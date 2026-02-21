@@ -1,0 +1,156 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # Database Services
+  # ============================================
+  mongodb:
+    image: mongo:7.0
+    container_name: ai-saas-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: ai_saas
+    volumes:
+      - mongodb_data:/data/db
+      - ./backend/scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - ai-saas-network
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: ai-saas-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - ai-saas-network
+
+  # ============================================
+  # Application Services
+  # ============================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ai-saas-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGO_URL=mongodb://admin:password123@mongodb:27017/ai_saas?authSource=admin
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET_KEY=your-super-secret-key-min-32-chars-here
+      - ENVIRONMENT=development
+    depends_on:
+      - mongodb
+      - redis
+    volumes:
+      - ./backend:/app
+    networks:
+      - ai-saas-network
+    command: python main.py
+
+  frontend:
+    build:
+      context: ./backend/frontend
+      dockerfile: Dockerfile
+    container_name: ai-saas-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000/api/v1
+    depends_on:
+      - backend
+    volumes:
+      - ./backend/frontend:/app
+    networks:
+      - ai-saas-network
+    command: npm run dev -- --host 0.0.0.0
+
+  # ============================================
+  # Background Workers
+  # ============================================
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ai-saas-celery-worker
+    restart: unless-stopped
+    environment:
+      - MONGO_URL=mongodb://admin:password123@mongodb:27017/ai_saas?authSource=admin
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET_KEY=your-super-secret-key-min-32-chars-here
+    depends_on:
+      - mongodb
+      - redis
+    volumes:
+      - ./backend:/app
+    networks:
+      - ai-saas-network
+    command: celery -A core.celery_app worker --loglevel=info
+
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ai-saas-celery-beat
+    restart: unless-stopped
+    environment:
+      - MONGO_URL=mongodb://admin:password123@mongodb:27017/ai_saas?authSource=admin
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET_KEY=your-super-secret-key-min-32-chars-here
+    depends_on:
+      - mongodb
+      - redis
+    volumes:
+      - ./backend:/app
+    networks:
+      - ai-saas-network
+    command: celery -A core.celery_app beat --loglevel=info
+
+  # ============================================
+  # Management Tools
+  # ============================================
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: ai-saas-redis-ui
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    depends_on:
+      - redis
+    networks:
+      - ai-saas-network
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: ai-saas-mongo-ui
+    restart: unless-stopped
+    ports:
+      - "8082:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: password123
+      ME_CONFIG_MONGODB_URL: mongodb://admin:password123@mongodb:27017/
+    depends_on:
+      - mongodb
+    networks:
+      - ai-saas-network
+
+volumes:
+  mongodb_data:
+  redis_data:
+
+networks:
+  ai-saas-network:
+    driver: bridge

@@ -1,0 +1,63 @@
+# logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# node_modules
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# virtualenv
+venv/
+.env
+.venv
+env.bak/
+venv.bak/
+
+# Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# macos
+.DS_Store
+
+# build files
+*.zip
+*.db
+*.sqlite
+*.sqlite3
+.env.example.complete
+.env.progressive
+backend/zexai.db
+backend/supabase_db.sqlite

@@ -1,0 +1,29 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "images": "Images",
+    "videos": "Videos",
+    "audio": "Audio",
+    "chat": "Chat",
+    "synapse": "Synapse",
+    "media": "Media",
+    "admin": "Admin Panel"
+  },
+  "user": {
+    "profile": "Profile",
+    "analytics": "Analytics",
+    "apiKeys": "API Keys",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "nav": {
+    "dashboard": "Ana Sayfa",
+    "images": "Görseller",
+    "videos": "Videolar",
+    "audio": "Ses",
+    "chat": "Sohbet",
+    "synapse": "Synapse",
+    "media": "Medya",
+    "admin": "Admin Paneli"
+  },
+  "user": {
+    "profile": "Profil",
+    "analytics": "Analitik",
+    "apiKeys": "API Anahtarları",
+    "settings": "Ayarlar",
+    "logout": "Çıkış Yap"
+  },
+  "common": {
+    "loading": "Yükleniyor...",
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "create": "Oluştur",
+    "search": "Ara",
+    "filter": "Filtrele"
+  }
+}
