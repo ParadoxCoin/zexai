@@ -189,6 +189,7 @@ class Settings(BaseSettings):
         env_file_encoding = "utf-8"
         case_sensitive = True
         extra = "ignore"  # Ignore extra fields in .env that aren't in config
+        protected_namespaces = ()
 
 
 # Global settings instance
