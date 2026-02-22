@@ -69,7 +69,7 @@ const Layout: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen overflow-x-hidden bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Modern Header */}
       <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -91,7 +91,7 @@ const Layout: React.FC = () => {
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-1 bg-gray-100/80 dark:bg-gray-800/80 rounded-2xl p-1.5">
+            <nav className="hidden lg:flex items-center gap-1 bg-gray-100/80 dark:bg-gray-800/80 rounded-2xl p-1.5 max-w-[calc(100vw-400px)] overflow-x-auto scrollbar-hide">
               {allNavigation.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.href;
@@ -99,12 +99,12 @@ const Layout: React.FC = () => {
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${isActive
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${isActive
                       ? `bg-gradient-to-r ${item.color} text-white shadow-lg`
                       : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white dark:hover:bg-gray-700'
                       }`}
                   >
-                    <Icon className="h-4 w-4" />
+                    <Icon className="h-4 w-4 flex-shrink-0" />
                     <span className="hidden xl:inline">{item.name}</span>
                   </Link>
                 );
@@ -294,7 +294,7 @@ const Layout: React.FC = () => {
       </header>
 
       {/* Main Content - Full width with better proportions */}
-      <main className="w-full">
+      <main className="w-full overflow-x-hidden">
         <Outlet />
       </main>
 

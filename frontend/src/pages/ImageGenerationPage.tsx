@@ -311,16 +311,16 @@ const ImageGenerationPage = () => {
       {/* Hero Header */}
       <div className="relative overflow-hidden bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 text-white">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTRzMiAyIDIgNC0yIDQtMiA0LTItMi0yLTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30" />
-        <div className="relative px-6 py-12 lg:px-8">
+        <div className="relative px-4 sm:px-6 py-8 sm:py-12 lg:px-8">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm mb-4">
-              <Sparkles className="w-4 h-4" />
-              <span className="text-sm font-medium">AI Görsel Üretici</span>
+            <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/10 backdrop-blur-sm mb-3 sm:mb-4">
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="text-xs sm:text-sm font-medium">AI Görsel Üretici</span>
             </div>
-            <h1 className="text-4xl lg:text-5xl font-bold mb-4">
+            <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold mb-2 sm:mb-4">
               Hayal Et, <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 to-yellow-300">Oluştur</span>
             </h1>
-            <p className="text-lg text-purple-100 max-w-2xl mx-auto">
+            <p className="text-sm sm:text-base lg:text-lg text-purple-100 max-w-2xl mx-auto px-2">
               Düşüncelerinizi saniyeler içinde etkileyici görsellere dönüştürün
             </p>
           </div>
@@ -333,47 +333,47 @@ const ImageGenerationPage = () => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-4 mb-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 -mt-4 mb-6">
         <div className="flex justify-center">
-          <div className="inline-flex bg-white dark:bg-gray-800 rounded-2xl p-1.5 shadow-lg border border-gray-100 dark:border-gray-700">
+          <div className="inline-flex bg-white dark:bg-gray-800 rounded-2xl p-1 sm:p-1.5 shadow-lg border border-gray-100 dark:border-gray-700 max-w-full overflow-x-auto scrollbar-hide">
             <button
               onClick={() => setActiveTab('generate')}
-              className={`px-6 py-3 rounded-xl font-medium transition-all flex items-center gap-2 ${activeTab === 'generate'
+              className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-medium transition-all flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm whitespace-nowrap ${activeTab === 'generate'
                 ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
             >
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               Üret
             </button>
             <button
               onClick={() => setActiveTab('edit')}
-              className={`px-6 py-3 rounded-xl font-medium transition-all flex items-center gap-2 ${activeTab === 'edit'
+              className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-medium transition-all flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm whitespace-nowrap ${activeTab === 'edit'
                 ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
             >
-              <Wand2 className="w-4 h-4" />
+              <Wand2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               Düzenle
             </button>
             <button
               onClick={() => setActiveTab('gallery')}
-              className={`px-6 py-3 rounded-xl font-medium transition-all flex items-center gap-2 ${activeTab === 'gallery'
+              className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-medium transition-all flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm whitespace-nowrap ${activeTab === 'gallery'
                 ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
             >
-              <Layers className="w-4 h-4" />
+              <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               Galeri
             </button>
             <button
               onClick={() => setActiveTab('compare')}
-              className={`px-6 py-3 rounded-xl font-medium transition-all flex items-center gap-2 ${activeTab === 'compare'
+              className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-medium transition-all flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm whitespace-nowrap ${activeTab === 'compare'
                 ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
             >
-              <GitCompare className="w-4 h-4" />
+              <GitCompare className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               Karşılaştır
             </button>
           </div>
