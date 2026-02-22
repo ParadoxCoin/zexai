@@ -43,27 +43,27 @@ class ApiService {
     );
   }
 
-  async get<T>(url: string, params?: any): Promise<ApiResponse<T>> {
+  async get<T = any>(url: string, params?: any): Promise<ApiResponse<T>> {
     const response = await this.api.get(url, { params });
     return response.data;
   }
 
-  async post<T>(url: string, data?: any): Promise<ApiResponse<T>> {
+  async post<T = any>(url: string, data?: any): Promise<ApiResponse<T>> {
     const response = await this.api.post(url, data);
     return response.data;
   }
 
-  async put<T>(url: string, data?: any): Promise<ApiResponse<T>> {
+  async put<T = any>(url: string, data?: any): Promise<ApiResponse<T>> {
     const response = await this.api.put(url, data);
     return response.data;
   }
 
-  async delete<T>(url: string): Promise<ApiResponse<T>> {
+  async delete<T = any>(url: string): Promise<ApiResponse<T>> {
     const response = await this.api.delete(url);
     return response.data;
   }
 
-  async upload<T>(url: string, formData: FormData): Promise<ApiResponse<T>> {
+  async upload<T = any>(url: string, formData: FormData): Promise<ApiResponse<T>> {
     const response = await this.api.post(url, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
