@@ -10,6 +10,8 @@ export interface User {
   auth_provider: 'jwt' | 'supabase';
   email_verified: boolean;
   two_factor_enabled: boolean;
+  credits?: number;
+  credits_balance?: number;
 }
 
 export interface AuthResponse extends User {

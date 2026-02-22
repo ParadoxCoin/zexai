@@ -16,10 +16,10 @@ const ReferralPage: React.FC = () => {
     const fetchData = async () => {
         try {
             const statsRes = await referralService.getStats();
-            setStats(statsRes.data);
+            setStats(statsRes.data as any);
 
             const historyRes = await referralService.getHistory();
-            setHistory(historyRes.data);
+            setHistory(historyRes.data as any || []);
         } catch (error) {
             console.error("Failed to fetch referral data", error);
         } finally {
