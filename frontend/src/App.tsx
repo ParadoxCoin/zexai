@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Layout from '@/components/Layout';
 import { LoginPage } from '@/pages/LoginPage';
 import { RegisterPage } from '@/pages/RegisterPage';
+import AuthCallbackPage from '@/pages/AuthCallbackPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import ImageGenerationPage from '@/pages/ImageGenerationPage';
@@ -76,6 +77,7 @@ function AppContent() {
           {/* Public routes */}
           <Route path="/login" element={<PublicRoute><PageTransition><LoginPage /></PageTransition></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><PageTransition><RegisterPage /></PageTransition></PublicRoute>} />
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
           {/* Protected routes */}
           <Route path="/dashboard" element={<ProtectedRoute><PageTransition><DashboardPage /></PageTransition></ProtectedRoute>} />
