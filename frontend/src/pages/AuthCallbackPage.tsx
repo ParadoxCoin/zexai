@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { Loader2 } from 'lucide-react';
@@ -11,11 +11,35 @@ import { Loader2 } from 'lucide-react';
  */
 const AuthCallbackPage = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const handleCallback = async () => {
             try {
+                // Check for error parameters in URL (Supabase sends errors as query params)
+                const urlError = searchParams.get('error');
+                const errorDescription = searchParams.get('error_description');
+                const errorCode = searchParams.get('error_code');
+
+                if (urlError) {
+                    console.error('OAuth error from Supabase:', { urlError, errorCode, errorDescription });
+                    throw new Error(
+                        errorDescription ||
+                        `OAuth hatası: ${urlError}${errorCode ? ` (${errorCode})` : ''}`
+                    );
+                }
+
+                // Also check for errors in URL hash (some flows use hash fragments)
+                const hashParams = new URLSearchParams(window.location.hash.substring(1));
+                const hashError = hashParams.get('error');
+                const hashErrorDescription = hashParams.get('error_description');
+
+                if (hashError) {
+                    console.error('OAuth hash error:', { hashError, hashErrorDescription });
+                    throw new Error(hashErrorDescription || `OAuth hatası: ${hashError}`);
+                }
+
                 // Get session from URL hash (Supabase puts tokens in URL fragment)
                 const { data, error: sessionError } = await supabase.auth.getSession();
 
@@ -77,23 +101,29 @@ const AuthCallbackPage = () => {
             } catch (err: any) {
                 console.error('OAuth callback error:', err);
                 setError(err.message || 'Giriş sırasında bir hata oluştu');
-                setTimeout(() => navigate('/login', { replace: true }), 3000);
+                setTimeout(() => navigate('/login', { replace: true }), 5000);
             }
         };
 
         handleCallback();
-    }, [navigate]);
+    }, [navigate, searchParams]);
 
     if (error) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#0a0a1a]">
-                <div className="text-center">
+                <div className="text-center max-w-md px-6">
                     <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/10 flex items-center justify-center">
                         <span className="text-2xl">❌</span>
                     </div>
                     <p className="text-red-400 text-lg font-medium mb-2">Giriş Hatası</p>
-                    <p className="text-gray-500 text-sm">{error}</p>
-                    <p className="text-gray-600 text-xs mt-3">Login sayfasına yönlendiriliyorsunuz...</p>
+                    <p className="text-gray-500 text-sm mb-4">{error}</p>
+                    <button
+                        onClick={() => navigate('/login', { replace: true })}
+                        className="px-6 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium transition-colors"
+                    >
+                        Giriş Sayfasına Dön
+                    </button>
+                    <p className="text-gray-600 text-xs mt-3">5 saniye içinde otomatik yönlendirileceksiniz...</p>
                 </div>
             </div>
         );
