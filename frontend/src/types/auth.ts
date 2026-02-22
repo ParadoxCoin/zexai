@@ -12,12 +12,7 @@ export interface User {
   two_factor_enabled: boolean;
 }
 
-export interface AuthResponse {
-  user_id: string;
-  email: string;
-  full_name: string;
-  role: string;
-  package: string;
+export interface AuthResponse extends User {
   access_token: string;
   token_type: string;
 }

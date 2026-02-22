@@ -50,7 +50,7 @@ export const addWatermark = async (imageUrl: string, watermarkText: string = "Ze
             }, "image/png", 1.0);
         };
 
-        img.onerror = (err) => {
+        img.onerror = () => {
             reject(new Error("Failed to load image for watermarking."));
         };
 
