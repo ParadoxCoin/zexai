@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 
@@ -68,6 +68,8 @@ class TopModel(BaseModel):
     usage_count: int
     total_credits: float
 
+    model_config = ConfigDict(protected_namespaces=())
+
 class AnalyticsResponse(BaseModel):
     data: Dict[str, Any]
 
@@ -75,6 +77,8 @@ class ModelPricing(BaseModel):
     model_id: str
     service_type: str
     credits: int
+
+    model_config = ConfigDict(protected_namespaces=())
 
 class ModelPricingUpdate(BaseModel):
     model_id: str

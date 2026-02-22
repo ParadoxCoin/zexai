@@ -3,7 +3,7 @@ Admin Model Management API
 CRUD operations for AI models with role-based access control
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 
@@ -32,6 +32,8 @@ class ModelBase(BaseModel):
     badge: Optional[str] = None
     description: Optional[str] = None
     is_active: bool = True
+
+    model_config = ConfigDict(protected_namespaces=())
 
 
 class ModelCreate(ModelBase):
@@ -65,6 +67,8 @@ class BulkPriceUpdate(BaseModel):
     multiplier_change: Optional[float] = None  # e.g., 1.1 = +10%
     new_multiplier: Optional[float] = None  # Set exact multiplier
 
+    model_config = ConfigDict(protected_namespaces=())
+
 
 class ModelResponse(BaseModel):
     """Model response"""
@@ -81,6 +85,8 @@ class ModelResponse(BaseModel):
     badge: Optional[str]
     description: Optional[str]
     is_active: bool
+
+    model_config = ConfigDict(protected_namespaces=())
     source: str  # 'hardcoded' or 'database'
     capabilities: Optional[Dict[str, Any]] = None  # Dynamic parameters
 

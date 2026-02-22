@@ -1,7 +1,7 @@
 """
 Image generation schemas
 """
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List, Literal
 from datetime import datetime
 from enum import Enum
@@ -13,6 +13,9 @@ class ImageType(str, Enum):
     controlnet = "controlnet"
     specialized = "specialized"
     upscaler = "upscaler"
+    background_remover = "background_remover"
+    text_to_video = "text_to_video"
+    text_to_music = "text_to_music"
 
 
 class AspectRatio(str, Enum):
@@ -55,6 +58,8 @@ class ImageGenerateRequest(BaseModel):
     guidance_scale: Optional[float] = Field(default=7.5, ge=1.0, le=20.0)
     image_url: Optional[str] = None
     strength: Optional[float] = Field(default=0.75, ge=0.0, le=1.0)
+
+    model_config = ConfigDict(protected_namespaces=())
 
 
 class ImageToImageRequest(BaseModel):
@@ -99,6 +104,8 @@ class ImageModelInfo(BaseModel):
     description: Optional[str]
     capabilities: Optional[dict] = {}
 
+    model_config = ConfigDict(protected_namespaces=())
+
 
 class ImageToolInfo(BaseModel):
     id: str
@@ -127,6 +134,8 @@ class ImageGenerateResponse(BaseModel):
     credits_used: int
     model_used: str
     estimated_time: int
+
+    model_config = ConfigDict(protected_namespaces=())
 
 
 class ImageTaskStatus(BaseModel):

@@ -2,7 +2,7 @@
 Video generation schemas for Pollo.ai integration
 Supports 40+ models and 20+ effects
 """
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
@@ -73,6 +73,8 @@ class VideoModelInfo(BaseModel):
     example_video_url: Optional[str] = None
     description: Optional[str] = None
     capabilities: Optional[Dict] = None  # Dynamic capabilities for the model
+
+    model_config = ConfigDict(protected_namespaces=())
 
 
 class VideoGenerateRequest(BaseModel):
