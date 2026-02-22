@@ -106,7 +106,7 @@ class ModelService:
                 raise HTTPException(status_code=500, detail=f"API Key not found for provider {provider_id}")
                 
             return {
-                "api_key": api_key,
+                "api_key": str(api_key),
                 "base_url": provider_data.get("base_url")
             }
             

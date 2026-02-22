@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Bell, X, Check, CheckCheck, Trash2, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { supabase } from '@/lib/supabase';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
@@ -43,28 +44,46 @@ const NotificationDropdown: React.FC = () => {
         return () => clearInterval(interval);
     }, []);
 
-    const getAuthHeaders = () => {
-        const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
-        return { Authorization: `Bearer ${token}` };
+    const getAuthHeaders = async () => {
+        try {
+            const { data } = await supabase.auth.getSession();
+            if (data?.session?.access_token) {
+                return { Authorization: `Bearer ${data.session.access_token}` };
+            }
+        } catch (e) {
+            console.warn('Failed to get session for notifications:', e);
+        }
+        // Fallback
+        const token = localStorage.getItem('auth_token');
+        if (token && token !== 'null' && token !== 'undefined') {
+            return { Authorization: `Bearer ${token}` };
+        }
+        return {};
     };
 
     const fetchUnreadCount = async () => {
         try {
+            const headers = await getAuthHeaders();
+            if (!headers.Authorization) return; // Skip if not authenticated
             const response = await axios.get(`${API_URL}/notifications/unread-count`, {
-                headers: getAuthHeaders()
+                headers
             });
             setUnreadCount(response.data.count);
         } catch (error) {
-            console.error('Failed to fetch unread count:', error);
+            // Silently ignore auth errors for notification count
+            if (axios.isAxiosError(error) && error.response?.status !== 401) {
+                console.error('Failed to fetch unread count:', error);
+            }
         }
     };
 
     const fetchNotifications = async () => {
         setLoading(true);
         try {
+            const headers = await getAuthHeaders();
             const response = await axios.get(`${API_URL}/notifications`, {
                 params: { limit: 10 },
-                headers: getAuthHeaders()
+                headers
             });
             setNotifications(response.data.notifications || []);
             setUnreadCount(response.data.unread_count);
@@ -84,10 +103,11 @@ const NotificationDropdown: React.FC = () => {
 
     const handleMarkAsRead = async (notificationId: string) => {
         try {
+            const headers = await getAuthHeaders();
             await axios.post(
                 `${API_URL}/notifications/mark-read`,
                 { notification_ids: [notificationId] },
-                { headers: getAuthHeaders() }
+                { headers }
             );
             setNotifications(prev =>
                 prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
@@ -100,10 +120,11 @@ const NotificationDropdown: React.FC = () => {
 
     const handleMarkAllAsRead = async () => {
         try {
+            const headers = await getAuthHeaders();
             await axios.post(
                 `${API_URL}/notifications/mark-read`,
                 { notification_ids: null },
-                { headers: getAuthHeaders() }
+                { headers }
             );
             setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
             setUnreadCount(0);
@@ -114,8 +135,9 @@ const NotificationDropdown: React.FC = () => {
 
     const handleDelete = async (notificationId: string) => {
         try {
+            const headers = await getAuthHeaders();
             await axios.delete(`${API_URL}/notifications/${notificationId}`, {
-                headers: getAuthHeaders()
+                headers
             });
             setNotifications(prev => prev.filter(n => n.id !== notificationId));
         } catch (error) {
@@ -219,15 +241,15 @@ const NotificationDropdown: React.FC = () => {
                                     <div className="flex gap-3">
                                         {/* Type indicator */}
                                         <div className={`w-2 h-2 mt-2 rounded-full flex-shrink-0 ${notification.type === 'success' ? 'bg-green-500' :
-                                                notification.type === 'warning' ? 'bg-yellow-500' :
-                                                    notification.type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+                                            notification.type === 'warning' ? 'bg-yellow-500' :
+                                                notification.type === 'error' ? 'bg-red-500' : 'bg-blue-500'
                                             }`} />
 
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-start justify-between gap-2">
                                                 <p className={`text-sm font-medium ${!notification.is_read
-                                                        ? 'text-gray-900 dark:text-white'
-                                                        : 'text-gray-700 dark:text-gray-300'
+                                                    ? 'text-gray-900 dark:text-white'
+                                                    : 'text-gray-700 dark:text-gray-300'
                                                     }`}>
                                                     {notification.title}
                                                 </p>

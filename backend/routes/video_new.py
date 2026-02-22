@@ -477,7 +477,7 @@ async def export_for_social_media(
             response = await client.post(
                 f"{provider_config['base_url']}/video/export",
                 headers={
-                    "Authorization": f"Bearer {provider_config['api_key']}",
+                    "Authorization": f"Bearer {str(provider_config['api_key'])}",
                     "Content-Type": "application/json"
                 },
                 json={
@@ -547,7 +547,7 @@ async def get_my_videos(
                                 print(f"[StatusPoll] Calling: {status_url}")
                                 response = await client.get(
                                     status_url,
-                                    headers={"Authorization": f"Bearer {api_key}"}
+                                    headers={"Authorization": f"Bearer {str(api_key)}"}
                                 )
                                 
                                 print(f"[StatusPoll] Response: {response.status_code} - {response.text[:500]}")

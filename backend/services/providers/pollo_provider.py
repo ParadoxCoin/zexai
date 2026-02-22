@@ -13,7 +13,7 @@ class PolloProvider:
     async def generate_image(self, model_id: str, prompt: str, params: Dict[str, Any]) -> List[str]:
         """Generate image using Pollo.ai"""
         headers = {
-            "Authorization": f"Bearer {self.api_key}",
+            "Authorization": f"Bearer {str(self.api_key)}",
             "Content-Type": "application/json"
         }
         

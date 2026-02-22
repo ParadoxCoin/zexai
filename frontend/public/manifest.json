@@ -73,44 +73,48 @@
       "purpose": "maskable"
     }
   ],
-  "categories": ["productivity", "utilities", "entertainment"],
-  "screenshots": [
-    {
-      "src": "/screenshots/dashboard.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Dashboard Ana Ekran"
-    },
-    {
-      "src": "/screenshots/mobile.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Mobil Görünüm"
-    }
+  "categories": [
+    "productivity",
+    "utilities",
+    "entertainment"
   ],
+  "screenshots": [],
   "shortcuts": [
     {
       "name": "Görsel Oluştur",
       "short_name": "Görsel",
       "description": "AI ile görsel oluştur",
       "url": "/images",
-      "icons": [{ "src": "/icons/shortcut-image.png", "sizes": "96x96" }]
+      "icons": [
+        {
+          "src": "/icons/shortcut-image.png",
+          "sizes": "96x96"
+        }
+      ]
     },
     {
       "name": "Video Oluştur",
       "short_name": "Video",
       "description": "AI ile video oluştur",
       "url": "/video",
-      "icons": [{ "src": "/icons/shortcut-video.png", "sizes": "96x96" }]
+      "icons": [
+        {
+          "src": "/icons/shortcut-video.png",
+          "sizes": "96x96"
+        }
+      ]
     },
     {
       "name": "Chat Başlat",
       "short_name": "Chat",
       "description": "AI ile sohbet et",
       "url": "/chat",
-      "icons": [{ "src": "/icons/shortcut-chat.png", "sizes": "96x96" }]
+      "icons": [
+        {
+          "src": "/icons/shortcut-chat.png",
+          "sizes": "96x96"
+        }
+      ]
     }
   ],
   "share_target": {
@@ -124,7 +128,11 @@
       "files": [
         {
           "name": "media",
-          "accept": ["image/*", "video/*", "audio/*"]
+          "accept": [
+            "image/*",
+            "video/*",
+            "audio/*"
+          ]
         }
       ]
     }

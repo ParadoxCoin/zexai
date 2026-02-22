@@ -12,7 +12,7 @@ class FALProvider:
     async def generate_image(self, model_id: str, prompt: str, params: Dict[str, Any]) -> List[str]:
         """Generate image using FAL.AI"""
         headers = {
-            "Authorization": f"Key {self.api_key}",
+            "Authorization": f"Key {str(self.api_key)}",
             "Content-Type": "application/json"
         }
         

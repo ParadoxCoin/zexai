@@ -31,7 +31,7 @@ class KieProvider:
         
     def _get_headers(self) -> Dict[str, str]:
         return {
-            "Authorization": f"Bearer {self.api_key}",
+            "Authorization": f"Bearer {str(self.api_key)}",
             "Content-Type": "application/json"
         }
     

@@ -26,8 +26,8 @@ def get_supabase_client() -> Optional[Client]:
     if _supabase_client is None:
         try:
             _supabase_client = create_client(
-                settings.SUPABASE_URL,
-                settings.SUPABASE_SERVICE_ROLE_KEY
+                str(settings.SUPABASE_URL),
+                str(settings.SUPABASE_SERVICE_ROLE_KEY)
             )
             logger.info("Supabase client initialized (service role)")
         except Exception as e:
@@ -51,8 +51,8 @@ def get_supabase_public_client() -> Optional[Client]:
     if _supabase_public_client is None:
         try:
             _supabase_public_client = create_client(
-                settings.SUPABASE_URL,
-                settings.SUPABASE_ANON_KEY
+                str(settings.SUPABASE_URL),
+                str(settings.SUPABASE_ANON_KEY)
             )
             logger.info("Supabase public client initialized")
         except Exception as e:

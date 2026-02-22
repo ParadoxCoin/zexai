@@ -13,7 +13,7 @@ class PolloVideoProvider:
     async def generate_video(self, model_id: str, prompt: str, params: Dict[str, Any]) -> Dict[str, Any]:
         """Generate video using Pollo.ai"""
         headers = {
-            "Authorization": f"Bearer {self.api_key}",
+            "Authorization": f"Bearer {str(self.api_key)}",
             "Content-Type": "application/json"
         }
         
@@ -74,7 +74,7 @@ class PolloVideoProvider:
     async def apply_effect(self, effect_id: str, image_url: str, image_url_2: Optional[str] = None) -> Dict[str, Any]:
         """Apply video effect"""
         headers = {
-            "Authorization": f"Bearer {self.api_key}",
+            "Authorization": f"Bearer {str(self.api_key)}",
             "Content-Type": "application/json"
         }
         

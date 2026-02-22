@@ -87,7 +87,35 @@ export class AuthService {
   }
 
   static getStoredToken(): string | null {
-    return localStorage.getItem('sb-access-token') || localStorage.getItem('auth_token');
+    // Check auth_token first (kept in sync by api.ts)
+    const authToken = localStorage.getItem('auth_token');
+    if (authToken && authToken !== 'null' && authToken !== 'undefined') {
+      return authToken;
+    }
+    // Check Supabase internal key patterns
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+        try {
+          const data = JSON.parse(localStorage.getItem(key) || '');
+          if (data?.access_token) return data.access_token;
+        } catch { /* skip */ }
+      }
+    }
+    return null;
+  }
+
+  static async getStoredTokenAsync(): Promise<string | null> {
+    try {
+      const { data } = await supabase.auth.getSession();
+      if (data?.session?.access_token) {
+        localStorage.setItem('auth_token', data.session.access_token);
+        return data.session.access_token;
+      }
+    } catch (e) {
+      console.warn('getStoredTokenAsync failed:', e);
+    }
+    return this.getStoredToken();
   }
 
   static getStoredUser(): AuthResponse | null {

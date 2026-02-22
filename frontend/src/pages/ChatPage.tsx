@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiService } from "@/services/api";
+import { supabase } from "@/lib/supabase";
 import {
   MessageCircle, Send, Plus, Trash2, Download, Bot, User,
   Clock, Zap, Copy, Check, Sparkles, Settings2, History,
@@ -179,7 +180,18 @@ const ChatPage = () => {
     setIsTyping(true);
 
     try {
-      const token = localStorage.getItem('auth_token');
+      // Get fresh token from Supabase session
+      let token: string | null = null;
+      try {
+        const { data } = await supabase.auth.getSession();
+        token = data?.session?.access_token || null;
+      } catch { /* fallback */ }
+      if (!token) token = localStorage.getItem('auth_token');
+
+      if (!token || token === 'null' || token === 'undefined') {
+        throw new Error('No auth token available');
+      }
+
       const response = await fetch(`${import.meta.env.VITE_API_URL}/chat/stream`, {
         method: 'POST',
         headers: {

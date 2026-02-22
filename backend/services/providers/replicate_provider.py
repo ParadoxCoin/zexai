@@ -13,7 +13,7 @@ class ReplicateProvider:
     async def generate_image(self, model_id: str, prompt: str, params: Dict[str, Any]) -> List[str]:
         """Generate image using Replicate"""
         headers = {
-            "Authorization": f"Token {self.api_key}",
+            "Authorization": f"Token {str(self.api_key)}",
             "Content-Type": "application/json"
         }
         

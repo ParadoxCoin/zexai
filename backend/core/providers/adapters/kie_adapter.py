@@ -81,7 +81,7 @@ class KieAIAdapter(BaseVideoAdapter):
     def __init__(self, api_key: str):
         super().__init__(api_key, self.BASE_URL)
         self.headers = {
-            "Authorization": f"Bearer {api_key}",
+            "Authorization": f"Bearer {str(api_key)}",
             "Content-Type": "application/json"
         }
     
