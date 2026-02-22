@@ -24,14 +24,20 @@ class KieAIService:
     """
     
     def __init__(self):
-        self.api_key = settings.KIE_API_KEY
+        raw_key = settings.KIE_API_KEY
+        if isinstance(raw_key, bytes):
+            raw_key = raw_key.decode('utf-8')
+        self.api_key = str(raw_key).strip() if raw_key else ""
         self.base_url = KIE_API_BASE
         self.timeout = 120  # 2 minutes timeout for generation
         
     def _get_headers(self) -> Dict[str, str]:
         """Get auth headers for API requests"""
+        if not self.api_key:
+            raise Exception("KIE_API_KEY is not configured")
+        key = str(self.api_key).strip()
         return {
-            "Authorization": f"Bearer {str(self.api_key)}",
+            "Authorization": f"Bearer {key}",
             "Content-Type": "application/json"
         }
     

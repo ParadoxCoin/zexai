@@ -24,14 +24,25 @@ class KieProvider:
     """
     
     def __init__(self):
-        self.api_key = settings.KIE_API_KEY
+        raw_key = settings.KIE_API_KEY
+        # Ensure api_key is always a proper string, never bytes or None
+        if isinstance(raw_key, bytes):
+            raw_key = raw_key.decode('utf-8')
+        self.api_key = str(raw_key).strip() if raw_key else ""
         self.base_url = "https://api.kie.ai"
         self.poll_interval = 3  # seconds
         self.max_poll_time = 300  # seconds (increased for slower models)
         
     def _get_headers(self) -> Dict[str, str]:
+        if not self.api_key:
+            raise Exception("KIE_API_KEY is not configured. Please set it in Railway environment variables.")
+        # Ensure the key is a plain string (not bytes)
+        key = self.api_key
+        if isinstance(key, bytes):
+            key = key.decode('utf-8')
+        key = str(key).strip()
         return {
-            "Authorization": f"Bearer {str(self.api_key)}",
+            "Authorization": f"Bearer {key}",
             "Content-Type": "application/json"
         }
     
