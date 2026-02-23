@@ -708,125 +708,98 @@ async def chat_stream(
     db = Depends(get_db)
 ):
     """
-    Stream AI chat completion using SSE (Server-Sent Events)
-    Real-time token-by-token response WITH conversation memory.
-    Works with any OpenAI-compatible provider (Groq, OpenAI, Fireworks, DeepSeek, etc.)
+    Stream AI chat completion using SSE with conversation memory.
+    All DB reads happen BEFORE the generator to avoid scope issues.
     """
-    import asyncio
-    
+    # ── PRE-STREAM: All DB operations ──
+    model_data = await model_service.get_model_by_id(db, request.model)
+    provider_config = None
+    if model_data:
+        provider_config = await model_service.get_provider_config(db, model_data.get("provider_id"))
+
+    if provider_config:
+        api_url = f"{provider_config['base_url']}/chat/completions"
+        api_key = str(provider_config['api_key'])
+        provider_model_id = model_data.get("provider_model_id", request.model)
+    else:
+        groq_key = os.getenv("GROQ_API_KEY", "")
+        if not groq_key:
+            raise HTTPException(status_code=500, detail="No API key configured")
+        api_url = "https://api.groq.com/openai/v1/chat/completions"
+        api_key = groq_key
+        groq_map = {"llama-3.3-70b": "llama-3.3-70b-versatile", "llama-3.1-8b": "llama-3.1-8b-instant",
+                     "llama-3.2-3b": "llama-3.2-3b-preview", "llama-3.2-1b": "llama-3.2-1b-preview"}
+        provider_model_id = groq_map.get(request.model, "llama-3.3-70b-versatile")
+
+    existing_conv, existing_messages = _load_conversation_messages(db, request.conversation_id, current_user.id)
+    api_messages = _build_messages_for_api(existing_messages, request.message, request.system_prompt)
+    conv_id = request.conversation_id if existing_conv else str(uuid.uuid4())
+
+    logger.info(f"STREAM: model={provider_model_id}, api_msgs={len(api_messages)}, conv_id={conv_id}, history={len(existing_messages)}")
+
+    # ── Closure context for generator ──
+    ctx = {
+        "api_url": api_url, "api_key": api_key, "model_id": provider_model_id,
+        "messages": api_messages, "temp": request.temperature, "max_tok": request.max_tokens,
+        "conv_id": conv_id, "uid": current_user.id, "user_msg": request.message,
+        "model_name": request.model, "ex_conv": existing_conv, "ex_msgs": existing_messages,
+    }
+
     async def generate():
+        c = ctx
         try:
-            # 1. Get model and provider config
-            model = await model_service.get_model_by_id(db, request.model)
-            provider_config = None
-            
-            if model:
-                provider_id = model.get("provider_id")
-                provider_config = await model_service.get_provider_config(db, provider_id)
-            
-            # Determine API endpoint and key
-            if provider_config:
-                api_url = f"{provider_config['base_url']}/chat/completions"
-                api_key = str(provider_config['api_key'])
-                provider_model_id = model.get("provider_model_id", request.model)
-            else:
-                # Fallback to Groq
-                groq_key = os.getenv("GROQ_API_KEY", "")
-                if not groq_key:
-                    yield f"data: {json.dumps({'error': 'No API key configured for this model'})}\n\n"
-                    return
-                api_url = "https://api.groq.com/openai/v1/chat/completions"
-                api_key = groq_key
-                # Model mapping for Groq fallback
-                groq_models = {
-                    "llama-3.3-70b": "llama-3.3-70b-versatile",
-                    "llama-3.1-8b": "llama-3.1-8b-instant",
-                    "llama-3.2-3b": "llama-3.2-3b-preview",
-                    "llama-3.2-1b": "llama-3.2-1b-preview",
-                }
-                provider_model_id = groq_models.get(request.model, "llama-3.3-70b-versatile")
-            
-            # 2. Load conversation history
-            existing_conv, existing_messages = _load_conversation_messages(
-                db, request.conversation_id, current_user.id
-            )
-            
-            # 3. Build messages with full context
-            api_messages = _build_messages_for_api(
-                history=existing_messages,
-                new_message=request.message,
-                system_prompt=request.system_prompt
-            )
-            
-            logger.info(f"Stream chat: model={request.model}, provider_model={provider_model_id}, context_msgs={len(api_messages)}")
-            
-            # 4. Stream from provider
-            async with httpx.AsyncClient() as client:
-                async with client.stream(
-                    "POST",
-                    api_url,
-                    headers={
-                        "Authorization": f"Bearer {api_key}",
-                        "Content-Type": "application/json"
-                    },
-                    json={
-                        "model": provider_model_id,
-                        "messages": api_messages,  # ✅ Full history included!
-                        "temperature": request.temperature,
-                        "max_tokens": request.max_tokens,
-                        "stream": True
-                    },
+            # FIRST event: conversation_id so frontend tracks it immediately
+            yield f"data: {json.dumps({'conversation_id': c['conv_id'], 'content': '', 'done': False})}\n\n"
+
+            async with httpx.AsyncClient() as http:
+                async with http.stream(
+                    "POST", c["api_url"],
+                    headers={"Authorization": f"Bearer {c['api_key']}", "Content-Type": "application/json"},
+                    json={"model": c["model_id"], "messages": c["messages"],
+                          "temperature": c["temp"], "max_tokens": c["max_tok"], "stream": True},
                     timeout=120.0
-                ) as response:
-                    if response.status_code != 200:
-                        error_text = await response.aread()
-                        yield f"data: {json.dumps({'error': error_text.decode()})}\n\n"
+                ) as resp:
+                    if resp.status_code != 200:
+                        err = await resp.aread()
+                        yield f"data: {json.dumps({'error': err.decode()})}\n\n"
                         return
-                    
-                    full_response = ""
-                    async for line in response.aiter_lines():
+
+                    full = ""
+                    async for line in resp.aiter_lines():
                         if line.startswith("data: "):
-                            data = line[6:]
-                            if data == "[DONE]":
+                            raw = line[6:]
+                            if raw == "[DONE]":
                                 break
                             try:
-                                chunk = json.loads(data)
-                                delta = chunk.get("choices", [{}])[0].get("delta", {})
-                                content = delta.get("content", "")
-                                if content:
-                                    full_response += content
-                                    yield f"data: {json.dumps({'content': content, 'done': False})}\n\n"
+                                tk = json.loads(raw).get("choices", [{}])[0].get("delta", {}).get("content", "")
+                                if tk:
+                                    full += tk
+                                    yield f"data: {json.dumps({'content': tk, 'done': False})}\n\n"
                             except json.JSONDecodeError:
                                 continue
-                    
-                    # 5. Save conversation after streaming completes
-                    conv_id = request.conversation_id or str(uuid.uuid4())
-                    saved_conv_id = _save_conversation(
-                        db=db,
-                        conversation_id=conv_id,
-                        user_id=current_user.id,
-                        existing_conv=existing_conv,
-                        existing_messages=existing_messages,
-                        user_message=request.message,
-                        ai_response=full_response,
-                        model=request.model,
-                        tokens_used=len(full_response.split()) * 2,  # Approximate token count
-                        credits_charged=1  # Minimum 1 credit for streaming
-                    )
-                    
-                    # Send final message with metadata
-                    yield f"data: {json.dumps({'content': '', 'done': True, 'full_response': full_response, 'conversation_id': saved_conv_id})}\n\n"
-                    
+
+            # ── POST-STREAM: Save with fresh DB client ──
+            try:
+                from core.supabase_client import get_supabase_client
+                fresh = get_supabase_client()
+                _save_conversation(
+                    db=fresh, conversation_id=c["conv_id"], user_id=c["uid"],
+                    existing_conv=c["ex_conv"], existing_messages=c["ex_msgs"],
+                    user_message=c["user_msg"], ai_response=full,
+                    model=c["model_name"], tokens_used=max(len(full.split())*2, 1), credits_charged=1
+                )
+                logger.info(f"Saved conv {c['conv_id']} ({len(c['ex_msgs'])+2} msgs)")
+            except Exception as se:
+                logger.error(f"Save error: {se}")
+
+            yield f"data: {json.dumps({'content': '', 'done': True, 'conversation_id': c['conv_id']})}\n\n"
+
         except Exception as e:
-            logger.error(f"Streaming error: {e}")
+            logger.error(f"Stream error: {e}")
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
-    
+
     return StreamingResponse(
-        generate(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no"
-        }
+        generate(), media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"}
     )
+
