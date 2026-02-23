@@ -3,7 +3,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiService } from '@/services/api';
 import {
     Sparkles, Send, Check, Copy, Clock, Zap,
-    Loader2, Trophy, Star, ArrowLeft, BarChart3, Timer
+    Loader2, Trophy, Star, ArrowLeft, BarChart3, Timer, RefreshCw
 } from 'lucide-react';
 import CodeBlock from '@/components/CodeBlock';
 
@@ -46,7 +46,7 @@ const ResponseContent = ({ content }: { content: string }) => {
     );
 };
 
-export const ComparisonChatPage = () => {
+export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
     const [prompt, setPrompt] = useState('');
     const [selectedModels, setSelectedModels] = useState<string[]>([]);
     const [results, setResults] = useState<ComparisonResult[]>([]);
@@ -105,6 +105,11 @@ export const ComparisonChatPage = () => {
             <div className="flex-shrink-0 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <div className="max-w-6xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-3">
+                        {onBack && (
+                            <button onClick={onBack} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all mr-1">
+                                <ArrowLeft className="w-4 h-4" />
+                            </button>
+                        )}
                         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
                             <Sparkles className="w-4.5 h-4.5 text-white" />
                         </div>
@@ -116,7 +121,7 @@ export const ComparisonChatPage = () => {
                     {results.length > 0 && (
                         <button onClick={() => { setResults([]); setPrompt(''); }}
                             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 bg-gray-100 dark:bg-gray-800 rounded-lg transition-colors">
-                            <ArrowLeft className="w-3 h-3" /> Yeni Karşılaştırma
+                            <RefreshCw className="w-3 h-3" /> Yeni Karşılaştırma
                         </button>
                     )}
                 </div>

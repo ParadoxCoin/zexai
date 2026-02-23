@@ -8,7 +8,7 @@ import {
   Crown, Zap, PanelLeftClose, PanelLeft, RotateCcw,
   Cpu, ArrowDown, Hash
 } from "lucide-react";
-import ComparisonChatPage from "./ComparisonChatPage";
+import { ComparisonChatPage } from "./ComparisonChatPage";
 import CodeBlock from "@/components/CodeBlock";
 
 // Available AI Models
@@ -235,14 +235,25 @@ const ChatPage = () => {
       setIsTyping(false);
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Streaming error:', error);
       setIsTyping(false);
-      sendMessageFn({
-        message: userInput, model: selectedModel, conversation_id: serverConversationId || null,
-        temperature, max_tokens: maxTokens,
-        history: currentConversation?.messages?.filter((m: Message) => m.content?.trim()).map((m: Message) => ({ role: m.role, content: m.content })) || []
-      });
+
+      // Fallback to non-streaming API if stream connection fails
+      try {
+        await sendMessageFn({
+          message: userInput,
+          model: selectedModel,
+          conversation_id: serverConversationId || null,
+          temperature,
+          max_tokens: maxTokens,
+          history: currentConversation?.messages?.filter((m: Message) => m.content?.trim())
+            .map((m: Message) => ({ role: m.role, content: m.content })) || []
+        });
+      } catch (fallbackError) {
+        console.error('Fallback error:', fallbackError);
+        // Could add a toast notification here if available
+      }
     }
   };
 
@@ -265,8 +276,6 @@ const ChatPage = () => {
 
   const conversationsList = conversations?.data?.conversations || [];
   const currentModel = availableModels.find(m => m.id === selectedModel) || availableModels[0];
-
-  if (activeTab === "compare") return <ComparisonChatPage />;
 
   return (
     <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-white dark:bg-gray-900">
@@ -376,147 +385,153 @@ const ChatPage = () => {
         </div>
       )}
 
-      {/* ═══ Main Chat Area ═══ */}
+      {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Chat Header */}
-        <div className="h-12 px-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <button onClick={() => setShowSidebar(!showSidebar)} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
-              {showSidebar ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
-            </button>
-            <div className="flex items-center gap-2">
-              <div className={`w-6 h-6 rounded-lg bg-gradient-to-br ${currentModel.color} flex items-center justify-center text-xs`}>
-                {currentModel.icon}
+        {activeTab === "compare" ? (
+          <ComparisonChatPage onBack={() => setActiveTab("chat")} />
+        ) : (
+          <>
+            {/* Chat Header */}
+            <div className="h-12 px-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <button onClick={() => setShowSidebar(!showSidebar)} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
+                  {showSidebar ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
+                </button>
+                <div className="flex items-center gap-2">
+                  <div className={`w-6 h-6 rounded-lg bg-gradient-to-br ${currentModel.color} flex items-center justify-center text-xs`}>
+                    {currentModel.icon}
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">{currentConversation?.title || "Yeni Sohbet"}</h3>
+                    <p className="text-[10px] text-gray-400">{currentModel.name}</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">{currentConversation?.title || "Yeni Sohbet"}</h3>
-                <p className="text-[10px] text-gray-400">{currentModel.name}</p>
+              <div className="flex items-center gap-1">
+                {isTyping && (
+                  <span className="flex items-center gap-1.5 text-xs text-emerald-500 mr-2">
+                    <span className="flex gap-0.5">
+                      <span className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" />
+                      <span className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <span className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </span>
+                    Yazıyor
+                  </span>
+                )}
+                <button onClick={startNewConversation} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all" title="Yeni Sohbet">
+                  <RotateCcw className="w-4 h-4" />
+                </button>
               </div>
             </div>
-          </div>
-          <div className="flex items-center gap-1">
-            {isTyping && (
-              <span className="flex items-center gap-1.5 text-xs text-emerald-500 mr-2">
-                <span className="flex gap-0.5">
-                  <span className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" />
-                  <span className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                </span>
-                Yazıyor
-              </span>
-            )}
-            <button onClick={startNewConversation} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all" title="Yeni Sohbet">
-              <RotateCcw className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Messages */}
-        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto relative">
-          <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
-            {/* Empty State */}
-            {!currentConversation?.messages?.length && (
-              <div className="flex flex-col items-center justify-center pt-12 pb-8">
-                <div className="relative mb-6">
-                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full blur-2xl opacity-15 scale-150" />
-                  <img src="/logo192.png" alt="ZexAi" className="relative w-16 h-16 object-contain" />
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Nasıl yardımcı olabilirim?</h2>
-                <p className="text-sm text-gray-500 mb-8">Sormak istediğiniz her şeyi yazabilirsiniz</p>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 w-full max-w-xl">
-                  {suggestedPrompts.map((item, idx) => (
-                    <button key={idx} onClick={() => setMessage(item.prompt)}
-                      className={`p-3.5 rounded-xl text-left bg-gradient-to-br ${item.gradient} border hover:scale-[1.02] transition-all group`}>
-                      <span className="text-xl mb-1.5 block">{item.icon}</span>
-                      <span className="font-medium text-gray-800 dark:text-gray-200 text-xs block">{item.title}</span>
-                      <span className="text-[10px] text-gray-500 dark:text-gray-400 line-clamp-1 mt-0.5 block">{item.prompt}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Messages */}
-            {currentConversation?.messages?.map((msg, index) => (
-              <div key={index} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
-                {msg.role === 'assistant' && (
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
-                    <Bot className="w-3.5 h-3.5 text-white" />
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto relative">
+              <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+                {/* Empty State */}
+                {!currentConversation?.messages?.length && (
+                  <div className="flex flex-col items-center justify-center pt-12 pb-8">
+                    <div className="relative mb-6">
+                      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full blur-2xl opacity-15 scale-150" />
+                      <img src="/logo192.png" alt="ZexAi" className="relative w-16 h-16 object-contain" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Nasıl yardımcı olabilirim?</h2>
+                    <p className="text-sm text-gray-500 mb-8">Sormak istediğiniz her şeyi yazabilirsiniz</p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 w-full max-w-xl">
+                      {suggestedPrompts.map((item, idx) => (
+                        <button key={idx} onClick={() => setMessage(item.prompt)}
+                          className={`p-3.5 rounded-xl text-left bg-gradient-to-br ${item.gradient} border hover:scale-[1.02] transition-all group`}>
+                          <span className="text-xl mb-1.5 block">{item.icon}</span>
+                          <span className="font-medium text-gray-800 dark:text-gray-200 text-xs block">{item.title}</span>
+                          <span className="text-[10px] text-gray-500 dark:text-gray-400 line-clamp-1 mt-0.5 block">{item.prompt}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
-                <div className={`max-w-[80%] min-w-[60px] ${msg.role === 'user' ? 'order-first' : ''}`}>
-                  <div className={`px-4 py-3 rounded-2xl ${msg.role === 'user'
-                    ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-tr-md shadow-lg shadow-emerald-500/10'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-tl-md border border-gray-200 dark:border-gray-700'}`}>
-                    {msg.role === 'assistant' ? (
-                      <MessageContent content={msg.content} />
-                    ) : (
-                      <p className="whitespace-pre-wrap text-[14px]">{msg.content}</p>
+
+                {/* Messages List */}
+                {currentConversation?.messages?.map((msg, index) => (
+                  <div key={index} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
+                    {msg.role === 'assistant' && (
+                      <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
+                        <Bot className="w-3.5 h-3.5 text-white" />
+                      </div>
                     )}
-                    {msg.role === 'assistant' && !msg.content && isTyping && (
-                      <div className="flex gap-1 py-1">
-                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" />
-                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <div className={`max-w-[80%] min-w-[60px] ${msg.role === 'user' ? 'order-first' : ''}`}>
+                      <div className={`px-4 py-3 rounded-2xl ${msg.role === 'user'
+                        ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-tr-md shadow-lg shadow-emerald-500/10'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-tl-md border border-gray-200 dark:border-gray-700'}`}>
+                        {msg.role === 'assistant' ? (
+                          <MessageContent content={msg.content} />
+                        ) : (
+                          <p className="whitespace-pre-wrap text-[14px]">{msg.content}</p>
+                        )}
+                        {msg.role === 'assistant' && !msg.content && isTyping && (
+                          <div className="flex gap-1 py-1">
+                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" />
+                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                          </div>
+                        )}
+                      </div>
+                      {/* Meta row */}
+                      <div className={`flex items-center gap-2 mt-1 px-1 ${msg.role === 'user' ? 'justify-end' : ''}`}>
+                        <span className="text-[10px] text-gray-400">
+                          {new Date(msg.timestamp).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        {msg.content && (
+                          <button onClick={() => copyToClipboard(msg.content, `${index}`)}
+                            className="p-0.5 text-gray-300 hover:text-gray-500 dark:text-gray-600 dark:hover:text-gray-400 transition-colors">
+                            {copiedMessageId === `${index}` ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    {msg.role === 'user' && (
+                      <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
+                        <User className="w-3.5 h-3.5 text-white" />
                       </div>
                     )}
                   </div>
-                  {/* Meta row */}
-                  <div className={`flex items-center gap-2 mt-1 px-1 ${msg.role === 'user' ? 'justify-end' : ''}`}>
-                    <span className="text-[10px] text-gray-400">
-                      {new Date(msg.timestamp).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                    {msg.content && (
-                      <button onClick={() => copyToClipboard(msg.content, `${index}`)}
-                        className="p-0.5 text-gray-300 hover:text-gray-500 dark:text-gray-600 dark:hover:text-gray-400 transition-colors">
-                        {copiedMessageId === `${index}` ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
-                      </button>
-                    )}
-                  </div>
-                </div>
-                {msg.role === 'user' && (
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
-                    <User className="w-3.5 h-3.5 text-white" />
-                  </div>
-                )}
+                ))}
+                <div ref={messagesEndRef} />
               </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
 
-          {/* Scroll to bottom button */}
-          {showScrollDown && (
-            <button onClick={scrollToBottom}
-              className="absolute bottom-4 left-1/2 -translate-x-1/2 p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full shadow-lg hover:shadow-xl transition-all z-10">
-              <ArrowDown className="w-4 h-4 text-gray-500" />
-            </button>
-          )}
-        </div>
-
-        {/* ═══ Input Area ═══ */}
-        <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3">
-          <form onSubmit={handleSendMessage} className="max-w-3xl mx-auto">
-            <div className="flex items-end gap-2 bg-gray-50 dark:bg-gray-800 rounded-2xl p-2 border border-gray-200 dark:border-gray-700 focus-within:border-emerald-300 dark:focus-within:border-emerald-700 focus-within:ring-2 focus-within:ring-emerald-500/10 transition-all">
-              <textarea
-                ref={textareaRef}
-                placeholder="Mesajınızı yazın..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                rows={1}
-                disabled={isTyping}
-                className="flex-1 px-3 py-2 bg-transparent border-0 resize-none focus:ring-0 focus:outline-none text-gray-900 dark:text-white placeholder-gray-400 text-sm max-h-[160px]"
-                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(e); } }}
-              />
-              <button type="submit" disabled={isTyping || !message.trim()}
-                className="p-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 disabled:from-gray-300 disabled:to-gray-400 dark:disabled:from-gray-600 dark:disabled:to-gray-700 text-white rounded-xl transition-all shadow-md disabled:shadow-none hover:shadow-lg hover:shadow-emerald-500/20 active:scale-95">
-                {isTyping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              </button>
+              {/* Scroll to bottom button */}
+              {showScrollDown && (
+                <button onClick={scrollToBottom}
+                  className="absolute bottom-4 left-1/2 -translate-x-1/2 p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full shadow-lg hover:shadow-xl transition-all z-10">
+                  <ArrowDown className="w-4 h-4 text-gray-500" />
+                </button>
+              )}
             </div>
-            <p className="text-center text-[10px] text-gray-400 mt-2">
-              {currentModel.icon} {currentModel.name} · Shift+Enter ile yeni satır
-            </p>
-          </form>
-        </div>
+
+            {/* Input Area */}
+            <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3">
+              <form onSubmit={handleSendMessage} className="max-w-3xl mx-auto">
+                <div className="flex items-end gap-2 bg-gray-50 dark:bg-gray-800 rounded-2xl p-2 border border-gray-200 dark:border-gray-700 focus-within:border-emerald-300 dark:focus-within:border-emerald-700 focus-within:ring-2 focus-within:ring-emerald-500/10 transition-all">
+                  <textarea
+                    ref={textareaRef}
+                    placeholder="Mesajınızı yazın..."
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    rows={1}
+                    disabled={isTyping}
+                    className="flex-1 px-3 py-2 bg-transparent border-0 resize-none focus:ring-0 focus:outline-none text-gray-900 dark:text-white placeholder-gray-400 text-sm max-h-[160px]"
+                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(e); } }}
+                  />
+                  <button type="submit" disabled={isTyping || !message.trim()}
+                    className="p-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 disabled:from-gray-300 disabled:to-gray-400 dark:disabled:from-gray-600 dark:disabled:to-gray-700 text-white rounded-xl transition-all shadow-md disabled:shadow-none hover:shadow-lg hover:shadow-emerald-500/20 active:scale-95">
+                    {isTyping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  </button>
+                </div>
+                <p className="text-center text-[10px] text-gray-400 mt-2">
+                  {currentModel.icon} {currentModel.name} · Shift+Enter ile yeni satır
+                </p>
+              </form>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
