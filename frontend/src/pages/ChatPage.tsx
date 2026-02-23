@@ -266,7 +266,8 @@ const ChatPage = () => {
   const loadConversation = async (conversationId: string) => {
     try {
       const response = await apiService.get(`/chat/conversations/${conversationId}`);
-      setCurrentConversation(response.data);
+      const convData = (response as any)?.data || response;
+      setCurrentConversation(convData);
       setServerConversationId(conversationId);
       setActiveTab("chat");
     } catch (error) { console.error("Failed to load:", error); }
@@ -278,7 +279,7 @@ const ChatPage = () => {
     setTimeout(() => setCopiedMessageId(null), 2000);
   };
 
-  const conversationsList = conversations?.data?.conversations || [];
+  const conversationsList = (conversations as any)?.conversations || (conversations as any)?.data?.conversations || [];
   const currentModel = availableModels.find(m => m.id === selectedModel) || availableModels[0];
 
   return (
