@@ -91,7 +91,7 @@ const Layout: React.FC = () => {
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-1 bg-gray-100/80 dark:bg-gray-800/80 rounded-2xl p-1.5 max-w-[calc(100vw-400px)] overflow-x-auto scrollbar-hide">
+            <nav className="hidden lg:flex items-center gap-1 bg-gray-100/80 dark:bg-gray-800/80 rounded-2xl p-1.5 flex-1 min-w-0 mx-2 overflow-x-auto scrollbar-hide">
               {allNavigation.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.href;
