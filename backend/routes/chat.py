@@ -770,6 +770,9 @@ async def chat_stream(
         "model_name": request.model, "ex_conv": existing_conv, "ex_msgs": existing_db_messages,
     }
 
+    # Shared state for the generator to communicate with the background task
+    save_state = {"full_response": "", "saved": False}
+
     async def generate():
         c = ctx
         try:
@@ -803,22 +806,26 @@ async def chat_stream(
                             except json.JSONDecodeError:
                                 continue
 
-            # ── POST-STREAM: Save conversation ──
+            # Store full response for background save
+            save_state["full_response"] = full
+
+            # Try inline save BEFORE final yield (best effort)
             try:
                 from core.supabase_client import get_supabase_client
                 fresh = get_supabase_client()
-                if fresh is None:
-                    logger.error("CRITICAL: Supabase client is None - cannot save conversation!")
-                else:
-                    saved_id = _save_conversation(
+                if fresh is not None:
+                    _save_conversation(
                         db=fresh, conversation_id=c["conv_id"], user_id=c["uid"],
                         existing_conv=c["ex_conv"], existing_messages=c["ex_msgs"],
                         user_message=c["user_msg"], ai_response=full,
                         model=c["model_name"], tokens_used=max(len(full.split())*2, 1), credits_charged=1
                     )
-                    logger.info(f"✅ Saved conv {saved_id} ({len(c['ex_msgs'])+2} msgs, response_len={len(full)})")
+                    save_state["saved"] = True
+                    logger.info(f"✅ Saved conv {c['conv_id']} inline ({len(c['ex_msgs'])+2} msgs)")
+                else:
+                    logger.error("CRITICAL: Supabase client is None!")
             except Exception as se:
-                logger.error(f"❌ Save error: {se}", exc_info=True)
+                logger.error(f"❌ Inline save error: {se}", exc_info=True)
 
             yield f"data: {json.dumps({'content': '', 'done': True, 'conversation_id': c['conv_id']})}\n\n"
 
@@ -826,8 +833,38 @@ async def chat_stream(
             logger.error(f"Stream error: {e}")
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
+    def background_save():
+        """Fallback save in case the inline save didn't work"""
+        c = ctx
+        if save_state["saved"]:
+            logger.info(f"Background save skipped - already saved inline for {c['conv_id']}")
+            return
+        
+        full = save_state.get("full_response", "")
+        if not full:
+            logger.warning(f"Background save skipped - no response text for {c['conv_id']}")
+            return
+
+        try:
+            from core.supabase_client import get_supabase_client
+            fresh = get_supabase_client()
+            if fresh is not None:
+                _save_conversation(
+                    db=fresh, conversation_id=c["conv_id"], user_id=c["uid"],
+                    existing_conv=c["ex_conv"], existing_messages=c["ex_msgs"],
+                    user_message=c["user_msg"], ai_response=full,
+                    model=c["model_name"], tokens_used=max(len(full.split())*2, 1), credits_charged=1
+                )
+                logger.info(f"✅ Saved conv {c['conv_id']} via background task")
+            else:
+                logger.error("CRITICAL: Supabase client is None in background save!")
+        except Exception as se:
+            logger.error(f"❌ Background save error: {se}", exc_info=True)
+
+    from starlette.background import BackgroundTask
+
     return StreamingResponse(
         generate(), media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"}
+        headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"},
+        background=BackgroundTask(background_save)
     )
-
