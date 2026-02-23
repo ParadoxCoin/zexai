@@ -73,25 +73,25 @@ const Layout: React.FC = () => {
       {/* Modern Header */}
       <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex items-center h-16 gap-2">
             {/* Logo */}
-            <Link to="/dashboard" className="flex items-center gap-3 group">
-              <div className="relative flex items-center justify-center w-12 h-12">
-                <div className="absolute inset-2 bg-purple-500 rounded-full blur-xl opacity-20 group-hover:opacity-40 transition-opacity" />
-                <img src="/logo192.png" alt="ZexAi" className="relative w-12 h-12 object-contain drop-shadow-md transform group-hover:scale-105 transition-all duration-300" />
+            <Link to="/dashboard" className="flex items-center gap-3 group flex-shrink-0">
+              <div className="relative flex items-center justify-center w-10 h-10">
+                <div className="absolute inset-1 bg-purple-500 rounded-full blur-xl opacity-20 group-hover:opacity-40 transition-opacity" />
+                <img src="/logo192.png" alt="ZexAi" className="relative w-10 h-10 object-contain drop-shadow-md transform group-hover:scale-105 transition-all duration-300" />
               </div>
               <div className="hidden sm:flex flex-col items-center justify-center -ml-1">
-                <h1 className="text-2xl font-black tracking-tighter bg-gradient-to-br from-gray-900 via-gray-700 to-gray-900 dark:from-white dark:via-gray-300 dark:to-gray-400 bg-clip-text text-transparent leading-none">
+                <h1 className="text-xl font-black tracking-tighter bg-gradient-to-br from-gray-900 via-gray-700 to-gray-900 dark:from-white dark:via-gray-300 dark:to-gray-400 bg-clip-text text-transparent leading-none">
                   ZexAi
                 </h1>
-                <p className="text-[9px] font-bold text-gray-500 dark:text-gray-400 tracking-[0.3em] mt-1 uppercase leading-none text-center">
+                <p className="text-[8px] font-bold text-gray-500 dark:text-gray-400 tracking-[0.3em] mt-0.5 uppercase leading-none text-center">
                   Studio
                 </p>
               </div>
             </Link>
 
-            {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-0.5 bg-gray-100/80 dark:bg-gray-800/80 rounded-2xl p-1 flex-1 min-w-0 mx-2 overflow-x-auto scrollbar-hide">
+            {/* Desktop Navigation - centered */}
+            <nav className="hidden lg:flex items-center justify-center gap-0.5 bg-gray-100/80 dark:bg-gray-800/80 rounded-2xl p-1 flex-1 min-w-0 overflow-x-auto scrollbar-hide">
               {allNavigation.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.href;
@@ -124,6 +124,15 @@ const Layout: React.FC = () => {
                   {Math.round(currentCredits)}
                 </span>
               </Link>
+
+              {/* Theme Toggle */}
+              <button
+                onClick={toggleTheme}
+                className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+                title={theme === 'light' ? 'Koyu Tema' : 'Açık Tema'}
+              >
+                {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+              </button>
 
               {/* Install App Button */}
               <PWAInstallPrompt />
