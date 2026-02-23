@@ -2,15 +2,23 @@
 Chat service schemas
 """
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
+
+
+class ChatMessage(BaseModel):
+    """Individual chat message for history"""
+    role: str = Field(..., pattern="^(system|user|assistant)$")
+    content: str
 
 
 class ChatRequest(BaseModel):
     """Schema for chat completion request"""
     message: str = Field(..., min_length=1, max_length=10000)
-    model: str = "llama-v3p1-70b-instruct"
+    model: str = "llama-3.3-70b"
+    conversation_id: Optional[str] = None
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
-    max_tokens: int = Field(default=1000, ge=1, le=4000)
+    max_tokens: int = Field(default=2000, ge=1, le=8000)
+    system_prompt: Optional[str] = None
 
 
 class ChatResponse(BaseModel):
@@ -20,4 +28,4 @@ class ChatResponse(BaseModel):
     tokens_used: int
     credits_charged: float
     response_time: float
-
+    conversation_id: Optional[str] = None

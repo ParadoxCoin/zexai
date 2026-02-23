@@ -1,6 +1,6 @@
 """
 Chat service routes
-Handles AI chat completions with credit-based billing
+Handles AI chat completions with credit-based billing and conversation memory
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
 from fastapi.responses import StreamingResponse
@@ -10,7 +10,7 @@ import time
 import uuid
 import os
 import json
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 
 from schemas.chat import ChatRequest, ChatResponse
@@ -23,6 +23,18 @@ from core.rate_limiter import limiter, RateLimits
 from services.model_service import model_service
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
+
+# Default system prompt for ZexAi
+DEFAULT_SYSTEM_PROMPT = """Sen ZexAi platformunun yapay zeka asistanısın. Kullanıcılara yardımcı, doğru ve güncel bilgiler sunmaya çalışıyorsun.
+- Her zaman Türkçe veya kullanıcının tercih ettiği dilde yanıt ver.
+- Kod yazarken açıklayıcı yorumlar ekle.
+- Konuşma bağlamını hatırla ve önceki mesajlara referans ver.
+- Eğer bir konuda bilgin güncel değilse, bunu belirt.
+- Markdown formatını kullan (başlıklar, listeler, kod blokları).
+"""
+
+# Maximum messages to include in context (to avoid token overflow)
+MAX_CONTEXT_MESSAGES = 30  # ~15 user + 15 assistant turns
 
 
 # ============================================
@@ -84,7 +96,137 @@ class ChatModel(BaseModel):
 
 
 # ============================================
-# Chat Completion Endpoint
+# Helper: Load conversation history from DB
+# ============================================
+
+def _load_conversation_messages(db, conversation_id: str, user_id: str) -> tuple[Optional[Dict], List[Dict]]:
+    """
+    Load conversation and its messages from database.
+    Returns (conversation_record, messages_list)
+    """
+    if not conversation_id:
+        return None, []
+    
+    try:
+        result = db.table("conversations").select("*").eq("id", conversation_id).eq("user_id", user_id).execute()
+        if result.data and len(result.data) > 0:
+            conv = result.data[0]
+            messages = conv.get("messages", [])
+            if isinstance(messages, str):
+                try:
+                    messages = json.loads(messages)
+                except:
+                    messages = []
+            return conv, messages
+    except Exception as e:
+        logger.warning(f"Failed to load conversation {conversation_id}: {e}")
+    
+    return None, []
+
+
+def _build_messages_for_api(
+    history: List[Dict],
+    new_message: str,
+    system_prompt: Optional[str] = None,
+    max_messages: int = MAX_CONTEXT_MESSAGES
+) -> List[Dict[str, str]]:
+    """
+    Build the messages array for the OpenAI-compatible API call.
+    Includes system prompt + trimmed conversation history + new user message.
+    Works with ALL providers (OpenAI, Groq, Fireworks, DeepSeek, etc.)
+    """
+    api_messages = []
+    
+    # 1. System prompt
+    prompt = system_prompt or DEFAULT_SYSTEM_PROMPT
+    api_messages.append({"role": "system", "content": prompt})
+    
+    # 2. Conversation history (trimmed to last N messages)
+    if history:
+        # Take only the last max_messages to avoid token overflow
+        recent_history = history[-max_messages:]
+        for msg in recent_history:
+            role = msg.get("role", "user")
+            content = msg.get("content", "")
+            if role in ("user", "assistant") and content:
+                api_messages.append({"role": role, "content": content})
+    
+    # 3. New user message
+    api_messages.append({"role": "user", "content": new_message})
+    
+    return api_messages
+
+
+def _save_conversation(
+    db,
+    conversation_id: str,
+    user_id: str,
+    existing_conv: Optional[Dict],
+    existing_messages: List[Dict],
+    user_message: str,
+    ai_response: str,
+    model: str,
+    tokens_used: int,
+    credits_charged: float
+) -> str:
+    """
+    Save or update conversation in database.
+    Returns the conversation_id.
+    """
+    now = datetime.utcnow().isoformat()
+    
+    new_msgs = [
+        {"role": "user", "content": user_message, "timestamp": now},
+        {"role": "assistant", "content": ai_response, "timestamp": now}
+    ]
+    
+    if existing_conv:
+        # Update existing conversation
+        all_messages = existing_messages + new_msgs
+        prev_tokens = existing_conv.get("tokens_used", 0) or 0
+        prev_credits = existing_conv.get("credits_charged", 0) or 0
+        
+        try:
+            db.table("conversations").update({
+                "messages": json.dumps(all_messages, ensure_ascii=False) if isinstance(all_messages, list) else all_messages,
+                "tokens_used": prev_tokens + tokens_used,
+                "credits_charged": prev_credits + credits_charged,
+                "updated_at": now,
+                "model": model
+            }).eq("id", conversation_id).execute()
+        except Exception as e:
+            logger.error(f"Failed to update conversation: {e}")
+        
+        return conversation_id
+    else:
+        # Create new conversation
+        new_id = conversation_id if conversation_id and not conversation_id.startswith("temp-") else str(uuid.uuid4())
+        
+        # Auto-generate title from first message
+        title = user_message[:60] + "..." if len(user_message) > 60 else user_message
+        
+        conversation_record = {
+            "id": new_id,
+            "user_id": user_id,
+            "title": title,
+            "messages": json.dumps(new_msgs, ensure_ascii=False),
+            "model": model,
+            "tokens_used": tokens_used,
+            "credits_charged": credits_charged,
+            "created_at": now,
+            "updated_at": now
+        }
+        
+        try:
+            db.table("conversations").insert(conversation_record).execute()
+        except Exception as e:
+            logger.error(f"Failed to save conversation: {e}")
+        
+        return new_id
+
+
+# ============================================
+# Chat Completion Endpoint (Non-Streaming)
 # ============================================
 
 @router.post("", response_model=ChatResponse)
@@ -94,8 +236,8 @@ async def chat_completion(
     db = Depends(get_db)
 ):
     """
-    Generate AI chat completion
-    Credits are deducted based on token usage after API call
+    Generate AI chat completion with conversation memory.
+    Credits are deducted based on token usage after API call.
     """
     start_time = time.time()
     
@@ -103,8 +245,6 @@ async def chat_completion(
         # 1. Fetch Model Details
         model = await model_service.get_model_by_id(db, request.model)
         if not model:
-            # Fallback for legacy requests or if model not found in DB
-            # Try to find a default chat model
             all_chat_models = await model_service.get_models(db, type="chat")
             if all_chat_models:
                 model = all_chat_models[0]
@@ -115,29 +255,38 @@ async def chat_completion(
         provider_id = model.get("provider_id")
         provider_config = await model_service.get_provider_config(db, provider_id)
         
-        # 3. Prepare API Request
-        # Currently supporting OpenAI-compatible APIs (OpenAI, Fireworks, Groq, etc.)
-        # Most providers follow this standard now.
+        # 3. Load conversation history for context
+        existing_conv, existing_messages = _load_conversation_messages(
+            db, request.conversation_id, current_user.id
+        )
         
+        # 4. Build messages array with full history
+        api_messages = _build_messages_for_api(
+            history=existing_messages,
+            new_message=request.message,
+            system_prompt=request.system_prompt
+        )
+        
+        logger.info(f"Chat request: model={request.model}, history_msgs={len(existing_messages)}, total_api_msgs={len(api_messages)}")
+        
+        # 5. Call API (OpenAI-compatible format - works with all providers)
         api_endpoint = f"{provider_config['base_url']}/chat/completions"
-        
-        # Provider-specific model ID (e.g., 'gpt-4o' vs 'accounts/fireworks/models/...')
         provider_model_id = model.get("provider_model_id", request.model)
         
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 api_endpoint,
                 headers={
-                    "Authorization": f"Bearer {provider_config['api_key']}",
+                    "Authorization": f"Bearer {str(provider_config['api_key'])}",
                     "Content-Type": "application/json"
                 },
                 json={
                     "model": provider_model_id,
-                    "messages": [{"role": "user", "content": request.message}],
+                    "messages": api_messages,  # ✅ Full history included!
                     "temperature": request.temperature,
                     "max_tokens": request.max_tokens
                 },
-                timeout=60.0
+                timeout=120.0
             )
         
         if response.status_code != 200:
@@ -149,28 +298,21 @@ async def chat_completion(
         result = response.json()
         response_time = time.time() - start_time
         
-        # Extract response and token usage
+        # 6. Extract response and token usage
         ai_response = result["choices"][0]["message"]["content"]
         tokens_used = result.get("usage", {}).get("total_tokens", 0)
         
-        # Calculate credit cost
-        # Using cost_per_unit from DB (assuming it's per 1k tokens or similar unit)
-        # If cost_per_unit is 0.01 (USD per 1k tokens), and we use 500 tokens:
-        # Cost = (500 / 1000) * 0.01 * multiplier
-        
-        cost_per_unit = float(model.get("cost_per_unit", 0)) # Cost per 1 unit (usually 1k tokens for chat)
+        # 7. Calculate credit cost
+        cost_per_unit = float(model.get("cost_per_unit", 0))
         multiplier = float(model.get("cost_multiplier", 2.0))
-        
-        # Normalize tokens (assuming cost is per 1k tokens for chat models)
         token_units = tokens_used / 1000.0
         cost_usd = token_units * cost_per_unit
         credits_charged = int(cost_usd * settings.DEFAULT_USD_TO_CREDIT_RATE * multiplier)
         
-        # Ensure at least 1 credit if usage occurred
         if credits_charged == 0 and tokens_used > 0:
             credits_charged = 1
         
-        # Deduct credits and log usage
+        # 8. Deduct credits
         await CreditManager.deduct_credits(
             db=db,
             user_id=current_user.id,
@@ -180,42 +322,38 @@ async def chat_completion(
                 "model": request.model,
                 "tokens": tokens_used,
                 "prompt_length": len(request.message),
-                "response_length": len(ai_response)
+                "response_length": len(ai_response),
+                "context_messages": len(api_messages)
             }
         )
         
-        # Save conversation to database (Supabase)
-        conversation_record = {
-            "id": str(uuid.uuid4()),
-            "user_id": current_user.id,
-            "messages": [
-                {"role": "user", "content": request.message, "timestamp": datetime.utcnow().isoformat()},
-                {"role": "assistant", "content": ai_response, "timestamp": datetime.utcnow().isoformat()}
-            ],
-            "model": request.model,
-            "tokens_used": tokens_used,
-            "credits_charged": credits_charged,
-            "created_at": datetime.utcnow().isoformat(),
-            "updated_at": datetime.utcnow().isoformat()
-        }
-        
-        try:
-            db.table("conversations").insert(conversation_record).execute()
-        except Exception as e:
-             # If table doesn't exist, we might want to log error but not fail the request
-             print(f"Failed to save conversation: {e}")
+        # 9. Save/update conversation
+        saved_conv_id = _save_conversation(
+            db=db,
+            conversation_id=request.conversation_id or str(uuid.uuid4()),
+            user_id=current_user.id,
+            existing_conv=existing_conv,
+            existing_messages=existing_messages,
+            user_message=request.message,
+            ai_response=ai_response,
+            model=request.model,
+            tokens_used=tokens_used,
+            credits_charged=credits_charged
+        )
         
         return ChatResponse(
             response=ai_response,
             model=request.model,
             tokens_used=tokens_used,
             credits_charged=credits_charged,
-            response_time=response_time
+            response_time=response_time,
+            conversation_id=saved_conv_id
         )
         
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"Chat completion failed: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Chat completion failed: {str(e)}"
@@ -239,11 +377,9 @@ async def list_conversations(
     List user's chat conversations
     """
     try:
-        # Get total count
         count_response = db.table("conversations").select("*", count="exact").eq("user_id", current_user.id).execute()
         total = count_response.count
         
-        # Get paginated conversations
         start = (page - 1) * page_size
         end = start + page_size - 1
         
@@ -255,11 +391,9 @@ async def list_conversations(
             
         conversations = response.data
         
-        # Convert to list items
         conversation_list = []
         for conv in conversations:
             messages = conv.get("messages", [])
-            # Handle potential JSON string if not automatically parsed
             if isinstance(messages, str):
                 try:
                     messages = json.loads(messages)
@@ -268,13 +402,11 @@ async def list_conversations(
                     
             last_message = messages[-1].get("content", "") if messages else ""
             
-            # Auto-generate title from first message if not set
             title = conv.get("title")
             if not title and messages:
                 first_msg = messages[0].get("content", "")
                 title = first_msg[:50] + "..." if len(first_msg) > 50 else first_msg
             
-            # Parse dates
             created_at = datetime.fromisoformat(conv["created_at"].replace('Z', '+00:00'))
             updated_at = datetime.fromisoformat(conv.get("updated_at", conv["created_at"]).replace('Z', '+00:00'))
             
@@ -326,7 +458,6 @@ async def get_conversation(
         
         conversation = response.data[0]
         
-        # Convert messages to Message objects
         raw_messages = conversation.get("messages", [])
         if isinstance(raw_messages, str):
              try:
@@ -336,10 +467,11 @@ async def get_conversation(
                 
         messages = []
         for msg in raw_messages:
-            # Handle timestamp parsing if it's a string
             ts = msg.get("timestamp")
             if isinstance(ts, str):
                 ts = datetime.fromisoformat(ts.replace('Z', '+00:00'))
+            elif ts is None:
+                ts = datetime.utcnow()
             messages.append(Message(role=msg["role"], content=msg["content"], timestamp=ts))
             
         created_at = datetime.fromisoformat(conversation["created_at"].replace('Z', '+00:00'))
@@ -381,7 +513,6 @@ async def delete_conversation(
     try:
         response = db.table("conversations").delete().eq("id", conversation_id).eq("user_id", current_user.id).execute()
         
-        # Supabase delete returns the deleted rows
         if not response.data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -523,15 +654,11 @@ async def list_chat_models(
     Get list of available chat models from Supabase
     """
     try:
-        # Fetch chat models from Supabase
         models_data = await model_service.get_models(db, type="chat")
         
         models = []
         for m in models_data:
-            # Calculate cost per 1k tokens (assuming cost_per_unit is per 1k)
-            # This logic might need adjustment based on how you define cost_per_unit in DB
             cost = float(m.get("cost_per_unit", 0)) * float(m.get("cost_multiplier", 2.0))
-            
             params = m.get("parameters", {})
             
             models.append(ChatModel(
@@ -553,7 +680,7 @@ async def list_chat_models(
 
 
 # ============================================
-# Streaming Chat Endpoint (SSE)
+# Streaming Chat Endpoint (SSE) with Memory
 # ============================================
 
 class StreamingChatRequest(BaseModel):
@@ -563,6 +690,7 @@ class StreamingChatRequest(BaseModel):
     conversation_id: Optional[str] = None
     temperature: float = 0.7
     max_tokens: int = 2000
+    system_prompt: Optional[str] = None
 
 
 @router.post("/stream")
@@ -573,45 +701,74 @@ async def chat_stream(
 ):
     """
     Stream AI chat completion using SSE (Server-Sent Events)
-    Real-time token-by-token response
+    Real-time token-by-token response WITH conversation memory.
+    Works with any OpenAI-compatible provider (Groq, OpenAI, Fireworks, DeepSeek, etc.)
     """
     import asyncio
     
     async def generate():
         try:
-            # Get Groq API key for streaming (fast and free)
-            groq_key = os.getenv("GROQ_API_KEY", "")
+            # 1. Get model and provider config
+            model = await model_service.get_model_by_id(db, request.model)
+            provider_config = None
             
-            if not groq_key:
-                yield f"data: {json.dumps({'error': 'GROQ_API_KEY not configured'})}\n\n"
-                return
+            if model:
+                provider_id = model.get("provider_id")
+                provider_config = await model_service.get_provider_config(db, provider_id)
             
-            # Model mapping for Groq
-            groq_models = {
-                "llama-3.3-70b": "llama-3.3-70b-versatile",
-                "llama-3.1-8b": "llama-3.1-8b-instant",
-                "llama-3.2-3b": "llama-3.2-3b-preview",
-                "llama-3.2-1b": "llama-3.2-1b-preview",
-            }
+            # Determine API endpoint and key
+            if provider_config:
+                api_url = f"{provider_config['base_url']}/chat/completions"
+                api_key = str(provider_config['api_key'])
+                provider_model_id = model.get("provider_model_id", request.model)
+            else:
+                # Fallback to Groq
+                groq_key = os.getenv("GROQ_API_KEY", "")
+                if not groq_key:
+                    yield f"data: {json.dumps({'error': 'No API key configured for this model'})}\n\n"
+                    return
+                api_url = "https://api.groq.com/openai/v1/chat/completions"
+                api_key = groq_key
+                # Model mapping for Groq fallback
+                groq_models = {
+                    "llama-3.3-70b": "llama-3.3-70b-versatile",
+                    "llama-3.1-8b": "llama-3.1-8b-instant",
+                    "llama-3.2-3b": "llama-3.2-3b-preview",
+                    "llama-3.2-1b": "llama-3.2-1b-preview",
+                }
+                provider_model_id = groq_models.get(request.model, "llama-3.3-70b-versatile")
             
-            model_id = groq_models.get(request.model, "llama-3.3-70b-versatile")
+            # 2. Load conversation history
+            existing_conv, existing_messages = _load_conversation_messages(
+                db, request.conversation_id, current_user.id
+            )
             
+            # 3. Build messages with full context
+            api_messages = _build_messages_for_api(
+                history=existing_messages,
+                new_message=request.message,
+                system_prompt=request.system_prompt
+            )
+            
+            logger.info(f"Stream chat: model={request.model}, provider_model={provider_model_id}, context_msgs={len(api_messages)}")
+            
+            # 4. Stream from provider
             async with httpx.AsyncClient() as client:
                 async with client.stream(
                     "POST",
-                    "https://api.groq.com/openai/v1/chat/completions",
+                    api_url,
                     headers={
-                        "Authorization": f"Bearer {groq_key}",
+                        "Authorization": f"Bearer {api_key}",
                         "Content-Type": "application/json"
                     },
                     json={
-                        "model": model_id,
-                        "messages": [{"role": "user", "content": request.message}],
+                        "model": provider_model_id,
+                        "messages": api_messages,  # ✅ Full history included!
                         "temperature": request.temperature,
                         "max_tokens": request.max_tokens,
                         "stream": True
                     },
-                    timeout=60.0
+                    timeout=120.0
                 ) as response:
                     if response.status_code != 200:
                         error_text = await response.aread()
@@ -621,7 +778,7 @@ async def chat_stream(
                     full_response = ""
                     async for line in response.aiter_lines():
                         if line.startswith("data: "):
-                            data = line[6:]  # Remove "data: " prefix
+                            data = line[6:]
                             if data == "[DONE]":
                                 break
                             try:
@@ -634,8 +791,23 @@ async def chat_stream(
                             except json.JSONDecodeError:
                                 continue
                     
+                    # 5. Save conversation after streaming completes
+                    conv_id = request.conversation_id or str(uuid.uuid4())
+                    saved_conv_id = _save_conversation(
+                        db=db,
+                        conversation_id=conv_id,
+                        user_id=current_user.id,
+                        existing_conv=existing_conv,
+                        existing_messages=existing_messages,
+                        user_message=request.message,
+                        ai_response=full_response,
+                        model=request.model,
+                        tokens_used=len(full_response.split()) * 2,  # Approximate token count
+                        credits_charged=1  # Minimum 1 credit for streaming
+                    )
+                    
                     # Send final message with metadata
-                    yield f"data: {json.dumps({'content': '', 'done': True, 'full_response': full_response})}\n\n"
+                    yield f"data: {json.dumps({'content': '', 'done': True, 'full_response': full_response, 'conversation_id': saved_conv_id})}\n\n"
                     
         except Exception as e:
             logger.error(f"Streaming error: {e}")

@@ -92,6 +92,7 @@ const ChatPage = () => {
   const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [serverConversationId, setServerConversationId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const queryClient = useQueryClient();
@@ -201,6 +202,7 @@ const ChatPage = () => {
         body: JSON.stringify({
           message: userInput,
           model: selectedModel,
+          conversation_id: serverConversationId || currentConversation?.id?.replace('temp-', '') || null,
           temperature,
           max_tokens: maxTokens
         })
@@ -239,6 +241,11 @@ const ChatPage = () => {
                   return { ...prev, messages: msgs };
                 });
               }
+              // Track conversation ID from server for subsequent messages
+              if (data.conversation_id) {
+                setServerConversationId(data.conversation_id);
+                setCurrentConversation(prev => prev ? { ...prev, id: data.conversation_id } : null);
+              }
             } catch (e) { /* ignore parse errors */ }
           }
         }
@@ -251,16 +258,17 @@ const ChatPage = () => {
       console.error('Streaming error:', error);
       setIsTyping(false);
       // Fallback to non-streaming
-      sendMessageFn({ message: userInput, model: selectedModel, temperature, max_tokens: maxTokens });
+      sendMessageFn({ message: userInput, model: selectedModel, conversation_id: serverConversationId || null, temperature, max_tokens: maxTokens });
     }
   };
 
-  const startNewConversation = () => { setCurrentConversation(null); setMessage(""); };
+  const startNewConversation = () => { setCurrentConversation(null); setServerConversationId(null); setMessage(""); };
 
   const loadConversation = async (conversationId: string) => {
     try {
       const response = await apiService.get(`/chat/conversations/${conversationId}`);
       setCurrentConversation(response.data);
+      setServerConversationId(conversationId);
       setActiveTab("chat");
     } catch (error) { console.error("Failed to load conversation:", error); }
   };
