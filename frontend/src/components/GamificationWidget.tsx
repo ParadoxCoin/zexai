@@ -129,12 +129,15 @@ export const GamificationWidget: React.FC<GamificationProps> = ({
 
     const { mutate: claimDaily, isPending: isClaiming } = useMutation({
         mutationFn: () => apiService.post('/gamification/daily-claim'),
-        onSuccess: (data: any) => {
+        onSuccess: (response: any) => {
             queryClient.invalidateQueries({ queryKey: ['gamificationStats'] });
             queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
             queryClient.invalidateQueries({ queryKey: ['userCredits'] });
 
-            if (data.success) {
+            // Handle both {success: true, ...} and {data: {success: true, ...}} formats
+            const data = response?.data || response;
+
+            if (data?.success) {
                 // Show celebration
                 playHapticFeedback('success');
                 setShowConfetti(true);
@@ -142,7 +145,7 @@ export const GamificationWidget: React.FC<GamificationProps> = ({
 
                 // Show credit toast
                 setCreditEarned({
-                    amount: data.credits_earned || 5,
+                    amount: data.total_credits || data.credits_earned || 5,
                     reason: `Günlük ödül - ${data.streak_days || 1} gün streak! 🔥`
                 });
                 setShowCreditToast(true);

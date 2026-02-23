@@ -156,26 +156,28 @@ class GamificationService:
         # Add XP for daily login
         await self.add_xp(user_id, 'daily_login')
         
-        # Add credits to user (use direct update if RPC not available)
+        # Add credits to user via user_credits table
         if total_credits > 0:
             try:
-                # Try RPC first
-                self.supabase.rpc('add_credits', {
-                    'p_user_id': user_id,
-                    'p_amount': total_credits,
-                    'p_description': f'Günlük streak ödülü (Gün {new_streak})'
-                }).execute()
-            except:
-                # Fallback: update profile credits directly
-                try:
-                    profile = self.supabase.table('profiles').select('credits').eq('id', user_id).execute()
-                    if profile.data:
-                        current_credits = profile.data[0].get('credits') or 0
-                        self.supabase.table('profiles').update({
-                            'credits': current_credits + total_credits
-                        }).eq('id', user_id).execute()
-                except:
-                    pass  # Silently fail credit addition
+                credit_resp = self.supabase.table('user_credits').select('credits_balance').eq('user_id', user_id).execute()
+                if credit_resp.data:
+                    current_credits = float(credit_resp.data[0].get('credits_balance') or 0)
+                    self.supabase.table('user_credits').update({
+                        'credits_balance': current_credits + total_credits,
+                        'updated_at': datetime.now().isoformat()
+                    }).eq('user_id', user_id).execute()
+                else:
+                    # Create credit record if not exists
+                    self.supabase.table('user_credits').insert({
+                        'user_id': user_id,
+                        'credits_balance': total_credits,
+                        'created_at': datetime.now().isoformat(),
+                        'updated_at': datetime.now().isoformat()
+                    }).execute()
+            except Exception as e:
+                import traceback
+                print(f"Credit addition error: {e}")
+                traceback.print_exc()
         
         # Check streak achievements
         await self._check_streak_achievements(user_id, new_streak)
@@ -361,11 +363,23 @@ class GamificationService:
             await self.add_xp(user_id, 'achievement', xp_reward)
         
         if credit_reward > 0:
-            self.supabase.rpc('add_credits', {
-                'p_user_id': user_id,
-                'p_amount': credit_reward,
-                'p_description': f'Başarı ödülü: {achievement_id}'
-            }).execute()
+            try:
+                credit_resp = self.supabase.table('user_credits').select('credits_balance').eq('user_id', user_id).execute()
+                if credit_resp.data:
+                    current_credits = float(credit_resp.data[0].get('credits_balance') or 0)
+                    self.supabase.table('user_credits').update({
+                        'credits_balance': current_credits + credit_reward,
+                        'updated_at': datetime.now().isoformat()
+                    }).eq('user_id', user_id).execute()
+                else:
+                    self.supabase.table('user_credits').insert({
+                        'user_id': user_id,
+                        'credits_balance': credit_reward,
+                        'created_at': datetime.now().isoformat(),
+                        'updated_at': datetime.now().isoformat()
+                    }).execute()
+            except Exception as e:
+                print(f"Achievement credit reward error: {e}")
     
     async def get_leaderboard(self, period: str = 'weekly', limit: int = 10) -> List[Dict]:
         """Get leaderboard"""
