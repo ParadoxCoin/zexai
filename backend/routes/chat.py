@@ -191,20 +191,16 @@ def _save_conversation(
     if existing_conv:
         # Update existing conversation
         all_messages = existing_messages + new_msgs
-        prev_tokens = existing_conv.get("tokens_used", 0) or 0
-        prev_credits = existing_conv.get("credits_charged", 0) or 0
         
         try:
             logger.info(f"Updating conversation {conversation_id} with {len(all_messages)} total messages")
             db.table("conversations").update({
                 "messages": json.dumps(all_messages, ensure_ascii=False) if isinstance(all_messages, list) else all_messages,
-                "tokens_used": prev_tokens + tokens_used,
-                "credits_charged": prev_credits + credits_charged,
                 "updated_at": now,
                 "model": model
             }).eq("id", conversation_id).execute()
         except Exception as e:
-            logger.error(f"Failed to update conversation: {e}")
+            logger.error(f"Failed to update conversation: {e}", exc_info=True)
         
         return conversation_id
     else:
@@ -216,13 +212,11 @@ def _save_conversation(
         title = user_message[:60] + "..." if len(user_message) > 60 else user_message
         
         conversation_record = {
-            "id": conversation_id,  # USE the same ID sent to frontend!
+            "id": conversation_id,
             "user_id": user_id,
             "title": title,
             "messages": json.dumps(new_msgs, ensure_ascii=False),
             "model": model,
-            "tokens_used": tokens_used,
-            "credits_charged": credits_charged,
             "created_at": now,
             "updated_at": now
         }
@@ -265,8 +259,6 @@ async def test_save(
             "title": "TEST - will be deleted",
             "messages": json.dumps(test_msgs, ensure_ascii=False),
             "model": "test",
-            "tokens_used": 0,
-            "credits_charged": 0,
             "created_at": now,
             "updated_at": now
         }
