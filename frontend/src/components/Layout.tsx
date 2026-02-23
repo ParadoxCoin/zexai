@@ -105,22 +105,22 @@ const Layout: React.FC = () => {
                       }`}
                   >
                     <Icon className="h-4 w-4 flex-shrink-0" />
-                    <span className="hidden xl:inline">{item.name}</span>
+                    <span className="hidden 2xl:inline">{item.name}</span>
                   </Link>
                 );
               })}
             </nav>
 
             {/* Right Section */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 lg:gap-1.5 flex-shrink-0">
 
               {/* Dynamic Credits Display */}
               <Link
                 to="/credits"
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-500/10 to-orange-500/10 hover:from-amber-500/20 hover:to-orange-500/20 border border-amber-500/20 rounded-xl transition-all mr-1"
+                className="flex items-center gap-1 px-2 lg:px-2.5 py-1.5 bg-gradient-to-r from-amber-500/10 to-orange-500/10 hover:from-amber-500/20 hover:to-orange-500/20 border border-amber-500/20 rounded-xl transition-all"
               >
-                <Diamond className="w-4 h-4 text-amber-500 fill-amber-500" />
-                <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
+                <Diamond className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                <span className="text-xs lg:text-sm font-bold text-amber-600 dark:text-amber-400">
                   {Math.round(currentCredits)}
                 </span>
               </Link>
@@ -128,7 +128,7 @@ const Layout: React.FC = () => {
               {/* Language Toggle */}
               <button
                 onClick={toggleLanguage}
-                className="hidden sm:flex items-center gap-1 px-3 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+                className="hidden xl:flex items-center gap-1 px-2 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
               >
                 <Globe className="h-4 w-4" />
                 <span className="text-xs font-medium">{i18n.language.toUpperCase()}</span>
@@ -137,7 +137,7 @@ const Layout: React.FC = () => {
               {/* Theme Toggle */}
               <button
                 onClick={toggleTheme}
-                className="p-2.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+                className="hidden xl:flex p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
               >
                 {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
               </button>
