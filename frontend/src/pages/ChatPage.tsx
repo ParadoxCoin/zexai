@@ -91,6 +91,10 @@ const ChatPage = () => {
     queryFn: () => apiService.get("/chat/conversations")
   });
 
+  useEffect(() => {
+    console.log("ChatPage: activeTab changed to:", activeTab);
+  }, [activeTab]);
+
   const { mutate: sendMessageFn } = useMutation({
     mutationFn: (data: any) => apiService.post("/chat", data),
     onMutate: () => setIsTyping(true),

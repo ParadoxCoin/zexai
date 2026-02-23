@@ -194,7 +194,7 @@ def _save_conversation(
         try:
             logger.info(f"Updating conversation {conversation_id} with {len(all_messages)} total messages")
             db.table("conversations").update({
-                "messages": all_messages,
+                "messages": json.dumps(all_messages, ensure_ascii=False) if isinstance(all_messages, list) else all_messages,
                 "tokens_used": prev_tokens + tokens_used,
                 "credits_charged": prev_credits + credits_charged,
                 "updated_at": now,
@@ -215,7 +215,7 @@ def _save_conversation(
             "id": new_id,
             "user_id": user_id,
             "title": title,
-            "messages": new_msgs,
+            "messages": json.dumps(new_msgs, ensure_ascii=False),
             "model": model,
             "tokens_used": tokens_used,
             "credits_charged": credits_charged,

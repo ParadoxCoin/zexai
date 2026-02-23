@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiService } from '@/services/api';
 import {
@@ -57,6 +57,10 @@ export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
         queryFn: () => apiService.get('/comparison/models'),
         staleTime: 60000
     });
+
+    useEffect(() => {
+        console.log("ComparisonChatPage: component mounted");
+    }, []);
 
     const freeModels: Model[] = (modelsData as any)?.free || [];
     const premiumModels: Model[] = (modelsData as any)?.premium || [];
@@ -357,4 +361,4 @@ export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
     );
 };
 
-export default ComparisonChatPage;
+// No default export to avoid confusion with named export
