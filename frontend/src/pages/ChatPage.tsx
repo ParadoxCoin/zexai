@@ -88,12 +88,16 @@ const ChatPage = () => {
 
   const { data: conversations, isLoading: isLoadingConversations } = useQuery({
     queryKey: ["conversations"],
-    queryFn: () => apiService.get("/chat/conversations")
+    queryFn: async () => {
+      const res = await apiService.get("/chat/conversations");
+      console.log("[DEBUG] /chat/conversations raw response:", JSON.stringify(res).substring(0, 500));
+      return res;
+    }
   });
 
   useEffect(() => {
-    console.log("ChatPage: activeTab changed to:", activeTab);
-  }, [activeTab]);
+    console.log("[DEBUG] conversations state:", conversations);
+  }, [conversations]);
 
   const { mutate: sendMessageFn } = useMutation({
     mutationFn: (data: any) => apiService.post("/chat", data),
@@ -279,7 +283,15 @@ const ChatPage = () => {
     setTimeout(() => setCopiedMessageId(null), 2000);
   };
 
-  const conversationsList = (conversations as any)?.conversations || (conversations as any)?.data?.conversations || [];
+  // Extract conversations list - handle ALL possible response shapes
+  const rawConv = conversations as any;
+  const conversationsList: any[] =
+    rawConv?.conversations ||           // Direct: {conversations: [...]}
+    rawConv?.data?.conversations ||     // Wrapped: {data: {conversations: [...]}}
+    (Array.isArray(rawConv?.data) ? rawConv.data : []) ||  // Array: {data: [...]}
+    (Array.isArray(rawConv) ? rawConv : []);                // Direct array: [...]
+
+  console.log("[DEBUG] conversationsList length:", conversationsList.length);
   const currentModel = availableModels.find(m => m.id === selectedModel) || availableModels[0];
 
   return (
