@@ -98,48 +98,48 @@ export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
 
     const getGridCols = () => {
         const n = results.length || selectedModels.length;
-        if (n <= 2) return 'grid-cols-1 md:grid-cols-2';
-        if (n <= 3) return 'grid-cols-1 md:grid-cols-3';
-        return 'grid-cols-2 lg:grid-cols-3';
+        if (n <= 2) return 'grid-cols-1 sm:grid-cols-2';
+        if (n <= 3) return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3';
+        return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3';
     };
 
     return (
         <div className="flex flex-col h-[calc(100vh-64px)] bg-white dark:bg-gray-900">
             {/* Header */}
-            <div className="flex-shrink-0 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex-shrink-0 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700">
                 <div className="max-w-6xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
                         {onBack && (
-                            <button onClick={onBack} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all mr-1">
+                            <button onClick={onBack} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
                                 <ArrowLeft className="w-4 h-4" />
                             </button>
                         )}
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
-                            <Sparkles className="w-4.5 h-4.5 text-white" />
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                            <Sparkles className="w-4 h-4 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-lg font-bold text-gray-900 dark:text-white">Model Karşılaştırma</h1>
-                            <p className="text-[11px] text-gray-500">AI modellerini yan yana test edin</p>
+                            <h1 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">Model Karşılaştırma</h1>
+                            <p className="text-[10px] sm:text-[11px] text-gray-500 hidden sm:block">AI modellerini yan yana test edin</p>
                         </div>
                     </div>
                     {results.length > 0 && (
                         <button onClick={() => { setResults([]); setPrompt(''); }}
                             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 bg-gray-100 dark:bg-gray-800 rounded-lg transition-colors">
-                            <RefreshCw className="w-3 h-3" /> Yeni Karşılaştırma
+                            <RefreshCw className="w-3 h-3" /> <span className="hidden sm:inline">Yeni </span>Sıfırla
                         </button>
                     )}
                 </div>
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto">
-                <div className="max-w-6xl mx-auto px-6 py-6 space-y-5">
+            <div className="flex-1 overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-5">
 
                     {/* ═══ Setup Area (shown when no results) ═══ */}
                     {results.length === 0 && (
                         <>
                             {/* Model Selection */}
-                            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700 p-5">
+                            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
                                 <div className="flex items-center justify-between mb-4">
                                     <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                                         <BarChart3 className="w-4 h-4 text-purple-500" />
@@ -197,7 +197,7 @@ export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
                             </div>
 
                             {/* Prompt Input */}
-                            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700 p-5">
+                            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5">
                                 <textarea
                                     value={prompt}
                                     onChange={(e) => setPrompt(e.target.value)}

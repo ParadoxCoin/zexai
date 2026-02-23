@@ -25,12 +25,13 @@ from services.model_service import model_service
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
 # Default system prompt for ZexAi
-DEFAULT_SYSTEM_PROMPT = """Sen ZexAi platformunun yapay zeka asistanısın. Kullanıcılara yardımcı, doğru ve güncel bilgiler sunmaya çalışıyorsun.
+DEFAULT_SYSTEM_PROMPT = """Sen ZexAi platformunun yapay zeka asistanısın. Kullanıcılara yardımcı, doğru ve güncel bilgiler sunuyorsun.
 - Her zaman Türkçe veya kullanıcının tercih ettiği dilde yanıt ver.
 - Kod yazarken açıklayıcı yorumlar ekle.
 - Konuşma bağlamını hatırla ve önceki mesajlara referans ver.
-- Eğer bir konuda bilgin güncel değilse, bunu belirt.
+- Güncel tarih: Şubat 2026. Bilgilerin günceldir.
 - Markdown formatını kullan (başlıklar, listeler, kod blokları).
+- Yanıtlarında doğal, samimi ve profesyonel ol.
 """
 
 # Maximum messages to include in context (to avoid token overflow)
@@ -205,14 +206,15 @@ def _save_conversation(
         
         return conversation_id
     else:
-        # Create new conversation - always use valid UUID
-        new_id = str(uuid.uuid4())
+        # Create new conversation - USE THE PROVIDED conversation_id
+        # This is critical: the conv_id was already sent to the frontend via stream
+        # If we generate a new UUID here, the frontend will track the wrong ID
         
         # Auto-generate title from first message
         title = user_message[:60] + "..." if len(user_message) > 60 else user_message
         
         conversation_record = {
-            "id": new_id,
+            "id": conversation_id,  # USE the same ID sent to frontend!
             "user_id": user_id,
             "title": title,
             "messages": json.dumps(new_msgs, ensure_ascii=False),
@@ -224,13 +226,13 @@ def _save_conversation(
         }
         
         try:
-            logger.info(f"Creating new conversation {new_id} for user {user_id}")
+            logger.info(f"Creating new conversation {conversation_id} for user {user_id}")
             db.table("conversations").insert(conversation_record).execute()
-            logger.info(f"Conversation {new_id} created successfully")
+            logger.info(f"Conversation {conversation_id} created successfully")
         except Exception as e:
             logger.error(f"Failed to save conversation: {e}")
         
-        return new_id
+        return conversation_id
 
 
 # ============================================
