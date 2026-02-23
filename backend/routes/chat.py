@@ -241,6 +241,72 @@ def _save_conversation(
 
 
 # ============================================
+# Diagnostic: Test conversation save
+# ============================================
+
+@router.get("/test-save")
+async def test_save(
+    current_user = Depends(get_current_user),
+    db = Depends(get_db)
+):
+    """Test if conversations table works"""
+    test_id = str(uuid.uuid4())
+    now = datetime.utcnow().isoformat()
+    test_msgs = [{"role": "user", "content": "test", "timestamp": now}]
+    
+    errors = []
+    results = {}
+    
+    # 1. Test insert
+    try:
+        record = {
+            "id": test_id,
+            "user_id": current_user.id,
+            "title": "TEST - will be deleted",
+            "messages": json.dumps(test_msgs, ensure_ascii=False),
+            "model": "test",
+            "tokens_used": 0,
+            "credits_charged": 0,
+            "created_at": now,
+            "updated_at": now
+        }
+        insert_result = db.table("conversations").insert(record).execute()
+        results["insert"] = {"success": bool(insert_result.data), "data_count": len(insert_result.data) if insert_result.data else 0}
+    except Exception as e:
+        errors.append(f"INSERT: {str(e)}")
+        results["insert"] = {"success": False, "error": str(e)}
+    
+    # 2. Test read
+    try:
+        read_result = db.table("conversations").select("*").eq("user_id", current_user.id).order("created_at", desc=True).limit(5).execute()
+        results["read"] = {"success": True, "count": len(read_result.data) if read_result.data else 0}
+        if read_result.data:
+            results["read"]["first_title"] = read_result.data[0].get("title", "no title")
+    except Exception as e:
+        errors.append(f"READ: {str(e)}")
+        results["read"] = {"success": False, "error": str(e)}
+    
+    # 3. Cleanup test record
+    try:
+        db.table("conversations").delete().eq("id", test_id).execute()
+        results["cleanup"] = "ok"
+    except Exception as e:
+        results["cleanup"] = f"failed: {str(e)}"
+    
+    # 4. Check supabase client type
+    from core.supabase_client import get_supabase_client
+    fresh = get_supabase_client()
+    results["supabase_client"] = "available" if fresh else "NONE"
+    
+    return {
+        "user_id": current_user.id,
+        "test_id": test_id,
+        "results": results,
+        "errors": errors
+    }
+
+
+# ============================================
 # Chat Completion Endpoint (Non-Streaming)
 # ============================================
 
