@@ -210,7 +210,10 @@ const ChatPage = () => {
           model: selectedModel,
           conversation_id: serverConversationId || null,
           temperature,
-          max_tokens: maxTokens
+          max_tokens: maxTokens,
+          history: conversation.messages
+            .filter((m: Message) => m.content && m.content.trim())
+            .map((m: Message) => ({ role: m.role, content: m.content }))
         })
       });
 
@@ -264,7 +267,11 @@ const ChatPage = () => {
       console.error('Streaming error:', error);
       setIsTyping(false);
       // Fallback to non-streaming
-      sendMessageFn({ message: userInput, model: selectedModel, conversation_id: serverConversationId || null, temperature, max_tokens: maxTokens });
+      sendMessageFn({
+        message: userInput, model: selectedModel, conversation_id: serverConversationId || null,
+        temperature, max_tokens: maxTokens,
+        history: currentConversation?.messages?.filter((m: Message) => m.content?.trim()).map((m: Message) => ({ role: m.role, content: m.content })) || []
+      });
     }
   };
 

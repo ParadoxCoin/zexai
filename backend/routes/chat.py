@@ -264,13 +264,17 @@ async def chat_completion(
         provider_config = await model_service.get_provider_config(db, provider_id)
         
         # 3. Load conversation history for context
-        existing_conv, existing_messages = _load_conversation_messages(
-            db, request.conversation_id, current_user.id
-        )
+        if request.history and len(request.history) > 0:
+            history_messages = request.history
+        else:
+            existing_conv, existing_messages = _load_conversation_messages(
+                db, request.conversation_id, current_user.id
+            )
+            history_messages = existing_messages
         
         # 4. Build messages array with full history
         api_messages = _build_messages_for_api(
-            history=existing_messages,
+            history=history_messages,
             new_message=request.message,
             system_prompt=request.system_prompt
         )
@@ -699,6 +703,7 @@ class StreamingChatRequest(BaseModel):
     temperature: float = 0.7
     max_tokens: int = 2000
     system_prompt: Optional[str] = None
+    history: Optional[List[Dict]] = None  # Frontend sends full message history
 
 
 @router.post("/stream")
@@ -709,7 +714,7 @@ async def chat_stream(
 ):
     """
     Stream AI chat completion using SSE with conversation memory.
-    All DB reads happen BEFORE the generator to avoid scope issues.
+    Uses frontend-provided history (priority) or DB-loaded history (fallback).
     """
     # ── PRE-STREAM: All DB operations ──
     model_data = await model_service.get_model_by_id(db, request.model)
@@ -731,18 +736,26 @@ async def chat_stream(
                      "llama-3.2-3b": "llama-3.2-3b-preview", "llama-3.2-1b": "llama-3.2-1b-preview"}
         provider_model_id = groq_map.get(request.model, "llama-3.3-70b-versatile")
 
-    existing_conv, existing_messages = _load_conversation_messages(db, request.conversation_id, current_user.id)
-    api_messages = _build_messages_for_api(existing_messages, request.message, request.system_prompt)
-    conv_id = request.conversation_id if existing_conv else str(uuid.uuid4())
+    # Use frontend-provided history (priority) or DB history (fallback)
+    if request.history and len(request.history) > 0:
+        history_messages = request.history
+        logger.info(f"Using frontend-provided history: {len(history_messages)} messages")
+    else:
+        existing_conv, existing_messages = _load_conversation_messages(db, request.conversation_id, current_user.id)
+        history_messages = existing_messages
+        logger.info(f"Using DB history: {len(history_messages)} messages")
 
-    logger.info(f"STREAM: model={provider_model_id}, api_msgs={len(api_messages)}, conv_id={conv_id}, history={len(existing_messages)}")
+    api_messages = _build_messages_for_api(history_messages, request.message, request.system_prompt)
+    conv_id = request.conversation_id or str(uuid.uuid4())
+
+    logger.info(f"STREAM: model={provider_model_id}, api_msgs={len(api_messages)}, conv_id={conv_id}")
 
     # ── Closure context for generator ──
     ctx = {
         "api_url": api_url, "api_key": api_key, "model_id": provider_model_id,
         "messages": api_messages, "temp": request.temperature, "max_tok": request.max_tokens,
         "conv_id": conv_id, "uid": current_user.id, "user_msg": request.message,
-        "model_name": request.model, "ex_conv": existing_conv, "ex_msgs": existing_messages,
+        "model_name": request.model, "ex_conv": None, "ex_msgs": history_messages,
     }
 
     async def generate():

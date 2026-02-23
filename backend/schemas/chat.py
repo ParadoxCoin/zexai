@@ -2,7 +2,7 @@
 Chat service schemas
 """
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 
 class ChatMessage(BaseModel):
@@ -19,6 +19,7 @@ class ChatRequest(BaseModel):
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     max_tokens: int = Field(default=2000, ge=1, le=8000)
     system_prompt: Optional[str] = None
+    history: Optional[List[Dict]] = None
 
 
 class ChatResponse(BaseModel):
