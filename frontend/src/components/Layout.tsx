@@ -91,7 +91,7 @@ const Layout: React.FC = () => {
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-1 bg-gray-100/80 dark:bg-gray-800/80 rounded-2xl p-1.5 flex-1 min-w-0 mx-2 overflow-x-auto scrollbar-hide">
+            <nav className="hidden lg:flex items-center gap-0.5 bg-gray-100/80 dark:bg-gray-800/80 rounded-2xl p-1 flex-1 min-w-0 mx-2 overflow-x-auto scrollbar-hide">
               {allNavigation.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.href;
@@ -99,48 +99,31 @@ const Layout: React.FC = () => {
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${isActive
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all whitespace-nowrap flex-shrink-0 ${isActive
                       ? `bg-gradient-to-r ${item.color} text-white shadow-lg`
                       : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white dark:hover:bg-gray-700'
                       }`}
                   >
-                    <Icon className="h-4 w-4 flex-shrink-0" />
-                    <span className="hidden 2xl:inline">{item.name}</span>
+                    <Icon className="h-3.5 w-3.5 flex-shrink-0" />
+                    {item.name}
                   </Link>
                 );
               })}
             </nav>
 
             {/* Right Section */}
-            <div className="flex items-center gap-1 lg:gap-1.5 flex-shrink-0">
+            <div className="flex items-center gap-1.5 flex-shrink-0">
 
               {/* Dynamic Credits Display */}
               <Link
                 to="/credits"
-                className="flex items-center gap-1 px-2 lg:px-2.5 py-1.5 bg-gradient-to-r from-amber-500/10 to-orange-500/10 hover:from-amber-500/20 hover:to-orange-500/20 border border-amber-500/20 rounded-xl transition-all"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-r from-amber-500/10 to-orange-500/10 hover:from-amber-500/20 hover:to-orange-500/20 border border-amber-500/20 rounded-xl transition-all"
               >
-                <Diamond className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                <span className="text-xs lg:text-sm font-bold text-amber-600 dark:text-amber-400">
+                <Diamond className="w-4 h-4 text-amber-500 fill-amber-500" />
+                <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
                   {Math.round(currentCredits)}
                 </span>
               </Link>
-
-              {/* Language Toggle */}
-              <button
-                onClick={toggleLanguage}
-                className="hidden xl:flex items-center gap-1 px-2 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
-              >
-                <Globe className="h-4 w-4" />
-                <span className="text-xs font-medium">{i18n.language.toUpperCase()}</span>
-              </button>
-
-              {/* Theme Toggle */}
-              <button
-                onClick={toggleTheme}
-                className="hidden xl:flex p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
-              >
-                {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-              </button>
 
               {/* Install App Button */}
               <PWAInstallPrompt />
@@ -236,6 +219,25 @@ const Layout: React.FC = () => {
                         Davet Et
                         <span className="ml-auto text-[10px] bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full">%1</span>
                       </Link>
+
+                      <div className="my-2 border-t border-gray-100 dark:border-gray-700" />
+                      <p className="px-3 py-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Tercihler</p>
+
+                      <button
+                        onClick={() => { toggleLanguage(); }}
+                        className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl"
+                      >
+                        <Globe className="h-4 w-4" />
+                        Dil: {i18n.language === 'tr' ? '🇹🇷 Türkçe' : '🇺🇸 English'}
+                        <span className="ml-auto text-[10px] bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">{i18n.language.toUpperCase()}</span>
+                      </button>
+                      <button
+                        onClick={() => { toggleTheme(); }}
+                        className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl"
+                      >
+                        {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+                        Tema: {theme === 'light' ? '☀️ Açık' : '🌙 Koyu'}
+                      </button>
 
                       <div className="my-2 border-t border-gray-100 dark:border-gray-700" />
 
