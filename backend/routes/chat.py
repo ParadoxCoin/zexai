@@ -25,13 +25,15 @@ from services.model_service import model_service
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
 # Default system prompt for ZexAi
-DEFAULT_SYSTEM_PROMPT = """Sen ZexAi platformunun yapay zeka asistanısın. Kullanıcılara yardımcı, doğru ve güncel bilgiler sunuyorsun.
+DEFAULT_SYSTEM_PROMPT = """Sen ZexAi platformunun yapay zeka asistanısın.
+- Bugünün tarihi: 23 Şubat 2026, Pazartesi.
+- Kullanıcılara yardımcı, doğru ve kapsamlı bilgiler sun.
 - Her zaman Türkçe veya kullanıcının tercih ettiği dilde yanıt ver.
 - Kod yazarken açıklayıcı yorumlar ekle.
 - Konuşma bağlamını hatırla ve önceki mesajlara referans ver.
-- Güncel tarih: Şubat 2026. Bilgilerin günceldir.
 - Markdown formatını kullan (başlıklar, listeler, kod blokları).
 - Yanıtlarında doğal, samimi ve profesyonel ol.
+- ÖNEMLİ: Bilgi kesim tarihinden veya güncel olmayan bilgilerden asla bahsetme. Bildiğin kadarıyla cevap ver, emin olmadığın konularda 'bu konuda kesin bilgim yok' de ama asla 'eğitim verim şu tarihe kadar' gibi ifadeler kullanma.
 """
 
 # Maximum messages to include in context (to avoid token overflow)
@@ -227,10 +229,13 @@ def _save_conversation(
         
         try:
             logger.info(f"Creating new conversation {conversation_id} for user {user_id}")
-            db.table("conversations").insert(conversation_record).execute()
-            logger.info(f"Conversation {conversation_id} created successfully")
+            result = db.table("conversations").insert(conversation_record).execute()
+            if result.data:
+                logger.info(f"✅ Conversation {conversation_id} created successfully")
+            else:
+                logger.error(f"⚠️ Insert returned no data for {conversation_id}")
         except Exception as e:
-            logger.error(f"Failed to save conversation: {e}")
+            logger.error(f"❌ Failed to save conversation: {e}", exc_info=True)
         
         return conversation_id
 
@@ -798,19 +803,22 @@ async def chat_stream(
                             except json.JSONDecodeError:
                                 continue
 
-            # ── POST-STREAM: Save with fresh DB client ──
+            # ── POST-STREAM: Save conversation ──
             try:
                 from core.supabase_client import get_supabase_client
                 fresh = get_supabase_client()
-                _save_conversation(
-                    db=fresh, conversation_id=c["conv_id"], user_id=c["uid"],
-                    existing_conv=c["ex_conv"], existing_messages=c["ex_msgs"],
-                    user_message=c["user_msg"], ai_response=full,
-                    model=c["model_name"], tokens_used=max(len(full.split())*2, 1), credits_charged=1
-                )
-                logger.info(f"Saved conv {c['conv_id']} ({len(c['ex_msgs'])+2} msgs)")
+                if fresh is None:
+                    logger.error("CRITICAL: Supabase client is None - cannot save conversation!")
+                else:
+                    saved_id = _save_conversation(
+                        db=fresh, conversation_id=c["conv_id"], user_id=c["uid"],
+                        existing_conv=c["ex_conv"], existing_messages=c["ex_msgs"],
+                        user_message=c["user_msg"], ai_response=full,
+                        model=c["model_name"], tokens_used=max(len(full.split())*2, 1), credits_charged=1
+                    )
+                    logger.info(f"✅ Saved conv {saved_id} ({len(c['ex_msgs'])+2} msgs, response_len={len(full)})")
             except Exception as se:
-                logger.error(f"Save error: {se}")
+                logger.error(f"❌ Save error: {se}", exc_info=True)
 
             yield f"data: {json.dumps({'content': '', 'done': True, 'conversation_id': c['conv_id']})}\n\n"
 
