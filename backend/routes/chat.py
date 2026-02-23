@@ -736,26 +736,31 @@ async def chat_stream(
                      "llama-3.2-3b": "llama-3.2-3b-preview", "llama-3.2-1b": "llama-3.2-1b-preview"}
         provider_model_id = groq_map.get(request.model, "llama-3.3-70b-versatile")
 
-    # Use frontend-provided history (priority) or DB history (fallback)
+    # Always try to load existing conversation for proper save/update
+    existing_conv = None
+    existing_db_messages = []
+    if request.conversation_id:
+        existing_conv, existing_db_messages = _load_conversation_messages(db, request.conversation_id, current_user.id)
+
+    # Use frontend-provided history for API context (priority) or DB history (fallback)
     if request.history and len(request.history) > 0:
         history_messages = request.history
         logger.info(f"Using frontend-provided history: {len(history_messages)} messages")
     else:
-        existing_conv, existing_messages = _load_conversation_messages(db, request.conversation_id, current_user.id)
-        history_messages = existing_messages
+        history_messages = existing_db_messages
         logger.info(f"Using DB history: {len(history_messages)} messages")
 
     api_messages = _build_messages_for_api(history_messages, request.message, request.system_prompt)
-    conv_id = request.conversation_id or str(uuid.uuid4())
+    conv_id = request.conversation_id if existing_conv else str(uuid.uuid4())
 
-    logger.info(f"STREAM: model={provider_model_id}, api_msgs={len(api_messages)}, conv_id={conv_id}")
+    logger.info(f"STREAM: model={provider_model_id}, api_msgs={len(api_messages)}, conv_id={conv_id}, existing={existing_conv is not None}")
 
     # ── Closure context for generator ──
     ctx = {
         "api_url": api_url, "api_key": api_key, "model_id": provider_model_id,
         "messages": api_messages, "temp": request.temperature, "max_tok": request.max_tokens,
         "conv_id": conv_id, "uid": current_user.id, "user_msg": request.message,
-        "model_name": request.model, "ex_conv": None, "ex_msgs": history_messages,
+        "model_name": request.model, "ex_conv": existing_conv, "ex_msgs": existing_db_messages,
     }
 
     async def generate():

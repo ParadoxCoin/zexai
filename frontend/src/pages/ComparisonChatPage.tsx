@@ -2,35 +2,49 @@ import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiService } from '@/services/api';
 import {
-    Sparkles, Send, Check, Copy, Download, Clock, Coins, Zap,
-    ChevronDown, Loader2, Trophy, Star, RefreshCw, Settings
+    Sparkles, Send, Check, Copy, Clock, Zap,
+    Loader2, Trophy, Star, ArrowLeft, BarChart3, Timer
 } from 'lucide-react';
+import CodeBlock from '@/components/CodeBlock';
 
 interface Model {
-    id: string;
-    name: string;
-    icon: string;
-    color: string;
-    tier: 'free' | 'premium';
-    available: boolean;
+    id: string; name: string; icon: string; color: string; tier: 'free' | 'premium'; available: boolean;
 }
 
 interface ComparisonResult {
-    model_id: string;
-    name: string;
-    icon: string;
-    color: string;
-    tier: string;
-    success: boolean;
-    error?: string;
-    response?: string;
-    metrics?: {
-        duration_ms: number;
-        token_count: number;
-        cost: number;
-        speed_score: number;
-    };
+    model_id: string; name: string; icon: string; color: string; tier: string;
+    success: boolean; error?: string; response?: string;
+    metrics?: { duration_ms: number; token_count: number; cost: number; speed_score: number; };
 }
+
+// Reuse message renderer
+const ResponseContent = ({ content }: { content: string }) => {
+    if (!content) return null;
+    const parts = content.split(/(```\w*\n[\s\S]*?```)/g);
+    return (
+        <div className="space-y-2 leading-relaxed">
+            {parts.map((part, idx) => {
+                const codeMatch = part.match(/```(\w*)\n([\s\S]*?)```/);
+                if (codeMatch) {
+                    const [, lang, code] = codeMatch;
+                    return <CodeBlock key={idx} code={code} language={lang || 'javascript'} />;
+                }
+                if (part.trim()) {
+                    const formatted = part
+                        .replace(/`([^`]+)`/g, '<code class="bg-gray-200/80 dark:bg-gray-600/80 px-1.5 py-0.5 rounded text-emerald-700 dark:text-emerald-300 text-[13px] font-mono">$1</code>')
+                        .replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold">$1</strong>')
+                        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+                        .replace(/^### (.+)$/gm, '<h3 class="text-sm font-bold mt-2 mb-1">$1</h3>')
+                        .replace(/^## (.+)$/gm, '<h2 class="text-base font-bold mt-3 mb-1">$1</h2>')
+                        .replace(/^- (.+)$/gm, '<li class="ml-3 list-disc text-[13px]">$1</li>')
+                        .replace(/\n/g, '<br/>');
+                    return <div key={idx} className="text-[13px]" dangerouslySetInnerHTML={{ __html: formatted }} />;
+                }
+                return null;
+            })}
+        </div>
+    );
+};
 
 export const ComparisonChatPage = () => {
     const [prompt, setPrompt] = useState('');
@@ -38,8 +52,7 @@ export const ComparisonChatPage = () => {
     const [results, setResults] = useState<ComparisonResult[]>([]);
     const [copiedId, setCopiedId] = useState<string | null>(null);
 
-    // Fetch available models
-    const { data: modelsData, isLoading: isLoadingModels } = useQuery({
+    const { data: modelsData } = useQuery({
         queryKey: ['comparison-models'],
         queryFn: () => apiService.get('/comparison/models'),
         staleTime: 60000
@@ -47,23 +60,16 @@ export const ComparisonChatPage = () => {
 
     const freeModels: Model[] = (modelsData as any)?.free || [];
     const premiumModels: Model[] = (modelsData as any)?.premium || [];
+    const allModels = [...freeModels, ...premiumModels];
 
-    // Compare mutation
     const compareMutation = useMutation({
-        mutationFn: () => apiService.post('/comparison/compare', {
-            prompt: prompt.trim(),
-            model_ids: selectedModels
-        }),
-        onSuccess: (data: any) => {
-            setResults(data.results || []);
-        }
+        mutationFn: () => apiService.post('/comparison/compare', { prompt: prompt.trim(), model_ids: selectedModels }),
+        onSuccess: (data: any) => setResults(data.results || [])
     });
 
     const toggleModel = (modelId: string) => {
         setSelectedModels(prev =>
-            prev.includes(modelId)
-                ? prev.filter(id => id !== modelId)
-                : prev.length < 6 ? [...prev, modelId] : prev
+            prev.includes(modelId) ? prev.filter(id => id !== modelId) : prev.length < 6 ? [...prev, modelId] : prev
         );
     };
 
@@ -79,242 +85,268 @@ export const ComparisonChatPage = () => {
         setTimeout(() => setCopiedId(null), 2000);
     };
 
-    // Find winner (fastest)
     const getWinner = () => {
-        const successResults = results.filter(r => r.success && r.metrics);
-        if (successResults.length === 0) return null;
-        return successResults.reduce((prev, curr) =>
-            (curr.metrics?.duration_ms || 999999) < (prev.metrics?.duration_ms || 999999) ? curr : prev
-        );
+        const ok = results.filter(r => r.success && r.metrics);
+        if (ok.length === 0) return null;
+        return ok.reduce((p, c) => (c.metrics?.duration_ms || 999999) < (p.metrics?.duration_ms || 999999) ? c : p);
     };
-
     const winner = getWinner();
 
-    // Calculate grid columns based on selected models
     const getGridCols = () => {
-        const count = results.length || selectedModels.length;
-        if (count <= 2) return 'grid-cols-1 md:grid-cols-2';
-        if (count <= 3) return 'grid-cols-1 md:grid-cols-3';
-        if (count <= 4) return 'grid-cols-2 lg:grid-cols-4';
+        const n = results.length || selectedModels.length;
+        if (n <= 2) return 'grid-cols-1 md:grid-cols-2';
+        if (n <= 3) return 'grid-cols-1 md:grid-cols-3';
         return 'grid-cols-2 lg:grid-cols-3';
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900">
-            <div className="max-w-[1800px] mx-auto p-6">
-                {/* Header */}
-                <div className="text-center mb-8">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-full mb-4">
-                        <Sparkles className="w-4 h-4 text-purple-400" />
-                        <span className="text-purple-300 text-sm font-medium">Side-by-Side AI Comparison</span>
-                    </div>
-                    <h1 className="text-4xl font-bold text-white mb-2">
-                        <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400 bg-clip-text text-transparent">
-                            Model Karşılaştırma
-                        </span>
-                    </h1>
-                    <p className="text-gray-400">En iyi AI modellerini yan yana test et, sonuçları karşılaştır</p>
-                </div>
-
-                {/* Model Selection */}
-                <div className="bg-gray-800/50 border border-gray-700 rounded-2xl p-6 mb-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                            <Settings className="w-5 h-5 text-purple-400" />
-                            Model Seçimi
-                            <span className="text-sm text-gray-400 font-normal">({selectedModels.length}/6 seçili)</span>
-                        </h3>
-                    </div>
-
-                    {/* Free Models */}
-                    <div className="mb-4">
-                        <div className="flex items-center gap-2 mb-3">
-                            <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs font-medium rounded-full">🆓 ÜCRETSİZ</span>
+        <div className="flex flex-col h-[calc(100vh-64px)] bg-white dark:bg-gray-900">
+            {/* Header */}
+            <div className="flex-shrink-0 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="max-w-6xl mx-auto flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                            <Sparkles className="w-4.5 h-4.5 text-white" />
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                            {freeModels.map((model) => (
-                                <button
-                                    key={model.id}
-                                    onClick={() => toggleModel(model.id)}
-                                    disabled={!model.available}
-                                    className={`px-4 py-2.5 rounded-xl font-medium transition-all flex items-center gap-2 ${selectedModels.includes(model.id)
-                                            ? `bg-gradient-to-r ${model.color} text-white shadow-lg scale-105`
-                                            : model.available
-                                                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                                : 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                                        }`}
-                                >
-                                    <span>{model.icon}</span>
-                                    {model.name}
-                                    {selectedModels.includes(model.id) && <Check className="w-4 h-4" />}
-                                </button>
-                            ))}
+                        <div>
+                            <h1 className="text-lg font-bold text-gray-900 dark:text-white">Model Karşılaştırma</h1>
+                            <p className="text-[11px] text-gray-500">AI modellerini yan yana test edin</p>
                         </div>
                     </div>
-
-                    {/* Premium Models */}
-                    <div>
-                        <div className="flex items-center gap-2 mb-3">
-                            <span className="px-2 py-1 bg-amber-500/20 text-amber-400 text-xs font-medium rounded-full">💎 PREMİUM</span>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            {premiumModels.map((model) => (
-                                <button
-                                    key={model.id}
-                                    onClick={() => toggleModel(model.id)}
-                                    disabled={!model.available}
-                                    className={`px-4 py-2.5 rounded-xl font-medium transition-all flex items-center gap-2 ${selectedModels.includes(model.id)
-                                            ? `bg-gradient-to-r ${model.color} text-white shadow-lg scale-105`
-                                            : model.available
-                                                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                                : 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                                        }`}
-                                >
-                                    <span>{model.icon}</span>
-                                    {model.name}
-                                    {selectedModels.includes(model.id) && <Check className="w-4 h-4" />}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Prompt Input */}
-                <div className="bg-gray-800/50 border border-gray-700 rounded-2xl p-6 mb-6">
-                    <textarea
-                        value={prompt}
-                        onChange={(e) => setPrompt(e.target.value)}
-                        placeholder="Karşılaştırmak istediğiniz promptu yazın... (min. 5 karakter)"
-                        rows={4}
-                        className="w-full px-4 py-3 bg-gray-900 border border-gray-600 rounded-xl text-white placeholder-gray-500 resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    />
-                    <div className="flex justify-between items-center mt-4">
-                        <p className="text-sm text-gray-400">
-                            {selectedModels.length < 2
-                                ? `En az 2 model seçin (${2 - selectedModels.length} kaldı)`
-                                : `${selectedModels.length} model seçildi`}
-                        </p>
-                        <button
-                            onClick={handleCompare}
-                            disabled={compareMutation.isPending || prompt.trim().length < 5 || selectedModels.length < 2}
-                            className="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:from-gray-600 disabled:to-gray-600 text-white font-semibold rounded-xl shadow-lg flex items-center gap-2 transition-all"
-                        >
-                            {compareMutation.isPending ? (
-                                <>
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                    Karşılaştırılıyor...
-                                </>
-                            ) : (
-                                <>
-                                    <Zap className="w-5 h-5" />
-                                    Karşılaştır
-                                </>
-                            )}
+                    {results.length > 0 && (
+                        <button onClick={() => { setResults([]); setPrompt(''); }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 bg-gray-100 dark:bg-gray-800 rounded-lg transition-colors">
+                            <ArrowLeft className="w-3 h-3" /> Yeni Karşılaştırma
                         </button>
-                    </div>
+                    )}
                 </div>
+            </div>
 
-                {/* Results Grid */}
-                {results.length > 0 && (
-                    <div className={`grid ${getGridCols()} gap-4`}>
-                        {results.map((result) => (
-                            <div
-                                key={result.model_id}
-                                className={`bg-gray-800/80 border rounded-2xl overflow-hidden transition-all ${winner?.model_id === result.model_id
-                                        ? 'border-yellow-500 shadow-lg shadow-yellow-500/20'
-                                        : 'border-gray-700'
-                                    }`}
-                            >
-                                {/* Card Header */}
-                                <div className={`px-4 py-3 bg-gradient-to-r ${result.color} flex items-center justify-between`}>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xl">{result.icon}</span>
-                                        <span className="font-semibold text-white">{result.name}</span>
-                                    </div>
-                                    {winner?.model_id === result.model_id && (
-                                        <div className="flex items-center gap-1 px-2 py-1 bg-yellow-500 rounded-full">
-                                            <Trophy className="w-3 h-3 text-yellow-900" />
-                                            <span className="text-xs font-bold text-yellow-900">EN HIZLI</span>
-                                        </div>
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto">
+                <div className="max-w-6xl mx-auto px-6 py-6 space-y-5">
+
+                    {/* ═══ Setup Area (shown when no results) ═══ */}
+                    {results.length === 0 && (
+                        <>
+                            {/* Model Selection */}
+                            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700 p-5">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                        <BarChart3 className="w-4 h-4 text-purple-500" />
+                                        Model Seçimi
+                                        <span className="text-xs font-normal text-gray-400 ml-1">({selectedModels.length}/6)</span>
+                                    </h3>
+                                    {selectedModels.length > 0 && (
+                                        <button onClick={() => setSelectedModels([])} className="text-xs text-gray-400 hover:text-red-500 transition-colors">
+                                            Temizle
+                                        </button>
                                     )}
                                 </div>
 
-                                {/* Metrics */}
-                                {result.success && result.metrics && (
-                                    <div className="px-4 py-2 bg-gray-900/50 border-b border-gray-700 flex items-center gap-4 text-sm">
-                                        <div className="flex items-center gap-1 text-blue-400">
-                                            <Clock className="w-4 h-4" />
-                                            <span>{result.metrics.duration_ms}ms</span>
-                                        </div>
-                                        <div className="flex items-center gap-1 text-green-400">
-                                            <Zap className="w-4 h-4" />
-                                            <span>{result.metrics.token_count} tokens</span>
-                                        </div>
-                                        <div className="flex items-center gap-1 text-yellow-400">
-                                            <Star className="w-4 h-4" />
-                                            <span>{result.metrics.speed_score.toFixed(1)}</span>
+                                {/* Free Models */}
+                                {freeModels.length > 0 && (
+                                    <div className="mb-3">
+                                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">🆓 Ücretsiz</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {freeModels.map((model) => (
+                                                <button key={model.id} onClick={() => toggleModel(model.id)} disabled={!model.available}
+                                                    className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${selectedModels.includes(model.id)
+                                                        ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-2 border-emerald-500 shadow-sm'
+                                                        : model.available
+                                                            ? 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-600'
+                                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed border border-transparent'}`}>
+                                                    <span>{model.icon}</span>
+                                                    <span>{model.name}</span>
+                                                    {selectedModels.includes(model.id) && <Check className="w-3.5 h-3.5" />}
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
                                 )}
 
-                                {/* Response */}
-                                <div className="p-4 max-h-96 overflow-y-auto">
-                                    {result.success ? (
-                                        <div className="prose prose-invert prose-sm max-w-none">
-                                            <div className="text-gray-300 whitespace-pre-wrap">{result.response}</div>
+                                {/* Premium Models */}
+                                {premiumModels.length > 0 && (
+                                    <div>
+                                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">💎 Premium</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {premiumModels.map((model) => (
+                                                <button key={model.id} onClick={() => toggleModel(model.id)} disabled={!model.available}
+                                                    className={`px-3.5 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${selectedModels.includes(model.id)
+                                                        ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-2 border-amber-500 shadow-sm'
+                                                        : model.available
+                                                            ? 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-600'
+                                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed border border-transparent'}`}>
+                                                    <span>{model.icon}</span>
+                                                    <span>{model.name}</span>
+                                                    {selectedModels.includes(model.id) && <Check className="w-3.5 h-3.5" />}
+                                                </button>
+                                            ))}
                                         </div>
-                                    ) : (
-                                        <div className="text-red-400 text-sm">
-                                            ❌ Hata: {result.error}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Actions */}
-                                {result.success && (
-                                    <div className="px-4 py-3 border-t border-gray-700 bg-gray-900/30 flex items-center gap-2">
-                                        <button
-                                            onClick={() => copyToClipboard(result.response || '', result.model_id)}
-                                            className="flex-1 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg flex items-center justify-center gap-2 transition-colors"
-                                        >
-                                            {copiedId === result.model_id ? (
-                                                <><Check className="w-4 h-4 text-green-400" /> Kopyalandı</>
-                                            ) : (
-                                                <><Copy className="w-4 h-4" /> Kopyala</>
-                                            )}
-                                        </button>
-                                        <button className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg flex items-center justify-center gap-2 transition-colors">
-                                            <Check className="w-4 h-4" /> Seç
-                                        </button>
                                     </div>
                                 )}
                             </div>
-                        ))}
-                    </div>
-                )}
 
-                {/* Loading State */}
-                {compareMutation.isPending && (
-                    <div className={`grid ${getGridCols()} gap-4`}>
-                        {selectedModels.map((modelId) => {
-                            const model = [...freeModels, ...premiumModels].find(m => m.id === modelId);
-                            return (
-                                <div key={modelId} className="bg-gray-800/80 border border-gray-700 rounded-2xl overflow-hidden">
-                                    <div className={`px-4 py-3 bg-gradient-to-r ${model?.color || 'from-gray-600 to-gray-700'}`}>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xl">{model?.icon}</span>
-                                            <span className="font-semibold text-white">{model?.name}</span>
+                            {/* Prompt Input */}
+                            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700 p-5">
+                                <textarea
+                                    value={prompt}
+                                    onChange={(e) => setPrompt(e.target.value)}
+                                    placeholder="Karşılaştırmak istediğiniz soruyu yazın... (min. 5 karakter)"
+                                    rows={3}
+                                    className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 resize-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 dark:focus:border-purple-600 text-sm transition-all"
+                                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleCompare(); } }}
+                                />
+                                <div className="flex justify-between items-center mt-3">
+                                    <p className="text-xs text-gray-400">
+                                        {selectedModels.length < 2
+                                            ? <span className="text-amber-500">⚠ En az 2 model seçin</span>
+                                            : <span className="text-emerald-500">✓ {selectedModels.length} model hazır</span>}
+                                    </p>
+                                    <button onClick={handleCompare}
+                                        disabled={compareMutation.isPending || prompt.trim().length < 5 || selectedModels.length < 2}
+                                        className="px-6 py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:from-gray-300 disabled:to-gray-400 dark:disabled:from-gray-600 dark:disabled:to-gray-700 text-white font-medium rounded-xl shadow-lg shadow-purple-500/20 disabled:shadow-none flex items-center gap-2 transition-all text-sm active:scale-95">
+                                        {compareMutation.isPending ? (
+                                            <><Loader2 className="w-4 h-4 animate-spin" /> Karşılaştırılıyor...</>
+                                        ) : (
+                                            <><Zap className="w-4 h-4" /> Karşılaştır</>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    {/* ═══ Loading State ═══ */}
+                    {compareMutation.isPending && (
+                        <div className={`grid ${getGridCols()} gap-4`}>
+                            {selectedModels.map((modelId) => {
+                                const model = allModels.find(m => m.id === modelId);
+                                return (
+                                    <div key={modelId} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden">
+                                        <div className={`px-4 py-2.5 bg-gradient-to-r ${model?.color || 'from-gray-400 to-gray-500'} flex items-center gap-2`}>
+                                            <span className="text-lg">{model?.icon}</span>
+                                            <span className="font-semibold text-white text-sm">{model?.name}</span>
+                                        </div>
+                                        <div className="p-10 flex flex-col items-center justify-center">
+                                            <div className="relative">
+                                                <div className="absolute inset-0 bg-purple-500/20 rounded-full blur-xl animate-pulse" />
+                                                <Loader2 className="relative w-8 h-8 animate-spin text-purple-500" />
+                                            </div>
+                                            <p className="text-gray-400 text-xs mt-4">Yanıt bekleniyor...</p>
                                         </div>
                                     </div>
-                                    <div className="p-8 flex flex-col items-center justify-center">
-                                        <Loader2 className="w-8 h-8 animate-spin text-purple-500 mb-3" />
-                                        <p className="text-gray-400 text-sm">Yanıt bekleniyor...</p>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {/* ═══ Results ═══ */}
+                    {results.length > 0 && (
+                        <>
+                            {/* Prompt recap */}
+                            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 flex items-start gap-3">
+                                <Send className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                                <p className="text-sm text-gray-700 dark:text-gray-300">{prompt}</p>
+                            </div>
+
+                            {/* Summary stats */}
+                            {winner && (
+                                <div className="grid grid-cols-3 gap-3">
+                                    <div className="bg-gradient-to-br from-yellow-500/10 to-amber-500/10 border border-yellow-200 dark:border-yellow-800 rounded-xl px-4 py-3 flex items-center gap-3">
+                                        <Trophy className="w-5 h-5 text-yellow-500" />
+                                        <div>
+                                            <p className="text-[10px] text-gray-500 uppercase tracking-wider">En Hızlı</p>
+                                            <p className="text-sm font-bold text-gray-900 dark:text-white">{winner.icon} {winner.name}</p>
+                                        </div>
+                                    </div>
+                                    <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-3 flex items-center gap-3">
+                                        <Timer className="w-5 h-5 text-blue-500" />
+                                        <div>
+                                            <p className="text-[10px] text-gray-500 uppercase tracking-wider">Süre</p>
+                                            <p className="text-sm font-bold text-gray-900 dark:text-white">{(winner.metrics!.duration_ms / 1000).toFixed(1)}s</p>
+                                        </div>
+                                    </div>
+                                    <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-200 dark:border-emerald-800 rounded-xl px-4 py-3 flex items-center gap-3">
+                                        <Star className="w-5 h-5 text-emerald-500" />
+                                        <div>
+                                            <p className="text-[10px] text-gray-500 uppercase tracking-wider">Token</p>
+                                            <p className="text-sm font-bold text-gray-900 dark:text-white">{winner.metrics!.token_count}</p>
+                                        </div>
                                     </div>
                                 </div>
-                            );
-                        })}
-                    </div>
-                )}
+                            )}
+
+                            {/* Model results grid */}
+                            <div className={`grid ${getGridCols()} gap-4`}>
+                                {results.map((result) => (
+                                    <div key={result.model_id}
+                                        className={`bg-white dark:bg-gray-800 border rounded-2xl overflow-hidden transition-all hover:shadow-lg ${winner?.model_id === result.model_id
+                                            ? 'border-yellow-400 dark:border-yellow-600 ring-1 ring-yellow-400/30 shadow-lg shadow-yellow-500/10'
+                                            : 'border-gray-200 dark:border-gray-700'}`}>
+
+                                        {/* Card Header */}
+                                        <div className={`px-4 py-2.5 bg-gradient-to-r ${result.color} flex items-center justify-between`}>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-lg">{result.icon}</span>
+                                                <span className="font-semibold text-white text-sm">{result.name}</span>
+                                            </div>
+                                            {winner?.model_id === result.model_id && (
+                                                <span className="flex items-center gap-1 px-2 py-0.5 bg-yellow-400 rounded-full">
+                                                    <Trophy className="w-3 h-3 text-yellow-900" />
+                                                    <span className="text-[10px] font-bold text-yellow-900">1.</span>
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {/* Metrics bar */}
+                                        {result.success && result.metrics && (
+                                            <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700 flex items-center gap-4 text-[11px]">
+                                                <span className="flex items-center gap-1 text-blue-500">
+                                                    <Clock className="w-3 h-3" />{(result.metrics.duration_ms / 1000).toFixed(1)}s
+                                                </span>
+                                                <span className="flex items-center gap-1 text-emerald-500">
+                                                    <Zap className="w-3 h-3" />{result.metrics.token_count} tk
+                                                </span>
+                                                <span className="flex items-center gap-1 text-amber-500">
+                                                    <Star className="w-3 h-3" />{result.metrics.speed_score.toFixed(1)}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* Response */}
+                                        <div className="p-4 max-h-[400px] overflow-y-auto">
+                                            {result.success ? (
+                                                <div className="text-gray-800 dark:text-gray-200">
+                                                    <ResponseContent content={result.response || ''} />
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-2 text-red-500 text-sm p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                                                    <span>❌</span>
+                                                    <span>{result.error}</span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Actions */}
+                                        {result.success && (
+                                            <div className="px-4 py-2.5 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30">
+                                                <button onClick={() => copyToClipboard(result.response || '', result.model_id)}
+                                                    className="w-full py-1.5 text-xs font-medium text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 flex items-center justify-center gap-1.5 transition-colors">
+                                                    {copiedId === result.model_id ? (
+                                                        <><Check className="w-3 h-3 text-emerald-500" /> Kopyalandı</>
+                                                    ) : (
+                                                        <><Copy className="w-3 h-3" /> Yanıtı Kopyala</>
+                                                    )}
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    )}
+                </div>
             </div>
         </div>
     );
