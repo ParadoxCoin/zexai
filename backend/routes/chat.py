@@ -105,9 +105,11 @@ def _load_conversation_messages(db, conversation_id: str, user_id: str) -> tuple
     Returns (conversation_record, messages_list)
     """
     if not conversation_id:
+        logger.info("No conversation_id provided, starting fresh")
         return None, []
     
     try:
+        logger.info(f"Loading conversation {conversation_id} for user {user_id}")
         result = db.table("conversations").select("*").eq("id", conversation_id).eq("user_id", user_id).execute()
         if result.data and len(result.data) > 0:
             conv = result.data[0]
@@ -117,7 +119,10 @@ def _load_conversation_messages(db, conversation_id: str, user_id: str) -> tuple
                     messages = json.loads(messages)
                 except:
                     messages = []
+            logger.info(f"Loaded conversation with {len(messages)} messages")
             return conv, messages
+        else:
+            logger.warning(f"Conversation {conversation_id} not found in DB")
     except Exception as e:
         logger.warning(f"Failed to load conversation {conversation_id}: {e}")
     
@@ -187,6 +192,7 @@ def _save_conversation(
         prev_credits = existing_conv.get("credits_charged", 0) or 0
         
         try:
+            logger.info(f"Updating conversation {conversation_id} with {len(all_messages)} total messages")
             db.table("conversations").update({
                 "messages": json.dumps(all_messages, ensure_ascii=False) if isinstance(all_messages, list) else all_messages,
                 "tokens_used": prev_tokens + tokens_used,
@@ -199,8 +205,8 @@ def _save_conversation(
         
         return conversation_id
     else:
-        # Create new conversation
-        new_id = conversation_id if conversation_id and not conversation_id.startswith("temp-") else str(uuid.uuid4())
+        # Create new conversation - always use valid UUID
+        new_id = str(uuid.uuid4())
         
         # Auto-generate title from first message
         title = user_message[:60] + "..." if len(user_message) > 60 else user_message
@@ -218,7 +224,9 @@ def _save_conversation(
         }
         
         try:
+            logger.info(f"Creating new conversation {new_id} for user {user_id}")
             db.table("conversations").insert(conversation_record).execute()
+            logger.info(f"Conversation {new_id} created successfully")
         except Exception as e:
             logger.error(f"Failed to save conversation: {e}")
         

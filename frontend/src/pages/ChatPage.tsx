@@ -111,18 +111,24 @@ const ChatPage = () => {
     mutationFn: (data: any) => apiService.post("/chat", data),
     onMutate: () => setIsTyping(true),
     onSuccess: (response) => {
+      const resData = response?.data || response;
       if (currentConversation) {
         const newMessage: Message = {
           role: "assistant",
-          content: response.data.response,
+          content: resData.response,
           timestamp: new Date().toISOString()
         };
         setCurrentConversation(prev => prev ? {
           ...prev,
+          id: resData.conversation_id || prev.id,
           messages: [...prev.messages, newMessage],
-          total_tokens: prev.total_tokens + response.data.tokens_used,
-          total_credits: prev.total_credits + response.data.credits_charged
+          total_tokens: prev.total_tokens + (resData.tokens_used || 0),
+          total_credits: prev.total_credits + (resData.credits_charged || 0)
         } : null);
+      }
+      // Track conversation ID for subsequent messages
+      if (resData.conversation_id) {
+        setServerConversationId(resData.conversation_id);
       }
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
       setMessage("");
@@ -202,7 +208,7 @@ const ChatPage = () => {
         body: JSON.stringify({
           message: userInput,
           model: selectedModel,
-          conversation_id: serverConversationId || currentConversation?.id?.replace('temp-', '') || null,
+          conversation_id: serverConversationId || null,
           temperature,
           max_tokens: maxTokens
         })
