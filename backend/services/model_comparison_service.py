@@ -33,6 +33,7 @@ class ModelComparisonService:
             "model_id": "llama-3.1-8b-instant",
             "name": "Llama 3.1 8B",
             "tier": "free",
+            "icon": "🦙",
             "color": "from-indigo-500 to-blue-500"
         }
     }
