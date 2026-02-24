@@ -104,7 +104,7 @@ export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
     };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-64px)] bg-white dark:bg-gray-900">
+        <div className="flex flex-col h-[calc(100vh-64px)] bg-gradient-to-br from-emerald-50 via-teal-50/50 to-cyan-50 dark:from-gray-900 dark:via-emerald-950/20 dark:to-gray-900">
             {/* Header */}
             <div className="flex-shrink-0 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700">
                 <div className="max-w-6xl mx-auto flex items-center justify-between">
