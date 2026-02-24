@@ -51,6 +51,7 @@ export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
     const [selectedModels, setSelectedModels] = useState<string[]>([]);
     const [results, setResults] = useState<ComparisonResult[]>([]);
     const [copiedId, setCopiedId] = useState<string | null>(null);
+    const [generalError, setGeneralError] = useState<string | null>(null);
 
     const { data: modelsData } = useQuery({
         queryKey: ['comparison-models'],
@@ -68,7 +69,15 @@ export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
 
     const compareMutation = useMutation({
         mutationFn: () => apiService.post('/comparison/compare', { prompt: prompt.trim(), model_ids: selectedModels }),
-        onSuccess: (data: any) => setResults(data.results || [])
+        onSuccess: (data: any) => {
+            setGeneralError(null);
+            setResults(data.results || []);
+        },
+        onError: (err: any) => {
+            const errorMsg = err?.response?.data?.detail || err?.message || 'Karşılaştırma sırasında bir hata oluştu.';
+            setGeneralError(errorMsg);
+            setResults([]);
+        }
     });
 
     const toggleModel = (modelId: string) => {
@@ -80,6 +89,7 @@ export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
     const handleCompare = () => {
         if (prompt.trim().length < 5 || selectedModels.length < 2) return;
         setResults([]);
+        setGeneralError(null);
         compareMutation.mutate();
     };
 
@@ -123,7 +133,7 @@ export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
                         </div>
                     </div>
                     {results.length > 0 && (
-                        <button onClick={() => { setResults([]); setPrompt(''); }}
+                        <button onClick={() => { setResults([]); setPrompt(''); setGeneralError(null); }}
                             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 bg-gray-100 dark:bg-gray-800 rounded-lg transition-colors">
                             <RefreshCw className="w-3 h-3" /> <span className="hidden sm:inline">Yeni </span>Sıfırla
                         </button>
@@ -247,6 +257,25 @@ export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
                                     </div>
                                 );
                             })}
+                        </div>
+                    )}
+
+                    {/* ═══ Error State ═══ */}
+                    {generalError && (
+                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 flex items-start gap-3">
+                            <div className="p-2 bg-red-100 dark:bg-red-800/50 rounded-lg shrink-0">
+                                <span>❌</span>
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-semibold text-red-800 dark:text-red-400">Hata Oluştu</h4>
+                                <p className="text-sm text-red-600 dark:text-red-300 mt-1">{generalError}</p>
+                                <button
+                                    onClick={() => compareMutation.mutate()}
+                                    className="mt-3 px-4 py-1.5 bg-red-100 dark:bg-red-900/50 hover:bg-red-200 dark:hover:bg-red-800/80 text-red-700 dark:text-red-300 text-xs font-medium rounded-lg transition-colors border border-red-200 dark:border-red-800"
+                                >
+                                    Tekrar Dene
+                                </button>
+                            </div>
                         </div>
                     )}
 
