@@ -579,25 +579,33 @@ const VideoPage = () => {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 -mt-4">
         {/* Content Type Navigation */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-2 mb-6">
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+        <div className="flex justify-center mb-6">
+          <div className="inline-flex bg-white dark:bg-gray-800 rounded-2xl p-1 sm:p-1.5 shadow-lg border border-gray-100 dark:border-gray-700 max-w-full overflow-x-auto scrollbar-hide">
             {contentTypes.map((type) => {
               const Icon = type.icon;
               const isActive = activeTab === type.id;
+              const gradients: Record<string, string> = {
+                'text-to-video': 'from-purple-500 to-violet-500',
+                'image-to-video': 'from-blue-500 to-cyan-500',
+                'compare': 'from-orange-500 to-red-500',
+                'effects': 'from-pink-500 to-rose-500',
+                'packages': 'from-amber-500 to-yellow-500',
+                'gallery': 'from-emerald-500 to-teal-500',
+              };
               return (
                 <button
                   key={type.id}
                   onClick={() => {
                     setActiveTab(type.id);
-                    setModelId(""); // Reset model when changing type
+                    setModelId("");
                   }}
-                  className={`flex flex-col items-center gap-1 px-3 py-3 rounded-xl text-center transition-all ${isActive
-                    ? 'bg-gradient-to-br from-purple-500 to-violet-500 text-white shadow-lg'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-medium transition-all flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm whitespace-nowrap ${isActive
+                    ? `bg-gradient-to-r ${gradients[type.id] || 'from-purple-500 to-violet-500'} text-white shadow-lg`
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                     }`}
                 >
-                  <Icon className="w-5 h-5" />
-                  <span className="text-xs font-medium">{type.name}</span>
+                  <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  {type.name}
                 </button>
               );
             })}

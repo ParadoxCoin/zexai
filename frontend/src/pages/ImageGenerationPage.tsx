@@ -11,7 +11,7 @@ import {
   Clock, CreditCard, Eye, ChevronDown, Loader2
 } from "lucide-react";
 import PromptEnhancer from "@/components/PromptEnhancer";
-import ImageTools from "@/components/ImageTools";
+
 import SocialButtons from "@/components/SocialButtons";
 import { addWatermark } from "@/utils/watermark";
 import playHapticFeedback from "@/utils/haptics";
@@ -75,7 +75,7 @@ const ImageGenerationPage = () => {
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [generatedTaskIds, setGeneratedTaskIds] = useState<string[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [activeTab, setActiveTab] = useState<'generate' | 'edit' | 'gallery' | 'compare'>('generate');
+  const [activeTab, setActiveTab] = useState<'generate' | 'gallery' | 'compare'>('generate');
   const [selectedModelsForCompare, setSelectedModelsForCompare] = useState<string[]>([]);
   const [compareResults, setCompareResults] = useState<any[]>([]);
   const [isComparing, setIsComparing] = useState(false);
@@ -346,16 +346,7 @@ const ImageGenerationPage = () => {
               <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               Üret
             </button>
-            <button
-              onClick={() => setActiveTab('edit')}
-              className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-medium transition-all flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm whitespace-nowrap ${activeTab === 'edit'
-                ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                }`}
-            >
-              <Wand2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              Düzenle
-            </button>
+
             <button
               onClick={() => setActiveTab('gallery')}
               className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-medium transition-all flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm whitespace-nowrap ${activeTab === 'gallery'
@@ -747,14 +738,7 @@ const ImageGenerationPage = () => {
         </div>
       )}
 
-      {/* ═══════════════════════════════════════════════════════ */}
-      {/* EDIT TAB */}
-      {/* ═══════════════════════════════════════════════════════ */}
-      {activeTab === 'edit' && (
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <ImageTools />
-        </div>
-      )}
+
 
       {/* ═══════════════════════════════════════════════════════ */}
       {/* GALLERY TAB (Persistent from backend) */}

@@ -158,20 +158,32 @@ const AudioPage = () => {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 -mt-4">
         {/* Tab Navigation */}
-        <div className="flex flex-wrap gap-2 mb-8 p-1.5 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${activeTab === tab.id
-                ? 'bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-lg'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-            >
-              <tab.icon className="w-4 h-4" />
-              {tab.name}
-            </button>
-          ))}
+        <div className="flex justify-center mb-8">
+          <div className="inline-flex bg-white dark:bg-gray-800 rounded-2xl p-1 sm:p-1.5 shadow-lg border border-gray-100 dark:border-gray-700 max-w-full overflow-x-auto scrollbar-hide">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+              const gradients: Record<string, string> = {
+                'tts': 'from-rose-500 to-pink-500',
+                'music': 'from-purple-500 to-violet-500',
+                'voice': 'from-blue-500 to-cyan-500',
+                'packages': 'from-amber-500 to-yellow-500',
+                'library': 'from-emerald-500 to-teal-500',
+              };
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-medium transition-all flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm whitespace-nowrap ${isActive
+                    ? `bg-gradient-to-r ${gradients[tab.id] || 'from-rose-500 to-pink-500'} text-white shadow-lg`
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    }`}
+                >
+                  <tab.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  {tab.name}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* TTS Tab */}
