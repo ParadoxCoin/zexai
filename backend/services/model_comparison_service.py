@@ -265,9 +265,9 @@ class ModelComparisonService:
         
         try:
             if provider == "groq":
-                response = await self._call_groq(model_id, prompt)
+                response = await self._call_groq(config["model_id"], prompt)
             elif provider == "openrouter":
-                response = await self._call_openrouter(model_id, prompt)
+                response = await self._call_openrouter(config["model_id"], prompt)
             else:
                 raise ValueError(f"Unknown provider: {provider}")
             
