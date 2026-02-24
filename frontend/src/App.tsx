@@ -19,7 +19,7 @@ import VideoPage from '@/pages/VideoPage';
 import AudioPage from '@/pages/AudioPage';
 import AvatarPage from '@/pages/AvatarPage';
 import ShowcasePage from '@/pages/ShowcasePage';
-import ComparisonChatPage from '@/pages/ComparisonChatPage';
+import { ComparisonChatPage } from '@/pages/ComparisonChatPage';
 import { AdminDashboardEnhanced } from '@/pages/AdminDashboardEnhanced';
 import { ApiKeysPage } from '@/pages/ApiKeysPage';
 import ReferralPage from '@/pages/ReferralPage';
