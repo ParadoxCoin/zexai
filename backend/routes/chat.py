@@ -391,13 +391,13 @@ async def chat_completion(
         tokens_used = result.get("usage", {}).get("total_tokens", 0)
         
         # 7. Calculate credit cost
-        cost_per_unit = float(model.get("cost_per_unit", 0))
+        cost_per_unit = float(model.get("cost_usd", 0))
         multiplier = float(model.get("cost_multiplier", 2.0))
         token_units = tokens_used / 1000.0
         cost_usd = token_units * cost_per_unit
         credits_charged = int(cost_usd * settings.DEFAULT_USD_TO_CREDIT_RATE * multiplier)
         
-        # Free models (cost_per_unit = 0) never deduct credits
+        # Free models (cost_usd = 0) never deduct credits
         is_free_model = cost_per_unit == 0
         
         if not is_free_model:
@@ -846,7 +846,7 @@ async def chat_stream(
     logger.info(f"STREAM: model={provider_model_id}, api_msgs={len(api_messages)}, conv_id={conv_id}, existing={existing_conv is not None}")
 
     # Calculate if this is a free model (no credit charge)
-    model_cost_per_unit = float(model_data.get("cost_per_unit", 0)) if model_data else 0.0
+    model_cost_per_unit = float(model_data.get("cost_usd", 0)) if model_data else 0.0
     is_free_model = model_cost_per_unit == 0
 
     # ── Closure context for generator ──
