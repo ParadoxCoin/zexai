@@ -386,23 +386,30 @@ async def chat_completion(
         cost_usd = token_units * cost_per_unit
         credits_charged = int(cost_usd * settings.DEFAULT_USD_TO_CREDIT_RATE * multiplier)
         
-        if credits_charged == 0 and tokens_used > 0:
-            credits_charged = 1
+        # Free models (cost_per_unit = 0) never deduct credits
+        is_free_model = cost_per_unit == 0
         
-        # 8. Deduct credits
-        await CreditManager.deduct_credits(
-            db=db,
-            user_id=current_user.id,
-            service_type="chat",
-            cost=credits_charged,
-            details={
-                "model": request.model,
-                "tokens": tokens_used,
-                "prompt_length": len(request.message),
-                "response_length": len(ai_response),
-                "context_messages": len(api_messages)
-            }
-        )
+        if not is_free_model:
+            # For paid models: always charge at least 1 credit
+            if credits_charged == 0 and tokens_used > 0:
+                credits_charged = 1
+            
+            # 8. Deduct credits (only for paid models)
+            await CreditManager.deduct_credits(
+                db=db,
+                user_id=current_user.id,
+                service_type="chat",
+                cost=credits_charged,
+                details={
+                    "model": request.model,
+                    "tokens": tokens_used,
+                    "prompt_length": len(request.message),
+                    "response_length": len(ai_response),
+                    "context_messages": len(api_messages)
+                }
+            )
+        else:
+            credits_charged = 0  # Free model - no charge
         
         # 9. Save/update conversation
         saved_conv_id = _save_conversation(
@@ -820,12 +827,17 @@ async def chat_stream(
 
     logger.info(f"STREAM: model={provider_model_id}, api_msgs={len(api_messages)}, conv_id={conv_id}, existing={existing_conv is not None}")
 
+    # Calculate if this is a free model (no credit charge)
+    model_cost_per_unit = float(model_data.get("cost_per_unit", 0)) if model_data else 0.0
+    is_free_model = model_cost_per_unit == 0
+
     # ── Closure context for generator ──
     ctx = {
         "api_url": api_url, "api_key": api_key, "model_id": provider_model_id,
         "messages": api_messages, "temp": request.temperature, "max_tok": request.max_tokens,
         "conv_id": conv_id, "uid": current_user.id, "user_msg": request.message,
         "model_name": request.model, "ex_conv": existing_conv, "ex_msgs": existing_db_messages,
+        "is_free": is_free_model
     }
 
     # Shared state for the generator to communicate with the background task
@@ -876,7 +888,7 @@ async def chat_stream(
                         db=fresh, conversation_id=c["conv_id"], user_id=c["uid"],
                         existing_conv=c["ex_conv"], existing_messages=c["ex_msgs"],
                         user_message=c["user_msg"], ai_response=full,
-                        model=c["model_name"], tokens_used=max(len(full.split())*2, 1), credits_charged=1
+                        model=c["model_name"], tokens_used=max(len(full.split())*2, 1), credits_charged=0 if c.get("is_free") else 1
                     )
                     save_state["saved"] = True
                     logger.info(f"✅ Saved conv {c['conv_id']} inline ({len(c['ex_msgs'])+2} msgs)")
@@ -911,7 +923,7 @@ async def chat_stream(
                     db=fresh, conversation_id=c["conv_id"], user_id=c["uid"],
                     existing_conv=c["ex_conv"], existing_messages=c["ex_msgs"],
                     user_message=c["user_msg"], ai_response=full,
-                    model=c["model_name"], tokens_used=max(len(full.split())*2, 1), credits_charged=1
+                    model=c["model_name"], tokens_used=max(len(full.split())*2, 1), credits_charged=0 if c.get("is_free") else 1
                 )
                 logger.info(f"✅ Saved conv {c['conv_id']} via background task")
             else:
