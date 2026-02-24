@@ -9,14 +9,14 @@ interface NFTMintModalProps {
 }
 
 const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) => {
-    const { account, manusBalance, mintNFT, connectWallet } = useWeb3();
+    const { account, zexBalance, mintNFT, connectWallet } = useWeb3();
     const [nftName, setNftName] = useState(image?.prompt?.substring(0, 30) || 'ZexAI Creation');
     const [nftDescription, setNftDescription] = useState(image?.prompt || 'Generated with ZexAI');
     const [isMinting, setIsMinting] = useState(false);
     const [mintStatus, setMintStatus] = useState<'idle' | 'approving' | 'minting' | 'success' | 'error'>('idle');
     const [errorMessage, setErrorMessage] = useState('');
 
-    const mintPrice = 10; // 10 MANUS Token for Phase 1
+    const mintPrice = 100; // 100 ZEX Token per Mint
 
     if (!isOpen || !image) return null;
 
@@ -26,8 +26,8 @@ const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) =
             return;
         }
 
-        if (Number(manusBalance) < mintPrice) {
-            setErrorMessage("Yetersiz MANUS bakiyesi.");
+        if (Number(zexBalance) < mintPrice) {
+            setErrorMessage("Yetersiz ZEX bakiyesi.");
             setMintStatus('error');
             return;
         }
@@ -60,8 +60,14 @@ const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) =
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-gray-900 rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800 animate-in zoom-in-95 duration-200">
+        <div
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={onClose}
+        >
+            <div
+                className="bg-white dark:bg-gray-900 rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800 animate-in zoom-in-95 duration-200 relative"
+                onClick={(e) => e.stopPropagation()} // Prevent clicks inside modal from closing it
+            >
 
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800">
@@ -138,7 +144,7 @@ const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) =
                                 <span className="text-gray-600 dark:text-gray-400 text-sm">Mint Ücreti</span>
                                 <div className="flex items-center gap-1.5 font-bold text-gray-900 dark:text-white text-lg">
                                     {mintPrice}
-                                    <span className="text-purple-600 text-sm ml-1">MANUS</span>
+                                    <span className="text-purple-600 text-sm ml-1">ZEX</span>
                                 </div>
                             </div>
 
@@ -164,7 +170,7 @@ const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) =
                                     ) : (
                                         <>
                                             <Diamond className="w-5 h-5" />
-                                            10 MANUS ile Mint Et
+                                            {mintPrice} ZEX ile Mint Et
                                         </>
                                     )}
                                 </button>

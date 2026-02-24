@@ -9,10 +9,10 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 contract ZexAIEcosystemNFT is ERC1155, Ownable {
     using Strings for uint256;
 
-    // The token used for paying mint fees (MANUS Token)
-    IERC20 public manusToken;
+    // The token used for paying mint fees (ZEX Token)
+    IERC20 public zexToken;
 
-    // Fixed mint fee in MANUS (e.g. 10 MANUS)
+    // Fixed mint fee in ZEX (e.g. 10 ZEX)
     uint256 public mintFee;
 
     // Optional treasury address to receive the fees (if not burned or kept in contract)
@@ -29,36 +29,35 @@ contract ZexAIEcosystemNFT is ERC1155, Ownable {
     event MintFeeUpdated(uint256 newFee);
     event TreasuryUpdated(address newTreasury);
 
-    /**
      * @dev Constructor
      * @param initialOwner Address of the contract owner
-     * @param _manusTokenAddress Address of the MANUS ERC20 token contract
-     * @param _initialMintFee Initial fee required to mint in MANUS (in wei format, e.g. 10 * 10**18)
+     * @param _zexTokenAddress Address of the ZEX ERC20 token contract
+     * @param _initialMintFee Initial fee required to mint in ZEX (in wei format, e.g. 10 * 10**18)
      */
     constructor(
         address initialOwner, 
-        address _manusTokenAddress, 
+        address _zexTokenAddress, 
         uint256 _initialMintFee
     ) ERC1155("") Ownable(initialOwner) {
-        manusToken = IERC20(_manusTokenAddress);
+        zexToken = IERC20(_zexTokenAddress);
         mintFee = _initialMintFee;
         treasury = initialOwner; // Default treasury is owner
     }
 
     /**
-     * @dev Mint a new ZexAI NFT by paying the MANUS fee
+     * @dev Mint a new ZexAI NFT by paying the ZEX fee
      * @param metadataURI The IPFS URI containing the JSON metadata (image url, prompt, maker info)
      * @param amount The number of copies to mint (1 for unique art, >1 for packs/editions)
      */
-    function mintWithManus(string memory metadataURI, uint256 amount) external {
+    function mintWithZex(string memory metadataURI, uint256 amount) external {
         require(amount > 0, "Amount must be greater than 0");
         
         uint256 totalCost = mintFee * amount;
 
-        // 1. Transfer MANUS from user to the treasury
-        // User MUST have called approve() on the MANUS token contract first
-        bool success = manusToken.transferFrom(msg.sender, treasury, totalCost);
-        require(success, "MANUS token transfer failed. Check allowance and balance.");
+        // 1. Transfer ZEX from user to the treasury
+        // User MUST have called approve() on the ZEX token contract first
+        bool success = zexToken.transferFrom(msg.sender, treasury, totalCost);
+        require(success, "ZEX token transfer failed. Check allowance and balance.");
 
         // 2. Increment token ID and set URI
         _currentTokenID++;
@@ -91,7 +90,7 @@ contract ZexAIEcosystemNFT is ERC1155, Ownable {
         emit TreasuryUpdated(newTreasury);
     }
 
-    function setManusToken(address _manusTokenAddress) external onlyOwner {
-        manusToken = IERC20(_manusTokenAddress);
+    function setZexToken(address _zexTokenAddress) external onlyOwner {
+        zexToken = IERC20(_zexTokenAddress);
     }
 }
