@@ -272,10 +272,17 @@ const ChatPage = () => {
     try {
       const response = await apiService.get(`/chat/conversations/${conversationId}`);
       const convData = (response as any)?.data || response;
+
+      // Ensure messages is an array (might be JSON string from DB)
+      if (convData && typeof convData.messages === 'string') {
+        try { convData.messages = JSON.parse(convData.messages); } catch { convData.messages = []; }
+      }
+
       setCurrentConversation(convData);
       setServerConversationId(conversationId);
+      if (convData?.model) setSelectedModel(convData.model);
       setActiveTab("chat");
-    } catch (error) { console.error("Failed to load:", error); }
+    } catch (error) { console.error("Failed to load conversation:", error); }
   };
 
   const copyToClipboard = async (text: string, id: string) => {
