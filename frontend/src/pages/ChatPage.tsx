@@ -359,8 +359,8 @@ const ChatPage = () => {
                 ) : conversationsList.map((conv: any) => (
                   <div key={conv.id} onClick={() => loadConversation(conv.id)}
                     className={`p-3 rounded-xl cursor-pointer transition-all group border ${currentConversation?.id === conv.id
-                        ? 'bg-emerald-500/10 border-emerald-300 dark:border-emerald-700 shadow-sm'
-                        : 'border-transparent hover:bg-gray-100 dark:hover:bg-gray-700/50 hover:border-gray-200 dark:hover:border-gray-600'
+                      ? 'bg-emerald-500/10 border-emerald-300 dark:border-emerald-700 shadow-sm'
+                      : 'border-transparent hover:bg-gray-100 dark:hover:bg-gray-700/50 hover:border-gray-200 dark:hover:border-gray-600'
                       }`}>
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
@@ -390,7 +390,7 @@ const ChatPage = () => {
             {/* Compare button at bottom */}
             <div className="p-3 border-t border-gray-200 dark:border-gray-700">
               <button onClick={() => setActiveTab("compare")}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-all">
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-emerald-500/20 transition-all active:scale-[0.98]">
                 <Zap className="w-4 h-4" /> Model Karşılaştır
               </button>
             </div>
