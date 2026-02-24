@@ -42,42 +42,44 @@ KIE_IMAGE_MODELS = {
     # },
     
     # ── FLUX.1 Schnell (Market API) ──────────────
-    "kie_flux1_schnell": {
-        "provider": "kie.ai",
-        "api_type": "market",
-        "name": "Flux.1 Schnell",
-        "type": "text_to_image",
-        "model_id": "black-forest-labs/flux-1-schnell",
-        "kie_credits": 4,
-        "cost_usd": 0.02,
-        "quality": 5,
-        "speed": "very_fast",
-        "badge": "⚡ Çok Hızlı",
-        "description": "Flux 1 Schnell - Ultra hızlı görsel üretim",
-        "capabilities": {
-            "image_editing": True,
-            "text_rendering": True
-        }
-    },
+    # DISABLED: User request - remove Flux 1
+    # "kie_flux1_schnell": {
+    #     "provider": "kie.ai",
+    #     "api_type": "market",
+    #     "name": "Flux.1 Schnell",
+    #     "type": "text_to_image",
+    #     "model_id": "black-forest-labs/flux-1-schnell",
+    #     "kie_credits": 4,
+    #     "cost_usd": 0.02,
+    #     "quality": 5,
+    #     "speed": "very_fast",
+    #     "badge": "⚡ Çok Hızlı",
+    #     "description": "Flux 1 Schnell - Ultra hızlı görsel üretim",
+    #     "capabilities": {
+    #         "image_editing": True,
+    #         "text_rendering": True
+    #     }
+    # },
 
     # ── GPT-Image-1.5 (Market API) ───────────────
-    "kie_gpt_image_1_5": {
-        "provider": "kie.ai",
-        "api_type": "market",
-        "name": "GPT-Image-1.5",
-        "type": "text_to_image",
-        "model_id": "openai/gpt-image-1.5",
-        "kie_credits": 8,
-        "cost_usd": 0.04,
-        "quality": 5,
-        "speed": "fast",
-        "badge": "🤖 OpenAI",
-        "description": "OpenAI GPT-Image-1.5",
-        "capabilities": {
-            "image_editing": True,
-            "text_rendering": True
-        }
-    },
+    # DISABLED: User request - remove GPT 1.5
+    # "kie_gpt_image_1_5": {
+    #     "provider": "kie.ai",
+    #     "api_type": "market",
+    #     "name": "GPT-Image-1.5",
+    #     "type": "text_to_image",
+    #     "model_id": "openai/gpt-image-1.5",
+    #     "kie_credits": 8,
+    #     "cost_usd": 0.04,
+    #     "quality": 5,
+    #     "speed": "fast",
+    #     "badge": "🤖 OpenAI",
+    #     "description": "OpenAI GPT-Image-1.5",
+    #     "capabilities": {
+    #         "image_editing": True,
+    #         "text_rendering": True
+    #     }
+    # },
     # "kie_flux2_flex": {
     #     "provider": "kie.ai",
     #     "api_type": "market",
