@@ -13,6 +13,7 @@ import {
 import PromptEnhancer from "@/components/PromptEnhancer";
 
 import SocialButtons from "@/components/SocialButtons";
+import NFTMintModal from "@/components/NFTMintModal";
 import { addWatermark } from "@/utils/watermark";
 import playHapticFeedback from "@/utils/haptics";
 
@@ -81,6 +82,10 @@ const ImageGenerationPage = () => {
   const [isComparing, setIsComparing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
+
+  // -- NFT State --
+  const [nftModalOpen, setNftModalOpen] = useState(false);
+  const [selectedImageForNft, setSelectedImageForNft] = useState<any>(null);
 
   // ---- Mode: text2img or img2img ----
   const [generationMode, setGenerationMode] = useState<'text2img' | 'img2img'>('text2img');
@@ -794,6 +799,16 @@ const ImageGenerationPage = () => {
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-white/70">{formatModelName(item.model_name || item.model_id || item.model)}</span>
                           <div className="flex gap-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedImageForNft(item);
+                                setNftModalOpen(true);
+                              }}
+                              className="px-2 py-1 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white rounded-lg text-xs font-medium shadow transition-all flex items-center gap-1"
+                            >
+                              💎 NFT Yap
+                            </button>
                             <a
                               href={item.file_url}
                               download
@@ -1078,6 +1093,16 @@ const ImageGenerationPage = () => {
           </button>
         </div>
       )}
+
+      {/* NFT Mint Modal */}
+      <NFTMintModal
+        isOpen={nftModalOpen}
+        onClose={() => {
+          setNftModalOpen(false);
+          setSelectedImageForNft(null);
+        }}
+        image={selectedImageForNft}
+      />
     </div>
   );
 };

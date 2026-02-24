@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import NotificationDropdown from './NotificationDropdown';
 import AchievementPopup from './AchievementPopup';
 import PWAInstallPrompt from './PWAInstallPrompt';
+import WalletConnect from './WalletConnect';
 
 const Layout: React.FC = () => {
   const location = useLocation();
@@ -113,6 +114,9 @@ const Layout: React.FC = () => {
 
             {/* Right Section */}
             <div className="flex items-center gap-1.5 flex-shrink-0">
+
+              {/* Wallet Connect */}
+              <WalletConnect showBalance={false} className="mr-1 hidden sm:flex" />
 
               {/* Dynamic Credits Display */}
               <Link

@@ -20,6 +20,7 @@
     "chartjs-adapter-date-fns": "^3.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "ethers": "^6.11.1",
     "framer-motion": "^12.34.3",
     "i18next": "^23.16.8",
     "i18next-browser-languagedetector": "^7.2.2",
