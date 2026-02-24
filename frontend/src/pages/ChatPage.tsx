@@ -5,20 +5,35 @@ import { apiService } from "@/services/api";
 import { supabase } from "@/lib/supabase";
 import {
   MessageCircle, Send, Plus, Trash2, Bot, User,
-  Copy, Check, Sparkles, History, Loader2, ChevronRight,
+  Copy, Check, Sparkles, History, Loader2, ChevronRight, ChevronDown,
   Crown, Zap, PanelLeftClose, PanelLeft, RotateCcw,
-  Cpu, ArrowDown, Hash
+  Cpu, ArrowDown, Hash, Search
 } from "lucide-react";
 import { ComparisonChatPage } from "./ComparisonChatPage";
 import CodeBlock from "@/components/CodeBlock";
 
-// Available AI Models
+// Available AI Models - Free (Groq + OpenRouter Free) + Premium (OpenRouter Paid)
 const availableModels = [
-  { id: "llama-3.3-70b", name: "Llama 3.3 70B", icon: "🦙", tier: "free", speed: "fast", color: "from-blue-500 to-purple-500", desc: "Güçlü ve ücretsiz" },
-  { id: "llama-3.1-8b", name: "Llama 3.1 8B", icon: "⚡", tier: "free", speed: "ultra", color: "from-cyan-500 to-blue-500", desc: "Ultra hızlı" },
-  { id: "gpt-4o", name: "GPT-4o", icon: "🧠", tier: "premium", speed: "fast", color: "from-green-500 to-emerald-500", desc: "En akıllı model" },
-  { id: "gpt-4o-mini", name: "GPT-4o Mini", icon: "✨", tier: "premium", speed: "ultra", color: "from-teal-500 to-green-500", desc: "Hızlı ve akıllı" },
-  { id: "claude-3.5-sonnet", name: "Claude 3.5", icon: "🎭", tier: "premium", speed: "fast", color: "from-amber-500 to-orange-500", desc: "Yaratıcı asistan" },
+  // 🆓 Free Models (Groq)
+  { id: "llama-3.3-70b", name: "Llama 3.3 70B", icon: "🦙", tier: "free", desc: "Güçlü ve ücretsiz", cost: 0 },
+  { id: "llama-3.1-8b", name: "Llama 3.1 8B", icon: "🦙", tier: "free", desc: "Ultra hızlı", cost: 0 },
+  // 🆓 Free Models (OpenRouter Free)
+  { id: "openrouter-auto-free", name: "Auto Free", icon: "🤖", tier: "free", desc: "En iyi ücretsiz", cost: 0 },
+  { id: "step-3.5-flash", name: "Step 3.5 Flash", icon: "⚡", tier: "free", desc: "Çok hızlı", cost: 0 },
+  { id: "trinity-large", name: "Trinity Large", icon: "🧠", tier: "free", desc: "Güçlü preview", cost: 0 },
+  { id: "solar-pro-3", name: "Solar Pro 3", icon: "☀️", tier: "free", desc: "Upstage modeli", cost: 0 },
+  { id: "lfm-thinking", name: "LFM Thinking", icon: "💭", tier: "free", desc: "Düşünen model", cost: 0 },
+  // 💎 Premium Models (OpenRouter Paid)
+  { id: "gpt-5.2", name: "GPT-5.2", icon: "🧠", tier: "premium", desc: "En akıllı model", cost: 10 },
+  { id: "claude-opus-4.6", name: "Claude Opus 4.6", icon: "👑", tier: "premium", desc: "En yaratıcı zeka", cost: 15 },
+  { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro", icon: "✨", tier: "premium", desc: "1M context", cost: 3 },
+  { id: "deepseek-r1", name: "DeepSeek R1", icon: "🐋", tier: "premium", desc: "Logic Master", cost: 2 },
+  { id: "grok-4", name: "Grok 4", icon: "⚡", tier: "premium", desc: "xAI en yeni", cost: 5 },
+  { id: "qwen3-max", name: "Qwen3 Max", icon: "💬", tier: "premium", desc: "MoE 262K ctx", cost: 2 },
+  { id: "mistral-large", name: "Mistral Large", icon: "🌪️", tier: "premium", desc: "Avrupa'nın en iyisi", cost: 3 },
+  { id: "minimax-m1", name: "MiniMax M1", icon: "🔥", tier: "premium", desc: "1M ctx, üretken", cost: 1 },
+  { id: "kimi-k2.5", name: "Kimi K2.5", icon: "🌙", tier: "premium", desc: "Multimodal agent", cost: 1 },
+  { id: "llama-405b", name: "Llama 3.1 405B", icon: "🦙", tier: "premium", desc: "Dev açık kaynak", cost: 4 },
 ];
 
 // Suggested Prompts
@@ -80,6 +95,9 @@ const ChatPage = () => {
   const [serverConversationId, setServerConversationId] = useState<string | null>(null);
   const [showSidebar, setShowSidebar] = useState(window.innerWidth > 768);
   const [showScrollDown, setShowScrollDown] = useState(false);
+  const [modelSearch, setModelSearch] = useState("");
+  const [showFreeModels, setShowFreeModels] = useState(true);
+  const [showPremiumModels, setShowPremiumModels] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -301,6 +319,9 @@ const ChatPage = () => {
 
   console.log("[DEBUG] conversationsList length:", conversationsList.length);
   const currentModel = availableModels.find(m => m.id === selectedModel) || availableModels[0];
+  const filteredModels = availableModels.filter(m => m.name.toLowerCase().includes(modelSearch.toLowerCase()));
+  const freeModels = filteredModels.filter(m => m.tier === 'free');
+  const premiumModels = filteredModels.filter(m => m.tier === 'premium');
 
   return (
     <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-white dark:bg-gray-900">
@@ -319,23 +340,64 @@ const ChatPage = () => {
             </div>
 
             {/* Model Selector */}
-            <div className="p-3 border-b border-gray-200 dark:border-gray-700">
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2 px-1">Model</p>
-              <div className="space-y-1">
-                {availableModels.map((model) => (
-                  <button key={model.id} onClick={() => setSelectedModel(model.id)}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all ${selectedModel === model.id
-                      ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50'}`}>
-                    <span className="text-base">{model.icon}</span>
-                    <div className="flex-1 text-left">
-                      <div className="font-medium text-xs">{model.name}</div>
-                      <div className="text-[10px] opacity-60">{model.desc}</div>
-                    </div>
-                    {model.tier === 'premium' && <Crown className="w-3 h-3 text-amber-500" />}
-                    {selectedModel === model.id && <Check className="w-3.5 h-3.5 text-emerald-500" />}
-                  </button>
-                ))}
+            <div className="p-3 border-b border-gray-200 dark:border-gray-700 max-h-[45vh] flex flex-col">
+              {/* Search */}
+              <div className="relative mb-2">
+                <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input type="text" placeholder="Model ara..." value={modelSearch} onChange={e => setModelSearch(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 text-xs bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-emerald-500" />
+              </div>
+
+              <div className="overflow-y-auto space-y-1 flex-1" style={{ scrollbarWidth: 'thin' }}>
+                {/* 🆓 Free Section */}
+                {freeModels.length > 0 && (
+                  <>
+                    <button onClick={() => setShowFreeModels(!showFreeModels)}
+                      className="w-full flex items-center gap-1.5 px-1 py-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-md transition-colors">
+                      {showFreeModels ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                      🆓 Ücretsiz ({freeModels.length})
+                    </button>
+                    {showFreeModels && freeModels.map((model) => (
+                      <button key={model.id} onClick={() => setSelectedModel(model.id)}
+                        className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm transition-all ${selectedModel === model.id
+                          ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50'}`}>
+                        <span className="text-sm">{model.icon}</span>
+                        <div className="flex-1 text-left min-w-0">
+                          <div className="font-medium text-[11px] truncate">{model.name}</div>
+                          <div className="text-[9px] opacity-50 truncate">{model.desc}</div>
+                        </div>
+                        <span className="text-[9px] font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded-full shrink-0">FREE</span>
+                        {selectedModel === model.id && <Check className="w-3 h-3 text-emerald-500 shrink-0" />}
+                      </button>
+                    ))}
+                  </>
+                )}
+
+                {/* 💎 Premium Section */}
+                {premiumModels.length > 0 && (
+                  <>
+                    <button onClick={() => setShowPremiumModels(!showPremiumModels)}
+                      className="w-full flex items-center gap-1.5 px-1 py-1 mt-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-md transition-colors">
+                      {showPremiumModels ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                      💎 Premium ({premiumModels.length})
+                    </button>
+                    {showPremiumModels && premiumModels.map((model) => (
+                      <button key={model.id} onClick={() => setSelectedModel(model.id)}
+                        className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm transition-all ${selectedModel === model.id
+                          ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
+                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50'}`}>
+                        <span className="text-sm">{model.icon}</span>
+                        <div className="flex-1 text-left min-w-0">
+                          <div className="font-medium text-[11px] truncate">{model.name}</div>
+                          <div className="text-[9px] opacity-50 truncate">{model.desc}</div>
+                        </div>
+                        <span className="text-[9px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded-full shrink-0">{model.cost}cr</span>
+                        {selectedModel === model.id && <Check className="w-3 h-3 text-amber-500 shrink-0" />}
+                      </button>
+                    ))}
+                  </>
+                )}
               </div>
             </div>
 

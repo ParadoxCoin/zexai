@@ -82,61 +82,97 @@ class ModelComparisonService:
         },
     }
     
-    # Popular paid models via OpenRouter
+    # Premium paid models via OpenRouter (Best versions as of Feb 2026)
     OPENROUTER_PAID_MODELS = {
-        "gpt-4o": {
+        "gpt-5.2": {
             "provider": "openrouter",
-            "model_id": "openai/gpt-4o",
-            "name": "GPT-4o",
+            "model_id": "openai/gpt-5.2",
+            "name": "GPT-5.2",
             "tier": "premium",
             "icon": "🧠",
             "color": "from-green-500 to-emerald-500",
-            "cost_per_1k": 0.005
+            "cost_per_1k": 0.01
         },
-        "gpt-4o-mini": {
+        "claude-opus-4.6": {
             "provider": "openrouter",
-            "model_id": "openai/gpt-4o-mini",
-            "name": "GPT-4o Mini",
-            "tier": "premium",
-            "icon": "⚡",
-            "color": "from-green-400 to-teal-500",
-            "cost_per_1k": 0.00015
-        },
-        "claude-3.5-sonnet": {
-            "provider": "openrouter",
-            "model_id": "anthropic/claude-3.5-sonnet",
-            "name": "Claude 3.5 Sonnet",
-            "tier": "premium",
-            "icon": "🎭",
-            "color": "from-amber-500 to-orange-500",
-            "cost_per_1k": 0.003
-        },
-        "claude-3-opus": {
-            "provider": "openrouter",
-            "model_id": "anthropic/claude-3-opus",
-            "name": "Claude 3 Opus",
+            "model_id": "anthropic/claude-opus-4.6",
+            "name": "Claude Opus 4.6",
             "tier": "premium",
             "icon": "👑",
-            "color": "from-purple-500 to-pink-500",
+            "color": "from-amber-500 to-orange-500",
             "cost_per_1k": 0.015
         },
-        "gemini-2.0-flash": {
+        "gemini-2.5-pro": {
             "provider": "openrouter",
-            "model_id": "google/gemini-2.0-flash-001",
-            "name": "Gemini 2.0 Flash",
+            "model_id": "google/gemini-2.5-pro-preview",
+            "name": "Gemini 2.5 Pro",
             "tier": "premium",
             "icon": "✨",
             "color": "from-blue-500 to-violet-500",
-            "cost_per_1k": 0.0001
-        },
-        "gemini-1.5-pro": {
-            "provider": "openrouter",
-            "model_id": "google/gemini-pro-1.5",
-            "name": "Gemini 1.5 Pro",
-            "tier": "premium",
-            "icon": "🔮",
-            "color": "from-indigo-500 to-purple-500",
             "cost_per_1k": 0.00125
+        },
+        "deepseek-r1": {
+            "provider": "openrouter",
+            "model_id": "deepseek/deepseek-r1-0528",
+            "name": "DeepSeek R1",
+            "tier": "premium",
+            "icon": "🐋",
+            "color": "from-blue-600 to-cyan-500",
+            "cost_per_1k": 0.00055
+        },
+        "grok-4": {
+            "provider": "openrouter",
+            "model_id": "x-ai/grok-4",
+            "name": "Grok 4",
+            "tier": "premium",
+            "icon": "⚡",
+            "color": "from-gray-600 to-gray-800",
+            "cost_per_1k": 0.003
+        },
+        "qwen3-max": {
+            "provider": "openrouter",
+            "model_id": "qwen/qwen3-max",
+            "name": "Qwen3 Max",
+            "tier": "premium",
+            "icon": "💬",
+            "color": "from-purple-500 to-indigo-500",
+            "cost_per_1k": 0.0012
+        },
+        "mistral-large": {
+            "provider": "openrouter",
+            "model_id": "mistralai/mistral-large-2411",
+            "name": "Mistral Large",
+            "tier": "premium",
+            "icon": "🌪️",
+            "color": "from-orange-500 to-red-500",
+            "cost_per_1k": 0.002
+        },
+        "minimax-m1": {
+            "provider": "openrouter",
+            "model_id": "minimax/minimax-m1",
+            "name": "MiniMax M1",
+            "tier": "premium",
+            "icon": "🔥",
+            "color": "from-red-500 to-pink-500",
+            "cost_per_1k": 0.0004
+        },
+        "kimi-k2.5": {
+            "provider": "openrouter",
+            "model_id": "moonshotai/kimi-k2.5",
+            "name": "Kimi K2.5",
+            "tier": "premium",
+            "icon": "🌙",
+            "color": "from-indigo-500 to-purple-500",
+            "cost_per_1k": 0.00045
+        },
+        "llama-405b": {
+            "provider": "openrouter",
+            "model_id": "meta-llama/llama-3.1-405b-instruct",
+            "name": "Llama 3.1 405B",
+            "tier": "premium",
+            "icon": "🦙",
+            "color": "from-violet-500 to-fuchsia-500",
+            "cost_per_1k": 0.004
         },
     }
     
