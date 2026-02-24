@@ -65,7 +65,6 @@ from routes.admin_rate_limits import router as admin_rate_limits_router
 from routes.admin_scheduler import router as admin_scheduler_router
 from routes.admin_key_vault import router as admin_key_vault_router
 from routes.admin_ab_testing import router as admin_ab_testing_router
-from routes.compare import router as compare_router
 from routes.admin_analytics import router as admin_analytics_router
 from routes.admin_email import router as admin_email_router
 from routes.marketplace import router as marketplace_router
@@ -282,7 +281,6 @@ app.include_router(admin_pricing_enhanced_router, prefix=API_V1_PREFIX)  # Enhan
 app.include_router(dashboard_enhanced_router, prefix=API_V1_PREFIX)  # Enhanced dashboard
 app.include_router(webhooks_router, prefix=API_V1_PREFIX)  # Webhook handlers
 app.include_router(referral_router, prefix=API_V1_PREFIX)  # Referral System
-app.include_router(compare_router, prefix=API_V1_PREFIX)  # Model Compare
 app.include_router(admin_analytics_router, prefix=API_V1_PREFIX)  # Analytics Dashboard
 app.include_router(admin_email_router, prefix=API_V1_PREFIX)  # Email Templates
 app.include_router(marketplace_router, prefix=API_V1_PREFIX)  # Model Marketplace
