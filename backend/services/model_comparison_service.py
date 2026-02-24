@@ -113,10 +113,33 @@ class ModelComparisonService:
     }
     
     def __init__(self):
-        self.groq_key = os.getenv("GROQ_API_KEY", "")
-        self.openrouter_key = os.getenv("OPENROUTER_API_KEY", "")
         self._cached_openrouter_models = None
         self._cache_time = 0
+
+    async def _get_api_key(self, provider: str) -> str:
+        """Fetch API key dynamically from Supabase, fallback to env"""
+        try:
+            from core.supabase_client import get_supabase_client
+            from services.model_service import model_service
+            import os
+            
+            db = get_supabase_client()
+            if db:
+                config = await model_service.get_provider_config(db, provider)
+                if config and config.get("api_key"):
+                    return config["api_key"]
+        except Exception as e:
+            logger.debug(f"DB lookup for {provider} key failed, trying fallback: {e}")
+            
+        # Fallback to env variables
+        if provider == "groq":
+            import os
+            return os.getenv("GROQ_API_KEY", "")
+        elif provider == "openrouter":
+            import os
+            return os.getenv("OPENROUTER_API_KEY", "")
+            
+        return ""
     
     def get_available_models(self) -> List[Dict[str, Any]]:
         """Get list of available models grouped by tier"""
@@ -130,7 +153,7 @@ class ModelComparisonService:
                 "tier": config["tier"],
                 "icon": config["icon"],
                 "color": config["color"],
-                "available": bool(self.groq_key),
+                "available": True,  # UI assumes available; backend validates key on execute
                 "provider": config["provider"]
             })
         
@@ -142,7 +165,7 @@ class ModelComparisonService:
                 "tier": config["tier"],
                 "icon": config["icon"],
                 "color": config["color"],
-                "available": bool(self.openrouter_key),
+                "available": True,  # UI assumes available; backend validates key on execute
                 "provider": config["provider"],
                 "cost": config.get("cost_per_1k", 0)
             })
@@ -151,11 +174,14 @@ class ModelComparisonService:
     
     async def fetch_openrouter_models(self) -> List[Dict[str, Any]]:
         """Fetch available models from OpenRouter API"""
+        api_key = await self._get_api_key("openrouter")
+        if not api_key: return []
+        
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
                     self.OPENROUTER_MODELS_URL,
-                    headers={"Authorization": f"Bearer {self.openrouter_key}"},
+                    headers={"Authorization": f"Bearer {api_key}"},
                     timeout=30.0
                 )
                 
@@ -268,11 +294,15 @@ class ModelComparisonService:
     
     async def _call_groq(self, model_id: str, prompt: str) -> str:
         """Call Groq API (free, fast)"""
+        api_key = await self._get_api_key("groq")
+        if not api_key:
+            raise Exception("Groq API Key yapılandırılmamış (Admin panelinden ekleyin)")
+            
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 self.GROQ_URL,
                 headers={
-                    "Authorization": f"Bearer {self.groq_key}",
+                    "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json"
                 },
                 json={
@@ -292,11 +322,15 @@ class ModelComparisonService:
     
     async def _call_openrouter(self, model_id: str, prompt: str) -> str:
         """Call OpenRouter API (paid models)"""
+        api_key = await self._get_api_key("openrouter")
+        if not api_key:
+            raise Exception("OpenRouter API Key yapılandırılmamış (Admin panelinden ekleyin)")
+            
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 self.OPENROUTER_URL,
                 headers={
-                    "Authorization": f"Bearer {self.openrouter_key}",
+                    "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json",
                     "HTTP-Referer": "https://ai-platform.com",
                     "X-Title": "AI Platform"
