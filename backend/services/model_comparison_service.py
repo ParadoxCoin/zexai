@@ -33,8 +33,52 @@ class ModelComparisonService:
             "model_id": "llama-3.1-8b-instant",
             "name": "Llama 3.1 8B",
             "tier": "free",
-            "icon": "🦙",
             "color": "from-indigo-500 to-blue-500"
+        }
+    }
+    
+    # Top 5 Free OpenRouter models
+    OPENROUTER_FREE_MODELS = {
+        "gemini-2.0-flash-lite": {
+            "provider": "openrouter",
+            "model_id": "google/gemini-2.0-flash-lite-preview-02-05:free",
+            "name": "Gemini 2.0 Flash Lite",
+            "tier": "free",
+            "icon": "✨",
+            "color": "from-teal-500 to-emerald-500"
+        },
+        "deepseek-r1-free": {
+            "provider": "openrouter",
+            "model_id": "deepseek/deepseek-r1:free",
+            "name": "DeepSeek R1",
+            "tier": "free",
+            "icon": "🐳",
+            "color": "from-blue-600 to-cyan-500"
+        },
+        "qwen-2.5-coder-32b": {
+            "provider": "openrouter",
+            "model_id": "qwen/qwen-2.5-coder-32b-instruct:free",
+            "name": "Qwen 2.5 Coder 32B",
+            "tier": "free",
+            "icon": "💻",
+            "color": "from-purple-500 to-indigo-500"
+        },
+        "mistral-nemo-12b": {
+            "provider": "openrouter",
+            "model_id": "mistralai/mistral-nemo:free",
+            "name": "Mistral Nemo 12B",
+            "tier": "free",
+            "icon": "🌪️",
+            "color": "from-amber-500 to-yellow-500"
+        },
+        "gemma-3-27b": {
+            "provider": "openrouter",
+            "model_id": "google/gemma-3-27b-it:free",
+            "name": "Gemma 3 27B",
+            "tier": "free",
+            "icon": "💎",
+            "color": "from-rose-500 to-pink-500"
+        },
     }
     
     # Popular paid models via OpenRouter
@@ -139,6 +183,18 @@ class ModelComparisonService:
                 "available": True,  # UI assumes available; backend validates key on execute
                 "provider": config["provider"]
             })
+            
+        # Add OpenRouter free models
+        for key, config in self.OPENROUTER_FREE_MODELS.items():
+            models.append({
+                "id": key,
+                "name": config["name"],
+                "tier": config["tier"],
+                "icon": config["icon"],
+                "color": config["color"],
+                "available": True,
+                "provider": config["provider"]
+            })
         
         # Add OpenRouter paid models
         for key, config in self.OPENROUTER_PAID_MODELS.items():
@@ -190,7 +246,7 @@ class ModelComparisonService:
             return {"success": False, "error": "En fazla 6 model seçebilirsiniz"}
         
         # Combine all models
-        all_models = {**self.GROQ_MODELS, **self.OPENROUTER_PAID_MODELS}
+        all_models = {**self.GROQ_MODELS, **self.OPENROUTER_FREE_MODELS, **self.OPENROUTER_PAID_MODELS}
         
         # Create tasks for parallel execution
         tasks = []
