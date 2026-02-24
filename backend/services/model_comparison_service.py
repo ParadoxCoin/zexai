@@ -38,46 +38,46 @@ class ModelComparisonService:
         }
     }
     
-    # Top 5 Free OpenRouter models
+    # Top 5 Free OpenRouter models (Verified Working)
     OPENROUTER_FREE_MODELS = {
-        "gemini-2.0-flash-lite": {
+        "openrouter-auto-free": {
             "provider": "openrouter",
-            "model_id": "google/gemini-2.0-flash-lite-preview-02-05:free",
-            "name": "Gemini 2.0 Flash Lite",
+            "model_id": "openrouter/free",
+            "name": "Auto Free (Best Available)",
             "tier": "free",
-            "icon": "✨",
+            "icon": "🤖",
             "color": "from-teal-500 to-emerald-500"
         },
-        "deepseek-r1-free": {
+        "step-3.5-flash": {
             "provider": "openrouter",
-            "model_id": "deepseek/deepseek-r1:free",
-            "name": "DeepSeek R1",
+            "model_id": "stepfun/step-3.5-flash:free",
+            "name": "Step 3.5 Flash",
             "tier": "free",
-            "icon": "🐳",
+            "icon": "⚡",
             "color": "from-blue-600 to-cyan-500"
         },
-        "qwen-2.5-coder-32b": {
+        "trinity-large": {
             "provider": "openrouter",
-            "model_id": "qwen/qwen-2.5-coder-32b-instruct:free",
-            "name": "Qwen 2.5 Coder 32B",
+            "model_id": "arcee-ai/trinity-large-preview:free",
+            "name": "Trinity Large Preview",
             "tier": "free",
-            "icon": "💻",
+            "icon": "🧠",
             "color": "from-purple-500 to-indigo-500"
         },
-        "mistral-nemo-12b": {
+        "solar-pro-3": {
             "provider": "openrouter",
-            "model_id": "mistralai/mistral-nemo:free",
-            "name": "Mistral Nemo 12B",
+            "model_id": "upstage/solar-pro-3:free",
+            "name": "Solar Pro 3",
             "tier": "free",
-            "icon": "🌪️",
+            "icon": "☀️",
             "color": "from-amber-500 to-yellow-500"
         },
-        "gemma-3-27b": {
+        "lfm-thinking": {
             "provider": "openrouter",
-            "model_id": "google/gemma-3-27b-it:free",
-            "name": "Gemma 3 27B",
+            "model_id": "liquid/lfm-2.5-1.2b-thinking:free",
+            "name": "LFM Thinking 1.2B",
             "tier": "free",
-            "icon": "💎",
+            "icon": "💭",
             "color": "from-rose-500 to-pink-500"
         },
     }
