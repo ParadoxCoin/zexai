@@ -35,23 +35,6 @@ class ModelComparisonService:
             "tier": "free",
             "icon": "🦙",
             "color": "from-indigo-500 to-blue-500"
-        },
-        "llama-3.2-3b": {
-            "provider": "groq",
-            "model_id": "llama-3.2-3b-preview",
-            "name": "Llama 3.2 3B",
-            "tier": "free",
-            "icon": "⚡",
-            "color": "from-cyan-500 to-blue-500"
-        },
-        "llama-3.2-1b": {
-            "provider": "groq",
-            "model_id": "llama-3.2-1b-preview",
-            "name": "Llama 3.2 1B",
-            "tier": "free",
-            "icon": "🚀",
-            "color": "from-green-500 to-teal-500"
-        },
     }
     
     # Popular paid models via OpenRouter
