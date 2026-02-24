@@ -374,7 +374,7 @@ async def chat_completion(
                     "temperature": request.temperature,
                     "max_tokens": request.max_tokens
                 },
-                timeout=120.0
+                timeout=300.0
             )
         
         if response.status_code != 200:
@@ -874,7 +874,7 @@ async def chat_stream(
                              **(({"HTTP-Referer": "https://zexai.vercel.app", "X-Title": "ZexAI"}) if c.get("is_openrouter") else {})},
                     json={"model": c["model_id"], "messages": c["messages"],
                           "temperature": c["temp"], "max_tokens": c["max_tok"], "stream": True},
-                    timeout=120.0
+                    timeout=300.0
                 ) as resp:
                     if resp.status_code != 200:
                         err = await resp.aread()
