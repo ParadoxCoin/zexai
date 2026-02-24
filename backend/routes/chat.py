@@ -347,16 +347,27 @@ async def chat_completion(
         logger.info(f"Chat request: model={request.model}, history_msgs={len(existing_messages)}, total_api_msgs={len(api_messages)}")
         
         # 5. Call API (OpenAI-compatible format - works with all providers)
-        api_endpoint = f"{provider_config['base_url']}/chat/completions"
-        provider_model_id = model.get("provider_model_id", request.model)
+        # Smart URL construction - avoid doubling /chat/completions
+        base = provider_config['base_url'].rstrip('/')
+        if base.endswith('/chat/completions'):
+            api_endpoint = base
+        else:
+            api_endpoint = f"{base}/chat/completions"
+        provider_model_id = model.get("model_id", request.model)
+        
+        # Build headers - add OpenRouter-specific headers when needed
+        req_headers = {
+            "Authorization": f"Bearer {str(provider_config['api_key'])}",
+            "Content-Type": "application/json"
+        }
+        if "openrouter" in provider_id.lower():
+            req_headers["HTTP-Referer"] = "https://zexai.vercel.app"
+            req_headers["X-Title"] = "ZexAI"
         
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 api_endpoint,
-                headers={
-                    "Authorization": f"Bearer {str(provider_config['api_key'])}",
-                    "Content-Type": "application/json"
-                },
+                headers=req_headers,
                 json={
                     "model": provider_model_id,
                     "messages": api_messages,  # ✅ Full history included!
@@ -795,17 +806,24 @@ async def chat_stream(
         provider_config = await model_service.get_provider_config(db, model_data.get("provider_id"))
 
     if provider_config:
-        api_url = f"{provider_config['base_url']}/chat/completions"
+        # Smart URL construction - avoid doubling /chat/completions
+        base = provider_config['base_url'].rstrip('/')
+        if base.endswith('/chat/completions'):
+            api_url = base
+        else:
+            api_url = f"{base}/chat/completions"
         api_key = str(provider_config['api_key'])
-        provider_model_id = model_data.get("provider_model_id", request.model)
+        provider_id_lower = (model_data.get("provider_id", "") if model_data else "").lower()
+        is_openrouter = "openrouter" in provider_id_lower
+        provider_model_id = model_data.get("model_id", request.model)  # model_id is the correct field
     else:
         groq_key = os.getenv("GROQ_API_KEY", "")
         if not groq_key:
             raise HTTPException(status_code=500, detail="No API key configured")
         api_url = "https://api.groq.com/openai/v1/chat/completions"
         api_key = groq_key
-        groq_map = {"llama-3.3-70b": "llama-3.3-70b-versatile", "llama-3.1-8b": "llama-3.1-8b-instant",
-                     "llama-3.2-3b": "llama-3.2-3b-preview", "llama-3.2-1b": "llama-3.2-1b-preview"}
+        is_openrouter = False
+        groq_map = {"llama-3.3-70b": "llama-3.3-70b-versatile", "llama-3.1-8b": "llama-3.1-8b-instant"}
         provider_model_id = groq_map.get(request.model, "llama-3.3-70b-versatile")
 
     # Always try to load existing conversation for proper save/update
@@ -837,7 +855,7 @@ async def chat_stream(
         "messages": api_messages, "temp": request.temperature, "max_tok": request.max_tokens,
         "conv_id": conv_id, "uid": current_user.id, "user_msg": request.message,
         "model_name": request.model, "ex_conv": existing_conv, "ex_msgs": existing_db_messages,
-        "is_free": is_free_model
+        "is_free": is_free_model, "is_openrouter": is_openrouter
     }
 
     # Shared state for the generator to communicate with the background task
@@ -852,7 +870,8 @@ async def chat_stream(
             async with httpx.AsyncClient() as http:
                 async with http.stream(
                     "POST", c["api_url"],
-                    headers={"Authorization": f"Bearer {c['api_key']}", "Content-Type": "application/json"},
+                    headers={"Authorization": f"Bearer {c['api_key']}", "Content-Type": "application/json",
+                             **(({"HTTP-Referer": "https://zexai.vercel.app", "X-Title": "ZexAI"}) if c.get("is_openrouter") else {})},
                     json={"model": c["model_id"], "messages": c["messages"],
                           "temperature": c["temp"], "max_tokens": c["max_tok"], "stream": True},
                     timeout=120.0
