@@ -1,3 +1,4 @@
+// Build v2.1 - Fixed conversation history display
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiService } from "@/services/api";
