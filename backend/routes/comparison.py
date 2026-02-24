@@ -42,8 +42,8 @@ async def compare_models(
 ):
     """Compare multiple models side-by-side"""
     try:
-        if not request.prompt or len(request.prompt.strip()) < 5:
-            raise HTTPException(status_code=400, detail="Prompt en az 5 karakter olmalı")
+        if not request.prompt or len(request.prompt.strip()) < 1:
+            raise HTTPException(status_code=400, detail="Prompt boş olamaz")
         
         if len(request.model_ids) < 2:
             raise HTTPException(status_code=400, detail="En az 2 model seçmelisiniz")

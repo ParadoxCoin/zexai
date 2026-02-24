@@ -87,7 +87,7 @@ export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
     };
 
     const handleCompare = () => {
-        if (prompt.trim().length < 5 || selectedModels.length < 2) return;
+        if (prompt.trim().length < 1 || selectedModels.length < 2) return;
         setResults([]);
         setGeneralError(null);
         compareMutation.mutate();
@@ -211,7 +211,7 @@ export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
                                 <textarea
                                     value={prompt}
                                     onChange={(e) => setPrompt(e.target.value)}
-                                    placeholder="Karşılaştırmak istediğiniz soruyu yazın... (min. 5 karakter)"
+                                    placeholder="Karşılaştırmak istediğiniz soruyu yazın..."
                                     rows={3}
                                     className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 resize-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 dark:focus:border-purple-600 text-sm transition-all"
                                     onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleCompare(); } }}
@@ -223,7 +223,7 @@ export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
                                             : <span className="text-emerald-500">✓ {selectedModels.length} model hazır</span>}
                                     </p>
                                     <button onClick={handleCompare}
-                                        disabled={compareMutation.isPending || prompt.trim().length < 5 || selectedModels.length < 2}
+                                        disabled={compareMutation.isPending || prompt.trim().length < 1 || selectedModels.length < 2}
                                         className="px-6 py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:from-gray-300 disabled:to-gray-400 dark:disabled:from-gray-600 dark:disabled:to-gray-700 text-white font-medium rounded-xl shadow-lg shadow-purple-500/20 disabled:shadow-none flex items-center gap-2 transition-all text-sm active:scale-95">
                                         {compareMutation.isPending ? (
                                             <><Loader2 className="w-4 h-4 animate-spin" /> Karşılaştırılıyor...</>
