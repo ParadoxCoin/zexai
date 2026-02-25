@@ -26,7 +26,9 @@ const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) =
             return;
         }
 
-        if (Number(zexBalance) < mintPrice) {
+        // Remove commas if any, and parse as Float to safely compare balances
+        const safeBalance = parseFloat(zexBalance.toString().replace(/,/g, ''));
+        if (safeBalance < mintPrice) {
             setErrorMessage("Yetersiz ZEX bakiyesi.");
             setMintStatus('error');
             return;

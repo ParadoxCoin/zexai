@@ -2,8 +2,8 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { ethers, BrowserProvider, Contract } from 'ethers';
 
 // Contract Addresses (Replace with real ones once deployed)
-export const ZEX_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000000";
-export const ZEXAI_NFT_ADDRESS = "0x0000000000000000000000000000000000000000";
+export const ZEX_TOKEN_ADDRESS = "0x5566234b86d4e0ee49bacf1DbCB3B914456511B3";
+export const ZEXAI_NFT_ADDRESS = "0xACC8bEba660AeFA386D405d7Ff27bcB3bf624Ab3";
 
 // Minimal ABI for ERC20 ZEX
 const ERC20_ABI = [
@@ -79,7 +79,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, []);
 
     const updateBalance = async (address: string, _provider: BrowserProvider) => {
-        if (!ZEX_TOKEN_ADDRESS || ZEX_TOKEN_ADDRESS === "0x0000000000000000000000000000000000000000") return;
+        if (!ZEX_TOKEN_ADDRESS || ZEX_TOKEN_ADDRESS === "0x5566234b86d4e0ee49bacf1DbCB3B914456511B3" === false) return;
         try {
             const zexContract = new ethers.Contract(ZEX_TOKEN_ADDRESS, ERC20_ABI, _provider);
             const balance = await zexContract.balanceOf(address);
