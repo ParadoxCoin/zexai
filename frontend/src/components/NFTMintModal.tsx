@@ -97,12 +97,33 @@ const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) =
                             <p className="text-gray-500 dark:text-gray-400">
                                 Görseliniz başarıyla NFT'ye dönüştürüldü ve cüzdanınıza gönderildi.
                             </p>
-                            <button
-                                onClick={onClose}
-                                className="mt-6 w-full py-3 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-                            >
-                                Kapat
-                            </button>
+
+                            <div className="flex flex-col gap-3 mt-6">
+                                <a
+                                    href={`https://testnets.opensea.io/${account}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium transition flex items-center justify-center gap-2"
+                                >
+                                    <img src="https://opensea.io/static/images/logos/opensea-logo.svg" alt="OpenSea" className="w-5 h-5 invert" />
+                                    OpenSea'de Görüntüle
+                                </a>
+                                <a
+                                    href={`https://testnet.zora.co/${account}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="w-full py-3 bg-black hover:bg-gray-800 text-white rounded-xl font-medium transition flex items-center justify-center gap-2 border border-gray-700"
+                                >
+                                    <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center text-black text-xs font-bold font-serif">Z</div>
+                                    Zora'da Görüntüle
+                                </a>
+                                <button
+                                    onClick={onClose}
+                                    className="w-full py-3 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition mt-2"
+                                >
+                                    Kapat
+                                </button>
+                            </div>
                         </div>
                     ) : (
                         <>

@@ -70,6 +70,9 @@ contract ZexAIEcosystemNFT is ERC1155, Ownable {
         emit NFTMinted(msg.sender, newItemId, metadataURI, amount);
     }
 
+    // Contract URI for OpenSea & Zora storefront metadata
+    string private _contractURI;
+
     /**
      * @dev Override URI function to return individual URI per token ID
      */
@@ -77,7 +80,18 @@ contract ZexAIEcosystemNFT is ERC1155, Ownable {
         return _tokenURIs[tokenId];
     }
 
+    /**
+     * @dev Returns the contract URI containing collection details (OpenSea/Zora standard)
+     */
+    function contractURI() public view returns (string memory) {
+        return _contractURI;
+    }
+
     // --- Admin Functions ---
+
+    function setContractURI(string memory newURI) external onlyOwner {
+        _contractURI = newURI;
+    }
 
     function setMintFee(uint256 newFee) external onlyOwner {
         mintFee = newFee;
