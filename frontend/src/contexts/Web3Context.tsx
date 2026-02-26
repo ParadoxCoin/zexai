@@ -82,11 +82,18 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     setZexBalance("0");
                 }
             });
+
+            // Ethers.js strongly recommends reloading the page on chain changes 
+            // to avoid state corruption or NETWORK_ERROR crashes
+            window.ethereum.on('chainChanged', () => {
+                window.location.reload();
+            });
         }
 
         return () => {
             if (window.ethereum && window.ethereum.removeListener) {
                 window.ethereum.removeListener('accountsChanged', () => { });
+                window.ethereum.removeListener('chainChanged', () => { });
             }
         };
     }, []);
@@ -164,13 +171,9 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
                         }
                     }
                 }
-                // Re-initialize provider after switch
-                const newProvider = new ethers.BrowserProvider(window.ethereum);
-                setProvider(newProvider);
-                if (accounts.length > 0) {
-                    setAccount(accounts[0]);
-                    await updateBalance(accounts[0], newProvider);
-                }
+                // Do not re-initialize on the fly if the network switch was successful
+                // The 'chainChanged' listener will catch it and reload the page automatically,
+                // which is the safest way to prevent ethers v6 NETWORK_ERRORs
                 return;
             }
 
