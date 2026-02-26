@@ -61,3 +61,4 @@ venv.bak/
 .env.progressive
 backend/zexai.db
 backend/supabase_db.sqlite
+.vercel
