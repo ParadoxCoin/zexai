@@ -233,12 +233,10 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (!contracts) return false;
 
         try {
-            // 1. Get current mint fee
-            // const mintFee = await contracts.nftContract.mintFee();
-            // const totalFee = mintFee * BigInt(amount);
-
-            // Hardcode for Phase 1 simulation (10 MANUS per mint)
-            const totalFeeEther = (10 * amount).toString();
+            // 1. Get current mint fee dynamically from the deployed contract
+            const mintFeeWei: bigint = await contracts.nftContract.mintFee();
+            const totalFeeWei = mintFeeWei * BigInt(amount);
+            const totalFeeEther = ethers.formatEther(totalFeeWei);
 
             // 2. Ensure allowance
             const approved = await checkAndApproveZex(totalFeeEther);
