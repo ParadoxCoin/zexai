@@ -29,6 +29,7 @@ contract ZexAIEcosystemNFT is ERC1155, Ownable {
     event MintFeeUpdated(uint256 newFee);
     event TreasuryUpdated(address newTreasury);
 
+    /**
      * @dev Constructor
      * @param initialOwner Address of the contract owner
      * @param _zexTokenAddress Address of the ZEX ERC20 token contract
@@ -54,10 +55,22 @@ contract ZexAIEcosystemNFT is ERC1155, Ownable {
         
         uint256 totalCost = mintFee * amount;
 
-        // 1. Transfer ZEX from user to the treasury
+        // Calculate 0.5% burn and 99.5% treasury distribution
+        // 0.5% = (totalCost * 5) / 1000
+        uint256 burnAmount = (totalCost * 5) / 1000;
+        uint256 treasuryAmount = totalCost - burnAmount;
+
+        // 1. Transfer ZEX from user
         // User MUST have called approve() on the ZEX token contract first
-        bool success = zexToken.transferFrom(msg.sender, treasury, totalCost);
-        require(success, "ZEX token transfer failed. Check allowance and balance.");
+        
+        // Send 99.5% to Treasury
+        bool successTreasury = zexToken.transferFrom(msg.sender, treasury, treasuryAmount);
+        require(successTreasury, "ZEX treasury transfer failed");
+
+        // Send 0.5% to the standard burn address
+        address burnAddress = 0x000000000000000000000000000000000000dEaD;
+        bool successBurn = zexToken.transferFrom(msg.sender, burnAddress, burnAmount);
+        require(successBurn, "ZEX burn transfer failed");
 
         // 2. Increment token ID and set URI
         _currentTokenID++;

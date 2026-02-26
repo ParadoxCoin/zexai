@@ -3,7 +3,7 @@ import { ethers, BrowserProvider, Contract } from 'ethers';
 
 // Contract Addresses (Replace with real ones once deployed)
 export const ZEX_TOKEN_ADDRESS = "0x5566234b86d4e0ee49bacf1DbCB3B914456511B3";
-export const ZEXAI_NFT_ADDRESS = "0xACC8bEba660AeFA386D405d7Ff27bcB3bf624Ab3";
+export const ZEXAI_NFT_ADDRESS = "0xe997FfD804B2a98d8c503939De9F3f6333081304";
 export const POLYGON_AMOY_CHAIN_ID = "0x13882"; // 80002 in hex
 
 // Minimal ABI for ERC20 ZEX
