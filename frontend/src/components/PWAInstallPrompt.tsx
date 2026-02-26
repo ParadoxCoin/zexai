@@ -34,24 +34,24 @@ export const PWAInstallPrompt = () => {
             setIsInstallable(true);
         }
 
-        // Listen for install prompt (Android/Chrome/Desktop Edge)
         const handleBeforeInstall = (e: Event) => {
             e.preventDefault();
             setDeferredPrompt(e as BeforeInstallPromptEvent);
             setIsInstallable(true);
-
-            // Eğer tarayıcı "Yüklenebilir" diyorsa, demek ki bilgisayardan kaldırılmıştır. Gizlemeyi iptal et.
             setIsForceHidden(false);
             localStorage.removeItem('pwa-installed');
         };
 
+        // If the event fired before React mounted, we can get it from the global window object
+        if ((window as any).deferredPWAEvent) {
+            handleBeforeInstall((window as any).deferredPWAEvent);
+            (window as any).deferredPWAEvent = null; // Consume it
+        }
+
         const handleAppInstalled = () => {
-            // Buton ve yükleme durumu hemen kapatılsın, uygulama kuruldu!
             setIsStandalone(true);
             setIsInstallable(false);
             setDeferredPrompt(null);
-
-            // Tüm sekmelerde bir daha çıkmasın diye kaydet
             setIsForceHidden(true);
             localStorage.setItem('pwa-installed', 'true');
         };

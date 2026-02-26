@@ -125,8 +125,15 @@
         if (splash) splash.classList.add('loaded');
       }, 500);
     });
+    // Register Service Worker and Catch PWA Install Prompt Early
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // Prevent the mini-infobar from appearing on mobile
+      e.preventDefault();
+      // Stash the event so it can be triggered later by React's PWAInstallPrompt.tsx
+      window.deferredPWAEvent = e;
+      console.log("[PWA] Install Prompt Captured early in index.html");
+    });
 
-    // Register Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', async () => {
         try {
