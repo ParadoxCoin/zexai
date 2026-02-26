@@ -28,8 +28,8 @@ const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) =
 
         // Remove commas if any, and parse as Float to safely compare balances
         const safeBalance = parseFloat(zexBalance.toString().replace(/,/g, ''));
-        if (safeBalance < mintPrice) {
-            setErrorMessage("Yetersiz ZEX bakiyesi.");
+        if (safeBalance < mintPrice || isNaN(safeBalance)) {
+            setErrorMessage(`Yetersiz ZEX bakiyesi. Cüzdan: ${zexBalance} (Algılanan: ${safeBalance})`);
             setMintStatus('error');
             return;
         }

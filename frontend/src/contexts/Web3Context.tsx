@@ -4,6 +4,7 @@ import { ethers, BrowserProvider, Contract } from 'ethers';
 // Contract Addresses (Replace with real ones once deployed)
 export const ZEX_TOKEN_ADDRESS = "0x5566234b86d4e0ee49bacf1DbCB3B914456511B3";
 export const ZEXAI_NFT_ADDRESS = "0xACC8bEba660AeFA386D405d7Ff27bcB3bf624Ab3";
+export const POLYGON_AMOY_CHAIN_ID = "0x13882"; // 80002 in hex
 
 // Minimal ABI for ERC20 ZEX
 const ERC20_ABI = [
@@ -45,6 +46,18 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 const _provider = new ethers.BrowserProvider(window.ethereum);
                 setProvider(_provider);
                 try {
+                    const network = await _provider.getNetwork();
+                    if (network.chainId !== 80002n) {
+                        try {
+                            await window.ethereum.request({
+                                method: 'wallet_switchEthereumChain',
+                                params: [{ chainId: POLYGON_AMOY_CHAIN_ID }],
+                            });
+                        } catch (switchError) {
+                            console.error("Please switch your wallet to Polygon Amoy Testnet manually.");
+                        }
+                    }
+
                     const accounts = await _provider.listAccounts();
                     if (accounts.length > 0) {
                         setAccount(accounts[0].address);
@@ -81,11 +94,26 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const updateBalance = async (address: string, _provider: BrowserProvider) => {
         if (!ZEX_TOKEN_ADDRESS || ZEX_TOKEN_ADDRESS === "0x5566234b86d4e0ee49bacf1DbCB3B914456511B3" === false) return;
         try {
+            const network = await _provider.getNetwork();
+            if (network.chainId !== 80002n) {
+                console.warn("Wrong network for balance update. Expected 80002, got:", network.chainId);
+                setZexBalance("0");
+                return;
+            }
+
             const zexContract = new ethers.Contract(ZEX_TOKEN_ADDRESS, ERC20_ABI, _provider);
-            const balance = await zexContract.balanceOf(address);
-            setZexBalance(ethers.formatEther(balance));
+            const balance: bigint = await zexContract.balanceOf(address);
+
+            // Format BigInt down to a readable string (18 decimals standard for ERC20)
+            const formattedBalance = ethers.formatUnits(balance, 18);
+
+            // Keep exactly 2 decimal places to prevent extreme lengths or NaN loops
+            const roundedBalance = parseFloat(formattedBalance).toFixed(2);
+            setZexBalance(roundedBalance);
+            console.log("ZEX Balance updated via RPC:", roundedBalance);
         } catch (error) {
             console.error("Error fetching ZEX balance:", error);
+            setZexBalance("0");
         }
     };
 
@@ -102,6 +130,50 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             // Request account access
             const accounts = await _provider.send("eth_requestAccounts", []);
+
+            // Switch network
+            const network = await _provider.getNetwork();
+            if (network.chainId !== 80002n) {
+                try {
+                    await window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: POLYGON_AMOY_CHAIN_ID }],
+                    });
+                } catch (switchError: any) {
+                    // This error code indicates that the chain has not been added to MetaMask.
+                    if (switchError.code === 4902) {
+                        try {
+                            await window.ethereum.request({
+                                method: 'wallet_addEthereumChain',
+                                params: [
+                                    {
+                                        chainId: POLYGON_AMOY_CHAIN_ID,
+                                        chainName: 'Polygon Amoy Testnet',
+                                        rpcUrls: ['https://rpc-amoy.polygon.technology/'],
+                                        nativeCurrency: {
+                                            name: 'MATIC',
+                                            symbol: 'MATIC',
+                                            decimals: 18
+                                        },
+                                        blockExplorerUrls: ['https://amoy.polygonscan.com/']
+                                    }
+                                ],
+                            });
+                        } catch (addError) {
+                            console.error("Failed to add Polygon Amoy Network:", addError);
+                        }
+                    }
+                }
+                // Re-initialize provider after switch
+                const newProvider = new ethers.BrowserProvider(window.ethereum);
+                setProvider(newProvider);
+                if (accounts.length > 0) {
+                    setAccount(accounts[0]);
+                    await updateBalance(accounts[0], newProvider);
+                }
+                return;
+            }
+
             if (accounts.length > 0) {
                 setAccount(accounts[0]);
                 await updateBalance(accounts[0], _provider);
