@@ -19,6 +19,7 @@ from schemas.video import (
     EffectPackage,
     VideoTaskStatus,
     SocialMediaExportRequest,
+    ShareRewardRequest,
     VideoType,
     VideoQuality,
     VideoSpeed
@@ -501,6 +502,64 @@ async def export_for_social_media(
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Export error: {str(e)}")
+
+
+@router.post("/export/share-reward")
+async def claim_share_reward(
+    request: ShareRewardRequest,
+    current_user = Depends(get_current_user),
+    db = Depends(get_db)
+):
+    """
+    Reward user with credits for sharing their generated video on social media
+    """
+    REWARD_CREDITS = 15  # Fixed reward for sharing
+    
+    try:
+        # Check if media exists and belongs to user
+        result = db.table("media_outputs").select("id, metadata, service_type").eq(
+            "id", request.media_id
+        ).eq("user_id", str(current_user.id)).single().execute()
+        
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Media item not found or unauthorized")
+            
+        media = result.data
+        metadata = media.get("metadata") or {}
+        
+        # Check if already rewarded for this specific video
+        if metadata.get("reward_claimed") is True:
+            raise HTTPException(status_code=400, detail="Reward already claimed for this video")
+            
+        # Update metadata to mark as claimed
+        metadata["reward_claimed"] = True
+        metadata["shared_platform"] = request.platform
+        metadata["shared_at"] = datetime.utcnow().isoformat()
+        
+        # Update the database record
+        db.table("media_outputs").update({"metadata": metadata}).eq("id", request.media_id).execute()
+        
+        # Add credits to user wallet
+        await CreditManager.add_credits(
+            db, 
+            current_user.id, 
+            REWARD_CREDITS, 
+            "social_share_reward",
+            details={"media_id": request.media_id, "platform": request.platform}
+        )
+        
+        return {
+            "success": True,
+            "message": f"Başarıyla paylaşıldı! {REWARD_CREDITS} kredi kazandınız.",
+            "reward_amount": REWARD_CREDITS
+        }
+        
+    except httpx.HTTPError:
+        raise HTTPException(status_code=500, detail="Network error while processing reward")
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(status_code=500, detail=f"Failed to claim reward: {str(e)}")
 
 
 @router.get("/my-videos", response_model=MediaOutputList)

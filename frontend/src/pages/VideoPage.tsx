@@ -1635,80 +1635,98 @@ const VideoPage = () => {
                             </button>
                             <div className="absolute right-0 bottom-full mb-1 hidden group-hover:flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-10 min-w-[140px]">
                               <a
-                                href={`https://twitter.com/intent/tweet?text=AI ile üretilmiş video!&url=${encodeURIComponent(video.url || video.file_url)}`}
+                                href={`https://twitter.com/intent/tweet?text=ZexAI ile ürettiğim muhteşem videoya göz atın! 🚀&url=${encodeURIComponent(video.url || video.file_url)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                onClick={async (e) => {
+                                  try {
+                                    await apiService.post('/video/export/share-reward', { media_id: video.id, platform: 'twitter' });
+                                    queryClient.invalidateQueries({ queryKey: ["userCredits"] });
+                                    alert('Paylaşımınız için 15 kredi kazandınız!');
+                                  } catch (err) {
+                                    console.log('Reward already claimed or error', err);
+                                  }
+                                }}
                                 className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
                               >
-                                <span className="text-black dark:text-white font-bold">𝕏</span> Twitter
+                                <span className="text-black dark:text-white font-bold">𝕏</span> Twitter (+15c)
                               </a>
                               <a
                                 href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(video.url || video.file_url)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
-                              >
-                                <span className="text-blue-600 font-bold">f</span> Facebook
-                              </a>
-                              <a
-                                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(video.url || video.file_url)}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
-                              >
-                                <span className="text-blue-700 font-bold">in</span> LinkedIn
-                              </a>
-                              <a
-                                href={`https://t.me/share/url?url=${encodeURIComponent(video.url || video.file_url)}&text=AI ile üretilmiş video!`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
-                              >
-                                <span className="text-blue-500">✈️</span> Telegram
-                              </a>
-                              <a
-                                href={`https://api.whatsapp.com/send?text=AI ile üretilmiş video! ${encodeURIComponent(video.url || video.file_url)}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
-                              >
-                                <span className="text-green-500">📱</span> WhatsApp
-                              </a>
-                              <a
-                                href={`https://www.youtube.com/upload`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
-                              >
-                                <span className="text-red-600">▶️</span> YouTube
-                              </a>
-                              <a
-                                href={`https://www.tiktok.com/upload`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
-                              >
-                                <span>🎵</span> TikTok
-                              </a>
-                              <a
-                                href={`https://www.instagram.com/`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
-                              >
-                                <span className="text-pink-500">📷</span> Instagram
-                              </a>
-                              <button
-                                onClick={() => {
-                                  navigator.clipboard.writeText(video.url || video.file_url);
-                                  alert('Link kopyalandı!');
+                                onClick={async (e) => {
+                                  try {
+                                    await apiService.post('/video/export/share-reward', { media_id: video.id, platform: 'facebook' });
+                                    queryClient.invalidateQueries({ queryKey: ["userCredits"] });
+                                    alert('Paylaşımınız için 15 kredi kazandınız!');
+                                  } catch (err) {
+                                    console.log('Reward already claimed or error', err);
+                                  }
                                 }}
-                                className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm border-t border-gray-100 dark:border-gray-700"
+                                className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
                               >
-                                <Link2 className="w-4 h-4" /> Linki Kopyala
-                              </button>
+                                <span className="text-blue-600 font-bold">f</span> Facebook (+15c)
+                              </a>
                             </div>
                           </div>
+                          <a
+                            href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(video.url || video.file_url)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
+                          >
+                            <span className="text-blue-700 font-bold">in</span> LinkedIn
+                          </a>
+                          <a
+                            href={`https://t.me/share/url?url=${encodeURIComponent(video.url || video.file_url)}&text=AI ile üretilmiş video!`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
+                          >
+                            <span className="text-blue-500">✈️</span> Telegram
+                          </a>
+                          <a
+                            href={`https://api.whatsapp.com/send?text=AI ile üretilmiş video! ${encodeURIComponent(video.url || video.file_url)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
+                          >
+                            <span className="text-green-500">📱</span> WhatsApp
+                          </a>
+                          <a
+                            href={`https://www.youtube.com/upload`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
+                          >
+                            <span className="text-red-600">▶️</span> YouTube
+                          </a>
+                          <a
+                            href={`https://www.tiktok.com/upload`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
+                          >
+                            <span>🎵</span> TikTok
+                          </a>
+                          <a
+                            href={`https://www.instagram.com/`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
+                          >
+                            <span className="text-pink-500">📷</span> Instagram
+                          </a>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(video.url || video.file_url);
+                              alert('Link kopyalandı!');
+                            }}
+                            className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm border-t border-gray-100 dark:border-gray-700"
+                          >
+                            <Link2 className="w-4 h-4" /> Linki Kopyala
+                          </button>
                         </div>
                       )}
                     </div>
@@ -1718,41 +1736,40 @@ const VideoPage = () => {
             </div>
           </div>
         )}
-      </div>
-
-      {/* Motion Brush Modal */}
-      {showMotionBrush && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl">
-                  <Wand2 className="w-5 h-5 text-white" />
+        {/* Motion Brush Modal */}
+        {showMotionBrush && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl">
+                    <Wand2 className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900 dark:text-white">Motion Brush</h2>
+                    <p className="text-xs text-gray-500">Görseli hareket ettirin</p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-lg font-bold text-gray-900 dark:text-white">Motion Brush</h2>
-                  <p className="text-xs text-gray-500">Görseli hareket ettirin</p>
-                </div>
+                <button
+                  onClick={() => setShowMotionBrush(false)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
               </div>
-              <button
-                onClick={() => setShowMotionBrush(false)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
 
-            {/* Modal Content */}
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
-              <MotionBrushEditor
-                onGenerate={handleMotionBrush}
-                isGenerating={motionBrushLoading}
-              />
+              {/* Modal Content */}
+              <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+                <MotionBrushEditor
+                  onGenerate={handleMotionBrush}
+                  isGenerating={motionBrushLoading}
+                />
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

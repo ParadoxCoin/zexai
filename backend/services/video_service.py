@@ -36,43 +36,43 @@ class VideoService:
     # Model to preferred provider mapping
     # Admin can change this in the database
     MODEL_PROVIDER_MAP = {
-        # fal.ai models
-        "hailuo_minimax_text": "fal",
-        "hailuo_minimax_image": "fal",
+        # fal.ai models (Now mapped to Pollo as primary source)
+        "hailuo_minimax_text": "pollo",
+        "hailuo_minimax_image": "pollo",
         "kling25_turbo_text": "fal",
         "kling25_turbo_image": "fal",
         "kling21_master_text": "fal",
-        "luma_dream_text": "fal",
-        "luma_dream_image": "fal",
-        "luma_ray2_text": "fal",
-        "runway_gen3_text": "fal",
-        "runway_gen3_image": "fal",
-        "runway_turbo_text": "fal",
+        "luma_dream_text": "pollo",
+        "luma_dream_image": "pollo",
+        "luma_ray2_text": "pollo",
+        "runway_gen3_text": "pollo",
+        "runway_gen3_image": "pollo",
+        "runway_turbo_text": "pollo",
         "wan_cogvideo_text": "fal",
         "hunyuan_video_text": "fal",
         "hunyuan_video_image": "fal",
-        # Veo models (Replicate)
-        "veo3_text": "replicate",
-        "veo3_fast_text": "replicate",
-        "veo31_text": "replicate",
-        "veo31_image": "replicate",
-        "veo31_video": "replicate",
-        # Sora models (not yet available via API)
-        "sora2_text": "fal",  # Will use fal.ai when available
-        "sora2_image": "fal",
-        "sora_turbo_text": "fal",
+        # Veo models (Pollo/Replicate)
+        "veo3_text": "pollo",
+        "veo3_fast_text": "pollo",
+        "veo31_text": "pollo",
+        "veo31_image": "pollo",
+        "veo31_video": "pollo",
+        # Sora models (Pollo)
+        "sora2_text": "pollo",
+        "sora2_image": "pollo",
+        "sora_turbo_text": "pollo",
         # Pika models
-        "pika20_text": "fal",
-        "pika20_image": "fal",
-        "pika15_text": "fal",
+        "pika20_text": "pollo",
+        "pika20_image": "pollo",
+        "pika15_text": "pollo",
         # PixVerse
-        "pixverse_v3_text": "fal",
-        "pixverse_v3_image": "fal",
+        "pixverse_v3_text": "pollo",
+        "pixverse_v3_image": "pollo",
         # Vidu
-        "vidu15_text": "fal",
-        "vidu15_image": "fal",
+        "vidu15_text": "pollo",
+        "vidu15_image": "pollo",
         # Seedance
-        "seedance_mochi1_text": "fal",
+        "seedance_mochi1_text": "pollo",
         # Midjourney
         "midjourney_video_text": "fal",
         # kie.ai models - all use kie provider

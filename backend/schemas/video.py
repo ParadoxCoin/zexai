@@ -40,6 +40,12 @@ class SocialMediaFormat(str, Enum):
     YOUTUBE_SHORTS = "youtube_shorts"
 
 
+class ShareRewardRequest(BaseModel):
+    """Schema for claiming a share-to-earn reward"""
+    media_id: str
+    platform: str = Field(..., description="Platform shared on, e.g., 'twitter', 'instagram'")
+
+
 class ModelParameter(BaseModel):
     """Schema for a single model parameter"""
     label: str

@@ -13,6 +13,7 @@ from .fal_adapter import FalAIAdapter
 from .goapi_adapter import GoAPIAdapter, PiAPIAdapter
 from .replicate_adapter import ReplicateAdapter
 from .kie_adapter import KieAIAdapter
+from .pollo_adapter import PolloVideoAdapter
 
 
 # Provider registry
@@ -22,6 +23,7 @@ PROVIDER_ADAPTERS = {
     "piapi": PiAPIAdapter,
     "replicate": ReplicateAdapter,
     "kie": KieAIAdapter,
+    "pollo": PolloVideoAdapter,
 }
 
 
@@ -64,6 +66,7 @@ __all__ = [
     "PiAPIAdapter",
     "ReplicateAdapter",
     "KieAIAdapter",
+    "PolloVideoAdapter",
     # Factory
     "get_video_adapter",
     "get_supported_providers",
