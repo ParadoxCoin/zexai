@@ -90,8 +90,8 @@ export const PWAInstallPrompt = () => {
         <>
             <button
                 onClick={handleInstall}
-                className="hidden sm:flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 rounded-xl transition-all shadow-md shadow-blue-500/20"
-                title="Masaüstü Uygulaması Olarak Yükle"
+                className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 rounded-xl transition-all shadow-md shadow-blue-500/20"
+                title="Mobil veya Masaüstü Uygulaması Olarak Yükle"
             >
                 <Download className="h-4 w-4" />
                 <span className="text-xs font-semibold">Uygulamayı İndir</span>
