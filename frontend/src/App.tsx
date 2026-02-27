@@ -24,6 +24,7 @@ import { AdminDashboardEnhanced } from '@/pages/AdminDashboardEnhanced';
 import { ApiKeysPage } from '@/pages/ApiKeysPage';
 import ReferralPage from '@/pages/ReferralPage';
 import MarketplacePage from '@/pages/MarketplacePage';
+import StakingPage from '@/pages/StakingPage'; // Added StakingPage import
 import { useAuthStore } from '@/store/authStore';
 import { ToastProvider } from './components/ui/toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -82,6 +83,7 @@ function AppContent() {
           {/* Protected routes */}
           <Route path="/dashboard" element={<ProtectedRoute><PageTransition><DashboardPage /></PageTransition></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><PageTransition><ProfilePage /></PageTransition></ProtectedRoute>} />
+          <Route path="/staking" element={<ProtectedRoute><PageTransition><StakingPage /></PageTransition></ProtectedRoute>} /> {/* Added StakingPage route */}
           <Route path="/images" element={<ProtectedRoute><PageTransition><ImageGenerationPage /></PageTransition></ProtectedRoute>} />
           <Route path="/media" element={<ProtectedRoute><PageTransition><MediaLibraryPage /></PageTransition></ProtectedRoute>} />
           <Route path="/synapse" element={<ProtectedRoute><PageTransition><SynapsePage /></PageTransition></ProtectedRoute>} />

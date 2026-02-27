@@ -4,6 +4,7 @@ import { ethers, BrowserProvider, Contract } from 'ethers';
 // Contract Addresses (Polygon Amoy)
 export const ZEX_TOKEN_ADDRESS = "0x65970F056193A468F9C0a90B2e1B205a1a92a885";
 export const ZEXAI_NFT_ADDRESS = "0x99d86D3615812243C3b52a181AD00702A37C1663";
+export const ZEX_STAKING_ADDRESS = "0x489e0a853C051684C680b431e0737fA5ba84335a";
 export const POLYGON_AMOY_CHAIN_ID = "0x13882"; // 80002 in hex
 
 // Minimal ABI for ERC20 ZEX
@@ -19,6 +20,17 @@ const NFT_ABI = [
     "function mintFee() view returns (uint256)"
 ];
 
+// Minimal ABI for ZexStaking
+const STAKING_ABI = [
+    "function balanceOf(address account) view returns (uint256)",
+    "function earned(address account) view returns (uint256)",
+    "function stake(uint256 amount) external",
+    "function withdraw(uint256 amount) external",
+    "function getReward() external",
+    "function rewardRate() view returns (uint256)",
+    "function totalSupply() view returns (uint256)"
+];
+
 interface Web3ContextType {
     account: string | null;
     zexBalance: string;
@@ -26,7 +38,7 @@ interface Web3ContextType {
     connectWallet: () => Promise<void>;
     disconnectWallet: () => void;
     provider: BrowserProvider | null;
-    getContracts: () => Promise<{ zexContract: Contract; nftContract: Contract } | null>;
+    getContracts: () => Promise<{ zexContract: Contract; nftContract: Contract; stakingContract: Contract } | null>;
     checkAndApproveZex: (amountInEther: string) => Promise<boolean>;
     mintNFT: (metadataURI: string, amount: number) => Promise<boolean>;
 }
@@ -199,7 +211,8 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const signer = await provider.getSigner();
             const zexContract = new ethers.Contract(ZEX_TOKEN_ADDRESS, ERC20_ABI, signer);
             const nftContract = new ethers.Contract(ZEXAI_NFT_ADDRESS, NFT_ABI, signer);
-            return { zexContract, nftContract };
+            const stakingContract = new ethers.Contract(ZEX_STAKING_ADDRESS, STAKING_ABI, signer);
+            return { zexContract, nftContract, stakingContract };
         } catch (error) {
             console.error("Error getting contracts:", error);
             return null;

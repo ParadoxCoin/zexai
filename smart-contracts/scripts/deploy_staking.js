@@ -7,8 +7,8 @@ async function main() {
     const balance = await ethers.provider.getBalance(deployer.address);
     console.log("Account balance:", ethers.formatEther(balance), "ETH");
 
-    // TODO: Replace with your actual ZEX Token address deployed on the network
-    const ZEX_TOKEN_ADDRESS = process.env.VITE_ZEX_TOKEN_ADDRESS || "0x0000000000000000000000000000000000000000";
+    // ZEX Token address deployed on Polygon Amoy
+    const ZEX_TOKEN_ADDRESS = process.env.VITE_ZEX_TOKEN_ADDRESS || "0x65970F056193A468F9C0a90B2e1B205a1a92a885";
 
     // In this ecosystem, ZEX token is used for both staking and rewards.
     const REWARD_TOKEN_ADDRESS = ZEX_TOKEN_ADDRESS;

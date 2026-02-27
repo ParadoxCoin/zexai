@@ -51,6 +51,7 @@ const Layout: React.FC = () => {
     { name: 'Avatar', href: '/avatar', icon: User, color: 'from-fuchsia-500 to-purple-500' },
     { name: 'Chat', href: '/chat', icon: MessageCircle, color: 'from-emerald-500 to-teal-500' },
     { name: 'Synapse', href: '/synapse', icon: Bot, color: 'from-amber-500 to-orange-500' },
+    { name: 'Staking', href: '/staking', icon: Diamond, color: 'from-indigo-500 to-purple-500' },
     { name: 'Showcase', href: '/showcase', icon: Award, color: 'from-yellow-500 to-orange-500' },
   ];
 
