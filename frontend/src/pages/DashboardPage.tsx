@@ -25,6 +25,7 @@ import GamificationWidget from '@/components/GamificationWidget';
 import GuidedTour from '@/components/GuidedTour';
 import { motion } from 'framer-motion';
 import { apiService } from '@/services/api';
+import { useWeb3, ZEX_TOKEN_ADDRESS, ZEXAI_NFT_ADDRESS } from '@/contexts/Web3Context';
 
 interface Activity {
   id: string;
@@ -45,7 +46,11 @@ interface UsageSummary {
 export const DashboardPage: React.FC = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
+  const { account, zexBalance, isConnecting, connectWallet, disconnectWallet, mintNFT } = useWeb3();
   const [loading, setLoading] = useState(true);
+  const [mintUri, setMintUri] = useState('ipfs://');
+  const [mintAmount, setMintAmount] = useState(1);
+  const [isMinting, setIsMinting] = useState(false);
   const [stats, setStats] = useState({
     credits: 0,
     images: 0,
@@ -79,6 +84,16 @@ export const DashboardPage: React.FC = () => {
   const setRandomTip = () => {
     const randomTip = tips[Math.floor(Math.random() * tips.length)];
     setDailyTip(randomTip);
+  };
+
+  const handleMint = async () => {
+    if (!mintUri || mintAmount < 1) return;
+    setIsMinting(true);
+    try {
+      await mintNFT(mintUri.trim(), mintAmount);
+    } finally {
+      setIsMinting(false);
+    }
   };
 
   const fetchDashboardData = async () => {
@@ -284,6 +299,95 @@ export const DashboardPage: React.FC = () => {
           icon={Music}
           variant="success"
         />
+      </div>
+
+      {/* Web3 Panel */}
+      <div className="mb-8">
+        <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-xl border border-gray-100 dark:border-gray-700">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-extrabold text-gray-900 dark:text-white">Web3 (Polygon Amoy)</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                ZEX ve NFT kontratların testnet üzerinde canlı.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {account ? (
+                <>
+                  <button
+                    onClick={disconnectWallet}
+                    className="px-4 py-2 rounded-xl text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    Cüzdanı Ayır
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={connectWallet}
+                  disabled={isConnecting}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white transition-colors"
+                >
+                  {isConnecting ? 'Bağlanıyor…' : 'Cüzdan Bağla'}
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-5 grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="rounded-2xl border border-gray-100 dark:border-gray-700 p-4">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Cüzdan</p>
+              <p className="mt-1 font-mono text-sm text-gray-900 dark:text-gray-100 break-all">
+                {account || 'Bağlı değil'}
+              </p>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                ZEX bakiyesi: <span className="font-semibold">{zexBalance}</span>
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-gray-100 dark:border-gray-700 p-4">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Kontratlar</p>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                ZEX: <span className="font-mono text-xs break-all">{ZEX_TOKEN_ADDRESS}</span>
+              </p>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                NFT: <span className="font-mono text-xs break-all">{ZEXAI_NFT_ADDRESS}</span>
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-gray-100 dark:border-gray-700 p-4">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">NFT Mint</p>
+              <div className="mt-2 space-y-3">
+                <input
+                  value={mintUri}
+                  onChange={(e) => setMintUri(e.target.value)}
+                  placeholder="ipfs://..."
+                  className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    min={1}
+                    value={mintAmount}
+                    onChange={(e) => setMintAmount(Math.max(1, Number(e.target.value) || 1))}
+                    className="w-28 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <button
+                    onClick={handleMint}
+                    disabled={!account || isMinting}
+                    className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white transition-colors"
+                    title={!account ? 'Önce cüzdan bağla' : undefined}
+                  >
+                    {isMinting ? 'Mint ediliyor…' : 'Mint Et'}
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Not: Mint işlemi ZEX onayı gerektirir; MetaMask imza isteyecek.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Gamification Widget */}

@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { ethers, BrowserProvider, Contract } from 'ethers';
 
-// Contract Addresses (Replace with real ones once deployed)
-export const ZEX_TOKEN_ADDRESS = "0x5566234b86d4e0ee49bacf1DbCB3B914456511B3";
-export const ZEXAI_NFT_ADDRESS = "0xe997FfD804B2a98d8c503939De9F3f6333081304";
+// Contract Addresses (Polygon Amoy)
+export const ZEX_TOKEN_ADDRESS = "0x65970F056193A468F9C0a90B2e1B205a1a92a885";
+export const ZEXAI_NFT_ADDRESS = "0x99d86D3615812243C3b52a181AD00702A37C1663";
 export const POLYGON_AMOY_CHAIN_ID = "0x13882"; // 80002 in hex
 
 // Minimal ABI for ERC20 ZEX
@@ -99,7 +99,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, []);
 
     const updateBalance = async (address: string, _provider: BrowserProvider) => {
-        if (!ZEX_TOKEN_ADDRESS || ZEX_TOKEN_ADDRESS === "0x5566234b86d4e0ee49bacf1DbCB3B914456511B3" === false) return;
+        if (!ZEX_TOKEN_ADDRESS) return;
         try {
             const network = await _provider.getNetwork();
             if (network.chainId !== 80002n) {

@@ -1630,16 +1630,19 @@ const VideoPage = () => {
 
                           {/* Share to Earn - Twitter */}
                           <button
-                            onClick={async (e) => {
-                              try {
-                                await apiService.post('/video/export/share-reward', { media_id: video.id, platform: 'twitter' });
-                                queryClient.invalidateQueries({ queryKey: ["userCredits"] });
-                                alert('Twitter üzerinden paylaştığınız için 15 kredi kazandınız!');
-                                window.open(`https://twitter.com/intent/tweet?text=ZexAI ile ürettiğim muhteşem videoya göz atın! 🚀&url=${encodeURIComponent(video.url || video.file_url)}`, '_blank');
-                              } catch (err) {
-                                console.log('Reward already claimed or error', err);
-                                window.open(`https://twitter.com/intent/tweet?text=ZexAI ile ürettiğim muhteşem videoya göz atın! 🚀&url=${encodeURIComponent(video.url || video.file_url)}`, '_blank');
-                              }
+                            onClick={(e) => {
+                              // 1. Synchronous popup bypass wrapper
+                              window.open(`https://twitter.com/intent/tweet?text=ZexAI ile ürettiğim muhteşem videoya göz atın! 🚀&url=${encodeURIComponent(video.url || video.file_url)}`, '_blank');
+                              
+                              // 2. Async reward logic
+                              apiService.post('/video/export/share-reward', { media_id: video.id, platform: 'twitter' })
+                                .then(() => {
+                                  queryClient.invalidateQueries({ queryKey: ["userCredits"] });
+                                  alert('Twitter üzerinden paylaştığınız için 15 kredi kazandınız!');
+                                })
+                                .catch((err) => {
+                                  console.log('Reward already claimed or error', err);
+                                });
                             }}
                             className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-xs font-semibold transition-colors border border-blue-200 dark:border-blue-800/50 shadow-sm"
                             title="Twitter'da Paylaş & Kazan"
@@ -1649,16 +1652,17 @@ const VideoPage = () => {
 
                           {/* Share to Earn - Facebook */}
                           <button
-                            onClick={async (e) => {
-                              try {
-                                await apiService.post('/video/export/share-reward', { media_id: video.id, platform: 'facebook' });
-                                queryClient.invalidateQueries({ queryKey: ["userCredits"] });
-                                alert('Facebook üzerinden paylaştığınız için 15 kredi kazandınız!');
-                                window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(video.url || video.file_url)}`, '_blank');
-                              } catch (err) {
-                                console.log('Reward already claimed or error', err);
-                                window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(video.url || video.file_url)}`, '_blank');
-                              }
+                            onClick={(e) => {
+                              window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(video.url || video.file_url)}`, '_blank');
+                              
+                              apiService.post('/video/export/share-reward', { media_id: video.id, platform: 'facebook' })
+                                .then(() => {
+                                  queryClient.invalidateQueries({ queryKey: ["userCredits"] });
+                                  alert('Facebook üzerinden paylaştığınız için 15 kredi kazandınız!');
+                                })
+                                .catch((err) => {
+                                  console.log('Reward already claimed or error', err);
+                                });
                             }}
                             className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-xs font-semibold transition-colors border border-indigo-200 dark:border-indigo-800/50 shadow-sm"
                             title="Facebook'ta Paylaş & Kazan"
