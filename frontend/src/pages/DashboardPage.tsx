@@ -22,6 +22,7 @@ import { StatCard, FeatureCard, AnimatedCounter } from '@/components/ui/Animated
 import { CardSkeleton, ListItemSkeleton } from '@/components/ui/skeleton';
 import { NoData } from '@/components/ui/EmptyState';
 import GamificationWidget from '@/components/GamificationWidget';
+import LeaderboardWidget from '@/components/LeaderboardWidget';
 import GuidedTour from '@/components/GuidedTour';
 import { motion } from 'framer-motion';
 import { apiService } from '@/services/api';
@@ -390,14 +391,19 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Gamification Widget */}
-      <div className="mb-8">
-        <GamificationWidget
-          imagesCount={stats.images}
-          videosCount={stats.videos}
-          audioCount={stats.audio}
-          chatsCount={stats.chats}
-        />
+      {/* Gamification & Leaderboard Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="lg:col-span-2">
+          <GamificationWidget
+            imagesCount={stats.images}
+            videosCount={stats.videos}
+            audioCount={stats.audio}
+            chatsCount={stats.chats}
+          />
+        </div>
+        <div className="lg:col-span-1">
+          <LeaderboardWidget />
+        </div>
       </div>
 
       {/* Progress Row */}
