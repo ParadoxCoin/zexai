@@ -69,8 +69,8 @@ export const StakingPage: React.FC = () => {
         if (!stakeAmount || parseFloat(stakeAmount) <= 0 || !account) return;
         setIsStaking(true);
         try {
-            // 1. Approve allowance
-            const approved = await checkAndApproveZex(stakeAmount);
+            // 1. Approve allowance for Staking Contract
+            const approved = await checkAndApproveZex(ZEX_STAKING_ADDRESS, stakeAmount);
             if (!approved) {
                 alert("ERC20 ZEX harcama onayı verilmedi.");
                 setIsStaking(false);
@@ -253,8 +253,8 @@ export const StakingPage: React.FC = () => {
                                 <button
                                     onClick={() => setActiveTab('stake')}
                                     className={`flex-1 py-5 text-center font-bold text-sm transition-colors flex justify-center items-center gap-2 ${activeTab === 'stake'
-                                            ? 'text-indigo-600 bg-indigo-50/50 dark:bg-indigo-900/10 border-b-2 border-indigo-600'
-                                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                                        ? 'text-indigo-600 bg-indigo-50/50 dark:bg-indigo-900/10 border-b-2 border-indigo-600'
+                                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                                         }`}
                                 >
                                     <Lock className="w-4 h-4" /> TOKEN KİLİTLE (Stake)
@@ -262,8 +262,8 @@ export const StakingPage: React.FC = () => {
                                 <button
                                     onClick={() => setActiveTab('withdraw')}
                                     className={`flex-1 py-5 text-center font-bold text-sm transition-colors flex justify-center items-center gap-2 ${activeTab === 'withdraw'
-                                            ? 'text-purple-600 bg-purple-50/50 dark:bg-purple-900/10 border-b-2 border-purple-600'
-                                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                                        ? 'text-purple-600 bg-purple-50/50 dark:bg-purple-900/10 border-b-2 border-purple-600'
+                                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                                         }`}
                                 >
                                     <Unlock className="w-4 h-4" /> KİLİDİ AÇ (Withdraw)

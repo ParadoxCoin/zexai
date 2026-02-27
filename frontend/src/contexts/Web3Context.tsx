@@ -39,7 +39,7 @@ interface Web3ContextType {
     disconnectWallet: () => void;
     provider: BrowserProvider | null;
     getContracts: () => Promise<{ zexContract: Contract; nftContract: Contract; stakingContract: Contract } | null>;
-    checkAndApproveZex: (amountInEther: string) => Promise<boolean>;
+    checkAndApproveZex: (targetAddress: string, amountInEther: string) => Promise<boolean>;
     mintNFT: (metadataURI: string, amount: number) => Promise<boolean>;
 }
 
@@ -219,7 +219,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
-    const checkAndApproveZex = async (amountInEther: string): Promise<boolean> => {
+    const checkAndApproveZex = async (targetAddress: string, amountInEther: string): Promise<boolean> => {
         const contracts = await getContracts();
         if (!contracts || !account) return false;
 
@@ -227,11 +227,11 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const amountInWei = ethers.parseEther(amountInEther);
 
             // Check allowance
-            const currentAllowance = await contracts.zexContract.allowance(account, ZEXAI_NFT_ADDRESS);
+            const currentAllowance = await contracts.zexContract.allowance(account, targetAddress);
 
             if (currentAllowance < amountInWei) {
                 // Need to approve
-                const tx = await contracts.zexContract.approve(ZEXAI_NFT_ADDRESS, amountInWei);
+                const tx = await contracts.zexContract.approve(targetAddress, amountInWei);
                 await tx.wait(); // Wait for confirmation
             }
             return true;
@@ -252,7 +252,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const totalFeeEther = ethers.formatEther(totalFeeWei);
 
             // 2. Ensure allowance
-            const approved = await checkAndApproveZex(totalFeeEther);
+            const approved = await checkAndApproveZex(ZEXAI_NFT_ADDRESS, totalFeeEther);
             if (!approved) return false;
 
             // 3. Mint
