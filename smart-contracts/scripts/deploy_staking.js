@@ -24,8 +24,8 @@ async function main() {
     console.log("\nDeploying ZexStaking...");
     const ZexStaking = await ethers.getContractFactory("ZexStaking");
 
-    // Constructor requires: stakingToken address, rewardToken address
-    const staking = await ZexStaking.deploy(ZEX_TOKEN_ADDRESS, REWARD_TOKEN_ADDRESS);
+    // Constructor requires: stakingToken address
+    const staking = await ZexStaking.deploy(ZEX_TOKEN_ADDRESS);
     await staking.waitForDeployment();
 
     const stakingAddress = await staking.getAddress();

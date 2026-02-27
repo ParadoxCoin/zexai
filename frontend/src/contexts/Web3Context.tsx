@@ -4,7 +4,7 @@ import { ethers, BrowserProvider, Contract } from 'ethers';
 // Contract Addresses (Polygon Amoy)
 export const ZEX_TOKEN_ADDRESS = "0x65970F056193A468F9C0a90B2e1B205a1a92a885";
 export const ZEXAI_NFT_ADDRESS = "0x99d86D3615812243C3b52a181AD00702A37C1663";
-export const ZEX_STAKING_ADDRESS = "0x489e0a853C051684C680b431e0737fA5ba84335a";
+export const ZEX_STAKING_ADDRESS = "0x588D627cC515c80f4Dd8D01319c0D486024C186D";
 export const POLYGON_AMOY_CHAIN_ID = "0x13882"; // 80002 in hex
 
 // Minimal ABI for ERC20 ZEX
@@ -20,15 +20,17 @@ const NFT_ABI = [
     "function mintFee() view returns (uint256)"
 ];
 
-// Minimal ABI for ZexStaking
+// Minimal ABI for ZexStaking V2
 const STAKING_ABI = [
     "function balanceOf(address account) view returns (uint256)",
     "function earned(address account) view returns (uint256)",
     "function stake(uint256 amount) external",
     "function withdraw(uint256 amount) external",
+    "function claimReward() external",
     "function getReward() external",
     "function rewardRate() view returns (uint256)",
-    "function totalSupply() view returns (uint256)"
+    "function totalSupply() view returns (uint256)",
+    "function getStakerInfo(address account) external view returns (uint256 balance, uint256 currentEarned, uint256 lockupEnd, bool isLocked)"
 ];
 
 interface Web3ContextType {

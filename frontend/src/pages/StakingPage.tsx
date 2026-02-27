@@ -16,6 +16,8 @@ export const StakingPage: React.FC = () => {
     const [earnedRewards, setEarnedRewards] = useState("0");
     const [totalStaked, setTotalStaked] = useState("0");
     const [rewardRateDisplay, setRewardRateDisplay] = useState("0");
+    const [lockupEndTime, setLockupEndTime] = useState<number | null>(null);
+    const [isLocked, setIsLocked] = useState(false);
 
     // UI Input State
     const [stakeAmount, setStakeAmount] = useState("");
@@ -97,6 +99,15 @@ export const StakingPage: React.FC = () => {
 
     const handleWithdraw = async () => {
         if (!withdrawAmount || parseFloat(withdrawAmount) <= 0 || !account) return;
+        
+        // Warn about early penalty
+        if (isLocked) {
+           const confirmWithdraw = window.confirm(
+               "⚠️ DİKKAT: Kilit süreniz henüz dolmadı!\n\nŞu an kilitli tokenlarınızı çekerseniz %10 Erken Çekim Cezası (Unstake Penalty) kesilecektir. Gerçekten ZEX'lerinizin %10'undan vazgeçerek işlemi onaylıyor musunuz?"
+           );
+           if (!confirmWithdraw) return;
+        }
+
         setIsWithdrawing(true);
         try {
             const contracts = await getContracts();
@@ -234,8 +245,8 @@ export const StakingPage: React.FC = () => {
                                     <span className="font-bold text-gray-900 dark:text-white">{totalStaked}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-500 dark:text-gray-400">Emisyon Hızı (/sn)</span>
-                                    <span className="font-bold text-emerald-500">{rewardRateDisplay} ZEX</span>
+                                    <span className="text-gray-500 dark:text-gray-400">Yıllık Sabit Getiri (APY)</span>
+                                    <span className="font-bold text-emerald-500">%{rewardRateDisplay}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="text-gray-500 dark:text-gray-400">Bağlı Ağ</span>
@@ -304,9 +315,12 @@ export const StakingPage: React.FC = () => {
 
                                             <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-xl p-4 mb-8 flex items-start gap-3">
                                                 <AlertCircle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
-                                                <p className="text-xs text-blue-800 dark:text-blue-300 leading-relaxed">
-                                                    Stake ettiğiniz ZEX tokenları güvenli bir şekilde ZexAI Smart Contract'ine kilitlenir. Tokenlarınızı istediğiniz zaman ceza ödemeden "Kilidi Aç" sekmesinden geri çekebilirsiniz.
-                                                </p>
+                                                <div className="space-y-1">
+                                                    <p className="text-xs font-bold text-blue-900 dark:text-blue-300">Yeni Staking Kuralları (V2)</p>
+                                                    <p className="text-xs text-blue-800 dark:text-blue-400 leading-relaxed">
+                                                        Tokenlarınızı kilitlediğiniz andan itibaren **14 Günlük** bir zorunlu kilit süresi (Lock-up) başlar. Kazançlarınız saniye saniye yansımaya başlar ve %{rewardRateDisplay} APY (Yıllık Getiri) ile değerlendirilir.
+                                                    </p>
+                                                </div>
                                             </div>
 
                                             <button
@@ -348,9 +362,23 @@ export const StakingPage: React.FC = () => {
 
                                             <div className="bg-purple-50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-900/30 rounded-xl p-4 mb-8 flex items-start gap-3">
                                                 <Unlock className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
-                                                <p className="text-xs text-purple-800 dark:text-purple-300 leading-relaxed">
-                                                    Tokenlarınızı çektiğiniz anda MetaMask cüzdanınıza iade edilir. Kilitli token miktarınız azaldığı için kazanacağınız APY ve ödül oranı düşer.
-                                                </p>
+                                                <div className="space-y-2 flex-1">
+                                                    <p className="text-xs text-purple-800 dark:text-purple-300 leading-relaxed">
+                                                        Buradan ZEX tokenlarınızı cüzdanınıza geri çekebilirsiniz. Kilitli limitiniz azaldığı için kazanacağınız APY oranı aynı kalsa da miktar azalır.
+                                                    </p>
+                                                    
+                                                    {isLocked && lockupEndTime && parseFloat(stakedBalance) > 0 && (
+                                                        <div className="p-2.5 bg-red-100 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-lg">
+                                                            <p className="text-xs font-bold text-red-600 dark:text-red-400 mb-0.5">⚠️ Erken Çekim Uyarısı</p>
+                                                            <p className="text-[11px] text-red-500 dark:text-red-300">
+                                                                Kilit sürenizin dolmasına kalan süre nedeniyle, şu an para çekerseniz çekilen miktar üzerinden <b>%10 oranında ceza (Burn)</b> kesilecektir.
+                                                            </p>
+                                                            <p className="text-[10px] text-red-400 dark:text-red-400/80 mt-1 font-mono">
+                                                                Kilit Açılış Tarihi: {new Date(lockupEndTime).toLocaleString()}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
 
                                             <button
