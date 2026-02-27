@@ -156,7 +156,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
                                     {
                                         chainId: POLYGON_AMOY_CHAIN_ID,
                                         chainName: 'Polygon Amoy Testnet',
-                                        rpcUrls: ['https://rpc-amoy.polygon.technology/'],
+                                        rpcUrls: ['https://polygon-amoy.drpc.org'],
                                         nativeCurrency: {
                                             name: 'MATIC',
                                             symbol: 'MATIC',

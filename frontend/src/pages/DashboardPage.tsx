@@ -335,7 +335,7 @@ export const DashboardPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-5 grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="rounded-2xl border border-gray-100 dark:border-gray-700 p-4">
               <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Cüzdan</p>
               <p className="mt-1 font-mono text-sm text-gray-900 dark:text-gray-100 break-all">
@@ -356,37 +356,6 @@ export const DashboardPage: React.FC = () => {
               </p>
             </div>
 
-            <div className="rounded-2xl border border-gray-100 dark:border-gray-700 p-4">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">NFT Mint</p>
-              <div className="mt-2 space-y-3">
-                <input
-                  value={mintUri}
-                  onChange={(e) => setMintUri(e.target.value)}
-                  placeholder="ipfs://..."
-                  className="w-full px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-                <div className="flex gap-2">
-                  <input
-                    type="number"
-                    min={1}
-                    value={mintAmount}
-                    onChange={(e) => setMintAmount(Math.max(1, Number(e.target.value) || 1))}
-                    className="w-28 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                  <button
-                    onClick={handleMint}
-                    disabled={!account || isMinting}
-                    className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white transition-colors"
-                    title={!account ? 'Önce cüzdan bağla' : undefined}
-                  >
-                    {isMinting ? 'Mint ediliyor…' : 'Mint Et'}
-                  </button>
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Not: Mint işlemi ZEX onayı gerektirir; MetaMask imza isteyecek.
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </div>
