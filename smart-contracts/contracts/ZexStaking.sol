@@ -5,8 +5,12 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+interface IBurnableERC20 is IERC20 {
+    function burn(uint256 amount) external;
+}
+
 contract ZexStaking is ReentrancyGuard, Ownable {
-    IERC20 public token;
+    IBurnableERC20 public token;
 
     uint256 public apy = 50; // 50% Annual Percentage Yield
     uint256 public lockupDuration = 14 days;
@@ -31,7 +35,7 @@ contract ZexStaking is ReentrancyGuard, Ownable {
     event APYUpdated(uint256 newAPY);
 
     constructor(address _token) Ownable(msg.sender) {
-        token = IERC20(_token);
+        token = IBurnableERC20(_token);
     }
 
     function earned(address account) public view returns (uint256) {
@@ -79,7 +83,7 @@ contract ZexStaking is ReentrancyGuard, Ownable {
         uint256 payout = amount - penalty;
 
         if (penalty > 0) {
-            require(token.transfer(BURN_ADDRESS, penalty), "Burn transfer failed");
+            token.burn(penalty);
         }
         require(token.transfer(msg.sender, payout), "Payout transfer failed");
 

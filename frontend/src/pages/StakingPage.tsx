@@ -18,6 +18,7 @@ export const StakingPage: React.FC = () => {
     const [rewardRateDisplay, setRewardRateDisplay] = useState("0");
     const [lockupEndTime, setLockupEndTime] = useState<number | null>(null);
     const [isLocked, setIsLocked] = useState(false);
+    const [timeRemaining, setTimeRemaining] = useState<string>("");
 
     // UI Input State
     const [stakeAmount, setStakeAmount] = useState("");
@@ -66,6 +67,36 @@ export const StakingPage: React.FC = () => {
         const interval = setInterval(fetchStakingStats, 10000);
         return () => clearInterval(interval);
     }, [account]);
+
+    // Live Countdown Timer logic
+    useEffect(() => {
+        if (!isLocked || !lockupEndTime) {
+            setTimeRemaining("");
+            return;
+        }
+
+        const tick = () => {
+            const now = Date.now();
+            const difference = lockupEndTime - now;
+
+            if (difference <= 0) {
+                setIsLocked(false);
+                setTimeRemaining("Kilit Süresi Doldu!");
+                return;
+            }
+
+            const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+            const minutes = Math.floor((difference / 1000 / 60) % 60);
+            const seconds = Math.floor((difference / 1000) % 60);
+
+            setTimeRemaining(`${days}g ${hours}s ${minutes}d ${seconds}sn`);
+        };
+
+        tick(); // Run immediately
+        const timerInterval = setInterval(tick, 1000);
+        return () => clearInterval(timerInterval);
+    }, [isLocked, lockupEndTime]);
 
     const handleStake = async () => {
         if (!stakeAmount || parseFloat(stakeAmount) <= 0 || !account) return;
@@ -373,8 +404,10 @@ export const StakingPage: React.FC = () => {
                                                             <p className="text-[11px] text-red-500 dark:text-red-300">
                                                                 Kilit sürenizin dolmasına kalan süre nedeniyle, şu an para çekerseniz çekilen miktar üzerinden <b>%10 oranında ceza (Burn)</b> kesilecektir.
                                                             </p>
-                                                            <p className="text-[10px] text-red-400 dark:text-red-400/80 mt-1 font-mono">
-                                                                Kilit Açılış Tarihi: {new Date(lockupEndTime).toLocaleString()}
+                                                            <p className="text-[10px] text-red-500 dark:text-red-400 mt-2 font-mono bg-red-500/10 p-2 rounded border border-red-500/20">
+                                                                Kalan Süre: <span className="font-bold text-red-600 dark:text-red-400 text-xs">{timeRemaining}</span>
+                                                                <br/>
+                                                                <span className="text-gray-500 mt-1 block">Açılış: {new Date(lockupEndTime).toLocaleString()}</span>
                                                             </p>
                                                         </div>
                                                     )}
