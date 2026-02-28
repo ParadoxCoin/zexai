@@ -3,7 +3,7 @@ import { useAuthStore } from '@/store/authStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Settings, Bell, Shield, CreditCard, Key } from 'lucide-react';
+import { Settings, Bell, Shield, CreditCard } from 'lucide-react';
 import { subscribeToPushNotifications, unsubscribeFromPushNotifications, checkPushSubscriptionStatus } from '@/lib/pushNotifications';
 
 export const SettingsPage: React.FC = () => {
@@ -116,19 +116,26 @@ export const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
-      <div className="flex items-center space-x-2">
-        <Settings className="h-8 w-8 text-gray-600" />
-        <h1 className="text-3xl font-bold">Settings</h1>
+    <div className="container max-w-5xl mx-auto p-4 md:p-8 space-y-8 animate-in fade-in duration-500">
+      <div className="flex items-center space-x-4 mb-8 pb-6 border-b border-gray-100">
+        <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg shadow-indigo-200">
+          <Settings className="h-6 w-6 text-white" />
+        </div>
+        <div>
+          <h1 className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-indigo-800 to-gray-900">
+            Account Preferences
+          </h1>
+          <p className="text-gray-500 text-sm mt-1">Manage your profile, billing, and notification settings</p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Account Settings */}
-        <Card>
+        <Card className="border-gray-200/60 shadow-md hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Shield className="h-5 w-5" />
-              <span>Account Settings</span>
+            <CardTitle className="flex items-center space-x-2 text-indigo-900">
+              <Shield className="h-5 w-5 text-indigo-500" />
+              <span>Profile Information</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -183,50 +190,11 @@ export const SettingsPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* API Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Key className="h-5 w-5" />
-              <span>API Settings</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Rate Limits
-              </label>
-              <div className="text-sm text-gray-600 space-y-1">
-                <p>• Images: 100 per hour</p>
-                <p>• Videos: 20 per hour</p>
-                <p>• Audio: 50 per hour</p>
-                <p>• Chat: 1000 messages per hour</p>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Webhook URL
-              </label>
-              <Input
-                type="url"
-                placeholder="https://your-app.com/webhook"
-                className="mb-2"
-                value={settings.api.webhookUrl}
-                onChange={handleWebhookChange}
-              />
-              <p className="text-xs text-gray-500">
-                Receive notifications about task completions and credit usage
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Billing Settings */}
-        <Card>
+        <Card className="border-gray-200/60 shadow-md hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <CreditCard className="h-5 w-5" />
+            <CardTitle className="flex items-center space-x-2 text-indigo-900">
+              <CreditCard className="h-5 w-5 text-indigo-500" />
               <span>Billing & Credits</span>
             </CardTitle>
           </CardHeader>
@@ -266,18 +234,18 @@ export const SettingsPage: React.FC = () => {
               </div>
             </div>
 
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full mt-2 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition-colors">
               Manage Payment Methods
             </Button>
           </CardContent>
         </Card>
 
         {/* Notification Settings */}
-        <Card>
+        <Card className="border-gray-200/60 shadow-md hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Bell className="h-5 w-5" />
-              <span>Notifications</span>
+            <CardTitle className="flex items-center space-x-2 text-indigo-900">
+              <Bell className="h-5 w-5 text-indigo-500" />
+              <span>Device Notifications</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -305,7 +273,7 @@ export const SettingsPage: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Notification Sound
               </label>
-              <select className="w-full p-2 border border-gray-300 rounded-md">
+              <select className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none">
                 <option>Default</option>
                 <option>Chime</option>
                 <option>Bell</option>
@@ -316,11 +284,12 @@ export const SettingsPage: React.FC = () => {
         </Card>
       </div>
 
-      <div className="flex justify-end space-x-4 mt-6">
-        <Button variant="outline">Reset to Defaults</Button>
+      <div className="flex justify-end space-x-4 mt-8 pt-6 border-t border-gray-100">
+        <Button variant="ghost" className="hover:bg-gray-100">Reset to Defaults</Button>
         <Button
           onClick={handleSaveSettings}
           disabled={isSaving}
+          className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-indigo-200 transition-all border-0"
         >
           {isSaving ? 'Saving...' : 'Save Changes'}
         </Button>
