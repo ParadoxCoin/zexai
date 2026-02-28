@@ -1619,21 +1619,37 @@ const VideoPage = () => {
                           </button>
 
                           {/* Download */}
-                          <a
-                            href={video.url || video.file_url}
-                            download
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              try {
+                                const response = await fetch(video.url || video.file_url);
+                                const blob = await response.blob();
+                                const url = window.URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.download = `ZexAi_Video_${Date.now()}.mp4`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                window.URL.revokeObjectURL(url);
+                              } catch (err) {
+                                console.error("Download failed:", err);
+                                window.open(video.url || video.file_url, '_blank');
+                              }
+                            }}
                             className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 text-xs font-medium transition-colors"
                             title="İndir"
                           >
                             <Download className="w-3.5 h-3.5" />
-                          </a>
+                          </button>
 
                           {/* Share to Earn - Twitter */}
                           <button
                             onClick={(e) => {
                               // 1. Synchronous popup bypass wrapper
                               window.open(`https://twitter.com/intent/tweet?text=ZexAI ile ürettiğim muhteşem videoya göz atın! 🚀&url=${encodeURIComponent(video.url || video.file_url)}`, '_blank');
-                              
+
                               // 2. Async reward logic
                               apiService.post('/social/share', { content_type: 'video', content_id: video.id, platform: 'twitter' })
                                 .then((response) => {
@@ -1657,7 +1673,7 @@ const VideoPage = () => {
                           <button
                             onClick={(e) => {
                               window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(video.url || video.file_url)}`, '_blank');
-                              
+
                               apiService.post('/social/share', { content_type: 'video', content_id: video.id, platform: 'facebook' })
                                 .then((response) => {
                                   const data = response?.data || response;

@@ -177,6 +177,20 @@ class SocialService:
                             'status': task.get('status', 'completed')
                         }).execute()
                         logger.info("Inserted.")
+                    elif file_url:
+                        logger.info("Inserting fallback record into media_outputs")
+                        self.supabase.table('media_outputs').insert({
+                            'id': content_id,
+                            'user_id': user_id,
+                            'service_type': content_type,
+                            'file_url': file_url,
+                            'thumbnail_url': file_url,
+                            'prompt': 'ZexAI Visual',
+                            'model_name': 'AI Model',
+                            'credits_charged': 0,
+                            'is_showcase': True,
+                            'status': 'completed'
+                        }).execute()
                 else:
                     logger.info("Updating existing media_outputs")
                     update_data = {'is_showcase': True}

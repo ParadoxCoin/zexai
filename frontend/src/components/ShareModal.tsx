@@ -106,7 +106,11 @@ export const ShareModal = ({
 
     // Showcase mutation
     const showcaseMutation = useMutation({
-        mutationFn: () => apiService.post('/social/showcase', { content_type: contentType, content_id: contentId }),
+        mutationFn: () => apiService.post('/social/showcase', {
+            content_type: contentType,
+            content_id: contentId,
+            file_url: contentUrl
+        }),
         onSuccess: (data: any) => {
             const showcaseState = Boolean(data?.data?.in_showcase ?? data?.in_showcase);
             setInShowcase(showcaseState);

@@ -96,7 +96,8 @@ const ImageGenerationPage = () => {
 
   // ---- Gallery state ----
   const [galleryPage, setGalleryPage] = useState(0);
-  const [lightboxImage, setLightboxImage] = useState<any | null>(null);
+  const [generateLightboxImage, setGenerateLightboxImage] = useState<string | null>(null);
+  const [galleryLightboxItem, setGalleryLightboxItem] = useState<any | null>(null);
   const GALLERY_LIMIT = 20;
 
   const { user } = useAuthStore();
@@ -682,7 +683,7 @@ const ImageGenerationPage = () => {
                           </button>
 
                           <button
-                            onClick={() => setLightboxImage(generatedImages[selectedImageIndex])}
+                            onClick={() => setGenerateLightboxImage(generatedImages[selectedImageIndex])}
                             className="p-3 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors"
                             title="Tam Ekran Göster"
                           >
@@ -780,7 +781,7 @@ const ImageGenerationPage = () => {
                     <div
                       key={item.id || idx}
                       className="relative group rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all cursor-pointer"
-                      onClick={() => setLightboxImage(item)}
+                      onClick={() => setGalleryLightboxItem(item)}
                     >
                       <div className="aspect-square">
                         <img
@@ -809,14 +810,30 @@ const ImageGenerationPage = () => {
                             >
                               💎 NFT Yap
                             </button>
-                            <a
-                              href={item.file_url}
-                              download
-                              onClick={(e) => e.stopPropagation()}
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                try {
+                                  const response = await fetch(item.file_url);
+                                  const blob = await response.blob();
+                                  const url = window.URL.createObjectURL(blob);
+                                  const link = document.createElement('a');
+                                  link.href = url;
+                                  link.download = `ZexAi_Gallery_${Date.now()}.png`;
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                  window.URL.revokeObjectURL(url);
+                                } catch (err) {
+                                  console.error("Download failed:", err);
+                                  window.open(item.file_url, '_blank');
+                                }
+                              }}
                               className="p-1.5 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors"
+                              title="İndir"
                             >
                               <Download className="w-3 h-3 text-white" />
-                            </a>
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -866,10 +883,10 @@ const ImageGenerationPage = () => {
           </div>
 
           {/* Lightbox Modal */}
-          {lightboxImage && (
+          {galleryLightboxItem && (
             <div
               className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-              onClick={() => setLightboxImage(null)}
+              onClick={() => setGalleryLightboxItem(null)}
             >
               <div
                 className="bg-white dark:bg-gray-800 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
@@ -878,15 +895,15 @@ const ImageGenerationPage = () => {
                 <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-xs font-medium rounded-md">
-                      {formatModelName(lightboxImage.model_name || lightboxImage.model_id || lightboxImage.model)}
+                      {formatModelName(galleryLightboxItem.model_name || galleryLightboxItem.model_id || galleryLightboxItem.model)}
                     </span>
                     <span className="text-xs text-gray-400 flex items-center gap-1">
                       <Clock className="w-3 h-3" />
-                      {new Date(lightboxImage.created_at).toLocaleDateString('tr-TR')}
+                      {new Date(galleryLightboxItem.created_at).toLocaleDateString('tr-TR')}
                     </span>
                   </div>
                   <button
-                    onClick={() => setLightboxImage(null)}
+                    onClick={() => setGalleryLightboxItem(null)}
                     className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     <X className="w-5 h-5" />
@@ -894,22 +911,37 @@ const ImageGenerationPage = () => {
                 </div>
                 <div className="p-4 flex items-center justify-center bg-gray-50 dark:bg-gray-900" style={{ maxHeight: 'calc(90vh - 140px)' }}>
                   <img
-                    src={lightboxImage.file_url}
-                    alt={lightboxImage.prompt}
+                    src={galleryLightboxItem.file_url}
+                    alt={galleryLightboxItem.prompt}
                     className="max-w-full max-h-full object-contain rounded-xl"
                   />
                 </div>
                 <div className="p-4 border-t border-gray-100 dark:border-gray-700">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 italic">"{lightboxImage.prompt}"</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 italic">"{galleryLightboxItem.prompt}"</p>
                   <div className="mt-3 flex gap-2">
-                    <a
-                      href={lightboxImage.file_url}
-                      download
+                    <button
+                      onClick={async () => {
+                        try {
+                          const response = await fetch(galleryLightboxItem.file_url);
+                          const blob = await response.blob();
+                          const url = window.URL.createObjectURL(blob);
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.download = `ZexAi_Gallery_${Date.now()}.png`;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          window.URL.revokeObjectURL(url);
+                        } catch (err) {
+                          console.error("Download failed:", err);
+                          window.open(galleryLightboxItem.file_url, '_blank');
+                        }
+                      }}
                       className="px-4 py-2 bg-purple-500 text-white text-sm rounded-lg hover:bg-purple-600 transition-colors flex items-center gap-2"
                     >
                       <Download className="w-4 h-4" />
                       İndir
-                    </a>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1072,13 +1104,13 @@ const ImageGenerationPage = () => {
       )}
 
       {/* Lightbox Modal */}
-      {lightboxImage && (
+      {generateLightboxImage && (
         <div
           className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 cursor-zoom-out"
-          onClick={() => setLightboxImage(null)}
+          onClick={() => setGenerateLightboxImage(null)}
         >
           <img
-            src={lightboxImage}
+            src={generateLightboxImage}
             alt="Enlarged view"
             className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
           />
@@ -1086,7 +1118,7 @@ const ImageGenerationPage = () => {
             className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors backdrop-blur-md"
             onClick={(e) => {
               e.stopPropagation();
-              setLightboxImage(null);
+              setGenerateLightboxImage(null);
             }}
           >
             <X className="w-8 h-8" />
