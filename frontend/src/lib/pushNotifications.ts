@@ -54,9 +54,20 @@ export async function subscribeToPushNotifications() {
         }
 
         // Get VAPID public key from backend or environment
-        const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+        let vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+
         if (!vapidPublicKey) {
-            console.error('VAPID public key not found in environment.');
+            // Fallback: fetch from backend
+            try {
+                const response = await api.get('/notifications/push/public-key');
+                vapidPublicKey = response.data.public_key;
+            } catch (e) {
+                console.error('API failed to return VAPID key', e);
+            }
+        }
+
+        if (!vapidPublicKey) {
+            console.error('VAPID public key not found in environment or backend.');
             return false;
         }
 
