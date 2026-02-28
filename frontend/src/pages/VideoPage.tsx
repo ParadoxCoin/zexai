@@ -1658,10 +1658,13 @@ const VideoPage = () => {
                             onClick={(e) => {
                               window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(video.url || video.file_url)}`, '_blank');
                               
-                              apiService.post('/video/export/share-reward', { media_id: video.id, platform: 'facebook' })
-                                .then(() => {
-                                  queryClient.invalidateQueries({ queryKey: ["userCredits"] });
-                                  alert('Facebook üzerinden paylaştığınız için 15 kredi kazandınız!');
+                              apiService.post('/social/share', { content_type: 'video', content_id: video.id, platform: 'facebook' })
+                                .then((response) => {
+                                  const data = response?.data || response;
+                                  if (data?.reward_granted) {
+                                    queryClient.invalidateQueries({ queryKey: ["userCredits"] });
+                                    alert('Facebook üzerinden paylaştığınız için 5 kredi kazandınız!');
+                                  }
                                 })
                                 .catch((err) => {
                                   console.log('Reward already claimed or error', err);
