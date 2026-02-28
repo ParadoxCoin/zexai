@@ -9,6 +9,13 @@ import logging
 import json
 
 from core.supabase_client import get_supabase_client
+from core.config import settings
+
+try:
+    from pywebpush import webpush, WebPushException
+except ImportError:
+    webpush = None
+    WebPushException = Exception
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +113,16 @@ class NotificationService:
             
             result = supabase.table("notifications").insert(notification).execute()
             
+            # Send Web Push Notifications if available
+            await self._send_web_push_for_user(
+                user_id=user_id,
+                title=title,
+                message=message,
+                action_url=action_url,
+                icon="/pwa-192x192.png",
+                data=metadata
+            )
+            
             if result.data:
                 logger.info(f"Notification sent to user {user_id}: {title}")
                 return result.data[0]
@@ -114,6 +131,57 @@ class NotificationService:
         except Exception as e:
             logger.error(f"Failed to send notification: {e}")
             return None
+            
+    async def _send_web_push_for_user(self, user_id: str, title: str, message: str, action_url: Optional[str] = None, icon: str = "/pwa-192x192.png", data: dict = None):
+        """Fetch user push subscriptions and send web push"""
+        if not webpush or not settings.VAPID_PRIVATE_KEY:
+            return
+            
+        supabase = get_supabase_client()
+        if not supabase:
+            return
+            
+        try:
+            # Fetch subscriptions
+            subscriptions = supabase.table("push_subscriptions").select("*").eq("user_id", user_id).execute()
+            
+            if not subscriptions.data:
+                return
+                
+            payload = {
+                "title": title,
+                "body": message,
+                "icon": icon,
+                "url": action_url or "/",
+                "data": data or {}
+            }
+            
+            for sub in subscriptions.data:
+                try:
+                    sub_info = {
+                        "endpoint": sub.get("endpoint"),
+                        "keys": {
+                            "p256dh": sub.get("p256dh"),
+                            "auth": sub.get("auth")
+                        }
+                    }
+                    webpush(
+                        subscription_info=sub_info,
+                        data=json.dumps(payload),
+                        vapid_private_key=settings.VAPID_PRIVATE_KEY,
+                        vapid_claims={"sub": settings.VAPID_CLAIM_EMAIL or "mailto:admin@domain.com"}
+                    )
+                except WebPushException as ex:
+                    logger.error(f"WebPushException for user {user_id}: {repr(ex)}")
+                    # 410 Gone or 404 Not Found means the subscription expired or revoked
+                    if ex.response and ex.response.status_code in (410, 404):
+                        logger.info(f"Removing expired subscription {sub.get('id')}")
+                        supabase.table("push_subscriptions").delete().eq("id", sub.get("id")).execute()
+                except Exception as ex:
+                    logger.error(f"Error sending web push: {ex}")
+                    
+        except Exception as e:
+            logger.error(f"Failed to fetch push subscriptions: {e}")
     
     async def send_to_all(
         self,
@@ -262,6 +330,52 @@ class NotificationService:
             
         except Exception as e:
             logger.error(f"Failed to delete notification: {e}")
+            return False
+
+    async def save_push_subscription(self, user_id: str, subscription: dict) -> bool:
+        """Save a new Web Push subscription for a user"""
+        supabase = get_supabase_client()
+        if not supabase:
+            return False
+            
+        try:
+            endpoints = supabase.table("push_subscriptions").select("id").eq("endpoint", subscription["endpoint"]).execute()
+            
+            data = {
+                "user_id": user_id,
+                "endpoint": subscription["endpoint"],
+                "p256dh": subscription["keys"]["p256dh"],
+                "auth": subscription["keys"]["auth"],
+                "created_at": datetime.utcnow().isoformat()
+            }
+            
+            if endpoints.data:
+                # Update existing
+                supabase.table("push_subscriptions").update(data).eq("endpoint", subscription["endpoint"]).execute()
+            else:
+                # Insert new
+                supabase.table("push_subscriptions").insert(data).execute()
+                
+            return True
+        except Exception as e:
+            logger.error(f"Failed to save push subscription: {e}")
+            return False
+
+    async def delete_push_subscription(self, user_id: str, endpoint: str) -> bool:
+        """Remove a Web Push subscription"""
+        supabase = get_supabase_client()
+        if not supabase:
+            return False
+            
+        try:
+            supabase.table("push_subscriptions")\
+                .delete()\
+                .eq("user_id", user_id)\
+                .eq("endpoint", endpoint)\
+                .execute()
+            return True
+        except Exception as e:
+            logger.error(f"Failed to delete push subscription: {e}")
             return False
 
 

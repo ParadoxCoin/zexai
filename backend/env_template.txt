@@ -28,3 +28,10 @@ ANTHROPIC_API_KEY=YOUR_ANTHROPIC_API_KEY
 
 # FRONTEND
 FRONTEND_URL=http://localhost:3000
+
+# ============================================
+# WEB PUSH NOTIFICATIONS
+# ============================================
+VAPID_PUBLIC_KEY=your_vapid_public_key
+VAPID_PRIVATE_KEY=your_vapid_private_key
+VAPID_CLAIM_EMAIL=mailto:your_email@domain.com

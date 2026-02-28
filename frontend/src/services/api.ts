@@ -24,7 +24,7 @@ class ApiService {
   constructor() {
     this.api = axios.create({
       baseURL: import.meta.env.VITE_API_URL || '/api/v1',
-      timeout: 30000,
+      timeout: 120000, // Increased to 120 seconds for AI tasks
       headers: {
         'Content-Type': 'application/json',
       },
@@ -90,23 +90,23 @@ class ApiService {
     );
   }
 
-  async get<T = any>(url: string, params?: any): Promise<ApiResponse<T>> {
-    const response = await this.api.get(url, { params });
+  async get<T = any>(url: string, params?: any, config?: import('axios').AxiosRequestConfig): Promise<ApiResponse<T>> {
+    const response = await this.api.get(url, { params, ...config });
     return response.data;
   }
 
-  async post<T = any>(url: string, data?: any): Promise<ApiResponse<T>> {
-    const response = await this.api.post(url, data);
+  async post<T = any>(url: string, data?: any, config?: import('axios').AxiosRequestConfig): Promise<ApiResponse<T>> {
+    const response = await this.api.post(url, data, config);
     return response.data;
   }
 
-  async put<T = any>(url: string, data?: any): Promise<ApiResponse<T>> {
-    const response = await this.api.put(url, data);
+  async put<T = any>(url: string, data?: any, config?: import('axios').AxiosRequestConfig): Promise<ApiResponse<T>> {
+    const response = await this.api.put(url, data, config);
     return response.data;
   }
 
-  async delete<T = any>(url: string): Promise<ApiResponse<T>> {
-    const response = await this.api.delete(url);
+  async delete<T = any>(url: string, config?: import('axios').AxiosRequestConfig): Promise<ApiResponse<T>> {
+    const response = await this.api.delete(url, config);
     return response.data;
   }
 

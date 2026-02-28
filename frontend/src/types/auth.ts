@@ -10,6 +10,7 @@ export interface User {
   auth_provider: 'jwt' | 'supabase';
   email_verified: boolean;
   two_factor_enabled: boolean;
+  preferences?: any;
   credits?: number;
   credits_balance?: number;
 }

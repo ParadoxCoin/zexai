@@ -10,6 +10,8 @@ import logging
 
 from core.security import get_current_user
 from core.notification_service import get_notification_service, NotificationCategory, NotificationType
+from core.config import settings
+from schemas.notification import PushSubscription
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
@@ -47,6 +49,11 @@ class UnreadCountResponse(BaseModel):
 class MarkReadRequest(BaseModel):
     """Mark as read request"""
     notification_ids: Optional[List[str]] = None  # If empty, mark all as read
+
+
+class UnsubscribeRequest(BaseModel):
+    """Unsubscribe request"""
+    endpoint: str
 
 
 # ============================================
@@ -160,3 +167,39 @@ async def delete_all_read(
     except Exception as e:
         logger.error(f"Failed to delete notifications: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/push/public-key")
+async def get_vapid_public_key():
+    """Get VAPID public key for web push subscription"""
+    if not settings.VAPID_PUBLIC_KEY:
+        raise HTTPException(status_code=501, detail="Web Push is not configured")
+    return {"public_key": settings.VAPID_PUBLIC_KEY}
+
+
+@router.post("/push/subscribe")
+async def subscribe_push(
+    subscription: PushSubscription,
+    current_user: SimpleNamespace = Depends(get_current_user)
+):
+    """Save user web push subscription"""
+    service = get_notification_service()
+    success = await service.save_push_subscription(current_user.id, subscription.model_dump())
+    
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to save push subscription")
+    
+    return {"success": True, "message": "Subscription saved"}
+
+
+@router.post("/push/unsubscribe")
+async def unsubscribe_push(
+    request: UnsubscribeRequest,
+    current_user: SimpleNamespace = Depends(get_current_user)
+):
+    """Remove user web push subscription"""
+    service = get_notification_service()
+    # Always return success to not block frontend if already deleted
+    await service.delete_push_subscription(current_user.id, request.endpoint)
+    
+    return {"success": True, "message": "Subscription removed"}

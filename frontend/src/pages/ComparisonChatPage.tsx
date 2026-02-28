@@ -68,7 +68,7 @@ export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
     const allModels = [...freeModels, ...premiumModels];
 
     const compareMutation = useMutation({
-        mutationFn: () => apiService.post('/comparison/compare', { prompt: prompt.trim(), model_ids: selectedModels }),
+        mutationFn: () => apiService.post('/comparison/compare', { prompt: prompt.trim(), model_ids: selectedModels }, { timeout: 300000 }),
         onSuccess: (data: any) => {
             setGeneralError(null);
             setResults(data.results || []);
