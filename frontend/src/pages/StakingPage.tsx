@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { ethers } from 'ethers';
 import playHapticFeedback from '@/utils/haptics';
+import api from '@/services/api';
 
 export const StakingPage: React.FC = () => {
     const { account, zexBalance, getContracts, checkAndApproveZex, connectWallet } = useWeb3();
@@ -30,6 +31,8 @@ export const StakingPage: React.FC = () => {
     const [isWithdrawing, setIsWithdrawing] = useState(false);
     const [isClaiming, setIsClaiming] = useState(false);
     const [isLoadingStats, setIsLoadingStats] = useState(false);
+    const [isClaimingCredits, setIsClaimingCredits] = useState(false);
+    const [hasClaimedCredits, setHasClaimedCredits] = useState(false);
 
     // Fetch Staking Stats
     const fetchStakingStats = async () => {
@@ -61,11 +64,24 @@ export const StakingPage: React.FC = () => {
         }
     };
 
+    // Check if user already claimed platform credits this month
+    const fetchClaimStatus = async () => {
+        try {
+            const res = await api.get('/staking/status');
+            if (res.data) setHasClaimedCredits(res.data.has_claimed_this_month);
+        } catch (e) {
+            console.error("Error checking claim status:", e);
+        }
+    };
+
     // Auto-refresh stats every 10 seconds (for live rewards)
     useEffect(() => {
-        fetchStakingStats();
-        const interval = setInterval(fetchStakingStats, 10000);
-        return () => clearInterval(interval);
+        if (account) {
+            fetchStakingStats();
+            fetchClaimStatus();
+            const interval = setInterval(fetchStakingStats, 10000);
+            return () => clearInterval(interval);
+        }
     }, [account]);
 
     // Live Countdown Timer logic
@@ -130,13 +146,13 @@ export const StakingPage: React.FC = () => {
 
     const handleWithdraw = async () => {
         if (!withdrawAmount || parseFloat(withdrawAmount) <= 0 || !account) return;
-        
+
         // Warn about early penalty
         if (isLocked) {
-           const confirmWithdraw = window.confirm(
-               "⚠️ DİKKAT: Kilit süreniz henüz dolmadı!\n\nŞu an kilitli tokenlarınızı çekerseniz %10 Erken Çekim Cezası (Unstake Penalty) kesilecektir. Gerçekten ZEX'lerinizin %10'undan vazgeçerek işlemi onaylıyor musunuz?"
-           );
-           if (!confirmWithdraw) return;
+            const confirmWithdraw = window.confirm(
+                "⚠️ DİKKAT: Kilit süreniz henüz dolmadı!\n\nŞu an kilitli tokenlarınızı çekerseniz %10 Erken Çekim Cezası (Unstake Penalty) kesilecektir. Gerçekten ZEX'lerinizin %10'undan vazgeçerek işlemi onaylıyor musunuz?"
+            );
+            if (!confirmWithdraw) return;
         }
 
         setIsWithdrawing(true);
@@ -174,6 +190,41 @@ export const StakingPage: React.FC = () => {
             alert("Ödül toplama işlemi başarısız oldu.");
         } finally {
             setIsClaiming(false);
+        }
+    };
+
+    const handleClaimPlatformCredits = async () => {
+        if (!account) return;
+        setIsClaimingCredits(true);
+        try {
+            // Ask MetaMask for signature
+            if (!window.ethereum) throw new Error("MetaMask is not installed.");
+            const browserProvider = new ethers.BrowserProvider(window.ethereum);
+            const signer = await browserProvider.getSigner();
+
+            const currentMonth = new Date().toLocaleString('tr-TR', { month: 'long', year: 'numeric' });
+            const message = `ZexAI Aylık Platform Kredisi Talep Ediyorum.\nCüzdan: ${account}\nAy: ${currentMonth}`;
+
+            const signature = await signer.signMessage(message);
+
+            // Send to FastAPI Backend
+            const res = await api.post('/staking/claim', {
+                wallet_address: account,
+                message: message,
+                signature: signature
+            });
+
+            if (res.data && res.data.success) {
+                alert(res.data.message);
+                playHapticFeedback('success');
+                setHasClaimedCredits(true);
+            }
+        } catch (error: any) {
+            console.error("Credit claim failed:", error);
+            const msg = error.response?.data?.detail || error.message || "Bilinmeyen bir hata oluştu.";
+            alert("Kredi talep işlemi başarısız: " + msg);
+        } finally {
+            setIsClaimingCredits(false);
         }
     };
 
@@ -249,6 +300,52 @@ export const StakingPage: React.FC = () => {
                                     Ödülleri Topla
                                 </button>
                             </div>
+                        </motion.div>
+
+                        {/* Monthly Platform Credits Claim Card */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                            className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-xl border border-gray-100 dark:border-gray-700 relative overflow-hidden"
+                        >
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <Zap className="w-5 h-5 text-yellow-500" /> Platform Kredisi (Aylık)
+                                </h3>
+                                {hasClaimedCredits && (
+                                    <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold rounded-full border border-green-200 dark:border-green-800/50">
+                                        Alındı ✓
+                                    </span>
+                                )}
+                            </div>
+
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
+                                Staking (Tier) seviyenize göre her ay ücretsiz AI Kredisi talep edebilirsiniz (Min 500 ZEX kilitli olmalı).
+                            </p>
+
+                            <button
+                                onClick={handleClaimPlatformCredits}
+                                disabled={isClaimingCredits || hasClaimedCredits || parseFloat(stakedBalance) < 500}
+                                className={`w-full py-4 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-2 ${hasClaimedCredits
+                                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 border border-gray-200 dark:border-gray-600 cursor-not-allowed'
+                                    : parseFloat(stakedBalance) < 500
+                                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 border border-gray-200 dark:border-gray-600 cursor-not-allowed opacity-50'
+                                        : 'bg-yellow-500 hover:bg-yellow-400 text-yellow-950 shadow-lg shadow-yellow-500/20 active:scale-[0.98]'
+                                    }`}
+                            >
+                                {isClaimingCredits ? (
+                                    <Activity className="w-5 h-5 animate-spin" />
+                                ) : hasClaimedCredits ? (
+                                    'Bu Ayın Kredisi Alındı'
+                                ) : (
+                                    'Aylık Kredimi İste'
+                                )}
+                            </button>
+
+                            {parseFloat(stakedBalance) < 500 && !hasClaimedCredits && (
+                                <p className="text-center text-xs text-red-500 mt-3 font-medium">
+                                    Tier 1 (Bronze) için en az 500 ZEX kilitlemelisiniz.
+                                </p>
+                            )}
                         </motion.div>
 
                         {/* Staked Balance / Wallet Balance Stats */}
@@ -397,7 +494,7 @@ export const StakingPage: React.FC = () => {
                                                     <p className="text-xs text-purple-800 dark:text-purple-300 leading-relaxed">
                                                         Buradan ZEX tokenlarınızı cüzdanınıza geri çekebilirsiniz. Kilitli limitiniz azaldığı için kazanacağınız APY oranı aynı kalsa da miktar azalır.
                                                     </p>
-                                                    
+
                                                     {isLocked && lockupEndTime && parseFloat(stakedBalance) > 0 && (
                                                         <div className="p-2.5 bg-red-100 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-lg">
                                                             <p className="text-xs font-bold text-red-600 dark:text-red-400 mb-0.5">⚠️ Erken Çekim Uyarısı</p>
@@ -406,7 +503,7 @@ export const StakingPage: React.FC = () => {
                                                             </p>
                                                             <p className="text-[10px] text-red-500 dark:text-red-400 mt-2 font-mono bg-red-500/10 p-2 rounded border border-red-500/20">
                                                                 Kalan Süre: <span className="font-bold text-red-600 dark:text-red-400 text-xs">{timeRemaining}</span>
-                                                                <br/>
+                                                                <br />
                                                                 <span className="text-gray-500 mt-1 block">Açılış: {new Date(lockupEndTime).toLocaleString()}</span>
                                                             </p>
                                                         </div>

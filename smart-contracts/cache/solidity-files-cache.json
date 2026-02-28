@@ -918,8 +918,8 @@
       ]
     },
     "C:\\Users\\my\\Desktop\\ZexAi\\Zex\\smart-contracts\\contracts\\ZexToken.sol": {
-      "lastModificationDate": 1771973953266,
-      "contentHash": "230035895a8e4a036ec5c625482da83e",
+      "lastModificationDate": 1772256687015,
+      "contentHash": "86b33ec77eec57a915829a263979cd3b",
       "sourceName": "contracts/ZexToken.sol",
       "solcConfig": {
         "version": "0.8.20",
