@@ -3,6 +3,7 @@ import { Bell, X, Check, CheckCheck, Trash2, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { supabase } from '@/lib/supabase';
+import { subscribeToPushNotifications, checkPushSubscriptionStatus } from '@/lib/pushNotifications';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
@@ -22,6 +23,8 @@ const NotificationDropdown: React.FC = () => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(false);
+    const [pushEnabled, setPushEnabled] = useState(true); // Default true to prevent flash of banner
+    const [isPushLoading, setIsPushLoading] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
 
@@ -41,6 +44,12 @@ const NotificationDropdown: React.FC = () => {
     useEffect(() => {
         fetchUnreadCount();
         const interval = setInterval(fetchUnreadCount, 60000); // Every 60 seconds
+
+        // Also check push status
+        checkPushSubscriptionStatus().then((isSubscribed) => {
+            setPushEnabled(isSubscribed);
+        });
+
         return () => clearInterval(interval);
     }, []);
 
@@ -92,6 +101,15 @@ const NotificationDropdown: React.FC = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleEnablePush = async () => {
+        setIsPushLoading(true);
+        const success = await subscribeToPushNotifications();
+        if (success) {
+            setPushEnabled(true);
+        }
+        setIsPushLoading(false);
     };
 
     const handleOpen = () => {
@@ -218,6 +236,27 @@ const NotificationDropdown: React.FC = () => {
                             </button>
                         )}
                     </div>
+
+                    {/* Push Notification Promo Banner */}
+                    {!pushEnabled && (
+                        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 px-4 py-3 border-b border-indigo-100 dark:border-indigo-800/30 flex items-center justify-between">
+                            <div className="flex-1 pr-3">
+                                <p className="text-xs font-semibold text-indigo-900 dark:text-indigo-300">
+                                    Bildirimleri Açın
+                                </p>
+                                <p className="text-[10px] text-indigo-700 dark:text-indigo-400 mt-0.5 leading-tight">
+                                    Önemli güncellemelerden anında haberdar olmak için tarayıcı bildirimlerine izin verin.
+                                </p>
+                            </div>
+                            <button
+                                onClick={handleEnablePush}
+                                disabled={isPushLoading}
+                                className="flex-shrink-0 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg shadow-sm shadow-indigo-200 dark:shadow-none transition-colors"
+                            >
+                                {isPushLoading ? 'Açılıyor...' : 'Aç'}
+                            </button>
+                        </div>
+                    )}
 
                     {/* Notification List */}
                     <div className="max-h-96 overflow-y-auto">

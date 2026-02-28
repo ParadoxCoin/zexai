@@ -3,15 +3,10 @@ import { useAuthStore } from '@/store/authStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Settings, Bell, Shield, CreditCard } from 'lucide-react';
-import { subscribeToPushNotifications, unsubscribeFromPushNotifications, checkPushSubscriptionStatus } from '@/lib/pushNotifications';
+import { Settings, Shield, CreditCard } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
   const { user } = useAuthStore();
-
-  // Push Notification State
-  const [pushEnabled, setPushEnabled] = useState(false);
-  const [isPushLoading, setIsPushLoading] = useState(true);
 
   // General Settings State
   const [isSaving, setIsSaving] = useState(false);
@@ -40,41 +35,6 @@ export const SettingsPage: React.FC = () => {
       }));
     }
   }, [user]);
-
-  // Load Push Subscription Status
-  useEffect(() => {
-    checkPushSubscriptionStatus().then((isSubscribed) => {
-      setPushEnabled(isSubscribed);
-      setIsPushLoading(false);
-    });
-  }, []);
-
-  const handlePushToggle = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const isChecked = e.target.checked;
-    setIsPushLoading(true);
-
-    if (isChecked) {
-      const success = await subscribeToPushNotifications();
-      if (success) {
-        setPushEnabled(true);
-        console.log("Push notifications enabled!");
-      } else {
-        setPushEnabled(false);
-        e.target.checked = false; // revert Visual change
-        console.error("Failed to enable push notifications. Please check browser permissions.");
-      }
-    } else {
-      const success = await unsubscribeFromPushNotifications();
-      if (success) {
-        setPushEnabled(false);
-        console.log("Push notifications disabled!");
-      } else {
-        console.error("Failed to disable push notifications.");
-      }
-    }
-
-    setIsPushLoading(false);
-  };
 
   const handleSaveSettings = async () => {
     setIsSaving(true);
@@ -237,49 +197,6 @@ export const SettingsPage: React.FC = () => {
             <Button variant="outline" className="w-full mt-2 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition-colors">
               Manage Payment Methods
             </Button>
-          </CardContent>
-        </Card>
-
-        {/* Notification Settings */}
-        <Card className="border-gray-200/60 shadow-md hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-indigo-900">
-              <Bell className="h-5 w-5 text-indigo-500" />
-              <span>Device Notifications</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Push Notifications
-              </label>
-              <div className="space-y-2">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    className="mr-2"
-                    checked={pushEnabled}
-                    onChange={handlePushToggle}
-                    disabled={isPushLoading}
-                  />
-                  <span className="text-sm">
-                    {isPushLoading ? 'Checking status...' : 'System & Browser notifications'}
-                  </span>
-                </label>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Notification Sound
-              </label>
-              <select className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none">
-                <option>Default</option>
-                <option>Chime</option>
-                <option>Bell</option>
-                <option>None</option>
-              </select>
-            </div>
           </CardContent>
         </Card>
       </div>
