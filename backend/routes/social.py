@@ -86,7 +86,7 @@ async def check_liked(content_type: str, content_id: str, current_user = Depends
 async def add_share(request: ShareRequest, current_user = Depends(get_current_user)):
     """Record a share action"""
     clean_id = request.content_id.split('_')[0]
-    result = await social_service.add_share(
+    result = await social_service.record_share(
         user_id=current_user.id,
         content_type=request.content_type,
         content_id=clean_id,

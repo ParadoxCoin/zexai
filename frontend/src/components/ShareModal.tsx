@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiService } from '@/services/api';
 import {
     X, Heart, Share2, Award, Copy, Check, ExternalLink,
@@ -93,6 +93,7 @@ export const ShareModal = ({
     const [isLiked, setIsLiked] = useState(false);
     const [inShowcase, setInShowcase] = useState(false);
     const [copied, setCopied] = useState(false);
+    const queryClient = useQueryClient();
 
     // Like mutation
     const likeMutation = useMutation({
@@ -122,6 +123,7 @@ export const ShareModal = ({
         onSuccess: (response: any) => {
             const data = response?.data || response;
             if (data?.reward_granted) {
+                queryClient.invalidateQueries({ queryKey: ["userCredits"] });
                 alert("🎉 Harika! X (Twitter) paylaşımınız için hesabınıza 5 AI Kredisi eklendi!");
             }
         }
