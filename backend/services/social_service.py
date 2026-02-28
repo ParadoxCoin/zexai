@@ -4,9 +4,9 @@ Handles likes, shares, showcase and comments for all content types
 """
 from typing import Optional, Dict, Any, List
 from core.supabase_client import get_supabase_client
+from core.credits import CreditManager
 from core.logger import logger
 import uuid
-
 
 class SocialService:
     """Service for social interactions on user-generated content"""
@@ -70,11 +70,17 @@ class SocialService:
     # ==================== SHARES ====================
     
     async def record_share(self, user_id: str, content_type: str, content_id: str, platform: str) -> Dict[str, Any]:
-        """Record a share action"""
+        """Record a share action and reward credits if applicable (Share to Earn)"""
         try:
             if platform not in self.SHARE_PLATFORMS:
                 return {"success": False, "error": "Geçersiz platform"}
             
+            # 1. Check if user already shared this content before (prevent infinite farming)
+            existing_share = self.supabase.table('content_interactions').select('id').eq(
+                'user_id', user_id
+            ).eq('content_type', content_type).eq('content_id', content_id).eq('action', 'share').execute()
+
+            # 2. Record the share action
             self.supabase.table('content_interactions').insert({
                 'user_id': user_id,
                 'content_type': content_type,
@@ -83,7 +89,25 @@ class SocialService:
                 'platform': platform
             }).execute()
             
-            return {"success": True, "message": f"{platform} paylaşımı kaydedildi"}
+            reward_granted = False
+            # 3. Share-to-Earn Logic (Twitter gets 5 Credits, once per content)
+            if platform == 'twitter' and (not existing_share.data):
+                try:
+                    await CreditManager.add_credits(
+                        db=self.supabase, 
+                        user_id=user_id, 
+                        amount=5.0, 
+                        reason=f"Twitter Share Reward for {content_type} {content_id}"
+                    )
+                    reward_granted = True
+                except Exception as e:
+                    logger.error(f"Failed to grant share reward credits: {e}")
+            
+            return {
+                "success": True, 
+                "message": f"{platform} paylaşımı kaydedildi",
+                "reward_granted": reward_granted
+            }
         except Exception as e:
             logger.error(f"Record share error: {e}")
             return {"success": False, "error": str(e)}

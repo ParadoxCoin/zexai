@@ -119,8 +119,11 @@ export const ShareModal = ({
             content_id: contentId,
             platform
         }),
-        onSuccess: () => {
-            // Optional: you could show a toast here like "5 Kredi Kazandınız!" 
+        onSuccess: (response: any) => {
+            const data = response?.data || response;
+            if (data?.reward_granted) {
+                alert("🎉 Harika! X (Twitter) paylaşımınız için hesabınıza 5 AI Kredisi eklendi!");
+            }
         }
     });
 

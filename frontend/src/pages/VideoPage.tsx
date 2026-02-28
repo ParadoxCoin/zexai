@@ -1635,10 +1635,13 @@ const VideoPage = () => {
                               window.open(`https://twitter.com/intent/tweet?text=ZexAI ile ürettiğim muhteşem videoya göz atın! 🚀&url=${encodeURIComponent(video.url || video.file_url)}`, '_blank');
                               
                               // 2. Async reward logic
-                              apiService.post('/video/export/share-reward', { media_id: video.id, platform: 'twitter' })
-                                .then(() => {
-                                  queryClient.invalidateQueries({ queryKey: ["userCredits"] });
-                                  alert('Twitter üzerinden paylaştığınız için 15 kredi kazandınız!');
+                              apiService.post('/social/share', { content_type: 'video', content_id: video.id, platform: 'twitter' })
+                                .then((response) => {
+                                  const data = response?.data || response;
+                                  if (data?.reward_granted) {
+                                    queryClient.invalidateQueries({ queryKey: ["userCredits"] });
+                                    alert('🎉 Harika! X (Twitter) paylaşımınız için hesabınıza 5 AI Kredisi eklendi!');
+                                  }
                                 })
                                 .catch((err) => {
                                   console.log('Reward already claimed or error', err);
@@ -1647,7 +1650,7 @@ const VideoPage = () => {
                             className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-xs font-semibold transition-colors border border-blue-200 dark:border-blue-800/50 shadow-sm"
                             title="Twitter'da Paylaş & Kazan"
                           >
-                            <span className="text-black dark:text-white font-bold">𝕏</span> Twitter <span className="text-[10px] bg-blue-100 dark:bg-blue-800 px-1 py-0.5 rounded text-blue-700 dark:text-blue-300">+15c</span>
+                            <span className="text-black dark:text-white font-bold">𝕏</span> Twitter <span className="text-[10px] bg-blue-100 dark:bg-blue-800 px-1 py-0.5 rounded text-blue-700 dark:text-blue-300">+5c</span>
                           </button>
 
                           {/* Share to Earn - Facebook */}
