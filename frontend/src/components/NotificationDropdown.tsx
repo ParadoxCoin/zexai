@@ -12,10 +12,10 @@ interface Notification {
     title: string;
     message: string;
     category: string;
-    type: string;
     action_url?: string;
     is_read: boolean;
     created_at: string;
+    metadata?: any;
 }
 
 const NotificationDropdown: React.FC = () => {
@@ -167,9 +167,29 @@ const NotificationDropdown: React.FC = () => {
         if (!notification.is_read) {
             handleMarkAsRead(notification.id);
         }
-        if (notification.action_url) {
+
+        // Retrieve and fix action_url for old notifications
+        let targetUrl = notification.action_url;
+
+        if (targetUrl === '/media' && notification.metadata?.type) {
+            const typeMap: Record<string, string> = {
+                image: '/images',
+                video: '/videos',
+                audio: '/audio',
+                avatar: '/avatar'
+            };
+            targetUrl = typeMap[notification.metadata.type] || '/images';
+        }
+
+        if (targetUrl) {
             setIsOpen(false);
-            navigate(notification.action_url);
+            // Check if we are already on the target page
+            if (window.location.pathname === targetUrl) {
+                // Force reload to fetch new items
+                window.location.reload();
+            } else {
+                navigate(targetUrl);
+            }
         }
     };
 
