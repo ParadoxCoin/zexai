@@ -60,7 +60,7 @@ export async function subscribeToPushNotifications() {
             // Fallback: fetch from backend
             try {
                 const response = await api.get('/notifications/push/public-key');
-                vapidPublicKey = response.data.public_key;
+                vapidPublicKey = (response as any).public_key;
             } catch (e) {
                 console.error('API failed to return VAPID key', e);
             }
