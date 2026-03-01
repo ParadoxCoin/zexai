@@ -13,6 +13,7 @@ from core.database import get_db
 from core.credits import CreditManager
 from core.config import settings
 from services.model_service import model_service
+from core.notification_service import notify_generation_complete
 
 router = APIRouter(prefix="/audio", tags=["Audio Generation"])
 
@@ -259,6 +260,17 @@ async def text_to_speech(req: TTSRequest, user = Depends(get_current_user), db =
             }
             db.table("media_outputs").insert(media_output).execute()
             
+            # Send Notification
+            try:
+                import asyncio
+                asyncio.create_task(notify_generation_complete(
+                    user_id=user.id,
+                    generation_type="audio",
+                    generation_id=task_id
+                ))
+            except Exception as notify_err:
+                print(f"Failed to send push notification for {task_id}: {notify_err}")
+                
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
     

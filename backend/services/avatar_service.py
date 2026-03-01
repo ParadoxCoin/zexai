@@ -276,12 +276,38 @@ class AvatarService:
                 result = response.json()
                 status = result.get("status")
                 
+                result_url = result.get("result_url") if status == "done" else None
+                error_msg = result.get("error") if status == "error" else None
+
+                if status in ["done", "error"]:
+                    try:
+                        # Check current DB status to avoid duplicate notifications
+                        job_record = self.supabase.table("avatar_jobs").select("status", "user_id").eq("job_id", job_id).single().execute()
+                        if job_record.data and job_record.data.get("status") not in ["done", "error"]:
+                            # Update DB
+                            self.supabase.table("avatar_jobs").update({
+                                "status": status,
+                                "result_url": result_url
+                            }).eq("job_id", job_id).execute()
+                            
+                            # Fire notification
+                            if status == "done":
+                                from core.notification_service import notify_generation_complete
+                                user_id = job_record.data.get("user_id")
+                                asyncio.create_task(notify_generation_complete(
+                                    user_id=user_id,
+                                    generation_type="avatar",
+                                    generation_id=job_id
+                                ))
+                    except Exception as e:
+                        logger.warning(f"Error updating avatar job status in DB: {e}")
+                
                 return {
                     "success": True,
                     "job_id": job_id,
                     "status": status,
-                    "result_url": result.get("result_url") if status == "done" else None,
-                    "error": result.get("error") if status == "error" else None
+                    "result_url": result_url,
+                    "error": error_msg
                 }
                 
         except Exception as e:

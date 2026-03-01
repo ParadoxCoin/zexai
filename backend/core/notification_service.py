@@ -418,13 +418,21 @@ async def notify_generation_complete(user_id: str, generation_type: str, generat
         "audio": "Ses",
         "chat": "Chat"
     }
+    type_urls = {
+        "image": "/images",
+        "video": "/videos",
+        "audio": "/audio",
+        "avatar": "/avatar",
+        "chat": "/chat"
+    }
+    
     await service.send(
         user_id=user_id,
         title=f"{type_names.get(generation_type, generation_type)} Hazır!",
         message=f"{type_names.get(generation_type, generation_type)} oluşturma işleminiz tamamlandı.",
         category=NotificationCategory.GENERATION,
         notification_type=NotificationType.SUCCESS,
-        action_url=f"/media",
+        action_url=type_urls.get(generation_type, "/media"),
         metadata={"generation_id": generation_id, "type": generation_type}
     )
 
