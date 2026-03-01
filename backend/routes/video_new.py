@@ -34,6 +34,7 @@ from services.unified_video_service import unified_video_service  # Database-dri
 from core.config import settings
 from core.pollo_models import EFFECT_PACKAGES, POLLO_VIDEO_MODELS, POLLO_VIDEO_EFFECTS
 from core.kie_models import KIE_VIDEO_MODELS  # Premium kie.ai video models
+from core.notification_service import notify_generation_complete
 
 
 router = APIRouter(prefix="/video", tags=["Video Generation"])
@@ -654,6 +655,18 @@ async def get_my_videos(
                                                 "status": "completed",
                                                 "file_url": video_url
                                             }).eq("id", video["id"]).execute()
+                                            
+                                            # Trigger Push Notification
+                                            try:
+                                                import asyncio
+                                                asyncio.create_task(notify_generation_complete(
+                                                    user_id=video["user_id"],
+                                                    generation_type="video",
+                                                    generation_id=video["id"]
+                                                ))
+                                            except Exception as notify_err:
+                                                print(f"[StatusPoll] Failed to notify: {notify_err}")
+                                                
                                             print(f"[StatusPoll] ✓ Video completed: {video['id']}")
                                         elif state == "fail":
                                             fail_msg = task_data.get("failMsg", "")

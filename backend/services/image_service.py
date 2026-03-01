@@ -19,6 +19,7 @@ from core.credits import CreditManager
 from core.config import settings
 from core.image_models import ALL_IMAGE_MODELS, IMAGE_TOOLS, SPECIALIZED_GENERATORS
 from core.kie_models import KIE_IMAGE_MODELS  # Premium kie.ai models
+from core.notification_service import notify_generation_complete
 from schemas.image_new import ImageGenerateRequest, ImageGenerateResponse, ImageTaskStatus, ImageToolRequest, SpecializedGeneratorRequest
 from schemas.output import MediaOutput
 from services.storage_service_supabase import hybrid_storage_service # Hybrid Storage (Supabase + R2)
@@ -308,6 +309,16 @@ class ImageService:
                 "completed_at": datetime.utcnow().isoformat()
             }).eq("id", task_id).execute()
             
+            # 4. Trigger Push Notification
+            try:
+                await notify_generation_complete(
+                    user_id=user_id, 
+                    generation_type="image", 
+                    generation_id=task_id
+                )
+            except Exception as notify_err:
+                logger.error(f"Failed to send push notification for {task_id}: {notify_err}")
+                
         except Exception as e:
             import traceback
             logger.error(f"Image generation failed for task {task_id}: {str(e)}")
