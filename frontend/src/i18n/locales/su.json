@@ -1,30 +1,66 @@
 {
-    "nav": {
-        "dashboard": "Dub-sar",
-        "images": "Nu-mu",
-        "videos": "Kin-gal",
-        "audio": "Gù-dé",
-        "chat": "En-du",
-        "synapse": "Synapse",
-        "media": "Me-te",
-        "admin": "Lugal-Panel"
-    },
-    "user": {
-        "profile": "Sag",
-        "analytics": "Zana",
-        "apiKeys": "Kišib-API",
-        "settings": "Gar-ra",
-        "logout": "Gub-ba"
-    },
-    "common": {
-        "loading": "Gál...",
-        "save": "Šid",
-        "cancel": "Šub",
-        "delete": "Zuh",
-        "edit": "Šar",
-        "create": "Dù",
-        "search": "Kín",
-        "filter": "Zuh-zuh",
-        "language": "Eme"
-    }
+  "nav": {
+    "dashboard": "Dub-sar",
+    "images": "Nu-mu",
+    "videos": "Kin-gal",
+    "audio": "Gù-dé",
+    "chat": "En-du",
+    "synapse": "Synapse",
+    "media": "Me-te",
+    "admin": "Lugal-Panel"
+  },
+  "user": {
+    "profile": "Sag",
+    "analytics": "Zana",
+    "apiKeys": "Kišib-API",
+    "settings": "Gar-ra",
+    "logout": "Gub-ba"
+  },
+  "common": {
+    "loading": "Gál...",
+    "save": "Šid",
+    "cancel": "Šub",
+    "delete": "Zuh",
+    "edit": "Šar",
+    "create": "Dù",
+    "search": "Kín",
+    "filter": "Zuh-zuh",
+    "language": "Eme"
+  },
+  "settings": {
+    "title": "Lu-gal Ki-en-gi",
+    "desc": "Dub-sar ki-ag-ga",
+    "profileInfo": "Lugal Mu-tu",
+    "accountType": "Lu-gal Nanna",
+    "emailNotif": "Kin-gi-a U-dug",
+    "taskComp": "Kin Til-la",
+    "creditAlerts": "Kug-sig Warn",
+    "marketing": "Kaskal Mail",
+    "billingTitle": "Kug-sig & Kù-babbar",
+    "autoRecharge": "Kug Auto-Add",
+    "rechargeWhenUrl": "Kug dir-ga en-nu",
+    "credits": "Kug-sig",
+    "managePayment": "Zuh-zuh Payment",
+    "reset": "Gibil-Bi",
+    "saveChanges": "Šid-Šid",
+    "saving": "Šid-da..."
+  },
+  "chat": {
+    "newChat": "En-du Gibil",
+    "searchModel": "Kin En-ki...",
+    "free": "Ša-ga",
+    "premium": "Kug-Babbar",
+    "pastChats": "En-du U-bi-a",
+    "noChats": "Nu En-du",
+    "firstMsg": "Dub-sar e-dub-ba-a!",
+    "untitled": "Nu Mu En-du",
+    "msgCount": "dub-sar",
+    "compare": "Kin-ki Model",
+    "howCanIHelp": "Me-a An-na help?",
+    "askAnything": "En-ki dub-sar",
+    "typing": "Sar-sar...",
+    "typeMsg": "Šar a-na...",
+    "shortcut": "Shift+Enter na-ru-a",
+    "copied": "Kišib"
+  }
 }

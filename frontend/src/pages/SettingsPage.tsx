@@ -4,9 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Settings, Shield, CreditCard } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export const SettingsPage: React.FC = () => {
   const { user } = useAuthStore();
+  const { t } = useTranslation();
 
   // General Settings State
   const [isSaving, setIsSaving] = useState(false);
@@ -83,9 +85,9 @@ export const SettingsPage: React.FC = () => {
         </div>
         <div>
           <h1 className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-indigo-800 to-gray-900">
-            Account Preferences
+            {t('settings.title', 'Account Preferences')}
           </h1>
-          <p className="text-gray-500 text-sm mt-1">Manage your profile, billing, and notification settings</p>
+          <p className="text-gray-500 text-sm mt-1">{t('settings.desc', 'Manage your profile, billing, and notification settings')}</p>
         </div>
       </div>
 
@@ -95,13 +97,13 @@ export const SettingsPage: React.FC = () => {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2 text-indigo-900">
               <Shield className="h-5 w-5 text-indigo-500" />
-              <span>Profile Information</span>
+              <span>{t('settings.profileInfo', 'Profile Information')}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Account Type
+                {t('settings.accountType', 'Account Type')}
               </label>
               <div className="flex items-center space-x-2">
                 <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium capitalize">
@@ -115,7 +117,7 @@ export const SettingsPage: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Notifications
+                {t('settings.emailNotif', 'Email Notifications')}
               </label>
               <div className="space-y-2">
                 <label className="flex items-center">
@@ -125,7 +127,7 @@ export const SettingsPage: React.FC = () => {
                     checked={settings.notifications.taskCompletion}
                     onChange={() => handleNotificationChange('taskCompletion')}
                   />
-                  <span className="text-sm">Task completion notifications</span>
+                  <span className="text-sm">{t('settings.taskComp', 'Task completion notifications')}</span>
                 </label>
                 <label className="flex items-center">
                   <input
@@ -134,7 +136,7 @@ export const SettingsPage: React.FC = () => {
                     checked={settings.notifications.creditAlerts}
                     onChange={() => handleNotificationChange('creditAlerts')}
                   />
-                  <span className="text-sm">Credit balance alerts</span>
+                  <span className="text-sm">{t('settings.creditAlerts', 'Credit balance alerts')}</span>
                 </label>
                 <label className="flex items-center">
                   <input
@@ -143,7 +145,7 @@ export const SettingsPage: React.FC = () => {
                     checked={settings.notifications.marketingEmails}
                     onChange={() => handleNotificationChange('marketingEmails')}
                   />
-                  <span className="text-sm">Marketing emails</span>
+                  <span className="text-sm">{t('settings.marketing', 'Marketing emails')}</span>
                 </label>
               </div>
             </div>
@@ -155,13 +157,13 @@ export const SettingsPage: React.FC = () => {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2 text-indigo-900">
               <CreditCard className="h-5 w-5 text-indigo-500" />
-              <span>Billing & Credits</span>
+              <span>{t('settings.billingTitle', 'Billing & Credits')}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Auto-recharge
+                {t('settings.autoRecharge', 'Auto-recharge')}
               </label>
               <div className="flex items-center space-x-2">
                 <input
@@ -170,7 +172,7 @@ export const SettingsPage: React.FC = () => {
                   checked={settings.billing.autoRecharge}
                   onChange={handleBillingToggle}
                 />
-                <span className="text-sm">Auto-recharge when balance is low</span>
+                <span className="text-sm">{t('settings.autoRecharge', 'Auto-recharge when balance is low')}</span>
               </div>
               <div className="mt-2 ml-6 space-y-2">
                 <Input
@@ -181,7 +183,7 @@ export const SettingsPage: React.FC = () => {
                   onChange={(e) => handleBillingValueChange('rechargeAmount', e.target.value)}
                   disabled={!settings.billing.autoRecharge}
                 />
-                <span className="text-sm text-gray-600">credits when balance drops below</span>
+                <span className="text-sm text-gray-600">{t('settings.rechargeWhenUrl', 'credits when balance drops below')}</span>
                 <Input
                   type="number"
                   placeholder="50"
@@ -190,25 +192,25 @@ export const SettingsPage: React.FC = () => {
                   onChange={(e) => handleBillingValueChange('rechargeThreshold', e.target.value)}
                   disabled={!settings.billing.autoRecharge}
                 />
-                <span className="text-sm text-gray-600">credits</span>
+                <span className="text-sm text-gray-600">{t('settings.credits', 'credits')}</span>
               </div>
             </div>
 
             <Button variant="outline" className="w-full mt-2 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition-colors">
-              Manage Payment Methods
+              {t('settings.managePayment', 'Manage Payment Methods')}
             </Button>
           </CardContent>
         </Card>
       </div>
 
       <div className="flex justify-end space-x-4 mt-8 pt-6 border-t border-gray-100">
-        <Button variant="ghost" className="hover:bg-gray-100">Reset to Defaults</Button>
+        <Button variant="ghost" className="hover:bg-gray-100">{t('settings.reset', 'Reset to Defaults')}</Button>
         <Button
           onClick={handleSaveSettings}
           disabled={isSaving}
           className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-indigo-200 transition-all border-0"
         >
-          {isSaving ? 'Saving...' : 'Save Changes'}
+          {isSaving ? t('settings.saving', 'Saving...') : t('settings.saveChanges', 'Save Changes')}
         </Button>
       </div>
     </div>

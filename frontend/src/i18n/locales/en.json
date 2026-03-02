@@ -26,5 +26,41 @@
     "search": "Search",
     "filter": "Filter",
     "language": "Language"
+  },
+  "settings": {
+    "title": "Account Preferences",
+    "desc": "Manage your profile, billing, and notification settings",
+    "profileInfo": "Profile Information",
+    "accountType": "Account Type",
+    "emailNotif": "Email Notifications",
+    "taskComp": "Task completion notifications",
+    "creditAlerts": "Credit balance alerts",
+    "marketing": "Marketing emails",
+    "billingTitle": "Billing & Credits",
+    "autoRecharge": "Auto-recharge when balance is low",
+    "rechargeWhenUrl": "credits when balance drops below",
+    "credits": "credits",
+    "managePayment": "Manage Payment Methods",
+    "reset": "Reset to Defaults",
+    "saveChanges": "Save Changes",
+    "saving": "Saving..."
+  },
+  "chat": {
+    "newChat": "New Chat",
+    "searchModel": "Search model...",
+    "free": "Free",
+    "premium": "Premium",
+    "pastChats": "Past Chats",
+    "noChats": "No chats yet",
+    "firstMsg": "Write your first message!",
+    "untitled": "Untitled Chat",
+    "msgCount": "messages",
+    "compare": "Compare Models",
+    "howCanIHelp": "How can I help you?",
+    "askAnything": "Ask anything you want",
+    "typing": "Typing...",
+    "typeMsg": "Type your message...",
+    "shortcut": "Shift+Enter for new line",
+    "copied": "Copied"
   }
 }

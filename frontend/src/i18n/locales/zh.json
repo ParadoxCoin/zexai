@@ -1,30 +1,66 @@
 {
-    "nav": {
-        "dashboard": "仪表板",
-        "images": "图像",
-        "videos": "视频",
-        "audio": "音频",
-        "chat": "聊天",
-        "synapse": "Synapse",
-        "media": "媒体",
-        "admin": "管理面板"
-    },
-    "user": {
-        "profile": "个人资料",
-        "analytics": "分析",
-        "apiKeys": "API 密钥",
-        "settings": "设置",
-        "logout": "登出"
-    },
-    "common": {
-        "loading": "加载中...",
-        "save": "保存",
-        "cancel": "取消",
-        "delete": "删除",
-        "edit": "编辑",
-        "create": "创建",
-        "search": "搜索",
-        "filter": "过滤",
-        "language": "语言"
-    }
+  "nav": {
+    "dashboard": "仪表板",
+    "images": "图像",
+    "videos": "视频",
+    "audio": "音频",
+    "chat": "聊天",
+    "synapse": "Synapse",
+    "media": "媒体",
+    "admin": "管理面板"
+  },
+  "user": {
+    "profile": "个人资料",
+    "analytics": "分析",
+    "apiKeys": "API 密钥",
+    "settings": "设置",
+    "logout": "登出"
+  },
+  "common": {
+    "loading": "加载中...",
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "create": "创建",
+    "search": "搜索",
+    "filter": "过滤",
+    "language": "语言"
+  },
+  "settings": {
+    "title": "帐户首选项",
+    "desc": "管理您的个人资料、账单和通知",
+    "profileInfo": "个人资料信息",
+    "accountType": "帐户类型",
+    "emailNotif": "电子邮件通知",
+    "taskComp": "任务完成",
+    "creditAlerts": "积分余额",
+    "marketing": "营销邮件",
+    "billingTitle": "账单和积分",
+    "autoRecharge": "自动充值",
+    "rechargeWhenUrl": "积分当低于",
+    "credits": "积分",
+    "managePayment": "付款方式",
+    "reset": "重置",
+    "saveChanges": "保存更改",
+    "saving": "保存中..."
+  },
+  "chat": {
+    "newChat": "新聊天",
+    "searchModel": "搜索模型...",
+    "free": "免费",
+    "premium": "高级",
+    "pastChats": "过去的聊天",
+    "noChats": "还没有聊天",
+    "firstMsg": "写下你的第一条信息！",
+    "untitled": "无标题聊天",
+    "msgCount": "信息",
+    "compare": "比较模型",
+    "howCanIHelp": "我能怎么帮你？",
+    "askAnything": "问任何你想问的",
+    "typing": "打字...",
+    "typeMsg": "输入你的信息...",
+    "shortcut": "Shift+Enter换行",
+    "copied": "已复制"
+  }
 }

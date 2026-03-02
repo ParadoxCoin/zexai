@@ -1,30 +1,66 @@
 {
-    "nav": {
-        "dashboard": "Übersicht",
-        "images": "Bilder",
-        "videos": "Videos",
-        "audio": "Audio",
-        "chat": "Chat",
-        "synapse": "Synapse",
-        "media": "Medien",
-        "admin": "Admin-Bereich"
-    },
-    "user": {
-        "profile": "Profil",
-        "analytics": "Analyse",
-        "apiKeys": "API-Schlüssel",
-        "settings": "Einstellungen",
-        "logout": "Abmelden"
-    },
-    "common": {
-        "loading": "Laden...",
-        "save": "Speichern",
-        "cancel": "Abbrechen",
-        "delete": "Löschen",
-        "edit": "Bearbeiten",
-        "create": "Erstellen",
-        "search": "Suchen",
-        "filter": "Filtern",
-        "language": "Sprache"
-    }
+  "nav": {
+    "dashboard": "Übersicht",
+    "images": "Bilder",
+    "videos": "Videos",
+    "audio": "Audio",
+    "chat": "Chat",
+    "synapse": "Synapse",
+    "media": "Medien",
+    "admin": "Admin-Bereich"
+  },
+  "user": {
+    "profile": "Profil",
+    "analytics": "Analyse",
+    "apiKeys": "API-Schlüssel",
+    "settings": "Einstellungen",
+    "logout": "Abmelden"
+  },
+  "common": {
+    "loading": "Laden...",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "create": "Erstellen",
+    "search": "Suchen",
+    "filter": "Filtern",
+    "language": "Sprache"
+  },
+  "settings": {
+    "title": "Kontoeinstellungen",
+    "desc": "Profil, Abrechnung und Benachrichtigungen verwalten",
+    "profileInfo": "Profilinformationen",
+    "accountType": "Kontotyp",
+    "emailNotif": "E-Mail-Benachrichtigungen",
+    "taskComp": "Aufgabe abgeschlossen",
+    "creditAlerts": "Guthabenwarnungen",
+    "marketing": "Marketing-Mails",
+    "billingTitle": "Abrechnung & Credits",
+    "autoRecharge": "Automatisches Aufladen",
+    "rechargeWhenUrl": "Credits wenn das Guthaben unter",
+    "credits": "Credits",
+    "managePayment": "Zahlungsmethoden verwalten",
+    "reset": "Zurücksetzen",
+    "saveChanges": "Speichern",
+    "saving": "Speichern..."
+  },
+  "chat": {
+    "newChat": "Neuer Chat",
+    "searchModel": "Modell suchen...",
+    "free": "Kostenlos",
+    "premium": "Premium",
+    "pastChats": "Vorherige Chats",
+    "noChats": "Noch keine Chats",
+    "firstMsg": "Schreib deine erste Nachricht!",
+    "untitled": "Unbenannter Chat",
+    "msgCount": "Nachrichten",
+    "compare": "Modelle vergleichen",
+    "howCanIHelp": "Wie kann ich helfen?",
+    "askAnything": "Frag alles was du willst",
+    "typing": "Tippt...",
+    "typeMsg": "Schreibe eine Nachricht...",
+    "shortcut": "Shift+Enter für eine neue Zeile",
+    "copied": "Kopiert"
+  }
 }

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { ComparisonChatPage } from "./ComparisonChatPage";
 import CodeBlock from "@/components/CodeBlock";
+import { useTranslation } from 'react-i18next';
 
 // Available AI Models - Free (Groq + OpenRouter Free) + Premium (OpenRouter Paid)
 const availableModels = [
@@ -84,6 +85,7 @@ interface Message { role: "user" | "assistant"; content: string; timestamp: stri
 interface Conversation { id: string; title?: string; messages: Message[]; model: string; total_tokens: number; total_credits: number; created_at: string; updated_at: string; }
 
 const ChatPage = () => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("chat");
   const [message, setMessage] = useState("");
   const [selectedModel, setSelectedModel] = useState("llama-3.3-70b");
@@ -335,7 +337,7 @@ const ChatPage = () => {
             <div className="p-3 border-b border-gray-200 dark:border-gray-700">
               <button onClick={startNewConversation}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-medium text-sm hover:shadow-lg hover:shadow-emerald-500/20 transition-all active:scale-[0.98]">
-                <Plus className="w-4 h-4" /> Yeni Sohbet
+                <Plus className="w-4 h-4" /> {t('chat.newChat', 'Yeni Sohbet')}
               </button>
             </div>
 
@@ -344,7 +346,7 @@ const ChatPage = () => {
               {/* Search */}
               <div className="relative mb-2">
                 <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input type="text" placeholder="Model ara..." value={modelSearch} onChange={e => setModelSearch(e.target.value)}
+                <input type="text" placeholder={t('chat.searchModel', 'Model ara...')} value={modelSearch} onChange={e => setModelSearch(e.target.value)}
                   className="w-full pl-8 pr-3 py-1.5 text-xs bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-emerald-500" />
               </div>
 
@@ -403,7 +405,7 @@ const ChatPage = () => {
 
             {/* History Header */}
             <div className="px-3 pt-3 pb-1 flex items-center justify-between">
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider px-1">Geçmiş Sohbetler</p>
+              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider px-1">{t('chat.pastChats', 'Geçmiş Sohbetler')}</p>
               <span className="text-[10px] text-gray-400 bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded-full">{conversationsList.length}</span>
             </div>
 
@@ -415,8 +417,8 @@ const ChatPage = () => {
                 ) : conversationsList.length === 0 ? (
                   <div className="text-center py-10">
                     <History className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
-                    <p className="text-xs text-gray-400">Henüz sohbet yok</p>
-                    <p className="text-[10px] text-gray-300 dark:text-gray-600 mt-1">İlk mesajınızı yazın!</p>
+                    <p className="text-xs text-gray-400">{t('chat.noChats', 'Henüz sohbet yok')}</p>
+                    <p className="text-[10px] text-gray-300 dark:text-gray-600 mt-1">{t('chat.firstMsg', 'İlk mesajınızı yazın!')}</p>
                   </div>
                 ) : conversationsList.map((conv: any) => (
                   <div key={conv.id} onClick={() => loadConversation(conv.id)}
@@ -427,12 +429,12 @@ const ChatPage = () => {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate leading-tight">
-                          {conv.title || "Başlıksız Sohbet"}
+                          {conv.title || t('chat.untitled', "Başlıksız Sohbet")}
                         </p>
                         <p className="text-[11px] text-gray-400 truncate mt-1 leading-tight">{conv.last_message}</p>
                         <div className="flex items-center gap-2 mt-1.5">
                           <span className="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">
-                            {conv.message_count} mesaj
+                            {conv.message_count} {t('chat.msgCount', 'mesaj')}
                           </span>
                           <span className="text-[10px] text-gray-400">
                             {new Date(conv.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
@@ -453,7 +455,7 @@ const ChatPage = () => {
             <div className="p-3 border-t border-gray-200 dark:border-gray-700">
               <button onClick={() => setActiveTab("compare")}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-emerald-500/20 transition-all active:scale-[0.98]">
-                <Zap className="w-4 h-4" /> Model Karşılaştır
+                <Zap className="w-4 h-4" /> {t('chat.compare', 'Model Karşılaştır')}
               </button>
             </div>
           </div>
@@ -477,7 +479,7 @@ const ChatPage = () => {
                     {currentModel.icon}
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">{currentConversation?.title || "Yeni Sohbet"}</h3>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">{currentConversation?.title || t('chat.newChat', "Yeni Sohbet")}</h3>
                     <p className="text-[10px] text-gray-400">{currentModel.name}</p>
                   </div>
                 </div>
@@ -587,7 +589,7 @@ const ChatPage = () => {
                 <div className="flex items-end gap-2 bg-gray-50 dark:bg-gray-800 rounded-2xl p-2 border border-gray-200 dark:border-gray-700 focus-within:border-emerald-300 dark:focus-within:border-emerald-700 focus-within:ring-2 focus-within:ring-emerald-500/10 transition-all">
                   <textarea
                     ref={textareaRef}
-                    placeholder="Mesajınızı yazın..."
+                    placeholder={t('chat.typeMsg', "Mesajınızı yazın...")}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     rows={1}
@@ -601,7 +603,7 @@ const ChatPage = () => {
                   </button>
                 </div>
                 <p className="text-center text-[10px] text-gray-400 mt-2">
-                  {currentModel.icon} {currentModel.name} · Shift+Enter ile yeni satır
+                  {currentModel.icon} {currentModel.name} · {t('chat.shortcut', "Shift+Enter ile yeni satır")}
                 </p>
               </form>
             </div>

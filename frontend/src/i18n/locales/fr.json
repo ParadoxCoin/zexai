@@ -1,30 +1,66 @@
 {
-    "nav": {
-        "dashboard": "Tableau de Bord",
-        "images": "Images",
-        "videos": "Vidéos",
-        "audio": "Audio",
-        "chat": "Chat",
-        "synapse": "Synapse",
-        "media": "Médias",
-        "admin": "Administration"
-    },
-    "user": {
-        "profile": "Profil",
-        "analytics": "Analytique",
-        "apiKeys": "Clés API",
-        "settings": "Paramètres",
-        "logout": "Déconnexion"
-    },
-    "common": {
-        "loading": "Chargement...",
-        "save": "Enregistrer",
-        "cancel": "Annuler",
-        "delete": "Supprimer",
-        "edit": "Modifier",
-        "create": "Créer",
-        "search": "Rechercher",
-        "filter": "Filtrer",
-        "language": "Langue"
-    }
+  "nav": {
+    "dashboard": "Tableau de Bord",
+    "images": "Images",
+    "videos": "Vidéos",
+    "audio": "Audio",
+    "chat": "Chat",
+    "synapse": "Synapse",
+    "media": "Médias",
+    "admin": "Administration"
+  },
+  "user": {
+    "profile": "Profil",
+    "analytics": "Analytique",
+    "apiKeys": "Clés API",
+    "settings": "Paramètres",
+    "logout": "Déconnexion"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "language": "Langue"
+  },
+  "settings": {
+    "title": "Préférences du Compte",
+    "desc": "Gérez votre profil, facturation et notifications",
+    "profileInfo": "Informations du Profil",
+    "accountType": "Type de Compte",
+    "emailNotif": "Notifications par Email",
+    "taskComp": "Tâche terminée",
+    "creditAlerts": "Alertes de solde",
+    "marketing": "Emails marketing",
+    "billingTitle": "Facturation & Crédits",
+    "autoRecharge": "Rechargement automatique",
+    "rechargeWhenUrl": "crédits si le solde descend sous",
+    "credits": "crédits",
+    "managePayment": "Gérer les Méthodes de Paiement",
+    "reset": "Réinitialiser",
+    "saveChanges": "Enregistrer",
+    "saving": "Enregistrement..."
+  },
+  "chat": {
+    "newChat": "Nouveau Chat",
+    "searchModel": "Chercher modèle...",
+    "free": "Gratuit",
+    "premium": "Premium",
+    "pastChats": "Anciens Chats",
+    "noChats": "Aucun chat",
+    "firstMsg": "Écrivez votre premier message !",
+    "untitled": "Chat sans titre",
+    "msgCount": "messages",
+    "compare": "Comparer Modèles",
+    "howCanIHelp": "Comment puis-je aider ?",
+    "askAnything": "Demandez n'importe quoi",
+    "typing": "Écriture...",
+    "typeMsg": "Tapez votre message...",
+    "shortcut": "Shift+Enter pour ligne",
+    "copied": "Copié"
+  }
 }

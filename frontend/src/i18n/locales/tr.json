@@ -26,5 +26,41 @@
     "search": "Ara",
     "filter": "Filtrele",
     "language": "Dil"
+  },
+  "settings": {
+    "title": "Hesap Tercihleri",
+    "desc": "Profil, faturalandırma ve bildirim ayarlarınızı yönetin",
+    "profileInfo": "Profil Bilgileri",
+    "accountType": "Hesap Türü",
+    "emailNotif": "E-posta Bildirimleri",
+    "taskComp": "Görev tamamlanma bildirimleri",
+    "creditAlerts": "Kredi bakiyesi uyarıları",
+    "marketing": "Pazarlama e-postaları",
+    "billingTitle": "Faturalandırma & Krediler",
+    "autoRecharge": "Bakiye azaldığında otomatik yükle",
+    "rechargeWhenUrl": "kredi, bakiye şunun altına düştüğünde:",
+    "credits": "kredi",
+    "managePayment": "Ödeme Yöntemlerini Yönet",
+    "reset": "Varsayılana Sıfırla",
+    "saveChanges": "Değişiklikleri Kaydet",
+    "saving": "Kaydediliyor..."
+  },
+  "chat": {
+    "newChat": "Yeni Sohbet",
+    "searchModel": "Model ara...",
+    "free": "Ücretsiz",
+    "premium": "Premium",
+    "pastChats": "Geçmiş Sohbetler",
+    "noChats": "Henüz sohbet yok",
+    "firstMsg": "İlk mesajınızı yazın!",
+    "untitled": "Başlıksız Sohbet",
+    "msgCount": "mesaj",
+    "compare": "Model Karşılaştır",
+    "howCanIHelp": "Nasıl yardımcı olabilirim?",
+    "askAnything": "Sormak istediğiniz her şeyi yazabilirsiniz",
+    "typing": "Yazıyor...",
+    "typeMsg": "Mesajınızı yazın...",
+    "shortcut": "Shift+Enter ile yeni satır",
+    "copied": "Kopyalandı"
   }
 }

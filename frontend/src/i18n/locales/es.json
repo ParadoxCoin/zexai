@@ -1,30 +1,66 @@
 {
-    "nav": {
-        "dashboard": "Panel",
-        "images": "Imágenes",
-        "videos": "Videos",
-        "audio": "Audio",
-        "chat": "Chat",
-        "synapse": "Synapse",
-        "media": "Medios",
-        "admin": "Panel de Admin"
-    },
-    "user": {
-        "profile": "Perfil",
-        "analytics": "Analítica",
-        "apiKeys": "Claves API",
-        "settings": "Ajustes",
-        "logout": "Cerrar Sesión"
-    },
-    "common": {
-        "loading": "Cargando...",
-        "save": "Guardar",
-        "cancel": "Cancelar",
-        "delete": "Eliminar",
-        "edit": "Editar",
-        "create": "Crear",
-        "search": "Buscar",
-        "filter": "Filtrar",
-        "language": "Idioma"
-    }
+  "nav": {
+    "dashboard": "Panel",
+    "images": "Imágenes",
+    "videos": "Videos",
+    "audio": "Audio",
+    "chat": "Chat",
+    "synapse": "Synapse",
+    "media": "Medios",
+    "admin": "Panel de Admin"
+  },
+  "user": {
+    "profile": "Perfil",
+    "analytics": "Analítica",
+    "apiKeys": "Claves API",
+    "settings": "Ajustes",
+    "logout": "Cerrar Sesión"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "language": "Idioma"
+  },
+  "settings": {
+    "title": "Preferencias de Cuenta",
+    "desc": "Administre su perfil, facturación y notificaciones",
+    "profileInfo": "Información del Perfil",
+    "accountType": "Tipo de Cuenta",
+    "emailNotif": "Notificaciones de correo",
+    "taskComp": "Tarea completada",
+    "creditAlerts": "Alertas de saldo",
+    "marketing": "Correos de marketing",
+    "billingTitle": "Facturación y Créditos",
+    "autoRecharge": "Recarga automática",
+    "rechargeWhenUrl": "créditos cuando baje de",
+    "credits": "créditos",
+    "managePayment": "Métodos de pago",
+    "reset": "Restablecer",
+    "saveChanges": "Guardar",
+    "saving": "Guardando..."
+  },
+  "chat": {
+    "newChat": "Nuevo Chat",
+    "searchModel": "Buscar modelo...",
+    "free": "Gratis",
+    "premium": "Premium",
+    "pastChats": "Chats Pasados",
+    "noChats": "Sin chats",
+    "firstMsg": "¡Escribe tu primer mensaje!",
+    "untitled": "Chat sin título",
+    "msgCount": "mensajes",
+    "compare": "Comparar Modelos",
+    "howCanIHelp": "Cómó puedo ayudar?",
+    "askAnything": "Pregunta cualquier cosa",
+    "typing": "Escribiendo...",
+    "typeMsg": "Escribe tu mensaje...",
+    "shortcut": "Shift+Enter para nueva línea",
+    "copied": "Copiado"
+  }
 }
