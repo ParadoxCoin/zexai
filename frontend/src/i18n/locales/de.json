@@ -1,0 +1,30 @@
+{
+    "nav": {
+        "dashboard": "Übersicht",
+        "images": "Bilder",
+        "videos": "Videos",
+        "audio": "Audio",
+        "chat": "Chat",
+        "synapse": "Synapse",
+        "media": "Medien",
+        "admin": "Admin-Bereich"
+    },
+    "user": {
+        "profile": "Profil",
+        "analytics": "Analyse",
+        "apiKeys": "API-Schlüssel",
+        "settings": "Einstellungen",
+        "logout": "Abmelden"
+    },
+    "common": {
+        "loading": "Laden...",
+        "save": "Speichern",
+        "cancel": "Abbrechen",
+        "delete": "Löschen",
+        "edit": "Bearbeiten",
+        "create": "Erstellen",
+        "search": "Suchen",
+        "filter": "Filtern",
+        "language": "Sprache"
+    }
+}

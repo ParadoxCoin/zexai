@@ -14,13 +14,14 @@ import NotificationDropdown from './NotificationDropdown';
 import AchievementPopup from './AchievementPopup';
 import PWAInstallPrompt from './PWAInstallPrompt';
 import WalletConnect from './WalletConnect';
+import LanguageSwitcher from './LanguageSwitcher';
 
 const Layout: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, user, logout } = useAuthStore();
   const { theme, toggleTheme } = useTheme();
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = React.useState(false);
 
@@ -34,29 +35,25 @@ const Layout: React.FC = () => {
 
   const currentCredits = (statsData as any)?.credits_balance ?? (statsData as any)?.data?.credits_balance ?? 0;
 
-  const toggleLanguage = () => {
-    i18n.changeLanguage(i18n.language === 'en' ? 'tr' : 'en');
-  };
-
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: Home, color: 'from-blue-500 to-cyan-500' },
-    { name: 'Images', href: '/images', icon: Image, color: 'from-pink-500 to-rose-500' },
-    { name: 'Videos', href: '/videos', icon: Video, color: 'from-purple-500 to-violet-500' },
-    { name: 'Audio', href: '/audio', icon: Volume2, color: 'from-rose-500 to-pink-500' },
-    { name: 'Avatar', href: '/avatar', icon: User, color: 'from-fuchsia-500 to-purple-500' },
-    { name: 'Chat', href: '/chat', icon: MessageCircle, color: 'from-emerald-500 to-teal-500' },
-    { name: 'Synapse', href: '/synapse', icon: Bot, color: 'from-amber-500 to-orange-500' },
-    { name: 'Staking', href: '/staking', icon: Diamond, color: 'from-indigo-500 to-purple-500' },
-    { name: 'Showcase', href: '/showcase', icon: Award, color: 'from-yellow-500 to-orange-500' },
+    { name: t('nav.dashboard', 'Dashboard'), href: '/dashboard', icon: Home, color: 'from-blue-500 to-cyan-500' },
+    { name: t('nav.images', 'Images'), href: '/images', icon: Image, color: 'from-pink-500 to-rose-500' },
+    { name: t('nav.videos', 'Videos'), href: '/videos', icon: Video, color: 'from-purple-500 to-violet-500' },
+    { name: t('nav.audio', 'Audio'), href: '/audio', icon: Volume2, color: 'from-rose-500 to-pink-500' },
+    { name: t('nav.avatar', 'Avatar'), href: '/avatar', icon: User, color: 'from-fuchsia-500 to-purple-500' },
+    { name: t('nav.chat', 'Chat'), href: '/chat', icon: MessageCircle, color: 'from-emerald-500 to-teal-500' },
+    { name: t('nav.synapse', 'Synapse'), href: '/synapse', icon: Bot, color: 'from-amber-500 to-orange-500' },
+    { name: t('nav.staking', 'Staking'), href: '/staking', icon: Diamond, color: 'from-indigo-500 to-purple-500' },
+    { name: t('nav.showcase', 'Showcase'), href: '/showcase', icon: Award, color: 'from-yellow-500 to-orange-500' },
   ];
 
   const adminNavigation = [
-    { name: 'Admin', href: '/admin', icon: Shield, color: 'from-red-500 to-rose-500' },
+    { name: t('nav.admin', 'Admin'), href: '/admin', icon: Shield, color: 'from-red-500 to-rose-500' },
   ];
 
   const isAdminUser = user?.role === 'admin' || user?.role === 'super_admin';
@@ -115,6 +112,8 @@ const Layout: React.FC = () => {
 
             {/* Right Section */}
             <div className="flex items-center gap-1.5 flex-shrink-0">
+
+              <LanguageSwitcher />
 
               {/* Wallet Connect */}
               <WalletConnect showBalance={false} className="mr-1 hidden sm:flex" />
@@ -236,15 +235,6 @@ const Layout: React.FC = () => {
 
                       <div className="my-2 border-t border-gray-100 dark:border-gray-700" />
                       <p className="px-3 py-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Tercihler</p>
-
-                      <button
-                        onClick={() => { toggleLanguage(); }}
-                        className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl"
-                      >
-                        <Globe className="h-4 w-4" />
-                        Dil: {i18n.language === 'tr' ? '🇹🇷 Türkçe' : '🇺🇸 English'}
-                        <span className="ml-auto text-[10px] bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">{i18n.language.toUpperCase()}</span>
-                      </button>
                       <button
                         onClick={() => { toggleTheme(); }}
                         className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl"

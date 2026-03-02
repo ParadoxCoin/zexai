@@ -1,17 +1,17 @@
 {
   "nav": {
-    "dashboard": "Ana Sayfa",
+    "dashboard": "Panel",
     "images": "Görseller",
     "videos": "Videolar",
-    "audio": "Ses",
+    "audio": "Sesler",
     "chat": "Sohbet",
     "synapse": "Synapse",
     "media": "Medya",
-    "admin": "Admin Paneli"
+    "admin": "Yönetici Paneli"
   },
   "user": {
     "profile": "Profil",
-    "analytics": "Analitik",
+    "analytics": "Analiz",
     "apiKeys": "API Anahtarları",
     "settings": "Ayarlar",
     "logout": "Çıkış Yap"
@@ -24,6 +24,7 @@
     "edit": "Düzenle",
     "create": "Oluştur",
     "search": "Ara",
-    "filter": "Filtrele"
+    "filter": "Filtrele",
+    "language": "Dil"
   }
 }

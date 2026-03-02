@@ -26,6 +26,7 @@ import LeaderboardWidget from '@/components/LeaderboardWidget';
 import GuidedTour from '@/components/GuidedTour';
 import { motion } from 'framer-motion';
 import { apiService } from '@/services/api';
+import { useTranslation } from 'react-i18next';
 import { useWeb3, ZEX_TOKEN_ADDRESS, ZEXAI_NFT_ADDRESS } from '@/contexts/Web3Context';
 
 interface Activity {
@@ -46,6 +47,7 @@ interface UsageSummary {
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { account, zexBalance, isConnecting, connectWallet, disconnectWallet, mintNFT } = useWeb3();
   const [loading, setLoading] = useState(true);
@@ -273,28 +275,28 @@ export const DashboardPage: React.FC = () => {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
-          title="Kredi Bakiyesi"
+          title={t('dashboard.creditBalance', 'Kredi Bakiyesi')}
           value={<AnimatedCounter value={Math.round(stats.credits)} />}
           subtitle={stats.creditsSpentToday > 0 ? `Bugün ${Math.round(stats.creditsSpentToday)} kredi harcandı` : 'Bugün harcama yok'}
           icon={CreditCard}
           variant="info"
         />
         <StatCard
-          title="Oluşturulan Görseller"
+          title={t('dashboard.generatedImages', 'Oluşturulan Görseller')}
           value={<AnimatedCounter value={stats.images} />}
           subtitle={`Bu ay toplam ${stats.generationsMonth} üretim`}
           icon={Image}
           variant="success"
         />
         <StatCard
-          title="Oluşturulan Videolar"
+          title={t('dashboard.generatedVideos', 'Oluşturulan Videolar')}
           value={<AnimatedCounter value={stats.videos} />}
           subtitle={stats.favoriteModel ? `Favori model: ${stats.favoriteModel}` : 'Bu ay video üretimi yok'}
           icon={Video}
           variant="default"
         />
         <StatCard
-          title="Ses & Chat"
+          title={t('dashboard.audioAndChat', 'Ses & Chat')}
           value={<AnimatedCounter value={stats.audio + stats.chats} />}
           subtitle={`${stats.audio} ses, ${stats.chats} sohbet`}
           icon={Music}

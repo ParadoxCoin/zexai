@@ -1,0 +1,30 @@
+{
+    "nav": {
+        "dashboard": "Dub-sar",
+        "images": "Nu-mu",
+        "videos": "Kin-gal",
+        "audio": "Gù-dé",
+        "chat": "En-du",
+        "synapse": "Synapse",
+        "media": "Me-te",
+        "admin": "Lugal-Panel"
+    },
+    "user": {
+        "profile": "Sag",
+        "analytics": "Zana",
+        "apiKeys": "Kišib-API",
+        "settings": "Gar-ra",
+        "logout": "Gub-ba"
+    },
+    "common": {
+        "loading": "Gál...",
+        "save": "Šid",
+        "cancel": "Šub",
+        "delete": "Zuh",
+        "edit": "Šar",
+        "create": "Dù",
+        "search": "Kín",
+        "filter": "Zuh-zuh",
+        "language": "Eme"
+    }
+}
