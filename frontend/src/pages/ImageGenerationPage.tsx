@@ -11,6 +11,7 @@ import {
   Clock, CreditCard, Eye, ChevronDown, Loader2
 } from "lucide-react";
 import PromptEnhancer from "@/components/PromptEnhancer";
+import { useTranslation } from "react-i18next";
 
 import SocialButtons from "@/components/SocialButtons";
 import NFTMintModal from "@/components/NFTMintModal";
@@ -65,6 +66,7 @@ const pollTask = (taskId: string, onProgress: (status: string) => void): Promise
 };
 
 const ImageGenerationPage = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const getPromptFromQuery = () => {
     const params = new URLSearchParams(location.search);
@@ -321,13 +323,13 @@ const ImageGenerationPage = () => {
           <div className="max-w-4xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/10 backdrop-blur-sm mb-3 sm:mb-4">
               <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="text-xs sm:text-sm font-medium">AI Görsel Üretici</span>
+              <span className="text-xs sm:text-sm font-medium">{t('imageGen.badge', 'AI Görsel Üretici')}</span>
             </div>
             <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold mb-2 sm:mb-4">
-              Hayal Et, <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 to-yellow-300">Oluştur</span>
+              {t('imageGen.title', 'Hayal Et, ')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 to-yellow-300">{t('imageGen.titleHighlight', 'Oluştur')}</span>
             </h1>
             <p className="text-sm sm:text-base lg:text-lg text-purple-100 max-w-2xl mx-auto px-2">
-              Düşüncelerinizi saniyeler içinde etkileyici görsellere dönüştürün
+              {t('imageGen.desc', 'Düşüncelerinizi saniyeler içinde etkileyici görsellere dönüştürün')}
             </p>
           </div>
         </div>
@@ -350,7 +352,7 @@ const ImageGenerationPage = () => {
                 }`}
             >
               <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              Üret
+              {t('imageGen.tabGenerate', 'Üret')}
             </button>
 
             <button
@@ -361,7 +363,7 @@ const ImageGenerationPage = () => {
                 }`}
             >
               <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              Galeri
+              {t('imageGen.tabGallery', 'Galeri')}
             </button>
             <button
               onClick={() => setActiveTab('compare')}
@@ -371,7 +373,7 @@ const ImageGenerationPage = () => {
                 }`}
             >
               <GitCompare className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              Karşılaştır
+              {t('imageGen.tabCompare', 'Karşılaştır')}
             </button>
           </div>
         </div>
@@ -399,7 +401,7 @@ const ImageGenerationPage = () => {
                         }`}
                     >
                       <Type className="w-4 h-4" />
-                      Metin → Görsel
+                      {t('imageGen.modeText2Img', 'Metin → Görsel')}
                     </button>
                     <button
                       onClick={() => setGenerationMode('img2img')}
@@ -409,7 +411,7 @@ const ImageGenerationPage = () => {
                         }`}
                     >
                       <ImagePlus className="w-4 h-4" />
-                      Görsel → Görsel
+                      {t('imageGen.modeImg2Img', 'Görsel → Görsel')}
                     </button>
                   </div>
                 </div>
@@ -436,7 +438,7 @@ const ImageGenerationPage = () => {
                           <X className="w-4 h-4" />
                         </button>
                         <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/60 text-white text-xs rounded-lg backdrop-blur-sm">
-                          📷 Referans Görsel
+                          📷 {t('imageGen.refImage', 'Referans Görsel')}
                         </div>
                       </div>
                     ) : (
@@ -450,10 +452,10 @@ const ImageGenerationPage = () => {
                           <Upload className="w-8 h-8 text-blue-500" />
                         </div>
                         <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Referans görsel yükleyin
+                          {t('imageGen.uploadRef', 'Referans görsel yükleyin')}
                         </p>
                         <p className="text-xs text-gray-400 mt-1">
-                          Sürükle-bırak veya tıklayın
+                          {t('imageGen.dragDrop', 'Sürükle-bırak veya tıklayın')}
                         </p>
                       </div>
                     )}
@@ -463,7 +465,7 @@ const ImageGenerationPage = () => {
                       <div className="flex items-center justify-between">
                         <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
                           <SlidersHorizontal className="w-4 h-4 text-blue-500" />
-                          Dönüşüm Gücü
+                          {t('imageGen.strength', 'Dönüşüm Gücü')}
                         </label>
                         <span className="text-sm font-mono text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded-md">
                           {Math.round(strength * 100)}%
@@ -479,8 +481,8 @@ const ImageGenerationPage = () => {
                         className="w-full h-2 bg-gradient-to-r from-blue-200 to-cyan-400 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-blue-500 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-lg"
                       />
                       <div className="flex justify-between text-xs text-gray-400">
-                        <span>Az değişim</span>
-                        <span>Çok değişim</span>
+                        <span>{t('imageGen.lessChange', 'Az değişim')}</span>
+                        <span>{t('imageGen.moreChange', 'Çok değişim')}</span>
                       </div>
                     </div>
                   </div>
@@ -491,14 +493,14 @@ const ImageGenerationPage = () => {
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                       <Wand2 className="w-5 h-5 text-purple-500" />
-                      {generationMode === 'img2img' ? 'Yönlendirme Promptu' : 'Prompt Yaz'}
+                      {generationMode === 'img2img' ? t('imageGen.promptTitleI2I', 'Yönlendirme Promptu') : t('imageGen.promptTitleT2I', 'Prompt Yaz')}
                     </h2>
                     <button
                       onClick={useInspiration}
                       className="flex items-center gap-1 text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 transition-colors"
                     >
                       <Zap className="w-4 h-4" />
-                      İlham Al
+                      {t('imageGen.getInspiration', 'İlham Al')}
                     </button>
                   </div>
 
@@ -511,7 +513,7 @@ const ImageGenerationPage = () => {
                       "{inspirationPrompts[currentInspiration]}"
                     </p>
                     <p className="text-xs text-purple-500 mt-1 group-hover:text-purple-700 transition-colors">
-                      Kullanmak için tıkla →
+                      {t('imageGen.clickToUse', 'Kullanmak için tıkla →')}
                     </p>
                   </div>
 
@@ -520,8 +522,8 @@ const ImageGenerationPage = () => {
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
                       placeholder={generationMode === 'img2img'
-                        ? "Referans görseli nasıl dönüştürmek istediğinizi yazın..."
-                        : "Hayalinizdeki görseli detaylı bir şekilde tanımlayın..."
+                        ? t('imageGen.promptPlaceholderI2I', "Referans görseli nasıl dönüştürmek istediğinizi yazın...")
+                        : t('imageGen.promptPlaceholderT2I', "Hayalinizdeki görseli detaylı bir şekilde tanımlayın...")
                       }
                       rows={4}
                       disabled={isGenerating}
@@ -543,7 +545,7 @@ const ImageGenerationPage = () => {
                     <div>
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block flex items-center gap-2">
                         <Layers className="w-4 h-4" />
-                        AI Model
+                        {t('imageGen.modelTitle', 'AI Model')}
                       </label>
                       <select
                         value={modelId}
@@ -551,10 +553,10 @@ const ImageGenerationPage = () => {
                         disabled={isLoadingModels || isGenerating}
                         className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500"
                       >
-                        <option value="">Model seçin</option>
+                        <option value="">{t('imageGen.selectModel', 'Model seçin')}</option>
                         {generateModels.map((model: any) => (
                           <option key={model.id} value={model.id}>
-                            {model.name} ({model.credits} kredi)
+                            {model.name} ({model.credits} {t('imageGen.credits', 'kredi')})
                           </option>
                         ))}
                       </select>
@@ -563,7 +565,7 @@ const ImageGenerationPage = () => {
                     <div>
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block flex items-center gap-2">
                         <Maximize2 className="w-4 h-4" />
-                        Boyut
+                        {t('imageGen.sizeTitle', 'Boyut')}
                       </label>
                       <div className="flex gap-1">
                         {aspectRatios.map((ratio) => (
@@ -597,12 +599,12 @@ const ImageGenerationPage = () => {
                     {isGenerating ? (
                       <>
                         <RefreshCw className="w-5 h-5 animate-spin" />
-                        Oluşturuluyor...
+                        {t('imageGen.generating', 'Oluşturuluyor...')}
                       </>
                     ) : (
                       <>
                         {generationMode === 'img2img' ? <Camera className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
-                        {generationMode === 'img2img' ? 'Görseli Dönüştür' : 'Görsel Oluştur'}
+                        {generationMode === 'img2img' ? t('imageGen.generateBtnI2I', 'Görseli Dönüştür') : t('imageGen.generateBtnT2I', 'Görsel Oluştur')}
                       </>
                     )}
                   </button>
@@ -616,7 +618,7 @@ const ImageGenerationPage = () => {
                 <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex-shrink-0">
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                     <ImageIcon className="w-5 h-5 text-purple-500" />
-                    Önizleme
+                    {t('imageGen.previewTitle', 'Önizleme')}
                   </h2>
                 </div>
 
@@ -631,10 +633,10 @@ const ImageGenerationPage = () => {
                         <div className="absolute inset-0 border-4 border-transparent border-t-purple-500 rounded-full animate-spin" />
                       </div>
                       <p className="mt-6 text-gray-600 dark:text-gray-400 font-medium">
-                        {generationMode === 'img2img' ? 'Görsel dönüştürülüyor...' : 'Görseliniz oluşturuluyor...'}
+                        {generationMode === 'img2img' ? t('imageGen.previewGeneratingI2I', 'Görsel dönüştürülüyor...') : t('imageGen.previewGeneratingT2I', 'Görseliniz oluşturuluyor...')}
                       </p>
                       <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
-                        Bu birkaç saniye sürebilir
+                        {t('imageGen.waitSecs', 'Bu birkaç saniye sürebilir')}
                       </p>
                     </div>
                   ) : generatedImages.length > 0 ? (
@@ -677,7 +679,7 @@ const ImageGenerationPage = () => {
                               }
                             }}
                             className="p-3 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors"
-                            title="İndir"
+                            title={t('imageGen.download', 'İndir')}
                           >
                             <Download className="w-6 h-6 text-white" />
                           </button>
@@ -685,7 +687,7 @@ const ImageGenerationPage = () => {
                           <button
                             onClick={() => setGenerateLightboxImage(generatedImages[selectedImageIndex])}
                             className="p-3 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors"
-                            title="Tam Ekran Göster"
+                            title={t('imageGen.fullscreen', 'Tam Ekran Göster')}
                           >
                             <Maximize2 className="w-6 h-6 text-white" />
                           </button>
@@ -722,10 +724,10 @@ const ImageGenerationPage = () => {
                         <ImageIcon className="w-12 h-12 text-purple-400" />
                       </div>
                       <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                        Hayal edin, biz oluşturalım
+                        {t('imageGen.emptyPreviewTitle', 'Hayal edin, biz oluşturalım')}
                       </h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
-                        Sol taraftan bir prompt yazın ve AI'ın sihrini izleyin
+                        {t('imageGen.emptyPreviewDesc', "Sol taraftan bir prompt yazın ve AI'ın sihrini izleyin")}
                       </p>
                     </div>
                   )}
@@ -755,15 +757,15 @@ const ImageGenerationPage = () => {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                 <Layers className="w-5 h-5 text-emerald-500" />
-                Görsel Galerim
+                {t('imageGen.galleryTitle', 'Görsel Galerim')}
                 {galleryTotal > 0 && (
-                  <span className="text-sm font-normal text-gray-400 ml-2">({galleryTotal} görsel)</span>
+                  <span className="text-sm font-normal text-gray-400 ml-2">({galleryTotal} {t('imageGen.imagesCount', 'görsel')})</span>
                 )}
               </h2>
               <button
                 onClick={() => refetchGallery()}
                 className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                title="Yenile"
+                title={t('imageGen.refresh', 'Yenile')}
               >
                 <RefreshCw className="w-5 h-5" />
               </button>
@@ -772,7 +774,7 @@ const ImageGenerationPage = () => {
             {isLoadingGallery ? (
               <div className="flex items-center justify-center py-16">
                 <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
-                <span className="ml-3 text-gray-500">Yükleniyor...</span>
+                <span className="ml-3 text-gray-500">{t('imageGen.loading', 'Yükleniyor...')}</span>
               </div>
             ) : galleryItems.length > 0 ? (
               <>
@@ -808,7 +810,7 @@ const ImageGenerationPage = () => {
                               }}
                               className="px-2 py-1 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white rounded-lg text-xs font-medium shadow transition-all flex items-center gap-1"
                             >
-                              💎 NFT Yap
+                              💎 {t('imageGen.makeNft', 'NFT Yap')}
                             </button>
                             <button
                               onClick={async (e) => {
@@ -830,7 +832,7 @@ const ImageGenerationPage = () => {
                                 }
                               }}
                               className="p-1.5 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors"
-                              title="İndir"
+                              title={t('imageGen.download', 'İndir')}
                             >
                               <Download className="w-3 h-3 text-white" />
                             </button>
@@ -849,17 +851,17 @@ const ImageGenerationPage = () => {
                       disabled={galleryPage === 0}
                       className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-sm font-medium disabled:opacity-40 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                     >
-                      ← Önceki
+                      {t('imageGen.prevPage', '← Önceki')}
                     </button>
                     <span className="text-sm text-gray-500 px-3">
-                      Sayfa {galleryPage + 1} / {Math.ceil(galleryTotal / GALLERY_LIMIT)}
+                      {t('imageGen.page', 'Sayfa')} {galleryPage + 1} / {Math.ceil(galleryTotal / GALLERY_LIMIT)}
                     </span>
                     <button
                       onClick={() => setGalleryPage(galleryPage + 1)}
                       disabled={(galleryPage + 1) * GALLERY_LIMIT >= galleryTotal}
                       className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-sm font-medium disabled:opacity-40 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                     >
-                      Sonraki →
+                      {t('imageGen.nextPage', 'Sonraki →')}
                     </button>
                   </div>
                 )}
@@ -869,14 +871,14 @@ const ImageGenerationPage = () => {
                 <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 flex items-center justify-center">
                   <ImageIcon className="w-10 h-10 text-emerald-400" />
                 </div>
-                <p className="text-gray-500 font-medium text-lg">Henüz görsel yok</p>
-                <p className="text-sm text-gray-400 mt-1">Üret sekmesinden ilk görselinizi oluşturun</p>
+                <p className="text-gray-500 font-medium text-lg">{t('imageGen.noImagesTitle', 'Henüz görsel yok')}</p>
+                <p className="text-sm text-gray-400 mt-1">{t('imageGen.noImagesDesc', 'Üret sekmesinden ilk görselinizi oluşturun')}</p>
                 <button
                   onClick={() => setActiveTab('generate')}
                   className="mt-4 px-6 py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-medium hover:shadow-lg transition-all"
                 >
                   <Sparkles className="w-4 h-4 inline mr-2" />
-                  Görsel Oluştur
+                  {t('imageGen.generateBtnT2I', 'Görsel Oluştur')}
                 </button>
               </div>
             )}
@@ -940,7 +942,7 @@ const ImageGenerationPage = () => {
                       className="px-4 py-2 bg-purple-500 text-white text-sm rounded-lg hover:bg-purple-600 transition-colors flex items-center gap-2"
                     >
                       <Download className="w-4 h-4" />
-                      İndir
+                      {t('imageGen.download', 'İndir')}
                     </button>
                   </div>
                 </div>
@@ -958,16 +960,16 @@ const ImageGenerationPage = () => {
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-6">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
               <GitCompare className="w-5 h-5 text-orange-500" />
-              Model Karşılaştırma
+              {t('imageGen.compareTitle', 'Model Karşılaştırma')}
             </h2>
             <p className="text-gray-500 dark:text-gray-400 mb-6">
-              Aynı prompt ile birden fazla model seçip sonuçları yan yana karşılaştırın
+              {t('imageGen.compareDesc', 'Aynı prompt ile birden fazla model seçip sonuçları yan yana karşılaştırın')}
             </p>
 
             {/* Model Selection */}
             <div className="mb-6">
               <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                Model Seçin (en az 2, en fazla 4)
+                {t('imageGen.selectModels', 'Model Seçin (en az 2, en fazla 4)')}
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                 {compareModels.map((model: any) => (
@@ -992,7 +994,7 @@ const ImageGenerationPage = () => {
                         <Check className="w-4 h-4 text-orange-500" />
                       )}
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">{model.credits} kredi</div>
+                    <div className="text-xs text-gray-500 mt-1">{model.credits} {t('imageGen.credits', 'kredi')}</div>
                   </button>
                 ))}
               </div>
@@ -1004,7 +1006,7 @@ const ImageGenerationPage = () => {
                 <textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Karşılaştırmak istediğiniz görseli tanımlayın..."
+                  placeholder={t('imageGen.comparePromptPlaceholder', "Karşılaştırmak istediğiniz görseli tanımlayın...")}
                   rows={3}
                   disabled={isComparing}
                   className="w-full px-4 py-3 pr-14 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl resize-none focus:ring-2 focus:ring-orange-500 text-gray-900 dark:text-white"
@@ -1028,12 +1030,12 @@ const ImageGenerationPage = () => {
               {isComparing ? (
                 <>
                   <RefreshCw className="w-5 h-5 animate-spin" />
-                  Karşılaştırılıyor... ({selectedModelsForCompare.length} model)
+                  {t('imageGen.comparing', 'Karşılaştırılıyor...')} ({selectedModelsForCompare.length} {t('imageGen.model', 'model')})
                 </>
               ) : (
                 <>
                   <GitCompare className="w-5 h-5" />
-                  {selectedModelsForCompare.length} Model ile Karşılaştır
+                  {selectedModelsForCompare.length} {t('imageGen.compareBtn', 'Model ile Karşılaştır')}
                 </>
               )}
             </button>
