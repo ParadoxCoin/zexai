@@ -54,10 +54,10 @@ Generate 3 different enhanced prompts in different styles. Each should be:
 - Detailed and specific
 - Include relevant technical terms
 - Optimized for AI generation
-- In English (for best AI results)
+- Written entirely in {language} language
 
 Return ONLY a JSON array with 3 objects, each having:
-- "prompt": the enhanced prompt
+- "prompt": the enhanced prompt generated in {language} language
 - "style": style name translated to {language} language (e.g., "Realista", "Artístico" if Spanish)
 - "description": brief description of the style translated to {language} language
 
