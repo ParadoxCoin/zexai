@@ -139,7 +139,14 @@
     "comparePromptPlaceholder": "描述你想比较的图像...",
     "compareBtn": "与模型比较",
     "comparing": "比较中...",
-    "model": "模型"
+    "model": "模型",
+    "inspiration": {
+      "prompt1": "霓虹灯照亮的网络朋克雨夜街道",
+      "prompt2": "漂浮在天空中的神奇城堡",
+      "prompt3": "远方星球表面孤独的宇航员",
+      "prompt4": "日落时宁静的日本花园",
+      "prompt5": "拥有未来飞行汽车的城市"
+    }
   },
   "videoGen": {
     "badge": "人工智能视频工作室",

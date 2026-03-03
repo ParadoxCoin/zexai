@@ -139,7 +139,14 @@
     "comparePromptPlaceholder": "Dub Ig-gi-in...",
     "compareBtn": "Ig-gi-in En",
     "comparing": "Ig-gi-in-da...",
-    "model": "en"
+    "model": "en",
+    "inspiration": {
+      "prompt1": "Neo luzum hujanutu cyberpunku streetumu",
+      "prompt2": "Aki magicu castleu floatingu ka skyu",
+      "prompt3": "Aki lonelyu astronautu on planetumu",
+      "prompt4": "Aki peacefulu japanu gardenu at sunsetu",
+      "prompt5": "Aki cityumu withu flyatu carsumu"
+    }
   },
   "videoGen": {
     "badge": "An-na Igi-gál Šà",

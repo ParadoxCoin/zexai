@@ -25,13 +25,7 @@ const aspectRatios = [
   { id: '4:3', name: 'Klasik', icon: '🖥️', width: 1024, height: 768 },
 ];
 
-const inspirationPrompts = [
-  "Neon ışıklarla aydınlatılmış yağmurlu bir cyberpunk sokak",
-  "Gökyüzünde süzülen büyülü bir kale",
-  "Yalnız bir astronot uzak bir gezegenin yüzeyinde",
-  "Gün batımında sakin bir Japon bahçesi",
-  "Fütüristik uçan arabaların olduğu bir şehir",
-];
+
 
 // ---- Helper: Poll a task until completed ----
 const pollTask = (taskId: string, onProgress: (status: string) => void): Promise<string[]> => {
@@ -67,6 +61,15 @@ const pollTask = (taskId: string, onProgress: (status: string) => void): Promise
 
 const ImageGenerationPage = () => {
   const { t } = useTranslation();
+
+  const inspirationPrompts = [
+    t('imageGen.inspiration.prompt1', "Neon ışıklarla aydınlatılmış yağmurlu bir cyberpunk sokak"),
+    t('imageGen.inspiration.prompt2', "Gökyüzünde süzülen büyülü bir kale"),
+    t('imageGen.inspiration.prompt3', "Yalnız bir astronot uzak bir gezegenin yüzeyinde"),
+    t('imageGen.inspiration.prompt4', "Gün batımında sakin bir Japon bahçesi"),
+    t('imageGen.inspiration.prompt5', "Fütüristik uçan arabaların olduğu bir şehir"),
+  ];
+
   const location = useLocation();
   const getPromptFromQuery = () => {
     const params = new URLSearchParams(location.search);
@@ -109,7 +112,7 @@ const ImageGenerationPage = () => {
   const [currentInspiration, setCurrentInspiration] = useState(0);
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentInspiration((prev) => (prev + 1) % inspirationPrompts.length);
+      setCurrentInspiration((prev) => (prev + 1) % 5);
     }, 5000);
     return () => clearInterval(interval);
   }, []);

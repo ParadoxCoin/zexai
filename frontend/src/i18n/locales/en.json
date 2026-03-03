@@ -139,7 +139,14 @@
     "comparePromptPlaceholder": "Describe the image you want to compare...",
     "compareBtn": "Compare with Models",
     "comparing": "Comparing...",
-    "model": "model"
+    "model": "model",
+    "inspiration": {
+      "prompt1": "A rainy cyberpunk street illuminated by neon lights",
+      "prompt2": "A magical castle floating in the sky",
+      "prompt3": "A lonely astronaut on the surface of a distant planet",
+      "prompt4": "A peaceful Japanese garden at sunset",
+      "prompt5": "A city with futuristic flying cars"
+    }
   },
   "videoGen": {
     "badge": "AI Video Studio",

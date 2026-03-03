@@ -139,7 +139,14 @@
     "comparePromptPlaceholder": "Karşılaştırmak istediğiniz görseli tanımlayın...",
     "compareBtn": "Model ile Karşılaştır",
     "comparing": "Karşılaştırılıyor...",
-    "model": "model"
+    "model": "model",
+    "inspiration": {
+      "prompt1": "Neon ışıklarla aydınlatılmış yağmurlu bir cyberpunk sokak",
+      "prompt2": "Gökyüzünde süzülen büyülü bir kale",
+      "prompt3": "Yalnız bir astronot uzak bir gezegenin yüzeyinde",
+      "prompt4": "Gün batımında sakin bir Japon bahçesi",
+      "prompt5": "Fütüristik uçan arabaların olduğu bir şehir"
+    }
   },
   "videoGen": {
     "badge": "AI Video Stüdyosu",

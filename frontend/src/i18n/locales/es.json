@@ -139,7 +139,14 @@
     "comparePromptPlaceholder": "Describe...",
     "compareBtn": "Comparar con Modelos",
     "comparing": "Comparando...",
-    "model": "modelo"
+    "model": "modelo",
+    "inspiration": {
+      "prompt1": "Una calle cyberpunk lluviosa iluminada por luces de neón",
+      "prompt2": "Un castillo mágico flotando en el cielo",
+      "prompt3": "Un astronauta solitario en la superficie de un planeta distante",
+      "prompt4": "Un tranquilo jardín japonés al atardecer",
+      "prompt5": "Una ciudad con autos voladores futuristas"
+    }
   },
   "videoGen": {
     "badge": "Estudio de Video con IA",

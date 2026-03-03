@@ -139,7 +139,14 @@
     "comparePromptPlaceholder": "Bild beschreiben...",
     "compareBtn": "Mit Modellen vergleichen",
     "comparing": "Vergleichen...",
-    "model": "Modell"
+    "model": "Modell",
+    "inspiration": {
+      "prompt1": "Eine regnerische Cyberpunk-Straße beleuchtet von Neonlichtern",
+      "prompt2": "Ein magisches Schloss, das am Himmel schwebt",
+      "prompt3": "Ein einsamer Astronaut auf der Oberfläche eines fernen Planeten",
+      "prompt4": "Ein friedlicher japanischer Garten bei Sonnenuntergang",
+      "prompt5": "Eine Stadt mit futuristischen fliegenden Autos"
+    }
   },
   "videoGen": {
     "badge": "KI Video Studio",
