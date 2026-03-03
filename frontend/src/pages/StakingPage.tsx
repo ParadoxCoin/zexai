@@ -258,7 +258,7 @@ export const StakingPage: React.FC = () => {
                     </div>
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Web3 Cüzdanınızı Bağlayın</h2>
                     <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-md">
-                        Staking paneline erişmek ve Polygon Amoy ağı üzerinden ZEX kitlemek için MetaMask cüzdanınızı bağlamanız gereklidir.
+                        Staking paneline erişmek ve ZEX kilitlemek için Web3 cüzdanınızı (MetaMask vb.) bağlamanız gereklidir.
                     </p>
                     <button
                         onClick={connectWallet}
@@ -377,8 +377,8 @@ export const StakingPage: React.FC = () => {
                                     <span className="font-bold text-emerald-500">%{rewardRateDisplay}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-500 dark:text-gray-400">Bağlı Ağ</span>
-                                    <span className="font-bold text-gray-900 dark:text-white">Polygon Amoy</span>
+                                    <span className="text-gray-500 dark:text-gray-400">Desteklenen Ağ</span>
+                                    <span className="font-bold text-gray-900 dark:text-white">Ethereum / BSC</span>
                                 </div>
                             </div>
                         </div>

@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { ethers, BrowserProvider, Contract } from 'ethers';
+import { useAccount, useDisconnect } from 'wagmi';
+import { useWeb3Modal } from '@web3modal/wagmi/react';
 
-// Contract Addresses (Polygon Amoy)
+// Contract Addresses (Placeholder or actual ones needed)
 export const ZEX_TOKEN_ADDRESS = "0x65970F056193A468F9C0a90B2e1B205a1a92a885";
 export const ZEXAI_NFT_ADDRESS = "0x99d86D3615812243C3b52a181AD00702A37C1663";
 export const ZEX_STAKING_ADDRESS = "0x588D627cC515c80f4Dd8D01319c0D486024C186D";
-export const POLYGON_AMOY_CHAIN_ID = "0x13882"; // 80002 in hex
 
 // Minimal ABI for ERC20 ZEX
 const ERC20_ABI = [
@@ -34,7 +35,7 @@ const STAKING_ABI = [
 ];
 
 interface Web3ContextType {
-    account: string | null;
+    account: string | undefined;
     zexBalance: string;
     isConnecting: boolean;
     connectWallet: () => Promise<void>;
@@ -48,80 +49,31 @@ interface Web3ContextType {
 const Web3Context = createContext<Web3ContextType | undefined>(undefined);
 
 export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [account, setAccount] = useState<string | null>(null);
+    const { address: account, isConnecting } = useAccount();
+    const { disconnect } = useDisconnect();
+    const { open } = useWeb3Modal();
+
     const [zexBalance, setZexBalance] = useState<string>("0");
-    const [isConnecting, setIsConnecting] = useState(false);
     const [provider, setProvider] = useState<BrowserProvider | null>(null);
 
     useEffect(() => {
-        // Check if wallet is already connected
-        const checkConnection = async () => {
+        const initProvider = async () => {
             if (window.ethereum) {
-                const _provider = new ethers.BrowserProvider(window.ethereum);
+                const _provider = new ethers.BrowserProvider(window.ethereum as any);
                 setProvider(_provider);
-                try {
-                    const network = await _provider.getNetwork();
-                    if (network.chainId !== 80002n) {
-                        try {
-                            await window.ethereum.request({
-                                method: 'wallet_switchEthereumChain',
-                                params: [{ chainId: POLYGON_AMOY_CHAIN_ID }],
-                            });
-                        } catch (switchError) {
-                            console.error("Please switch your wallet to Polygon Amoy Testnet manually.");
-                        }
-                    }
-
-                    const accounts = await _provider.listAccounts();
-                    if (accounts.length > 0) {
-                        setAccount(accounts[0].address);
-                        updateBalance(accounts[0].address, _provider);
-                    }
-                } catch (error) {
-                    console.error("Error checking wallet connection:", error);
-                }
-            }
-        };
-
-        checkConnection();
-
-        // Listeners for Metamask account/chain changes
-        if (window.ethereum) {
-            window.ethereum.on('accountsChanged', (accounts: string[]) => {
-                if (accounts.length > 0) {
-                    setAccount(accounts[0]);
-                    if (provider) updateBalance(accounts[0], provider);
+                if (account) {
+                    updateBalance(account, _provider);
                 } else {
-                    setAccount(null);
                     setZexBalance("0");
                 }
-            });
-
-            // Ethers.js strongly recommends reloading the page on chain changes 
-            // to avoid state corruption or NETWORK_ERROR crashes
-            window.ethereum.on('chainChanged', () => {
-                window.location.reload();
-            });
-        }
-
-        return () => {
-            if (window.ethereum && window.ethereum.removeListener) {
-                window.ethereum.removeListener('accountsChanged', () => { });
-                window.ethereum.removeListener('chainChanged', () => { });
             }
         };
-    }, []);
+        initProvider();
+    }, [account]);
 
     const updateBalance = async (address: string, _provider: BrowserProvider) => {
         if (!ZEX_TOKEN_ADDRESS) return;
         try {
-            const network = await _provider.getNetwork();
-            if (network.chainId !== 80002n) {
-                console.warn("Wrong network for balance update. Expected 80002, got:", network.chainId);
-                setZexBalance("0");
-                return;
-            }
-
             const zexContract = new ethers.Contract(ZEX_TOKEN_ADDRESS, ERC20_ABI, _provider);
             const balance: bigint = await zexContract.balanceOf(address);
 
@@ -131,7 +83,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
             // Keep exactly 2 decimal places to prevent extreme lengths or NaN loops
             const roundedBalance = parseFloat(formattedBalance).toFixed(2);
             setZexBalance(roundedBalance);
-            console.log("ZEX Balance updated via RPC:", roundedBalance);
+            console.log("ZEX Balance updated:", roundedBalance);
         } catch (error) {
             console.error("Error fetching ZEX balance:", error);
             setZexBalance("0");
@@ -139,72 +91,15 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const connectWallet = async () => {
-        if (!window.ethereum) {
-            alert("Please install MetaMask to use this feature!");
-            return;
-        }
-
-        setIsConnecting(true);
         try {
-            const _provider = new ethers.BrowserProvider(window.ethereum);
-            setProvider(_provider);
-
-            // Request account access
-            const accounts = await _provider.send("eth_requestAccounts", []);
-
-            // Switch network
-            const network = await _provider.getNetwork();
-            if (network.chainId !== 80002n) {
-                try {
-                    await window.ethereum.request({
-                        method: 'wallet_switchEthereumChain',
-                        params: [{ chainId: POLYGON_AMOY_CHAIN_ID }],
-                    });
-                } catch (switchError: any) {
-                    // This error code indicates that the chain has not been added to MetaMask.
-                    if (switchError.code === 4902) {
-                        try {
-                            await window.ethereum.request({
-                                method: 'wallet_addEthereumChain',
-                                params: [
-                                    {
-                                        chainId: POLYGON_AMOY_CHAIN_ID,
-                                        chainName: 'Polygon Amoy Testnet',
-                                        rpcUrls: ['https://polygon-amoy.drpc.org'],
-                                        nativeCurrency: {
-                                            name: 'MATIC',
-                                            symbol: 'MATIC',
-                                            decimals: 18
-                                        },
-                                        blockExplorerUrls: ['https://amoy.polygonscan.com/']
-                                    }
-                                ],
-                            });
-                        } catch (addError) {
-                            console.error("Failed to add Polygon Amoy Network:", addError);
-                        }
-                    }
-                }
-                // Do not re-initialize on the fly if the network switch was successful
-                // The 'chainChanged' listener will catch it and reload the page automatically,
-                // which is the safest way to prevent ethers v6 NETWORK_ERRORs
-                return;
-            }
-
-            if (accounts.length > 0) {
-                setAccount(accounts[0]);
-                await updateBalance(accounts[0], _provider);
-            }
+            await open();
         } catch (error) {
-            console.error("Failed to connect wallet:", error);
-        } finally {
-            setIsConnecting(false);
+            console.error("User closed the modal or failed to connect:", error);
         }
     };
 
     const disconnectWallet = () => {
-        setAccount(null);
-        setZexBalance("0");
+        disconnect();
     };
 
     const getContracts = async () => {

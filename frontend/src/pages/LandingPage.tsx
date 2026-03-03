@@ -6,7 +6,6 @@ import {
     Music, BrainCircuit, Rocket, Shield, Crown, Terminal, ArrowRight,
     ShoppingCart, Gift, Download
 } from 'lucide-react';
-import WalletConnect from '@/components/WalletConnect';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
 import playHapticFeedback from '@/utils/haptics';
@@ -58,7 +57,7 @@ export default function LandingPage() {
                 <div className="flex items-center gap-4">
                     <LanguageSwitcher />
                     <div className="hidden md:block">
-                        <WalletConnect />
+                        <w3m-button />
                     </div>
                     <Link
                         to="/login"
@@ -259,7 +258,7 @@ export default function LandingPage() {
                                             Connect your Ethereum wallet to participate in the presale and secure your giveaway entries instantly.
                                         </p>
                                         <div className="flex justify-center">
-                                            <WalletConnect />
+                                            <w3m-button />
                                         </div>
                                     </div>
                                 </motion.div>

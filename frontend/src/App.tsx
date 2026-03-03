@@ -30,6 +30,8 @@ import { useAuthStore } from '@/store/authStore';
 import { ToastProvider } from './components/ui/toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { WagmiProvider } from 'wagmi';
+import { config } from './web3config';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -58,7 +60,7 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return !isAuthenticated ? <>{children}</> : <Navigate to="/dashboard" replace />;
 };
 
-const PageTransition: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+const PageTransition = ({ children }: { children: React.ReactNode }) => (
   <motion.div
     initial={{ opacity: 0, x: 10 }}
     animate={{ opacity: 1, x: 0 }}
@@ -116,15 +118,17 @@ function AppContent() {
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider>
-        <QueryClientProvider client={queryClient}>
-          <ToastProvider>
-            <Router>
-              <AppContent />
-            </Router>
-          </ToastProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
+      <WagmiProvider config={config}>
+        <ThemeProvider>
+          <QueryClientProvider client={queryClient}>
+            <ToastProvider>
+              <Router>
+                <AppContent />
+              </Router>
+            </ToastProvider>
+          </QueryClientProvider>
+        </ThemeProvider>
+      </WagmiProvider>
     </ErrorBoundary>
   );
 }

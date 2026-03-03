@@ -309,9 +309,9 @@ export const DashboardPage: React.FC = () => {
         <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-xl border border-gray-100 dark:border-gray-700">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h2 className="text-lg font-extrabold text-gray-900 dark:text-white">{t('dashboard.web3Title', 'Web3 (Polygon Amoy)')}</h2>
+              <h2 className="text-lg font-extrabold text-gray-900 dark:text-white">{t('dashboard.web3Title', 'Web3 Cüzdan')}</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                {t('dashboard.web3Subtitle', 'ZEX ve NFT kontratların testnet üzerinde canlı.')}
+                {t('dashboard.web3Subtitle', 'Geçerli Ethereum / BSC ağları üzerinden bağlanıldı.')}
               </p>
             </div>
 

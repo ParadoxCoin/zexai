@@ -13,7 +13,6 @@ import { useTranslation } from 'react-i18next';
 import NotificationDropdown from './NotificationDropdown';
 import AchievementPopup from './AchievementPopup';
 import PWAInstallPrompt from './PWAInstallPrompt';
-import WalletConnect from './WalletConnect';
 import LanguageSwitcher from './LanguageSwitcher';
 
 const Layout: React.FC = () => {
@@ -116,7 +115,9 @@ const Layout: React.FC = () => {
               <LanguageSwitcher />
 
               {/* Wallet Connect */}
-              <WalletConnect showBalance={false} className="mr-1 hidden sm:flex" />
+              <div className="mr-1 hidden sm:flex">
+                <w3m-button />
+              </div>
 
               {/* Dynamic Credits Display */}
               <Link
