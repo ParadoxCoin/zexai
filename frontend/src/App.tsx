@@ -8,6 +8,7 @@ import { RegisterPage } from '@/pages/RegisterPage';
 import AuthCallbackPage from '@/pages/AuthCallbackPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { ProfilePage } from '@/pages/ProfilePage';
+import LandingPage from '@/pages/LandingPage';
 import ImageGenerationPage from '@/pages/ImageGenerationPage';
 import MediaLibraryPage from '@/pages/MediaLibraryPage';
 import SynapsePage from '@/pages/SynapsePage';
@@ -74,7 +75,8 @@ function AppContent() {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<Layout />}>
+        <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
+        <Route element={<Layout />}>
           {/* Public routes */}
           <Route path="/login" element={<PublicRoute><PageTransition><LoginPage /></PageTransition></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><PageTransition><RegisterPage /></PageTransition></PublicRoute>} />
@@ -104,7 +106,6 @@ function AppContent() {
           <Route path="/api-keys" element={<ProtectedRoute><PageTransition><ApiKeysPage /></PageTransition></ProtectedRoute>} />
           <Route path="/referral" element={<ProtectedRoute><PageTransition><ReferralPage /></PageTransition></ProtectedRoute>} />
 
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
       </Routes>
