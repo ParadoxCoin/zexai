@@ -32,6 +32,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { WagmiProvider } from 'wagmi';
 import { config } from './web3config';
+import { Web3Provider } from '@/contexts/Web3Context';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -121,11 +122,13 @@ function App() {
       <WagmiProvider config={config}>
         <ThemeProvider>
           <QueryClientProvider client={queryClient}>
-            <ToastProvider>
-              <Router>
-                <AppContent />
-              </Router>
-            </ToastProvider>
+            <Web3Provider>
+              <ToastProvider>
+                <Router>
+                  <AppContent />
+                </Router>
+              </ToastProvider>
+            </Web3Provider>
           </QueryClientProvider>
         </ThemeProvider>
       </WagmiProvider>

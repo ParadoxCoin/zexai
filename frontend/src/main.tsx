@@ -2,7 +2,6 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './i18n'
-import { Web3Provider } from './contexts/Web3Context'
 
 // Register Service Worker for Push Notifications
 if ('serviceWorker' in navigator) {
@@ -20,8 +19,6 @@ if ('serviceWorker' in navigator) {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <Web3Provider>
-      <App />
-    </Web3Provider>
+    <App />
   </React.StrictMode>
 )
