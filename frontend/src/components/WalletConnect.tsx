@@ -1,5 +1,6 @@
 import React from 'react';
 import { useWeb3 } from '../contexts/Web3Context';
+import { useTranslation } from 'react-i18next';
 import { Wallet, LogOut, Loader2 } from 'lucide-react';
 
 interface WalletConnectProps {
@@ -9,6 +10,7 @@ interface WalletConnectProps {
 
 const WalletConnect: React.FC<WalletConnectProps> = ({ className = '', showBalance = true }) => {
     const { account, zexBalance, isConnecting, connectWallet, disconnectWallet } = useWeb3();
+    const { t } = useTranslation();
 
     // Shorten address format: 0x1234...5678
     const shortenAddress = (address: string) => {
@@ -39,7 +41,7 @@ const WalletConnect: React.FC<WalletConnectProps> = ({ className = '', showBalan
                                 className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                             >
                                 <LogOut className="w-4 h-4" />
-                                Cüzdanı Eşleşmeyi Kes
+                                {t('dashboard.walletBtnDisconnect', 'Cüzdanı Eşleşmeyi Kes')}
                             </button>
                         </div>
                     </div>
@@ -59,8 +61,8 @@ const WalletConnect: React.FC<WalletConnectProps> = ({ className = '', showBalan
             ) : (
                 <Wallet className="w-4 h-4" />
             )}
-            <span className="hidden sm:inline">Cüzdan Bağla</span>
-            <span className="sm:hidden">Bağla</span>
+            <span className="hidden sm:inline">{t('dashboard.walletBtnConnect', 'Cüzdan Bağla')}</span>
+            <span className="sm:hidden">{t('common.connect', 'Bağla')}</span>
         </button>
     );
 };

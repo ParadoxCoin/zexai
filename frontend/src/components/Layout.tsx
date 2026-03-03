@@ -185,25 +185,25 @@ const Layout: React.FC = () => {
                         onClick={() => setIsUserMenuOpen(false)}
                         className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl"
                       >
-                        <User className="h-4 w-4" />Profil
+                        <User className="h-4 w-4" />{t('layout.profile', 'Profil')}
                       </Link>
                       <Link
                         to="/api-keys"
                         onClick={() => setIsUserMenuOpen(false)}
                         className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl"
                       >
-                        <Key className="h-4 w-4" />API Anahtarları
+                        <Key className="h-4 w-4" />{t('layout.apiKeys', 'API Anahtarları')}
                       </Link>
                       <Link
                         to="/settings"
                         onClick={() => setIsUserMenuOpen(false)}
                         className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl"
                       >
-                        <Settings className="h-4 w-4" />Ayarlar
+                        <Settings className="h-4 w-4" />{t('layout.settings', 'Ayarlar')}
                       </Link>
 
                       <div className="my-2 border-t border-gray-100 dark:border-gray-700" />
-                      <p className="px-3 py-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Keşfet</p>
+                      <p className="px-3 py-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{t('layout.exploreSection', 'Keşfet')}</p>
 
                       <Link
                         to="/credits"
@@ -211,8 +211,8 @@ const Layout: React.FC = () => {
                         className="flex items-center gap-3 px-3 py-2.5 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl"
                       >
                         <Wallet className="h-4 w-4" />
-                        Kredi & Abonelik
-                        <span className="ml-auto text-[10px] bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded-full">Pro</span>
+                        {t('layout.creditsSub', 'Kredi & Abonelik')}
+                        <span className="ml-auto text-[10px] bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded-full">{t('layout.proBadge', 'Pro')}</span>
                       </Link>
                       <Link
                         to="/marketplace"
@@ -220,7 +220,7 @@ const Layout: React.FC = () => {
                         className="flex items-center gap-3 px-3 py-2.5 text-sm text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl"
                       >
                         <Star className="h-4 w-4" />
-                        Marketplace
+                        {t('layout.marketplace', 'Marketplace')}
                         <span className="ml-auto text-[10px] bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full">40+</span>
                       </Link>
                       <Link
@@ -229,18 +229,18 @@ const Layout: React.FC = () => {
                         className="flex items-center gap-3 px-3 py-2.5 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl"
                       >
                         <Gift className="h-4 w-4" />
-                        Davet Et
+                        {t('layout.invite', 'Davet Et')}
                         <span className="ml-auto text-[10px] bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full">%1</span>
                       </Link>
 
                       <div className="my-2 border-t border-gray-100 dark:border-gray-700" />
-                      <p className="px-3 py-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Tercihler</p>
+                      <p className="px-3 py-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{t('layout.preferencesSection', 'Tercihler')}</p>
                       <button
                         onClick={() => { toggleTheme(); }}
                         className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl"
                       >
                         {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-                        Tema: {theme === 'light' ? '☀️ Açık' : '🌙 Koyu'}
+                        {t('layout.theme', 'Tema')}: {theme === 'light' ? t('layout.themeLight', '☀️ Açık') : t('layout.themeDark', '🌙 Koyu')}
                       </button>
 
                       <div className="my-2 border-t border-gray-100 dark:border-gray-700" />
@@ -249,7 +249,7 @@ const Layout: React.FC = () => {
                         onClick={() => { setIsUserMenuOpen(false); handleLogout(); }}
                         className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl"
                       >
-                        <LogOut className="h-4 w-4" />Çıkış Yap
+                        <LogOut className="h-4 w-4" />{t('layout.logout', 'Çıkış Yap')}
                       </button>
                     </div>
                   </div>

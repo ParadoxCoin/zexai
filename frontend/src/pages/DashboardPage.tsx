@@ -78,10 +78,10 @@ export const DashboardPage: React.FC = () => {
   }, []);
 
   const tips = [
-    { title: '💡 Günün İpucu', content: 'Synapse ile farklı AI modellerini karşılaştırarak en iyi sonucu alın!' },
-    { title: '🎯 Bilgi', content: 'Referans programıyla arkadaşlarınızı davet edin, hem siz hem onlar kredi kazansın!' },
-    { title: '✨ Öneri', content: 'Video oluştururken detaylı prompt yazarak daha kaliteli sonuçlar elde edin.' },
-    { title: '🚀 Yenilik', content: 'Marketplace\'te 40+ farklı AI modeli arasından seçim yapabilirsiniz!' },
+    { title: t('dashboard.tip1Header', '💡 Günün İpucu'), content: t('dashboard.tip1Content', 'Synapse ile farklı AI modellerini karşılaştırarak en iyi sonucu alın!') },
+    { title: t('dashboard.tip2Header', '🎯 Bilgi'), content: t('dashboard.tip2Content', 'Referans programıyla arkadaşlarınızı davet edin, hem siz hem onlar kredi kazansın!') },
+    { title: t('dashboard.tip3Header', '✨ Öneri'), content: t('dashboard.tip3Content', 'Video oluştururken detaylı prompt yazarak daha kaliteli sonuçlar elde edin.') },
+    { title: t('dashboard.tip4Header', '🚀 Yenilik'), content: t('dashboard.tip4Content', "Marketplace'te 40+ farklı AI modeli arasından seçim yapabilirsiniz!") },
   ];
 
   const setRandomTip = () => {
@@ -166,10 +166,10 @@ export const DashboardPage: React.FC = () => {
       const diffHours = Math.floor(diffMs / 3600000);
       const diffDays = Math.floor(diffMs / 86400000);
 
-      if (diffMins < 1) return 'Az önce';
-      if (diffMins < 60) return `${diffMins} dakika önce`;
-      if (diffHours < 24) return `${diffHours} saat önce`;
-      if (diffDays < 7) return `${diffDays} gün önce`;
+      if (diffMins < 1) return t('dashboard.justNow', 'Az önce');
+      if (diffMins < 60) return t('dashboard.minsAgo', '{{mins}} dakika önce', { mins: diffMins });
+      if (diffHours < 24) return t('dashboard.hoursAgo', '{{hours}} saat önce', { hours: diffHours });
+      if (diffDays < 7) return t('dashboard.daysAgo', '{{days}} gün önce', { days: diffDays });
       return date.toLocaleDateString('tr-TR');
     } catch {
       return dateStr;
@@ -188,9 +188,9 @@ export const DashboardPage: React.FC = () => {
 
   const greeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Günaydın';
-    if (hour < 18) return 'İyi günler';
-    return 'İyi akşamlar';
+    if (hour < 12) return t('dashboard.greetingMorning', 'Günaydın');
+    if (hour < 18) return t('dashboard.greetingAfternoon', 'İyi günler');
+    return t('dashboard.greetingEvening', 'İyi akşamlar');
   };
 
   // Monthly generation target progress
@@ -254,7 +254,7 @@ export const DashboardPage: React.FC = () => {
               </h1>
             </div>
             <p className="text-gray-500 dark:text-gray-400 ml-[72px] text-base">
-              AI hizmetlerinizin bugünkü özeti
+              {t('dashboard.summarySubtitle', 'AI hizmetlerinizin bugünkü özeti')}
             </p>
           </div>
 
@@ -277,28 +277,28 @@ export const DashboardPage: React.FC = () => {
         <StatCard
           title={t('dashboard.creditBalance', 'Kredi Bakiyesi')}
           value={<AnimatedCounter value={Math.round(stats.credits)} />}
-          subtitle={stats.creditsSpentToday > 0 ? `Bugün ${Math.round(stats.creditsSpentToday)} kredi harcandı` : 'Bugün harcama yok'}
+          subtitle={stats.creditsSpentToday > 0 ? t('dashboard.spentToday', 'Bugün {{count}} kredi harcandı', { count: Math.round(stats.creditsSpentToday) }) : t('dashboard.noSpendToday', 'Bugün harcama yok')}
           icon={CreditCard}
           variant="info"
         />
         <StatCard
           title={t('dashboard.generatedImages', 'Oluşturulan Görseller')}
           value={<AnimatedCounter value={stats.images} />}
-          subtitle={`Bu ay toplam ${stats.generationsMonth} üretim`}
+          subtitle={t('dashboard.monthTotalGen', 'Bu ay toplam {{count}} üretim', { count: stats.generationsMonth })}
           icon={Image}
           variant="success"
         />
         <StatCard
           title={t('dashboard.generatedVideos', 'Oluşturulan Videolar')}
           value={<AnimatedCounter value={stats.videos} />}
-          subtitle={stats.favoriteModel ? `Favori model: ${stats.favoriteModel}` : 'Bu ay video üretimi yok'}
+          subtitle={stats.favoriteModel ? t('dashboard.favModel', 'Favori model: {{model}}', { model: stats.favoriteModel }) : t('dashboard.noVideoGen', 'Bu ay video üretimi yok')}
           icon={Video}
           variant="default"
         />
         <StatCard
           title={t('dashboard.audioAndChat', 'Ses & Chat')}
           value={<AnimatedCounter value={stats.audio + stats.chats} />}
-          subtitle={`${stats.audio} ses, ${stats.chats} sohbet`}
+          subtitle={t('dashboard.audioChatSubtitle', '{{audio}} ses, {{chats}} sohbet', { audio: stats.audio, chats: stats.chats })}
           icon={Music}
           variant="success"
         />
@@ -309,9 +309,9 @@ export const DashboardPage: React.FC = () => {
         <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-xl border border-gray-100 dark:border-gray-700">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h2 className="text-lg font-extrabold text-gray-900 dark:text-white">Web3 (Polygon Amoy)</h2>
+              <h2 className="text-lg font-extrabold text-gray-900 dark:text-white">{t('dashboard.web3Title', 'Web3 (Polygon Amoy)')}</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                ZEX ve NFT kontratların testnet üzerinde canlı.
+                {t('dashboard.web3Subtitle', 'ZEX ve NFT kontratların testnet üzerinde canlı.')}
               </p>
             </div>
 
@@ -322,7 +322,7 @@ export const DashboardPage: React.FC = () => {
                     onClick={disconnectWallet}
                     className="px-4 py-2 rounded-xl text-sm font-semibold bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                   >
-                    Cüzdanı Ayır
+                    {t('dashboard.walletBtnDisconnect', 'Cüzdanı Ayır')}
                   </button>
                 </>
               ) : (
@@ -331,7 +331,7 @@ export const DashboardPage: React.FC = () => {
                   disabled={isConnecting}
                   className="px-4 py-2 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white transition-colors"
                 >
-                  {isConnecting ? 'Bağlanıyor…' : 'Cüzdan Bağla'}
+                  {isConnecting ? t('dashboard.walletBtnConnecting', 'Bağlanıyor…') : t('dashboard.walletBtnConnect', 'Cüzdan Bağla')}
                 </button>
               )}
             </div>
@@ -339,17 +339,17 @@ export const DashboardPage: React.FC = () => {
 
           <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="rounded-2xl border border-gray-100 dark:border-gray-700 p-4">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Cüzdan</p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t('dashboard.walletInfoLabel', 'Cüzdan')}</p>
               <p className="mt-1 font-mono text-sm text-gray-900 dark:text-gray-100 break-all">
-                {account || 'Bağlı değil'}
+                {account || t('dashboard.walletNotConnected', 'Bağlı değil')}
               </p>
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                ZEX bakiyesi: <span className="font-semibold">{zexBalance}</span>
+                {t('dashboard.walletBalance', 'ZEX bakiyesi')}: <span className="font-semibold">{zexBalance}</span>
               </p>
             </div>
 
             <div className="rounded-2xl border border-gray-100 dark:border-gray-700 p-4">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Kontratlar</p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t('dashboard.contractsLabel', 'Kontratlar')}</p>
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
                 ZEX: <span className="font-mono text-xs break-all">{ZEX_TOKEN_ADDRESS}</span>
               </p>
@@ -383,7 +383,7 @@ export const DashboardPage: React.FC = () => {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Target className="w-5 h-5 text-indigo-500" />
-              <h3 className="font-bold text-gray-900 dark:text-white uppercase tracking-wider text-sm">Aylık Üretim Hedefi</h3>
+              <h3 className="font-bold text-gray-900 dark:text-white uppercase tracking-wider text-sm">{t('dashboard.monthlyTargetTitle', 'Aylık Üretim Hedefi')}</h3>
             </div>
             <span className="text-sm font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 rounded-full">{stats.generationsMonth} / 100</span>
           </div>
@@ -396,8 +396,8 @@ export const DashboardPage: React.FC = () => {
             />
           </div>
           <div className="flex justify-between mt-3 text-xs text-gray-400">
-            <span>Bugün: {stats.generationsToday} üretim</span>
-            <span>Bu hafta: {stats.generationsWeek} üretim</span>
+            <span>{t('dashboard.todayGen', 'Bugün: {{count}} üretim', { count: stats.generationsToday })}</span>
+            <span>{t('dashboard.weekGen', 'Bu hafta: {{count}} üretim', { count: stats.generationsWeek })}</span>
           </div>
         </div>
       </div>
@@ -407,33 +407,33 @@ export const DashboardPage: React.FC = () => {
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-3">
             <Sparkles className="w-7 h-7 text-amber-500 fill-amber-500 animate-pulse" />
-            Sihirli Şablonlar
+            {t('dashboard.magicTemplatesTitle', 'Sihirli Şablonlar')}
           </h2>
-          <span className="text-xs font-bold text-gray-400 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full uppercase">Tek Tıkla Üret</span>
+          <span className="text-xs font-bold text-gray-400 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full uppercase">{t('dashboard.oneClickGen', 'Tek Tıkla Üret')}</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
             {
-              title: "Cyberpunk Şehir",
+              title: t('dashboard.cyberpunkTemplateTitle', 'Cyberpunk Şehir'),
               image: "/templates/cyberpunk_city.png",
               prompt: "A stunning, hyper-realistic cyberpunk city at night with neon signs, flying cars, cinematic lighting",
               color: "from-blue-600/80 to-purple-600/80"
             },
             {
-              title: "Sinematik Portre",
+              title: t('dashboard.portraitTemplateTitle', 'Sinematik Portre'),
               image: "/templates/cinematic_portrait.png",
               prompt: "Breathtaking cinematic portrait of a futuristic warrior, intricate armor, dramatic rim lighting",
               color: "from-amber-600/80 to-orange-600/80"
             },
             {
-              title: "Rüya Manzarası",
+              title: t('dashboard.landscapeTemplateTitle', 'Rüya Manzarası'),
               image: "/templates/dreamy_landscape.png",
               prompt: "Magical dreamy floating island landscape with waterfalls, exotic purple trees, bioluminescent plants",
               color: "from-emerald-600/80 to-teal-600/80"
             },
             {
-              title: "3D Karakter",
+              title: t('dashboard.characterTemplateTitle', '3D Karakter'),
               image: "/templates/3d_character.png",
               prompt: "Cute 3D character render of a small robot explorer, Pixar style, soft subsurface scattering",
               color: "from-pink-600/80 to-rose-600/80"
@@ -455,7 +455,7 @@ export const DashboardPage: React.FC = () => {
               <div className="absolute inset-x-0 bottom-0 p-6 flex flex-col justify-end h-1/2 bg-gradient-to-t from-gray-950 via-gray-950/40 to-transparent">
                 <p className="text-white font-black text-xl mb-1">{template.title}</p>
                 <div className="flex items-center gap-2 text-white/80 text-xs font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">
-                  Şablonu Kullan <ArrowRight className="w-3 h-3" />
+                  {t('dashboard.useTemplate', 'Şablonu Kullan')} <ArrowRight className="w-3 h-3" />
                 </div>
               </div>
             </motion.div>
@@ -467,45 +467,45 @@ export const DashboardPage: React.FC = () => {
       <div id="quick-actions" className="mb-8">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           <Rocket className="w-5 h-5 text-indigo-500" />
-          Hızlı Aksiyonlar
+          {t('dashboard.quickActionsTitle', 'Hızlı Aksiyonlar')}
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           <FeatureCard
             icon={Image}
-            title="Görsel Oluştur"
-            description="AI ile görseller"
+            title={t('dashboard.genImage', 'Görsel Oluştur')}
+            description={t('dashboard.genImageDesc', 'AI ile görseller')}
             onClick={() => navigate('/images')}
           />
           <FeatureCard
             icon={Video}
-            title="Video Oluştur"
-            description="Metin'den video"
+            title={t('dashboard.genVideo', 'Video Oluştur')}
+            description={t('dashboard.genVideoDesc', "Metin'den video")}
             onClick={() => navigate('/videos')}
-            badge="Popüler"
+            badge={t('dashboard.popularBadge', 'Popüler')}
           />
           <FeatureCard
             icon={Music}
-            title="Ses Araçları"
-            description="TTS & Müzik"
+            title={t('dashboard.audioTools', 'Ses Araçları')}
+            description={t('dashboard.audioToolsDesc', 'TTS & Müzik')}
             onClick={() => navigate('/audio')}
           />
           <FeatureCard
             icon={MessageSquare}
-            title="AI Sohbet"
-            description="Akıllı asistan"
+            title={t('dashboard.aiChat', 'AI Sohbet')}
+            description={t('dashboard.aiChatDesc', 'Akıllı asistan')}
             onClick={() => navigate('/chat')}
           />
           <FeatureCard
             icon={Bot}
             title="Synapse"
-            description="Model karşılaştır"
+            description={t('dashboard.synapseDesc', 'Model karşılaştır')}
             onClick={() => navigate('/synapse')}
-            badge="Yeni"
+            badge={t('dashboard.newBadge', 'Yeni')}
           />
           <FeatureCard
             icon={FolderOpen}
-            title="Kütüphane"
-            description="Tüm içerikler"
+            title={t('dashboard.library', 'Kütüphane')}
+            description={t('dashboard.libraryDesc', 'Tüm içerikler')}
             onClick={() => navigate('/media')}
           />
         </div>
@@ -519,19 +519,19 @@ export const DashboardPage: React.FC = () => {
             <div className="flex items-center gap-2">
               <Clock className="w-5 h-5 text-gray-400" />
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Son Aktiviteler
+                {t('dashboard.recentActivitiesTitle', 'Son Aktiviteler')}
               </h2>
             </div>
             <button
               onClick={() => navigate('/media')}
               className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 flex items-center gap-1"
             >
-              Tümünü Gör <ArrowRight className="w-4 h-4" />
+              {t('dashboard.seeAll', 'Tümünü Gör')} <ArrowRight className="w-4 h-4" />
             </button>
           </div>
 
           {recentActivity.length === 0 ? (
-            <NoData title="Henüz aktivite yok" description="Bir AI hizmeti kullandığınızda aktiviteleriniz burada görünür." />
+            <NoData title={t('dashboard.noActivityTitle', 'Henüz aktivite yok')} description={t('dashboard.noActivityDesc', 'Bir AI hizmeti kullandığınızda aktiviteleriniz burada görünür.')} />
           ) : (
             <div className="divide-y divide-gray-100 dark:divide-gray-700">
               {recentActivity.map((activity) => {
@@ -553,7 +553,7 @@ export const DashboardPage: React.FC = () => {
                       )}
                       <div>
                         <p className="font-medium text-gray-900 dark:text-white text-sm line-clamp-1">
-                          {activity.title || 'AI Üretimi'}
+                          {activity.title || t('dashboard.aiGeneration', 'AI Üretimi')}
                         </p>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                           {formatRelativeTime(activity.created_at)}
@@ -562,7 +562,7 @@ export const DashboardPage: React.FC = () => {
                     </div>
                     {activity.credits_charged > 0 && (
                       <span className="px-3 py-1 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full text-sm font-medium flex-shrink-0">
-                        -{Math.round(activity.credits_charged)} kredi
+                        {t('dashboard.creditsSpentRow', '-{{count}} kredi', { count: Math.round(activity.credits_charged) })}
                       </span>
                     )}
                   </div>
@@ -577,10 +577,10 @@ export const DashboardPage: React.FC = () => {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Star className="w-6 h-6" />
-              <h3 className="font-semibold">Model Marketplace</h3>
+              <h3 className="font-semibold">{t('dashboard.marketplacePromoTitle', 'Model Marketplace')}</h3>
             </div>
             <p className="text-emerald-100 text-sm mb-2">
-              40+ AI modeli arasından seçim yapın
+              {t('dashboard.marketplacePromoDesc', '40+ AI modeli arasından seçim yapın')}
             </p>
             <div className="flex flex-wrap gap-2 mb-4">
               <span className="px-2 py-1 bg-white/20 rounded-full text-xs">FLUX</span>
@@ -593,7 +593,7 @@ export const DashboardPage: React.FC = () => {
             onClick={() => navigate('/marketplace')}
             className="w-full py-2.5 bg-white text-emerald-600 hover:bg-emerald-50 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2"
           >
-            Keşfet <ArrowRight className="w-4 h-4" />
+            {t('dashboard.discoverBtn', 'Keşfet')} <ArrowRight className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -618,23 +618,23 @@ export const DashboardPage: React.FC = () => {
             </div>
             <div>
               <span className="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">
-                ✨ Pasif Gelir
+                {t('dashboard.passiveIncomeBadge', '✨ Pasif Gelir')}
               </span>
             </div>
           </div>
 
           <h3 className="text-xl font-bold mb-1">
-            %1 Ömür Boyu Kazanç
+            {t('dashboard.lifetimeEarnTitle', '%1 Ömür Boyu Kazanç')}
           </h3>
           <p className="text-purple-100 text-sm mb-4">
-            Davet ettiğin kişilerin tüm alışverişlerinden
+            {t('dashboard.lifetimeEarnDesc', 'Davet ettiğin kişilerin tüm alışverişlerinden')}
           </p>
 
           <button
             onClick={() => navigate('/referral')}
             className="w-full py-2.5 bg-white text-purple-600 hover:bg-purple-50 rounded-xl text-sm font-bold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2"
           >
-            🚀 Hemen Başla
+            {t('dashboard.startNowBtn', '🚀 Hemen Başla')}
           </button>
         </div>
       </div>

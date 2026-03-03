@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import PromptEnhancer from "@/components/PromptEnhancer";
 import MotionBrushEditor from "@/components/video/MotionBrushEditor";
+import { useTranslation } from "react-i18next";
 
 // Provider styling
 const providerStyles: Record<string, { bg: string; text: string; icon: string }> = {
@@ -30,19 +31,19 @@ const videoStyles = [
   { id: 'vintage', name: 'Vintage', icon: '📼' },
 ];
 
-// Content type tabs
-const contentTypes = [
-  { id: "text-to-video", name: "Metin → Video", icon: Film, description: "Metinden video oluştur" },
-  { id: "image-to-video", name: "Görsel → Video", icon: Image, description: "Görseli hareketlendir" },
-  // { id: "video-to-video", name: "Video → Video", icon: RefreshCcw, description: "Videoyu dönüştür" }, // Disabled: Kie.ai doesn't support V2V yet
-  { id: "compare", name: "Karşılaştır", icon: GitCompare, description: "Modelleri karşılaştır" },
-  { id: "effects", name: "Efektler", icon: Sparkles, description: "Video efektleri" },
-  { id: "packages", name: "Paketler", icon: Package, description: "Efekt paketleri" },
-  { id: "gallery", name: "Galerim", icon: FolderOpen, description: "Videolarım" },
-];
-
 const VideoPage = () => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("text-to-video");
+
+  // Content type tabs with translations
+  const contentTypes = [
+    { id: "text-to-video", name: t('videoGen.tabT2V', 'Metin → Video'), icon: Film, description: t('videoGen.t2vDesc', "Metinden video oluştur") },
+    { id: "image-to-video", name: t('videoGen.tabI2V', 'Görsel → Video'), icon: Image, description: t('videoGen.i2vDesc', "Görseli hareketlendir") },
+    { id: "compare", name: t('videoGen.tabCompare', 'Karşılaştır'), icon: GitCompare, description: t('videoGen.compareDescModels', "Modelleri karşılaştır") },
+    { id: "effects", name: t('videoGen.tabEffects', 'Efektler'), icon: Sparkles, description: t('videoGen.effectsDesc', "Video efektleri") },
+    { id: "packages", name: t('videoGen.tabPackages', 'Paketler'), icon: Package, description: t('videoGen.packagesDesc', "Efekt paketleri") },
+    { id: "gallery", name: t('videoGen.tabGallery', 'Galerim'), icon: FolderOpen, description: t('videoGen.galleryDesc', "Videolarım") },
+  ];
   const [prompt, setPrompt] = useState("");
   const [modelId, setModelId] = useState("");
   const [selectedStyle, setSelectedStyle] = useState("");
@@ -563,12 +564,12 @@ const VideoPage = () => {
           <div className="max-w-4xl mx-auto text-center text-white">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm mb-3">
               <Video className="w-4 h-4" />
-              <span className="text-sm font-medium">AI Video Stüdyosu</span>
+              <span className="text-sm font-medium">{t('videoGen.badge', 'AI Video Stüdyosu')}</span>
             </div>
             <h1 className="text-3xl lg:text-4xl font-bold mb-2">
-              Video <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 to-yellow-300">Sihirbazı</span>
+              {t('videoGen.title', 'Video ')}<span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 to-yellow-300">{t('videoGen.titleHighlight', 'Sihirbazı')}</span>
             </h1>
-            <p className="text-purple-100">Sora 2, Veo 3.1, Kling 2.6, Runway ve daha fazlası</p>
+            <p className="text-purple-100">{t('videoGen.desc', 'Sora 2, Veo 3.1, Kling 2.6, Runway ve daha fazlası')}</p>
           </div>
         </div>
         <div className="absolute bottom-0 left-0 right-0">
@@ -622,11 +623,11 @@ const VideoPage = () => {
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                     <Crown className="w-5 h-5 text-yellow-500" />
-                    {activeTab === "text-to-video" && "Text → Video Modeller"}
-                    {activeTab === "image-to-video" && "Image → Video Modeller"}
-                    {activeTab === "video-to-video" && "Video → Video Modeller"}
+                    {activeTab === "text-to-video" && t('videoGen.modelsListT2V', "Text → Video Modeller")}
+                    {activeTab === "image-to-video" && t('videoGen.modelsListI2V', "Image → Video Modeller")}
+                    {activeTab === "video-to-video" && t('videoGen.modelsListV2V', "Video → Video Modeller")}
                   </h2>
-                  <span className="text-xs text-gray-500">{models.length} model</span>
+                  <span className="text-xs text-gray-500">{models.length} {t('videoGen.modelCount', 'model')}</span>
                 </div>
 
                 {/* Search */}
@@ -634,7 +635,7 @@ const VideoPage = () => {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="text"
-                    placeholder="Model ara..."
+                    placeholder={t('videoGen.searchModel', 'Model ara...')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
@@ -649,7 +650,7 @@ const VideoPage = () => {
                     ))
                   ) : models.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
-                      <p>Bu kategoride model bulunamadı</p>
+                      <p>{t('videoGen.noModelInCategory', 'Bu kategoride model bulunamadı')}</p>
                     </div>
                   ) : (
                     models.map((model: any) => {
@@ -743,7 +744,7 @@ const VideoPage = () => {
                   <div className="p-5 border-b border-gray-100 dark:border-gray-700">
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
                       <Image className="w-5 h-5 text-purple-500" />
-                      Başlangıç Görseli
+                      {t('videoGen.startImage', 'Başlangıç Görseli')}
                     </h3>
                     <div
                       className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${imageFile ? 'border-purple-400 bg-purple-50 dark:bg-purple-900/20' : 'border-gray-300 dark:border-gray-600 hover:border-purple-400'
@@ -761,13 +762,13 @@ const VideoPage = () => {
                         <>
                           <CheckCircle className="w-10 h-10 text-purple-500 mx-auto mb-2" />
                           <p className="text-purple-600 font-medium">{imageFile.name}</p>
-                          <p className="text-xs text-gray-500 mt-1">Değiştirmek için tıklayın</p>
+                          <p className="text-xs text-gray-500 mt-1">{t('videoGen.uploadChangeImage', 'Değiştirmek için tıklayın')}</p>
                         </>
                       ) : (
                         <>
                           <Upload className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-                          <p className="text-gray-600 dark:text-gray-400">Görsel yüklemek için tıklayın</p>
-                          <p className="text-xs text-gray-500 mt-1">PNG, JPG, WebP</p>
+                          <p className="text-gray-600 dark:text-gray-400">{t('videoGen.uploadClickImage', 'Görsel yüklemek için tıklayın')}</p>
+                          <p className="text-xs text-gray-500 mt-1">{t('videoGen.formatsImage', 'PNG, JPG, WebP')}</p>
                         </>
                       )}
                     </div>
@@ -779,7 +780,7 @@ const VideoPage = () => {
                   <div className="p-5 border-b border-gray-100 dark:border-gray-700">
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
                       <Film className="w-5 h-5 text-purple-500" />
-                      Kaynak Video
+                      {t('videoGen.sourceVideo', 'Kaynak Video')}
                     </h3>
                     <div
                       className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${videoFile ? 'border-purple-400 bg-purple-50 dark:bg-purple-900/20' : 'border-gray-300 dark:border-gray-600 hover:border-purple-400'
@@ -797,13 +798,13 @@ const VideoPage = () => {
                         <>
                           <CheckCircle className="w-10 h-10 text-purple-500 mx-auto mb-2" />
                           <p className="text-purple-600 font-medium">{videoFile.name}</p>
-                          <p className="text-xs text-gray-500 mt-1">Değiştirmek için tıklayın</p>
+                          <p className="text-xs text-gray-500 mt-1">{t('videoGen.uploadChangeImage', 'Değiştirmek için tıklayın')}</p>
                         </>
                       ) : (
                         <>
                           <Upload className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-                          <p className="text-gray-600 dark:text-gray-400">Video yüklemek için tıklayın</p>
-                          <p className="text-xs text-gray-500 mt-1">MP4, MOV, WebM</p>
+                          <p className="text-gray-600 dark:text-gray-400">{t('videoGen.uploadClickVideo', 'Video yüklemek için tıklayın')}</p>
+                          <p className="text-xs text-gray-500 mt-1">{t('videoGen.formatsVideo', 'MP4, MOV, WebM')}</p>
                         </>
                       )}
                     </div>
@@ -815,7 +816,7 @@ const VideoPage = () => {
                   <div className="flex items-center justify-between mb-3">
                     <h2 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                       <Wand2 className="w-5 h-5 text-purple-500" />
-                      {activeTab === "video-to-video" ? "Dönüşüm Talimatı" : "Video Senaryosu"}
+                      {activeTab === "video-to-video" ? t('videoGen.promptTitleV2V', "Dönüşüm Talimatı") : t('videoGen.promptTitleT2V', "Video Senaryosu")}
                     </h2>
                   </div>
                   <div className="relative">
@@ -824,8 +825,8 @@ const VideoPage = () => {
                       onChange={(e) => setPrompt(e.target.value)}
                       placeholder={
                         activeTab === "video-to-video"
-                          ? "Dönüşüm talimatı yazın... (Örn: Anime stiline çevir, gece vakti yap)"
-                          : "Videonuzun detaylı bir tanımını yazın..."
+                          ? t('videoGen.promptPlaceholderV2V', "Dönüşüm talimatı yazın... (Örn: Anime stiline çevir, gece vakti yap)")
+                          : t('videoGen.promptPlaceholderT2V', "Videonuzun detaylı bir tanımını yazın...")
                       }
                       rows={4}
                       disabled={isGenerating}
@@ -840,7 +841,7 @@ const VideoPage = () => {
                 {/* Style Selection - Only for text-to-video */}
                 {activeTab === "text-to-video" && (
                   <div className="px-5 pb-4">
-                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Stil (Opsiyonel)</h3>
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('videoGen.styleTitle', 'Stil (Opsiyonel)')}</h3>
                     <div className="flex flex-wrap gap-2">
                       {videoStyles.map((style) => (
                         <button
@@ -860,7 +861,7 @@ const VideoPage = () => {
 
                 {/* Aspect Ratio */}
                 <div className="px-5 pb-4 border-t border-gray-100 dark:border-gray-700 pt-4">
-                  <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">En-Boy Oranı</h3>
+                  <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('videoGen.aspectRatio', 'En-Boy Oranı')}</h3>
                   <div className="flex gap-2">
                     {['16:9', '9:16', '1:1'].map((ratio) => (
                       <button
@@ -890,13 +891,13 @@ const VideoPage = () => {
                     className="w-full py-4 bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/25 disabled:shadow-none transition-all flex items-center justify-center gap-2"
                   >
                     {isGenerating ? (
-                      <><Loader2 className="w-5 h-5 animate-spin" />Video Oluşturuluyor...</>
+                      <><Loader2 className="w-5 h-5 animate-spin" />{t('videoGen.generating', 'Video Oluşturuluyor...')}</>
                     ) : (
                       <>
                         <Play className="w-5 h-5" />
-                        {activeTab === "text-to-video" && "Video Oluştur"}
-                        {activeTab === "image-to-video" && "Görseli Hareketlendir"}
-                        {activeTab === "video-to-video" && "Videoyu Dönüştür"}
+                        {activeTab === "text-to-video" && t('videoGen.generateBtnT2V', "Video Oluştur")}
+                        {activeTab === "image-to-video" && t('videoGen.generateBtnI2V', "Görseli Hareketlendir")}
+                        {activeTab === "video-to-video" && t('videoGen.generateBtnV2V', "Videoyu Dönüştür")}
                         {selectedModel && ` (${selectedModel.credits}c)`}
                       </>
                     )}
@@ -911,17 +912,17 @@ const VideoPage = () => {
                     <div className="flex items-center justify-between">
                       <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                         <Video className="w-5 h-5 text-purple-500" />
-                        Üretilen Video
+                        {t('videoGen.previewTitle', 'Üretilen Video')}
                       </h3>
                       <div className={`px-3 py-1 rounded-full text-xs font-medium ${currentTask.status === 'completed' ? 'bg-green-100 text-green-700' :
                         currentTask.status === 'processing' ? 'bg-yellow-100 text-yellow-700' :
                           currentTask.status === 'failed' ? 'bg-red-100 text-red-700' :
                             'bg-purple-100 text-purple-700'
                         }`}>
-                        {currentTask.status === 'completed' ? '✓ Hazır' :
-                          currentTask.status === 'processing' ? '⏳ İşleniyor' :
-                            currentTask.status === 'failed' ? '✗ Hata' :
-                              '⏳ Bekliyor'}
+                        {currentTask.status === 'completed' ? t('videoGen.statusCompleted', '✓ Hazır') :
+                          currentTask.status === 'processing' ? t('videoGen.statusProcessing', '⏳ İşleniyor') :
+                            currentTask.status === 'failed' ? t('videoGen.statusFailed', '✗ Hata') :
+                              t('videoGen.statusPending', '⏳ Bekliyor')}
                       </div>
                     </div>
                   </div>
@@ -936,8 +937,8 @@ const VideoPage = () => {
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center text-white">
                         <Loader2 className="w-12 h-12 animate-spin text-purple-500 mb-4" />
-                        <p className="text-sm text-gray-400">Video üretiliyor...</p>
-                        <p className="text-xs text-gray-500 mt-2 max-w-md text-center px-4">{currentTask.prompt}</p>
+                        <p className="text-sm text-gray-400">{t('videoGen.previewGenerating', 'Video üretiliyor...')}</p>
+                        <p className="text-xs text-gray-500 mt-2 max-w-md text-center px-4">{currentTask.prompt || t('videoGen.previewWait', 'Oluşturuluyor...')}</p>
                       </div>
                     )}
                   </div>
@@ -948,13 +949,13 @@ const VideoPage = () => {
                         download
                         className="flex-1 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center justify-center gap-2 text-sm font-medium"
                       >
-                        <Download className="w-4 h-4" /> İndir
+                        <Download className="w-4 h-4" /> {t('videoGen.download', 'İndir')}
                       </a>
                       <button
                         onClick={() => setCurrentTask(null)}
                         className="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg text-sm font-medium"
                       >
-                        Kapat
+                        {t('videoGen.close', 'Kapat')}
                       </button>
                     </div>
                   )}
@@ -974,7 +975,7 @@ const VideoPage = () => {
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                     <GitCompare className="w-5 h-5 text-purple-500" />
-                    Modelleri Karşılaştır
+                    {t('videoGen.compareTitle', 'Modelleri Karşılaştır')}
                   </h2>
                   <span className="text-xs text-gray-500">
                     {selectedCompareModels.length}/4 seçili
@@ -982,7 +983,7 @@ const VideoPage = () => {
                 </div>
 
                 <p className="text-xs text-gray-500 mb-4">
-                  2-4 model seçin ve aynı prompt ile karşılaştırın
+                  {t('videoGen.compareDesc', '2-4 model seçin ve aynı prompt ile karşılaştırın')}
                 </p>
 
                 {/* Model Grid */}
@@ -1032,7 +1033,7 @@ const VideoPage = () => {
                   <div className="mt-4 p-3 bg-purple-50 dark:bg-purple-900/30 rounded-xl">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-purple-700 dark:text-purple-300">
-                        {selectedCompareModels.length} model seçili
+                        {selectedCompareModels.length} {t('videoGen.modelCount', 'model')} seçili
                       </span>
                       <span className="font-bold text-purple-600">
                         Toplam: {totalCompareCredits}💎
@@ -1049,12 +1050,12 @@ const VideoPage = () => {
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
                 <div className="p-4 border-b border-gray-100 dark:border-gray-700">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Prompt (Tüm modeller için)
+                    {t('videoGen.comparePromptLabel', 'Prompt (Tüm modeller için)')}
                   </label>
                   <textarea
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
-                    placeholder="Karşılaştırmak istediğiniz video için açıklama girin..."
+                    placeholder={t('videoGen.comparePromptPlaceholder', "Karşılaştırmak istediğiniz video için açıklama girin...")}
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 resize-none"
                     rows={3}
                   />
@@ -1062,7 +1063,7 @@ const VideoPage = () => {
 
                 {/* Aspect Ratio */}
                 <div className="p-4 border-b border-gray-100 dark:border-gray-700">
-                  <label className="block text-xs text-gray-500 mb-2">En-Boy Oranı</label>
+                  <label className="block text-xs text-gray-500 mb-2">{t('videoGen.aspectRatio', 'En-Boy Oranı')}</label>
                   <div className="flex gap-2">
                     {['16:9', '9:16', '1:1'].map(ratio => (
                       <button
@@ -1089,11 +1090,11 @@ const VideoPage = () => {
                     className="w-full py-4 bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/25 disabled:shadow-none transition-all flex items-center justify-center gap-2"
                   >
                     {isComparing ? (
-                      <><Loader2 className="w-5 h-5 animate-spin" />Karşılaştırma Başlatılıyor...</>
+                      <><Loader2 className="w-5 h-5 animate-spin" />{t('videoGen.compareGenerating', 'Karşılaştırma Başlatılıyor...')}</>
                     ) : (
                       <>
                         <GitCompare className="w-5 h-5" />
-                        Karşılaştır ({selectedCompareModels.length} Model)
+                        {t('videoGen.compareBtn', 'Karşılaştır')} ({selectedCompareModels.length} {t('videoGen.modelCount', 'Model').replace(/^[a-z]/, c => c.toUpperCase())})
                         <span className="ml-2 px-2 py-0.5 bg-white/20 rounded-full text-sm">
                           {totalCompareCredits}💎
                         </span>
@@ -1108,7 +1109,7 @@ const VideoPage = () => {
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-4">
                   <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
                     <Eye className="w-5 h-5 text-purple-500" />
-                    Karşılaştırma Sonuçları
+                    {t('videoGen.compareResultsTitle', 'Karşılaştırma Sonuçları')}
                   </h3>
 
                   <div className={`grid gap-4 ${compareTasks.length === 2 ? 'grid-cols-2' :
@@ -1128,10 +1129,10 @@ const VideoPage = () => {
                                 task.status === 'failed' ? 'bg-red-100 text-red-700' :
                                   'bg-purple-100 text-purple-700'
                               }`}>
-                              {task.status === 'completed' ? '✓ Hazır' :
-                                task.status === 'processing' ? '⏳ İşleniyor' :
-                                  task.status === 'failed' ? '✗ Hata' :
-                                    '⏳ Bekliyor'}
+                              {task.status === 'completed' ? t('videoGen.statusCompleted', '✓ Hazır') :
+                                task.status === 'processing' ? t('videoGen.statusProcessing', '⏳ İşleniyor') :
+                                  task.status === 'failed' ? t('videoGen.statusFailed', '✗ Hata') :
+                                    t('videoGen.statusPending', '⏳ Bekliyor')}
                             </span>
                           </div>
                           <div className="text-xs text-gray-500 mt-1">{task.credits}💎</div>
@@ -1151,12 +1152,12 @@ const VideoPage = () => {
                           ) : task.status === 'failed' ? (
                             <div className="text-center p-4">
                               <X className="w-8 h-8 text-red-500 mx-auto mb-2" />
-                              <p className="text-xs text-gray-500">Üretim başarısız</p>
+                              <p className="text-xs text-gray-500">{t('videoGen.compareGenFailed', 'Üretim başarısız')}</p>
                             </div>
                           ) : (
                             <div className="text-center p-4">
                               <Loader2 className="w-8 h-8 text-purple-500 mx-auto mb-2 animate-spin" />
-                              <p className="text-xs text-gray-500">Video oluşturuluyor...</p>
+                              <p className="text-xs text-gray-500">{t('videoGen.generating', 'Video oluşturuluyor...')}</p>
                             </div>
                           )}
                         </div>
@@ -1179,9 +1180,9 @@ const VideoPage = () => {
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-purple-500" />
-                    Video Efektleri
+                    {t('videoGen.effectsTitle', 'Video Efektleri')}
                   </h2>
-                  <span className="text-xs text-gray-500">{filteredEffects.length} efekt</span>
+                  <span className="text-xs text-gray-500">{filteredEffects.length} {t('videoGen.effectsCount', 'efekt')}</span>
                 </div>
 
                 {/* Category Filters */}
@@ -1225,7 +1226,7 @@ const VideoPage = () => {
                     ))
                   ) : filteredEffects.length === 0 ? (
                     <div className="text-center py-8 text-gray-500 text-sm">
-                      Bu kategoride efekt yok
+                      {t('videoGen.effectsNoCat', 'Bu kategoride efekt yok')}
                     </div>
                   ) : (
                     filteredEffects.map((effect: any) => {
@@ -1319,9 +1320,9 @@ const VideoPage = () => {
                           <>
                             <Upload className="w-12 h-12 text-gray-400 mx-auto mb-2" />
                             <p className="text-gray-600 dark:text-gray-400 font-medium">
-                              {effects.find((e: any) => e.id === effectId)?.requires_two_images ? '1. Görsel' : 'Görsel Yükle'}
+                              {effects.find((e: any) => e.id === effectId)?.requires_two_images ? t('videoGen.upload1stImage', '1. Görsel') : t('videoGen.uploadImage', 'Görsel Yükle')}
                             </p>
-                            <p className="text-xs text-gray-500 mt-1">PNG, JPG, WebP</p>
+                            <p className="text-xs text-gray-500 mt-1">{t('videoGen.formatsImage', 'PNG, JPG, WebP')}</p>
                           </>
                         )}
                       </div>
@@ -1367,7 +1368,7 @@ const VideoPage = () => {
                       ) : (
                         <Sparkles className="w-5 h-5" />
                       )}
-                      {applyingEffect ? 'İşleniyor...' : `Efekt Uygula (${effects.find((e: any) => e.id === effectId)?.credits}c)`}
+                      {applyingEffect ? t('videoGen.applyingEffect', 'İşleniyor...') : `${t('videoGen.applyEffect', 'Efekt Uygula')} (${effects.find((e: any) => e.id === effectId)?.credits}c)`}
                     </button>
 
                     {effectSuccess && (
@@ -1381,8 +1382,8 @@ const VideoPage = () => {
               ) : (
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-12 text-center">
                   <Sparkles className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Efekt Seçin</h3>
-                  <p className="text-gray-500">Sol taraftan bir efekt seçerek başlayın</p>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('videoGen.selectEffectTitle', 'Efekt Seçin')}</h3>
+                  <p className="text-gray-500">{t('videoGen.selectEffectHelp', 'Sol taraftan bir efekt seçerek başlayın')}</p>
                 </div>
               )}
             </div>
@@ -1399,7 +1400,7 @@ const VideoPage = () => {
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                     <Package className="w-5 h-5 text-purple-500" />
-                    Efekt Paketleri
+                    {t('videoGen.packagesTitle', 'Efekt Paketleri')}
                   </h2>
                   <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400 text-xs font-medium rounded-full">
                     %30'a varan
@@ -1414,7 +1415,7 @@ const VideoPage = () => {
                     ))
                   ) : !Array.isArray(packages) || packages.length === 0 ? (
                     <div className="text-center py-8 text-gray-500 text-sm">
-                      Henüz paket yok
+                      {t('videoGen.packagesNoCat', 'Henüz paket yok')}
                     </div>
                   ) : (
                     packages.map((pkg: any) => {
@@ -1491,7 +1492,7 @@ const VideoPage = () => {
                         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6">
                           <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                             <Sparkles className="w-5 h-5 text-purple-500" />
-                            Pakete Dahil Efektler ({selectedPkg.effects?.length || 0})
+                            {t('videoGen.packageIncludedEffects', 'Pakete Dahil Efektler')} ({selectedPkg.effects?.length || 0})
                           </h3>
 
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
@@ -1515,9 +1516,9 @@ const VideoPage = () => {
                           {/* Savings Calculation */}
                           <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 mb-6">
                             <div className="flex items-center justify-between">
-                              <span className="text-green-700 dark:text-green-300 font-medium">Toplam Tasarruf</span>
+                              <span className="text-green-700 dark:text-green-300 font-medium">{t('videoGen.packageTotalSavings', 'Toplam Tasarruf')}</span>
                               <span className="text-green-600 dark:text-green-400 font-bold text-lg">
-                                {(selectedPkg.original_credits || Math.round((selectedPkg.total_credits || 100) * 1.25)) - (selectedPkg.total_credits || 100)}c kazanıyorsunuz!
+                                {(selectedPkg.original_credits || Math.round((selectedPkg.total_credits || 100) * 1.25)) - (selectedPkg.total_credits || 100)}c {t('videoGen.packageYouSave', 'kazanıyorsunuz!')}
                               </span>
                             </div>
                           </div>
@@ -1533,7 +1534,7 @@ const VideoPage = () => {
                             ) : (
                               <Package className="w-5 h-5" />
                             )}
-                            {purchaseLoading ? 'İşleniyor...' : `Paketi Satın Al (${selectedPkg.total_credits || 100}c)`}
+                            {purchaseLoading ? 'İşleniyor...' : `${t('videoGen.buyPackage', 'Paketi Satın Al')} (${selectedPkg.total_credits || 100}c)`}
                           </button>
 
                           {purchaseSuccess && (
@@ -1550,8 +1551,8 @@ const VideoPage = () => {
               ) : (
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-12 text-center">
                   <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Paket Seçin</h3>
-                  <p className="text-gray-500">Sol taraftan bir paket seçerek detayları görüntüleyin</p>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">{t('videoGen.selectPackageTitle', 'Paket Seçin')}</h3>
+                  <p className="text-gray-500">{t('videoGen.selectPackageHelp', 'Sol taraftan bir paket seçerek detayları görüntüleyin')}</p>
                 </div>
               )}
             </div>
@@ -1563,7 +1564,7 @@ const VideoPage = () => {
           <div className="space-y-6">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <FolderOpen className="w-6 h-6 text-purple-500" />
-              Videolarım
+              {t('videoGen.galleryTitle', 'Videolarım')}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {isLoadingMyVideos ? (
@@ -1571,8 +1572,8 @@ const VideoPage = () => {
               ) : !Array.isArray(myVideos) || myVideos.length === 0 ? (
                 <div className="col-span-full text-center py-12">
                   <Video className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500 font-medium">Henüz video yok</p>
-                  <p className="text-sm text-gray-400">İlk videonuzu oluşturun!</p>
+                  <p className="text-gray-500 font-medium">{t('videoGen.galleryNoVideos', 'Henüz video yok')}</p>
+                  <p className="text-sm text-gray-400">{t('videoGen.galleryCreateFirst', 'İlk videonuzu oluşturun!')}</p>
                 </div>
               ) : (
                 myVideos.map((video: any) => (
@@ -1587,7 +1588,7 @@ const VideoPage = () => {
                       )}
                       <div className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${video.status === 'completed' ? 'bg-green-500' : video.status === 'processing' ? 'bg-yellow-500' : 'bg-gray-500'
                         } text-white`}>
-                        {video.status === 'completed' ? '✓ Hazır' : video.status === 'processing' ? '⏳ İşleniyor' : 'Bekliyor'}
+                        {video.status === 'completed' ? t('videoGen.statusCompleted', '✓ Hazır') : video.status === 'processing' ? t('videoGen.statusProcessing', '⏳ İşleniyor') : t('videoGen.statusPending', 'Bekliyor')}
                       </div>
                     </div>
                     <div className="p-4">
@@ -1612,10 +1613,10 @@ const VideoPage = () => {
                               ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
                               : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20'
                               }`}
-                            title={video.is_showcase ? 'Showcase\'dan kaldır' : 'Showcase\'a ekle'}
+                            title={video.is_showcase ? "Showcase'dan kaldır" : "Showcase'a ekle"}
                           >
                             <Star className={`w-3.5 h-3.5 ${video.is_showcase ? 'fill-yellow-500' : ''}`} />
-                            <span className="hidden sm:inline">{video.is_showcase ? 'Showcase' : 'Paylaş'}</span>
+                            <span className="hidden sm:inline">{video.is_showcase ? 'Showcase' : t('videoGen.share', 'Paylaş')}</span>
                           </button>
 
                           {/* Download */}
@@ -1742,11 +1743,11 @@ const VideoPage = () => {
                           <button
                             onClick={() => {
                               navigator.clipboard.writeText(video.url || video.file_url);
-                              alert('Link kopyalandı!');
+                              alert(t('videoGen.linkCopied', 'Link kopyalandı!'));
                             }}
                             className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm border-t border-gray-100 dark:border-gray-700"
                           >
-                            <Link2 className="w-4 h-4" /> Linki Kopyala
+                            <Link2 className="w-4 h-4" /> {t('videoGen.copyLink', 'Linki Kopyala')}
                           </button>
                         </div>
                       )}

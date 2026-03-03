@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useMutation } from '@tanstack/react-query';
 import { apiService } from '@/services/api';
 import { Wand2, Sparkles, Copy, Check, X, Loader2, Palette, ChevronRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface EnhancedPrompt {
     prompt: string;
@@ -23,6 +24,7 @@ export const PromptEnhancer = ({
     currentPrompt = '',
     className = ''
 }: PromptEnhancerProps) => {
+    const { t } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
     const [input, setInput] = useState(currentPrompt);
     const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
@@ -78,7 +80,7 @@ export const PromptEnhancer = ({
                     hover:from-purple-500 hover:to-pink-500
                     border-2 border-white/20
                     text-white animate-pulse hover:animate-none`}
-                title="🪄 AI Prompt Geliştirici"
+                title={t('promptEnhancer.btnTitle', '🪄 AI Prompt Geliştirici')}
             >
                 <Wand2 className="w-5 h-5" />
             </button>
@@ -94,8 +96,8 @@ export const PromptEnhancer = ({
                                     <Sparkles className="w-5 h-5 text-white" />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-semibold text-white">AI Prompt Asistanı</h3>
-                                    <p className="text-sm text-gray-400">Basit fikrinizi profesyonel prompt'a dönüştürün</p>
+                                    <h3 className="text-lg font-semibold text-white">{t('promptEnhancer.modalTitle', 'AI Prompt Asistanı')}</h3>
+                                    <p className="text-sm text-gray-400">{t('promptEnhancer.modalDesc', "Basit fikrinizi profesyonel prompt'a dönüştürün")}</p>
                                 </div>
                             </div>
                             <button
@@ -111,7 +113,7 @@ export const PromptEnhancer = ({
                             {/* Input */}
                             <div className="mb-6">
                                 <label className="text-sm font-medium text-gray-300 mb-2 block">
-                                    Fikrinizi yazın
+                                    {t('promptEnhancer.inputLabel', 'Fikrinizi yazın')}
                                 </label>
                                 <div className="flex gap-2">
                                     <input
@@ -119,7 +121,7 @@ export const PromptEnhancer = ({
                                         value={input}
                                         onChange={(e) => setInput(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleEnhance()}
-                                        placeholder="Örn: Güneş batan bir sahil, palmiye ağaçları..."
+                                        placeholder={t('promptEnhancer.inputPlaceholder', "Örn: Güneş batan bir sahil, palmiye ağaçları...")}
                                         className="flex-1 px-4 py-3 bg-gray-800 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                     />
                                     <button
@@ -132,7 +134,7 @@ export const PromptEnhancer = ({
                                         ) : (
                                             <Wand2 className="w-4 h-4" />
                                         )}
-                                        Geliştir
+                                        {t('promptEnhancer.enhanceBtn', 'Geliştir')}
                                     </button>
                                 </div>
                             </div>
@@ -141,7 +143,7 @@ export const PromptEnhancer = ({
                             {enhanceMutation.isPending && (
                                 <div className="text-center py-8">
                                     <Loader2 className="w-8 h-8 animate-spin text-purple-500 mx-auto mb-3" />
-                                    <p className="text-gray-400">Prompt'lar oluşturuluyor...</p>
+                                    <p className="text-gray-400">{t('promptEnhancer.generating', "Prompt'lar oluşturuluyor...")}</p>
                                 </div>
                             )}
 
@@ -149,7 +151,7 @@ export const PromptEnhancer = ({
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-2 mb-4">
                                         <Palette className="w-4 h-4 text-purple-400" />
-                                        <span className="text-sm font-medium text-gray-300">Önerilen Promptlar</span>
+                                        <span className="text-sm font-medium text-gray-300">{t('promptEnhancer.suggestedPrompts', 'Önerilen Promptlar')}</span>
                                     </div>
 
                                     {enhancedPrompts.map((item, index) => (
@@ -169,7 +171,7 @@ export const PromptEnhancer = ({
                                                             handleCopy(item.prompt, index);
                                                         }}
                                                         className="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-gray-700"
-                                                        title="Kopyala"
+                                                        title={t('promptEnhancer.copyTitle', 'Kopyala')}
                                                     >
                                                         {copiedIndex === index ? (
                                                             <Check className="w-4 h-4 text-green-400" />
@@ -190,12 +192,12 @@ export const PromptEnhancer = ({
                             {/* Tips */}
                             {enhancedPrompts.length === 0 && !enhanceMutation.isPending && (
                                 <div className="bg-gray-800/30 border border-gray-700 rounded-xl p-4">
-                                    <h4 className="text-sm font-medium text-gray-300 mb-2">💡 İpuçları</h4>
+                                    <h4 className="text-sm font-medium text-gray-300 mb-2">{t('promptEnhancer.tipsTitle', '💡 İpuçları')}</h4>
                                     <ul className="text-sm text-gray-400 space-y-1">
-                                        <li>• Basit ve kısa fikirler yazın (örn: "kedi", "uzay gemisi")</li>
-                                        <li>• AI otomatik olarak detaylı prompt'lar üretecek</li>
-                                        <li>• Farklı stillerde öneriler alacaksınız</li>
-                                        <li>• Beğendiğiniz prompt'a tıklayarak kullanın</li>
+                                        <li>{t('promptEnhancer.tip1', '• Basit ve kısa fikirler yazın (örn: "kedi", "uzay gemisi")')}</li>
+                                        <li>{t('promptEnhancer.tip2', "• AI otomatik olarak detaylı prompt'lar üretecek")}</li>
+                                        <li>{t('promptEnhancer.tip3', '• Farklı stillerde öneriler alacaksınız')}</li>
+                                        <li>{t('promptEnhancer.tip4', "• Beğendiğiniz prompt'a tıklayarak kullanın")}</li>
                                     </ul>
                                 </div>
                             )}

@@ -7,6 +7,7 @@ import {
   Waves, Package, FolderOpen, Star, Sparkles, X
 } from "lucide-react";
 import PromptEnhancer from "@/components/PromptEnhancer";
+import { useTranslation } from "react-i18next";
 
 // Voice Characters
 const voiceCharacters = [
@@ -36,7 +37,9 @@ const audioPakages = [
 ];
 
 const AudioPage = () => {
-  const [activeTab, setActiveTab] = useState("tts");
+  const { t } = useTranslation();
+  const [activeTab, setActiveTab] = useState("text-to-video");
+
   const [text, setText] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
   const [selectedVoice, setSelectedVoice] = useState("");
@@ -126,11 +129,11 @@ const AudioPage = () => {
   const myVoices = (clonedVoices as any)?.voices || [];
 
   const tabs = [
-    { id: "tts", name: "Metin → Ses", icon: Volume2 },
-    { id: "music", name: "Müzik Üretimi", icon: Music },
-    { id: "voice", name: "Ses Klonlama", icon: Mic },
-    { id: "packages", name: "Paketler", icon: Package },
-    { id: "library", name: "Seslerim", icon: FolderOpen },
+    { id: "tts", name: t('audioGen.tabTTS', 'Metin → Ses'), icon: Volume2 },
+    { id: "music", name: t('audioGen.tabMusic', 'Müzik Üretimi'), icon: Music },
+    { id: "voice", name: t('audioGen.tabVoice', 'Ses Klonlama'), icon: Mic },
+    { id: "packages", name: t('audioGen.tabPackages', 'Paketler'), icon: Package },
+    { id: "library", name: t('audioGen.tabLibrary', 'Seslerim'), icon: FolderOpen },
   ];
 
   return (
@@ -142,12 +145,12 @@ const AudioPage = () => {
           <div className="max-w-4xl mx-auto text-center text-white">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm mb-3">
               <Headphones className="w-4 h-4" />
-              <span className="text-sm font-medium">AI Ses Stüdyosu</span>
+              <span className="text-sm font-medium">{t('audioGen.badge', 'AI Ses Stüdyosu')}</span>
             </div>
             <h1 className="text-3xl lg:text-4xl font-bold mb-2">
-              Ses <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-white">Sihirbazı</span>
+              {t('audioGen.title', 'Ses ')}<span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-white">{t('audioGen.titleHighlight', 'Sihirbazı')}</span>
             </h1>
-            <p className="text-pink-100">Metinden sese, müzik üretiminden ses klonlamaya - profesyonel sesler oluşturun</p>
+            <p className="text-pink-100">{t('audioGen.desc', 'Metinden sese, müzik üretiminden ses klonlamaya - profesyonel sesler oluşturun')}</p>
           </div>
         </div>
         <div className="absolute bottom-0 left-0 right-0">
@@ -194,13 +197,13 @@ const AudioPage = () => {
                 <div className="p-6">
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                     <Wand2 className="w-5 h-5 text-pink-500" />
-                    Metni Sese Dönüştür
+                    {t('audioGen.ttsTitle', 'Metni Sese Dönüştür')}
                   </h2>
                   <div className="relative">
                     <textarea
                       value={text}
                       onChange={(e) => setText(e.target.value)}
-                      placeholder="Sese dönüştürmek istediğiniz metni yazın..."
+                      placeholder={t('audioGen.ttsPlaceholder', "Sese dönüştürmek istediğiniz metni yazın...")}
                       rows={4}
                       disabled={isGeneratingTTS}
                       className="w-full px-4 py-3 pr-14 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl resize-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all text-gray-900 dark:text-white placeholder-gray-400"
@@ -215,7 +218,7 @@ const AudioPage = () => {
                 <div className="px-6 pb-6">
                   <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
                     <Mic className="w-4 h-4" />
-                    Ses Karakteri
+                    {t('audioGen.voiceCharacter', 'Ses Karakteri')}
                   </h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {voiceCharacters.map((voice) => (
@@ -245,7 +248,7 @@ const AudioPage = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                        Hız: {speed}x
+                        {t('audioGen.speed', 'Hız')}: {speed}x
                       </label>
                       <input
                         type="range"
@@ -258,14 +261,14 @@ const AudioPage = () => {
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Model</label>
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">{t('audioGen.model', 'Model')}</label>
                       <select
                         value={selectedModel}
                         onChange={(e) => setSelectedModel(e.target.value)}
                         disabled={isLoadingTTS}
                         className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-pink-500"
                       >
-                        <option value="">Model seçin</option>
+                        <option value="">{t('audioGen.selectModel', 'Model seçin')}</option>
                         {Array.isArray(models) && models.map((model: any) => (
                           <option key={model.id} value={model.id}>{model.name} - {model.credits}c</option>
                         ))}
@@ -281,7 +284,7 @@ const AudioPage = () => {
                     disabled={isGeneratingTTS || !text || !selectedModel}
                     className="w-full py-4 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold rounded-xl shadow-lg shadow-pink-500/25 disabled:shadow-none transition-all flex items-center justify-center gap-2"
                   >
-                    {isGeneratingTTS ? <><Loader2 className="w-5 h-5 animate-spin" />Oluşturuluyor...</> : <><Play className="w-5 h-5" />Ses Oluştur</>}
+                    {isGeneratingTTS ? <><Loader2 className="w-5 h-5 animate-spin" />{t('audioGen.generating', 'Oluşturuluyor...')}</> : <><Play className="w-5 h-5" />{t('audioGen.generateBtn', 'Ses Oluştur')}</>}
                   </button>
                 </div>
               </div>
@@ -291,7 +294,7 @@ const AudioPage = () => {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                 <Star className="w-5 h-5 text-yellow-500" />
-                Popüler Modeller
+                {t('audioGen.popModelsTitle', 'Popüler Modeller')}
               </h3>
               <div className="space-y-3">
                 {isLoadingTTS ? (
@@ -325,12 +328,12 @@ const AudioPage = () => {
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-6">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
                 <Music className="w-6 h-6 text-pink-500" />
-                AI Müzik Üretimi
+                {t('audioGen.musicTitle', 'AI Müzik Üretimi')}
               </h2>
 
               {/* Genre Selection */}
               <div className="mb-6">
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Tarz Seçin</h3>
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{t('audioGen.musicSelectGenre', 'Tarz Seçin')}</h3>
                 <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
                   {musicGenres.map((genre) => (
                     <button
@@ -342,7 +345,7 @@ const AudioPage = () => {
                         }`}
                     >
                       <span className="text-3xl block mb-2">{genre.icon}</span>
-                      <span className="text-xs font-medium">{genre.name}</span>
+                      <span className="text-xs font-medium">{(t(`audioGen.musicGenres.${genre.id}`, genre.name))}</span>
                     </button>
                   ))}
                 </div>
@@ -350,32 +353,35 @@ const AudioPage = () => {
 
               {/* Mood Selection */}
               <div className="mb-6">
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Mood</h3>
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{t('audioGen.musicMood', 'Mood')}</h3>
                 <div className="flex flex-wrap gap-2">
-                  {['Mutlu', 'Hüzünlü', 'Epik', 'Sakin', 'Enerjik', 'Romantik'].map((m) => (
-                    <button
-                      key={m}
-                      onClick={() => setMood(m.toLowerCase())}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${mood === m.toLowerCase()
-                        ? 'bg-pink-500 text-white'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'
-                        }`}
-                    >
-                      {m}
-                    </button>
-                  ))}
+                  {['Mutlu', 'Hüzünlü', 'Epik', 'Sakin', 'Enerjik', 'Romantik'].map((m) => {
+                    const moodId = { 'Mutlu': 'happy', 'Hüzünlü': 'sad', 'Epik': 'epic', 'Sakin': 'calm', 'Enerjik': 'energetic', 'Romantik': 'romantic' }[m];
+                    return (
+                      <button
+                        key={m}
+                        onClick={() => setMood(m.toLowerCase())}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${mood === m.toLowerCase()
+                          ? 'bg-pink-500 text-white'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'
+                          }`}
+                      >
+                        {t(`audioGen.musicMoods.${moodId}`, m)}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               <textarea
-                placeholder="Müziğinizi tanımlayın... (Örn: Sabah koşusu için enerjik, motive edici elektronik müzik)"
+                placeholder={t('audioGen.musicPlaceholder', "Müziğinizi tanımlayın... (Örn: Sabah koşusu için enerjik, motive edici elektronik müzik)")}
                 rows={3}
                 className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl resize-none focus:ring-2 focus:ring-pink-500 mb-4"
               />
 
               <button className="w-full py-4 bg-gradient-to-r from-rose-500 to-pink-500 text-white font-semibold rounded-xl shadow-lg flex items-center justify-center gap-2">
                 <Music className="w-5 h-5" />
-                Müzik Oluştur
+                {t('audioGen.musicGenerateBtn', 'Müzik Oluştur')}
               </button>
             </div>
           </div>
@@ -388,19 +394,19 @@ const AudioPage = () => {
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-8">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
                 <Mic className="w-6 h-6 text-pink-500" />
-                Ses Klonlama
+                {t('audioGen.cloneTitle', 'Ses Klonlama')}
               </h2>
 
               {/* Voice Name Input */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Ses Adı
+                  {t('audioGen.cloneVoiceNameLabel', 'Ses Adı')}
                 </label>
                 <input
                   type="text"
                   value={voiceName}
                   onChange={(e) => setVoiceName(e.target.value)}
-                  placeholder="Örn: Benim Sesim"
+                  placeholder={t('audioGen.cloneVoiceNamePlaceholder', "Örn: Benim Sesim")}
                   className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-pink-500"
                 />
               </div>
@@ -408,7 +414,7 @@ const AudioPage = () => {
               {/* File Upload */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Ses Dosyası
+                  {t('audioGen.cloneAudioFileLabel', 'Ses Dosyası')}
                 </label>
                 <div
                   className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${audioFile
@@ -428,13 +434,13 @@ const AudioPage = () => {
                     <>
                       <Music className="w-12 h-12 text-pink-500 mx-auto mb-3" />
                       <p className="text-pink-600 dark:text-pink-400 font-medium">{audioFile.name}</p>
-                      <p className="text-xs text-gray-500 mt-1">Değiştirmek için tıklayın</p>
+                      <p className="text-xs text-gray-500 mt-1">{t('audioGen.cloneUploadChange', 'Değiştirmek için tıklayın')}</p>
                     </>
                   ) : (
                     <>
                       <Mic className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                      <p className="text-gray-600 dark:text-gray-400 mb-2">Ses örneği yükleyin</p>
-                      <p className="text-xs text-gray-500">MP3, WAV • Min. 30 saniye</p>
+                      <p className="text-gray-600 dark:text-gray-400 mb-2">{t('audioGen.cloneUploadClick', 'Ses örneği yükleyin')}</p>
+                      <p className="text-xs text-gray-500">{t('audioGen.cloneUploadReqs', 'MP3, WAV • Min. 30 saniye')}</p>
                     </>
                   )}
                 </div>
@@ -454,11 +460,11 @@ const AudioPage = () => {
 
               {/* Tips */}
               <div className="bg-pink-50 dark:bg-pink-900/20 p-4 rounded-xl mb-6">
-                <h4 className="font-medium text-pink-900 dark:text-pink-300 mb-2">💡 İpuçları:</h4>
+                <h4 className="font-medium text-pink-900 dark:text-pink-300 mb-2">{t('audioGen.cloneTipsTitle', '💡 İpuçları:')}</h4>
                 <ul className="text-sm text-pink-800 dark:text-pink-200 space-y-1">
-                  <li>• Temiz, yüksek kaliteli ses kullanın</li>
-                  <li>• Arka plan gürültüsünden kaçının</li>
-                  <li>• Min. 30 saniye, ideal 1-2 dakika</li>
+                  <li>{t('audioGen.cloneTip1', '• Temiz, yüksek kaliteli ses kullanın')}</li>
+                  <li>{t('audioGen.cloneTip2', '• Arka plan gürültüsünden kaçının')}</li>
+                  <li>{t('audioGen.cloneTip3', '• Min. 30 saniye, ideal 1-2 dakika')}</li>
                 </ul>
               </div>
 
@@ -471,12 +477,12 @@ const AudioPage = () => {
                 {isCloning ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    Klonlanıyor...
+                    {t('audioGen.cloning', 'Klonlanıyor...')}
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-5 h-5" />
-                    Ses Klonla (100 💎)
+                    {t('audioGen.cloneBtn', 'Ses Klonla')} (100 💎)
                   </>
                 )}
               </button>
@@ -486,7 +492,7 @@ const AudioPage = () => {
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-6">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <Volume2 className="w-5 h-5 text-pink-500" />
-                Klonlanmış Seslerim
+                {t('audioGen.clonedVoicesTitle', 'Klonlanmış Seslerim')}
               </h3>
 
               {isLoadingVoices ? (
@@ -494,7 +500,7 @@ const AudioPage = () => {
                   <Loader2 className="w-6 h-6 animate-spin text-pink-500" />
                 </div>
               ) : myVoices.length === 0 ? (
-                <p className="text-center text-gray-500 py-8">Henüz klonlanmış sesiniz yok</p>
+                <p className="text-center text-gray-500 py-8">{t('audioGen.noClonedVoices', 'Henüz klonlanmış sesiniz yok')}</p>
               ) : (
                 <div className="space-y-3">
                   {myVoices.map((voice: any) => (
@@ -506,9 +512,9 @@ const AudioPage = () => {
                         <div>
                           <p className="font-medium text-gray-900 dark:text-white">{voice.name}</p>
                           <p className="text-xs text-gray-500">
-                            {voice.status === 'ready' ? '✅ Hazır' :
-                              voice.status === 'processing' ? '⏳ İşleniyor' :
-                                voice.status === 'failed' ? '❌ Başarısız' : voice.status}
+                            {voice.status === 'ready' ? t('audioGen.statusReady', '✅ Hazır') :
+                              voice.status === 'processing' ? t('audioGen.statusProcessing', '⏳ İşleniyor') :
+                                voice.status === 'failed' ? t('audioGen.statusFailed', '❌ Başarısız') : voice.status}
                           </p>
                         </div>
                       </div>
@@ -532,10 +538,10 @@ const AudioPage = () => {
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                 <Package className="w-6 h-6 text-pink-500" />
-                Ses Paketleri
+                {t('audioGen.packagesTitle', 'Ses Paketleri')}
               </h2>
               <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-sm font-medium rounded-full">
-                %30'a varan indirim
+                {t('audioGen.discountBadge', "%30'a varan indirim")}
               </span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -552,7 +558,7 @@ const AudioPage = () => {
                     <span className="text-2xl font-bold">{pkg.price}c</span>
                   </div>
                   <button className="w-full py-3 bg-white text-pink-600 hover:bg-pink-50 rounded-xl font-semibold transition-all flex items-center justify-center gap-2">
-                    Paketi Al <ArrowRight className="w-4 h-4" />
+                    {t('audioGen.buyPackageBtn', 'Paketi Al')} <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
               ))}
@@ -563,15 +569,15 @@ const AudioPage = () => {
         {/* Library Tab */}
         {activeTab === "library" && (
           <div className="space-y-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Seslerim</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('audioGen.libraryTitle', 'Seslerim')}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {isLoadingAudio ? (
                 [1, 2, 3].map(i => <div key={i} className="h-40 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />)
               ) : myAudio.length === 0 ? (
                 <div className="col-span-full text-center py-12">
                   <Volume2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500 font-medium">Henüz ses yok</p>
-                  <p className="text-sm text-gray-400">İlk sesinizi oluşturun!</p>
+                  <p className="text-gray-500 font-medium">{t('audioGen.noAudio', 'Henüz ses yok')}</p>
+                  <p className="text-sm text-gray-400">{t('audioGen.createFirstAudio', 'İlk sesinizi oluşturun!')}</p>
                 </div>
               ) : (
                 myAudio.map((audio: any) => (
@@ -584,7 +590,7 @@ const AudioPage = () => {
                       <div className="flex items-center justify-between">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${audio.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
                           }`}>
-                          {audio.status === 'completed' ? 'Hazır' : 'İşleniyor'}
+                          {audio.status === 'completed' ? t('audioGen.statusReady2', 'Hazır') : t('audioGen.statusProcessing2', 'İşleniyor')}
                         </span>
                         {audio.status === 'completed' && audio.file_url && (
                           <button className="p-2 text-pink-500 hover:bg-pink-50 rounded-lg">
