@@ -18,6 +18,7 @@ class EnhanceRequest(BaseModel):
     input: str
     content_type: str = "image"  # image, video, audio, avatar
     style: Optional[str] = None
+    language: str = "en"
 
 
 class StyleResponse(BaseModel):
@@ -43,7 +44,8 @@ async def enhance_prompt(
         result = await prompt_enhancer.enhance_prompt(
             user_input=request.input.strip(),
             content_type=request.content_type,
-            style=request.style
+            style=request.style,
+            language=request.language
         )
         
         return result

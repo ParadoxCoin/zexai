@@ -58,8 +58,8 @@ Generate 3 different enhanced prompts in different styles. Each should be:
 
 Return ONLY a JSON array with 3 objects, each having:
 - "prompt": the enhanced prompt
-- "style": style name (e.g., "Realistic", "Artistic", "Cinematic")
-- "description": brief Turkish description of the style
+- "style": style name translated to {language} language (e.g., "Realista", "Artístico" if Spanish)
+- "description": brief description of the style translated to {language} language
 
 Example response:
 [
@@ -84,7 +84,8 @@ Example response:
         self, 
         user_input: str, 
         content_type: str = "image",
-        style: Optional[str] = None
+        style: Optional[str] = None,
+        language: str = "en"
     ) -> Dict[str, Any]:
         """
         Enhance a simple prompt into detailed AI-ready prompts
@@ -110,13 +111,13 @@ Example response:
             # Use AI for creative enhancement - Groq first (free!)
             if self.groq_key:
                 logger.info("Using Groq for enhancement")
-                return await self._enhance_with_groq(user_input, content_type)
+                return await self._enhance_with_groq(user_input, content_type, language)
             elif self.openai_key:
                 logger.info("Using OpenAI for enhancement")
-                return await self._enhance_with_openai(user_input, content_type)
+                return await self._enhance_with_openai(user_input, content_type, language)
             elif self.anthropic_key:
                 logger.info("Using Anthropic for enhancement")
-                return await self._enhance_with_anthropic(user_input, content_type)
+                return await self._enhance_with_anthropic(user_input, content_type, language)
             else:
                 logger.warning("No API keys found, using template")
                 # Fallback to template-based enhancement
@@ -167,7 +168,7 @@ Example response:
             "available_styles": styles
         }
     
-    async def _enhance_with_groq(self, user_input: str, content_type: str) -> Dict[str, Any]:
+    async def _enhance_with_groq(self, user_input: str, content_type: str, language: str) -> Dict[str, Any]:
         """Enhance using Groq with Llama 3.3 70B (FREE!)"""
         import json
         
@@ -189,7 +190,8 @@ Example response:
                             "role": "user", 
                             "content": self.ENHANCEMENT_PROMPT.format(
                                 content_type=content_type,
-                                user_input=user_input
+                                user_input=user_input,
+                                language=language
                             )
                         }
                     ],
@@ -230,7 +232,7 @@ Example response:
                 logger.warning(f"Failed to parse Groq response: {e}")
                 return self._template_enhance(user_input, content_type)
     
-    async def _enhance_with_openai(self, user_input: str, content_type: str) -> Dict[str, Any]:
+    async def _enhance_with_openai(self, user_input: str, content_type: str, language: str) -> Dict[str, Any]:
         """Enhance using OpenAI GPT"""
         import json
         
@@ -252,7 +254,8 @@ Example response:
                             "role": "user", 
                             "content": self.ENHANCEMENT_PROMPT.format(
                                 content_type=content_type,
-                                user_input=user_input
+                                user_input=user_input,
+                                language=language
                             )
                         }
                     ],
@@ -291,7 +294,7 @@ Example response:
                 logger.warning("Failed to parse AI response, using template")
                 return self._template_enhance(user_input, content_type)
     
-    async def _enhance_with_anthropic(self, user_input: str, content_type: str) -> Dict[str, Any]:
+    async def _enhance_with_anthropic(self, user_input: str, content_type: str, language: str) -> Dict[str, Any]:
         """Enhance using Anthropic Claude"""
         import json
         
@@ -311,7 +314,8 @@ Example response:
                             "role": "user",
                             "content": self.ENHANCEMENT_PROMPT.format(
                                 content_type=content_type,
-                                user_input=user_input
+                                user_input=user_input,
+                                language=language
                             )
                         }
                     ]

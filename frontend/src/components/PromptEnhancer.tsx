@@ -24,7 +24,7 @@ export const PromptEnhancer = ({
     currentPrompt = '',
     className = ''
 }: PromptEnhancerProps) => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
     const [input, setInput] = useState(currentPrompt);
     const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
@@ -38,7 +38,7 @@ export const PromptEnhancer = ({
 
     // Enhance mutation
     const enhanceMutation = useMutation({
-        mutationFn: (data: { input: string; content_type: string }) =>
+        mutationFn: (data: { input: string; content_type: string; language?: string }) =>
             apiService.post('/prompt/enhance', data),
         onSuccess: () => {
             // Prompts are shown from mutation.data
@@ -49,7 +49,8 @@ export const PromptEnhancer = ({
         if (!input.trim() || input.length < 3) return;
         enhanceMutation.mutate({
             input: input.trim(),
-            content_type: contentType
+            content_type: contentType,
+            language: i18n.language || 'en'
         });
     };
 
