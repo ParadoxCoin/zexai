@@ -11,6 +11,16 @@ from core.logger import logger
 class PromptEnhancerService:
     """AI-powered prompt enhancement service"""
     
+    LANGUAGE_MAP = {
+        "tr": "Turkish",
+        "en": "English",
+        "fr": "French",
+        "de": "German",
+        "es": "Spanish",
+        "zh": "Chinese",
+        "su": "Sumerian"
+    }
+
     # Style presets for different content types
     STYLES = {
         "image": [
@@ -108,16 +118,19 @@ Example response:
             if style:
                 return self._quick_enhance(user_input, content_type, style)
             
+            # Resolve language code to full language name
+            full_language = self.LANGUAGE_MAP.get(language, "English")
+            
             # Use AI for creative enhancement - Groq first (free!)
             if self.groq_key:
                 logger.info("Using Groq for enhancement")
-                return await self._enhance_with_groq(user_input, content_type, language)
+                return await self._enhance_with_groq(user_input, content_type, full_language)
             elif self.openai_key:
                 logger.info("Using OpenAI for enhancement")
-                return await self._enhance_with_openai(user_input, content_type, language)
+                return await self._enhance_with_openai(user_input, content_type, full_language)
             elif self.anthropic_key:
                 logger.info("Using Anthropic for enhancement")
-                return await self._enhance_with_anthropic(user_input, content_type, language)
+                return await self._enhance_with_anthropic(user_input, content_type, full_language)
             else:
                 logger.warning("No API keys found, using template")
                 # Fallback to template-based enhancement
