@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     JWT_EXPIRATION_DAYS: int = 30
     
     # CORS - Security: Specific origins only
-    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:3001,https://app.zexai.io,https://zexai.io,https://yourdomain.com"
+    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:3001,https://app.zexai.io,https://zexai.io,https://zexai.vercel.app,https://yourdomain.com"
     
     @property
     def cors_origins_list(self) -> List[str]:
