@@ -4,11 +4,11 @@ import { Globe } from 'lucide-react';
 
 const languages = [
     { code: 'en', name: 'English' },
-    { code: 'tr', name: 'Türkçe' },
     { code: 'fr', name: 'Français' },
     { code: 'de', name: 'Deutsch' },
     { code: 'es', name: 'Español' },
     { code: 'zh', name: '中文' },
+    { code: 'tr', name: 'Türkçe' },
     { code: 'su', name: '𒅴𒂠 (Sumerian)' },
 ];
 
@@ -53,8 +53,8 @@ const LanguageSwitcher: React.FC = () => {
                                 key={lang.code}
                                 onClick={() => changeLanguage(lang.code)}
                                 className={`block w-full text-left px-4 py-2 text-sm transition-colors ${i18n.language === lang.code
-                                        ? 'bg-primary/20 text-primary font-medium'
-                                        : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                                    ? 'bg-primary/20 text-primary font-medium'
+                                    : 'text-gray-300 hover:bg-white/5 hover:text-white'
                                     }`}
                             >
                                 {lang.name}

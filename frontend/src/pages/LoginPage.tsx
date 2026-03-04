@@ -6,10 +6,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/lib/supabase';
 import { Eye, EyeOff, ArrowRight, Sparkles, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const loginSchema = z.object({
-  email: z.string().email('Geçerli bir e-posta adresi girin'),
-  password: z.string().min(1, 'Şifre gerekli'),
+  email: z.string().email('Enter a valid email address'),
+  password: z.string().min(1, 'Password is required'),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
@@ -58,6 +59,7 @@ const socialProviders = [
 ];
 
 export const LoginPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { login, isLoading } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
@@ -78,7 +80,7 @@ export const LoginPage: React.FC = () => {
       await login(data);
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Giriş başarısız');
+      setError(err.message || t('login.loginFailed'));
     }
   };
 
@@ -94,7 +96,7 @@ export const LoginPage: React.FC = () => {
       });
       if (error) throw error;
     } catch (err: any) {
-      setError(err.message || `${provider} girişi başarısız`);
+      setError(err.message || t('login.socialLoginFailed', { provider }));
       setSocialLoading(null);
     }
   };
@@ -142,12 +144,12 @@ export const LoginPage: React.FC = () => {
             </span>
           </h1>
           <p className="text-xl text-gray-400 mb-6 leading-relaxed">
-            Yapay zeka ile içerik üretiminin geleceği
+            {t('login.tagline')}
           </p>
 
           {/* Feature pills */}
           <div className="flex flex-wrap gap-3 justify-center">
-            {['🎨 Görsel Üretimi', '🎬 Video Üretimi', '🎵 Müzik', '💬 AI Chat'].map((feature) => (
+            {[t('login.featureImage'), t('login.featureVideo'), t('login.featureMusic'), t('login.featureChat')].map((feature) => (
               <span
                 key={feature}
                 className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm text-gray-300 backdrop-blur-sm"
@@ -160,9 +162,9 @@ export const LoginPage: React.FC = () => {
           {/* Stats */}
           <div className="mt-12 grid grid-cols-3 gap-6">
             {[
-              { value: '40+', label: 'AI Model' },
-              { value: '10K+', label: 'Kullanıcı' },
-              { value: '1M+', label: 'Üretim' },
+              { value: '40+', label: t('login.statModels') },
+              { value: '10K+', label: t('login.statUsers') },
+              { value: '1M+', label: t('login.statGenerations') },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
                 <div className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
@@ -201,10 +203,10 @@ export const LoginPage: React.FC = () => {
             {/* Header */}
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-white mb-2">
-                Tekrar hoş geldiniz ✨
+                {t('login.welcomeBack')}
               </h2>
               <p className="text-gray-400 text-sm">
-                Hesabınıza giriş yaparak devam edin
+                {t('login.loginSubtitle')}
               </p>
             </div>
 
@@ -234,7 +236,7 @@ export const LoginPage: React.FC = () => {
                 ))}
               </div>
               <p className="text-center text-xs text-gray-500">
-                Sosyal hesapla hızlı giriş
+                {t('login.socialLoginHint')}
               </p>
             </div>
 
@@ -245,7 +247,7 @@ export const LoginPage: React.FC = () => {
               </div>
               <div className="relative flex justify-center text-xs">
                 <span className="px-4 text-gray-500" style={{ background: 'rgba(10,10,26,0.8)' }}>
-                  veya e-posta ile
+                  {t('login.orEmail')}
                 </span>
               </div>
             </div>
@@ -264,14 +266,14 @@ export const LoginPage: React.FC = () => {
               {/* Email */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-300">
-                  E-posta
+                  {t('login.emailLabel')}
                 </label>
                 <div className="relative group">
                   <input
                     {...register('email')}
                     type="email"
                     autoComplete="email"
-                    placeholder="ornek@email.com"
+                    placeholder={t('login.emailPlaceholder')}
                     className="w-full px-4 py-3.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 
                       focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 
                       transition-all duration-200 text-sm"
@@ -287,13 +289,13 @@ export const LoginPage: React.FC = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="block text-sm font-medium text-gray-300">
-                    Şifre
+                    {t('login.passwordLabel')}
                   </label>
                   <Link
                     to="/forgot-password"
                     className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
                   >
-                    Şifremi unuttum
+                    {t('login.forgotPassword')}
                   </Link>
                 </div>
                 <div className="relative group">
@@ -339,7 +341,7 @@ export const LoginPage: React.FC = () => {
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
                     <>
-                      Giriş Yap
+                      {t('login.loginButton')}
                       <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </>
                   )}
@@ -349,23 +351,22 @@ export const LoginPage: React.FC = () => {
 
             {/* Register Link */}
             <p className="mt-8 text-center text-sm text-gray-400">
-              Hesabınız yok mu?{' '}
+              {t('login.noAccount')}{' '}
               <Link
                 to="/register"
                 className="font-medium text-purple-400 hover:text-purple-300 transition-colors hover:underline"
               >
-                Ücretsiz kaydolun
+                {t('login.registerFree')}
               </Link>
             </p>
           </div>
 
           {/* Footer */}
           <p className="mt-6 text-center text-xs text-gray-600">
-            Giriş yaparak{' '}
-            <a href="#" className="text-gray-500 hover:text-gray-400">Kullanım Şartlarını</a>
-            {' '}ve{' '}
-            <a href="#" className="text-gray-500 hover:text-gray-400">Gizlilik Politikasını</a>
-            {' '}kabul etmiş olursunuz.
+            {t('login.termsFooter')}{' '}
+            <a href="#" className="text-gray-500 hover:text-gray-400">{t('login.termsLink')}</a>
+            {' '}{t('login.andText')}{' '}
+            <a href="#" className="text-gray-500 hover:text-gray-400">{t('login.privacyLink')}</a>
           </p>
         </div>
       </div>
