@@ -87,7 +87,20 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
             console.log("ZEX Balance updated:", roundedBalance);
         } catch (error) {
             console.error("Error fetching ZEX balance:", error);
-            setZexBalance("0");
+            // Retry once after 3 seconds (network may not be ready yet)
+            setTimeout(async () => {
+                try {
+                    const zexContract = new ethers.Contract(ZEX_TOKEN_ADDRESS, ERC20_ABI, _provider);
+                    const balance: bigint = await zexContract.balanceOf(address);
+                    const formattedBalance = ethers.formatUnits(balance, 18);
+                    const roundedBalance = parseFloat(formattedBalance).toFixed(2);
+                    setZexBalance(roundedBalance);
+                    console.log("ZEX Balance (retry) updated:", roundedBalance);
+                } catch (retryErr) {
+                    console.error("ZEX balance retry also failed:", retryErr);
+                    setZexBalance("0");
+                }
+            }, 3000);
         }
     };
 

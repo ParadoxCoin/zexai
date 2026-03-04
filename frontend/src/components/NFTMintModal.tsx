@@ -26,13 +26,9 @@ const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) =
             return;
         }
 
-        // Remove commas if any, and parse as Float to safely compare balances
-        const safeBalance = parseFloat(zexBalance.toString().replace(/,/g, ''));
-        if (safeBalance < mintPrice || isNaN(safeBalance)) {
-            setErrorMessage(`Yetersiz ZEX bakiyesi. Cüzdan: ${zexBalance} (Algılanan: ${safeBalance})`);
-            setMintStatus('error');
-            return;
-        }
+        // Note: We let the smart contract itself validate the ZEX balance to avoid race conditions
+        // where zexBalance may not have loaded yet from the blockchain.
+        // The contract will revert with an error if funds are insufficient.
 
         setIsMinting(true);
         setMintStatus('approving');
@@ -122,7 +118,7 @@ const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) =
 
                             <div className="flex flex-col gap-3 mt-6">
                                 <a
-                                    href={`https://testnets.opensea.io/${account}`}
+                                    href={`https://opensea.io/${account}`}
                                     target="_blank"
                                     rel="noreferrer"
                                     className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium transition flex items-center justify-center gap-2"
@@ -131,7 +127,7 @@ const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) =
                                     OpenSea'de Görüntüle
                                 </a>
                                 <a
-                                    href={`https://testnet.zora.co/${account}`}
+                                    href={`https://zora.co/${account}`}
                                     target="_blank"
                                     rel="noreferrer"
                                     className="w-full py-3 bg-black hover:bg-gray-800 text-white rounded-xl font-medium transition flex items-center justify-center gap-2 border border-gray-700"
