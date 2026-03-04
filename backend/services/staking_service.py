@@ -29,14 +29,14 @@ STAKING_ABI = [
     }
 ]
 
-ZEX_STAKING_ADDRESS = os.environ.get("ZEX_STAKING_ADDRESS", "0x588D627cC515c80f4Dd8D01319c0D486024C186D")
-AMOY_RPC_URL = os.environ.get("AMOY_RPC_URL", "https://rpc-amoy.polygon.technology/")
+ZEX_STAKING_ADDRESS = os.environ.get("ZEX_STAKING_ADDRESS", "0x6cBF98411AFd652E6AC01E18F6158B519Fb59410")
+POLYGON_RPC_URL = os.environ.get("POLYGON_RPC_URL", "https://polygon-mainnet.g.alchemy.com/v2/4OECI-BgprApuDWzNqcNL")
 
 # Connect to Polygon RPC
 try:
-    w3 = Web3(Web3.HTTPProvider(AMOY_RPC_URL))
+    w3 = Web3(Web3.HTTPProvider(POLYGON_RPC_URL))
     if not w3.is_connected():
-        logger.warning(f"Could not connect to {AMOY_RPC_URL}. Web3 integration might fail.")
+        logger.warning(f"Could not connect to {POLYGON_RPC_URL}. Web3 integration might fail.")
     staking_contract = w3.eth.contract(address=w3.to_checksum_address(ZEX_STAKING_ADDRESS), abi=STAKING_ABI)
 except Exception as e:
     logger.error(f"Failed to initialize Web3: {e}")
@@ -107,7 +107,7 @@ class StakingService:
             # Table might not exist yet, we will create it / handle gracefully.
             logger.warning(f"Error checking staking claims table, it might not exist: {e}")
 
-        # 3. Read Staked Balance directly from Polygon Amoy Blockchain
+        # 3. Read Staked Balance directly from Polygon Mainnet Blockchain
         staked_balance = StakingService.get_staked_balance(wallet_address)
         if staked_balance < 500:
             return {

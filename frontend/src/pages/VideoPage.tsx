@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import PromptEnhancer from "@/components/PromptEnhancer";
 import MotionBrushEditor from "@/components/video/MotionBrushEditor";
+import NFTMintModal from "@/components/NFTMintModal";
 import { useTranslation } from "react-i18next";
 
 // Provider styling
@@ -62,6 +63,10 @@ const VideoPage = () => {
     videoUrl?: string;
     prompt?: string;
   } | null>(null);
+
+  // NFT State
+  const [nftModalOpen, setNftModalOpen] = useState(false);
+  const [selectedVideoForNft, setSelectedVideoForNft] = useState<any>(null);
 
   // File states
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -1592,6 +1597,14 @@ const VideoPage = () => {
                       </div>
                     </div>
                     <div className="p-4">
+                      {video.is_nft_minted && (
+                        <div className="flex items-center gap-1.5 mb-2 px-2.5 py-1 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 border border-purple-500/20 rounded-md w-fit">
+                          <CheckCircle className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                          <span className="text-xs font-semibold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-400 dark:to-indigo-400">
+                            ZexAI Ecosystem NFT Olarak Basıldı
+                          </span>
+                        </div>
+                      )}
                       <p className="text-sm text-gray-900 dark:text-white line-clamp-2 mb-2">{video.prompt || 'Video'}</p>
                       <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
                         <span>{video.model_name || video.model}</span>
@@ -1600,7 +1613,22 @@ const VideoPage = () => {
 
                       {/* Action Buttons */}
                       {video.status === 'completed' && (video.url || video.file_url) && (
-                        <div className="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                        <div className="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-gray-700 flex-wrap">
+                          {/* NFT Mint Button */}
+                          {!video.is_nft_minted && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedVideoForNft(video);
+                                setNftModalOpen(true);
+                              }}
+                              className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow hover:from-purple-600 hover:to-indigo-600"
+                              title="NFT Olarak Bas"
+                            >
+                              💎 NFT Yap
+                            </button>
+                          )}
+
                           {/* Showcase Toggle */}
                           <button
                             onClick={async () => {
@@ -1792,6 +1820,16 @@ const VideoPage = () => {
           </div>
         )}
       </div>
+
+      {/* NFT Mint Modal */}
+      <NFTMintModal
+        isOpen={nftModalOpen}
+        onClose={() => {
+          setNftModalOpen(false);
+          setSelectedVideoForNft(null);
+        }}
+        image={selectedVideoForNft}
+      />
     </div>
   );
 };

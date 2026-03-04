@@ -7,6 +7,7 @@ import {
   Waves, Package, FolderOpen, Star, Sparkles, X
 } from "lucide-react";
 import PromptEnhancer from "@/components/PromptEnhancer";
+import NFTMintModal from "@/components/NFTMintModal";
 import { useTranslation } from "react-i18next";
 
 // Voice Characters
@@ -53,6 +54,10 @@ const AudioPage = () => {
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [cloneError, setCloneError] = useState("");
   const [cloneSuccess, setCloneSuccess] = useState("");
+
+  // NFT State
+  const [nftModalOpen, setNftModalOpen] = useState(false);
+  const [selectedAudioForNft, setSelectedAudioForNft] = useState<any>(null);
 
   const { data: ttsModels, isLoading: isLoadingTTS } = useQuery({
     queryKey: ["audioModels", "tts"],
@@ -593,9 +598,22 @@ const AudioPage = () => {
                           {audio.status === 'completed' ? t('audioGen.statusReady2', 'Hazır') : t('audioGen.statusProcessing2', 'İşleniyor')}
                         </span>
                         {audio.status === 'completed' && audio.file_url && (
-                          <button className="p-2 text-pink-500 hover:bg-pink-50 rounded-lg">
-                            <Download className="w-4 h-4" />
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedAudioForNft(audio);
+                                setNftModalOpen(true);
+                              }}
+                              className="px-2 py-1 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white rounded-lg text-xs font-medium shadow transition-all flex items-center gap-1"
+                              title="NFT Olarak Bas"
+                            >
+                              💎 NFT Yap
+                            </button>
+                            <button className="p-2 text-pink-500 hover:bg-pink-50 rounded-lg">
+                              <Download className="w-4 h-4" />
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -606,6 +624,16 @@ const AudioPage = () => {
           </div>
         )}
       </div>
+
+      {/* NFT Mint Modal */}
+      <NFTMintModal
+        isOpen={nftModalOpen}
+        onClose={() => {
+          setNftModalOpen(false);
+          setSelectedAudioForNft(null);
+        }}
+        image={selectedAudioForNft}
+      />
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Diamond, Loader2, Link as LinkIcon, CheckCircle } from 'lucide-react';
 import { useWeb3 } from '../contexts/Web3Context';
-
+import api from '../services/api';
 interface NFTMintModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -39,23 +39,43 @@ const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) =
         setErrorMessage('');
 
         try {
-            // In a real scenario, we'd first upload metadata to IPFS here
-            // const ipfsUri = await uploadMetadataToIPFS({ name: nftName, description: nftDescription, image: image.file_url });
-            const mockUri = `ipfs://mock-metadata-uri-${image.id}`;
+            // 1. Prepare Metadata via Backend (Upload to Pinata IPFS)
+            setMintStatus('approving');
 
+            const prepareRes = await api.post('/nft/prepare-metadata', {
+                asset_id: image.id,
+                asset_url: image.file_url || image.thumbnail_url,
+                prompt: nftDescription,
+                model: image.model_name || 'ZexAI Model'
+            });
+
+            if (!prepareRes.data?.success || !prepareRes.data?.metadata_uri) {
+                throw new Error("IPFS metadata yüklenemedi. Lütfen tekrar deneyin.");
+            }
+
+            const metadataUri = prepareRes.data.metadata_uri;
+
+            // 2. Mint via Web3 Smart Contract
             setMintStatus('minting');
-            const success = await mintNFT(mockUri, 1);
+            const txSuccess = await mintNFT(metadataUri, 1);
 
-            if (success) {
+            if (txSuccess) {
+                // 3. Confirm in Backend
+                await api.post('/nft/confirm-mint', {
+                    asset_id: image.id,
+                    tx_hash: "0xConfirmedByProvider", // This would ideally be returned by mintNFT
+                    token_id: null
+                });
+
                 setMintStatus('success');
             } else {
                 setMintStatus('error');
-                setErrorMessage("İşlem kullanıcı tarafından reddedildi veya başarısız oldu.");
+                setErrorMessage("Web3 işlemi kullanıcı tarafından reddedildi veya başarısız oldu.");
             }
         } catch (error: any) {
             console.error(error);
             setMintStatus('error');
-            setErrorMessage(error.message || "Bir hata oluştu.");
+            setErrorMessage(error.message || error.response?.data?.detail || "Bir hata oluştu.");
         } finally {
             setIsMinting(false);
         }

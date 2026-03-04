@@ -4,9 +4,10 @@ import { useAccount, useDisconnect } from 'wagmi';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 
 // Contract Addresses (Placeholder or actual ones needed)
-export const ZEX_TOKEN_ADDRESS = "0x65970F056193A468F9C0a90B2e1B205a1a92a885";
-export const ZEXAI_NFT_ADDRESS = "0x99d86D3615812243C3b52a181AD00702A37C1663";
-export const ZEX_STAKING_ADDRESS = "0x588D627cC515c80f4Dd8D01319c0D486024C186D";
+export const ZEX_TOKEN_ADDRESS = "0x63A489B9214b89606a12cAe3e7B9275c175f7268";
+export const ZEXAI_NFT_ADDRESS = "0x7562Da91986B72453DC5aE6cc89d524ba03e38dA";
+// Staking address remains the same for now until we deploy the new Staking Contract
+export const ZEX_STAKING_ADDRESS = "0x6cBF98411AFd652E6AC01E18F6158B519Fb59410";
 
 // Minimal ABI for ERC20 ZEX
 const ERC20_ABI = [

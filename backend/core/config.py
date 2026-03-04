@@ -62,6 +62,10 @@ class Settings(BaseSettings):
         emails = self.ADMIN_EMAILS.split(',')
         return [email.strip().lower() for email in emails if email.strip()]
     
+    # Web3 / IPFS (NFT Integration)
+    PINATA_API_KEY: str = ""
+    PINATA_SECRET_API_KEY: str = ""
+    
     # AI Provider API Keys
     FIREWORKS_API_KEY: str = ""
     FAL_API_KEY: str = ""

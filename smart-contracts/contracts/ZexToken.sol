@@ -12,10 +12,17 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  */
 contract ZexToken is ERC20, ERC20Burnable, Ownable {
     uint256 public constant MAX_SUPPLY = 100_000_000 * 10**18;
+    uint256 public constant MIN_SUPPLY = 50_000_000 * 10**18; // Cease deflationary burn below this
     
-    // V3 Transfer Tax: 0.5% (5 basis points out of 1000)
+    // V3 Base Transfer Tax: 0.5% (5 basis points out of 1000)
     uint256 public transferFeeBasisPoints = 5; 
     mapping(address => bool) public isExcludedFromFee;
+
+    // V3 Anti-Whale max tx amount (1% of MAX_SUPPLY)
+    uint256 public maxTxAmount = 1_000_000 * 10**18;
+
+    // V3 Staking Rewards / Auto-Liquidity Wallet
+    address public stakingRewardWallet;
 
     constructor(address initialOwner) ERC20("ZexToken", "ZEX") Ownable(initialOwner) {
         // Exclude owner/deployer from fee
@@ -34,23 +41,65 @@ contract ZexToken is ERC20, ERC20Burnable, Ownable {
         transferFeeBasisPoints = basisPoints;
     }
 
-    // Override the core openzeppelin v5 _update function to apply deflationary burn
+    function setMaxTxAmount(uint256 amount) external onlyOwner {
+        maxTxAmount = amount;
+    }
+
+    function setStakingRewardWallet(address wallet) external onlyOwner {
+        stakingRewardWallet = wallet;
+    }
+
+    // Dynamic fee calculation based on shrinking supply
+    function getCurrentFeeBasisPoints() public view returns (uint256) {
+        uint256 currentSupply = totalSupply();
+        if (currentSupply <= MIN_SUPPLY) {
+            return 0; // No deflationary fee once min supply is reached
+        } else if (currentSupply <= 60_000_000 * 10**18) {
+            return 1; // 0.1% (1 basis point)
+        } else if (currentSupply <= 75_000_000 * 10**18) {
+            return 3; // 0.3% (3 basis points)
+        } else {
+            return transferFeeBasisPoints; // Base fee (usually 5 = 0.5%)
+        }
+    }
+
+    // Override the core openzeppelin v5 _update function to apply dynamic deflationary & reward split fee
     function _update(address from, address to, uint256 value) internal virtual override {
         // If minting, burning, or either sender/receiver is whitelisted, do normal transfer
         if (from == address(0) || to == address(0) || isExcludedFromFee[from] || isExcludedFromFee[to]) {
             super._update(from, to, value);
         } else {
-            // Apply 0.5% Burn Penalty on all normal transfers
-            uint256 burnAmount = (value * transferFeeBasisPoints) / 1000;
-            uint256 sendAmount = value - burnAmount;
+            // Anti-Whale Check
+            require(value <= maxTxAmount, "Transfer amount exceeds max tx limit");
+
+            // Dynamic Fee Calculation
+            uint256 currentFeeBps = getCurrentFeeBasisPoints();
             
-            if (burnAmount > 0) {
-                // Burn the tokens from sender (updates total supply and emits transfer to 0x0)
+            if (currentFeeBps > 0) {
+                uint256 feeAmount = (value * currentFeeBps) / 1000;
+                uint256 sendAmount = value - feeAmount;
+                
+                // Split fee: Half to burn, half to staking rewards
+                uint256 burnAmount = feeAmount / 2;
+                uint256 rewardAmount = feeAmount - burnAmount;
+                
+                // Burn the tokens from sender
                 super._update(from, address(0), burnAmount);
+                
+                // Send to staking rewards wallet
+                if (stakingRewardWallet != address(0)) {
+                    super._update(from, stakingRewardWallet, rewardAmount);
+                } else {
+                    // If no reward wallet is set yet, we just burn the other half too to ensure no unbacked tokens
+                    super._update(from, address(0), rewardAmount);
+                }
+                
+                // Transfer the remaining amount to receiver
+                super._update(from, to, sendAmount);
+            } else {
+                // Transfer without fee if supply went under MIN_SUPPLY
+                super._update(from, to, value);
             }
-            
-            // Transfer the remaining amount to receiver
-            super._update(from, to, sendAmount);
         }
     }
 }

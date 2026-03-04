@@ -798,6 +798,14 @@ const ImageGenerationPage = () => {
                             (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNGM0Y0RjYiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI0QxRDVEQiIgZm9udC1zaXplPSIxNCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiPkfDtnJzZWw8L3RleHQ+PC9zdmc+';
                           }}
                         />
+                        {item.is_nft_minted && (
+                          <div className="absolute top-2 left-2 z-10 px-2 py-1 bg-black/60 backdrop-blur-md border border-purple-500/50 shadow-[0_0_10px_rgba(168,85,247,0.4)] rounded-md flex items-center gap-1">
+                            <CheckCircle className="w-3 h-3 text-purple-400" />
+                            <span className="text-[10px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-pink-300">
+                              NFT Minted
+                            </span>
+                          </div>
+                        )}
                       </div>
                       {/* Overlay */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
@@ -805,16 +813,18 @@ const ImageGenerationPage = () => {
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-white/70">{formatModelName(item.model_name || item.model_id || item.model)}</span>
                           <div className="flex gap-1">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedImageForNft(item);
-                                setNftModalOpen(true);
-                              }}
-                              className="px-2 py-1 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white rounded-lg text-xs font-medium shadow transition-all flex items-center gap-1"
-                            >
-                              💎 {t('imageGen.makeNft', 'NFT Yap')}
-                            </button>
+                            {!item.is_nft_minted && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedImageForNft(item);
+                                  setNftModalOpen(true);
+                                }}
+                                className="px-2 py-1 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white rounded-lg text-xs font-medium shadow transition-all flex items-center gap-1"
+                              >
+                                💎 {t('imageGen.makeNft', 'NFT Yap')}
+                              </button>
+                            )}
                             <button
                               onClick={async (e) => {
                                 e.stopPropagation();

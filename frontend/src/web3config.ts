@@ -2,7 +2,7 @@ import { createWeb3Modal } from '@web3modal/wagmi/react';
 import { defaultWagmiConfig } from '@web3modal/wagmi/react/config';
 
 import { cookieStorage, createStorage } from 'wagmi';
-import { mainnet, bsc, sepolia } from 'wagmi/chains';
+import { mainnet, polygon, bsc, sepolia } from 'wagmi/chains';
 
 // Get projectId from https://cloud.walletconnect.com
 export const projectId = '7618ae03fb9e1bd4fcdaeb7f1ca5c165';
@@ -14,7 +14,7 @@ const metadata = {
     icons: ['https://zexai.io/logo192.png']
 }
 
-const chains = [mainnet, bsc, sepolia] as const;
+const chains = [polygon, mainnet, bsc, sepolia] as const;
 export const config = defaultWagmiConfig({
     chains,
     projectId,

@@ -77,6 +77,7 @@ from routes.social import router as social_router
 from routes.voice_clone import router as voice_clone_router
 from routes.comparison import router as comparison_router
 from routes.staking import router as staking_router
+from routes.nft import router as nft_router
 from core.websocket import websocket_endpoint
 from core.websocket_enhanced import websocket_endpoint_enhanced
 from core.scheduler import get_scheduler
@@ -297,6 +298,7 @@ from routes.staking import router as staking_router
 app.include_router(packages_router, prefix=API_V1_PREFIX)  # Effect Packages
 app.include_router(comparison_router, prefix=API_V1_PREFIX)  # Model Comparison
 app.include_router(staking_router, prefix=API_V1_PREFIX)  # Web3 Staking Claims
+app.include_router(nft_router, prefix=API_V1_PREFIX)  # NFT Minting
 
 # WebSocket endpoints
 @app.websocket("/ws")
