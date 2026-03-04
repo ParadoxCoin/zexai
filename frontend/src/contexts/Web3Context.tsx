@@ -1,13 +1,16 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { ethers, BrowserProvider, Contract } from 'ethers';
+import { ethers, BrowserProvider, Contract, JsonRpcProvider } from 'ethers';
 import { useAccount, useDisconnect } from 'wagmi';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 
-// Contract Addresses (Placeholder or actual ones needed)
+// Contract Addresses (Polygon Mainnet - Deployed March 2026)
 export const ZEX_TOKEN_ADDRESS = "0x63A489B9214b89606a12cAe3e7B9275c175f7268";
 export const ZEXAI_NFT_ADDRESS = "0x7562Da91986B72453DC5aE6cc89d524ba03e38dA";
-// Staking address remains the same for now until we deploy the new Staking Contract
 export const ZEX_STAKING_ADDRESS = "0x6cBF98411AFd652E6AC01E18F6158B519Fb59410";
+
+// Polygon Mainnet read-only provider (Alchemy)
+const POLYGON_RPC = "https://polygon-mainnet.g.alchemy.com/v2/4OECI-BgprApuDWzNqcNL";
+const polygonProvider = new JsonRpcProvider(POLYGON_RPC);
 
 // Minimal ABI for ERC20 ZEX
 const ERC20_ABI = [
@@ -72,10 +75,12 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
         initProvider();
     }, [account]);
 
-    const updateBalance = async (address: string, _provider: BrowserProvider) => {
+    const updateBalance = async (address: string, _provider?: BrowserProvider) => {
         if (!ZEX_TOKEN_ADDRESS) return;
         try {
-            const zexContract = new ethers.Contract(ZEX_TOKEN_ADDRESS, ERC20_ABI, _provider);
+            // Use our dedicated Polygon Mainnet RPC provider (not MetaMask's provider)
+            // This avoids the 0x empty response error caused by chain mismatch
+            const zexContract = new ethers.Contract(ZEX_TOKEN_ADDRESS, ERC20_ABI, polygonProvider);
             const balance: bigint = await zexContract.balanceOf(address);
 
             // Format BigInt down to a readable string (18 decimals standard for ERC20)
@@ -90,7 +95,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
             // Retry once after 3 seconds (network may not be ready yet)
             setTimeout(async () => {
                 try {
-                    const zexContract = new ethers.Contract(ZEX_TOKEN_ADDRESS, ERC20_ABI, _provider);
+                    const zexContract = new ethers.Contract(ZEX_TOKEN_ADDRESS, ERC20_ABI, polygonProvider);
                     const balance: bigint = await zexContract.balanceOf(address);
                     const formattedBalance = ethers.formatUnits(balance, 18);
                     const roundedBalance = parseFloat(formattedBalance).toFixed(2);
