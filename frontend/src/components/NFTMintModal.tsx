@@ -132,19 +132,9 @@ const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) =
                                     <img src="https://opensea.io/static/images/logos/opensea-logo.svg" alt="OpenSea" className="w-5 h-5 invert" />
                                     OpenSea'de Görüntüle
                                 </a>
-                                {/* Blur - Polygon */}
-                                <a
-                                    href={`https://blur.io/${account}`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="w-full py-3 bg-[#FF6B00] hover:bg-[#E55E00] text-white rounded-xl font-medium transition flex items-center justify-center gap-2"
-                                >
-                                    <span className="font-black text-lg tracking-tighter">BLUR</span>
-                                    Blur'da Görüntüle
-                                </a>
                                 {/* Zora - Polygon */}
                                 <a
-                                    href={`https://zora.co/${account}`}
+                                    href={`https://zora.co/profile/${account}`}
                                     target="_blank"
                                     rel="noreferrer"
                                     className="w-full py-3 bg-black hover:bg-gray-800 text-white rounded-xl font-medium transition flex items-center justify-center gap-2 border border-gray-700"
