@@ -45,11 +45,12 @@ const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) =
                 model: image.model_name || 'ZexAI Model'
             });
 
-            if (!prepareRes.data?.success || !prepareRes.data?.metadata_uri) {
+            if (!prepareRes?.success || !prepareRes?.metadata_uri) {
+                console.error("Prepare metadata failed:", prepareRes);
                 throw new Error("IPFS metadata yüklenemedi. Lütfen tekrar deneyin.");
             }
 
-            const metadataUri = prepareRes.data.metadata_uri;
+            const metadataUri = prepareRes.metadata_uri;
 
             // 2. Mint via Web3 Smart Contract
             setMintStatus('minting');
