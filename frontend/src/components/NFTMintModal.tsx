@@ -57,12 +57,16 @@ const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) =
             const txSuccess = await mintNFT(metadataUri, 1);
 
             if (txSuccess) {
-                // 3. Confirm in Backend
-                await api.post('/nft/confirm-mint', {
-                    asset_id: image.id,
-                    tx_hash: "0xConfirmedByProvider", // This would ideally be returned by mintNFT
-                    token_id: null
-                });
+                // 3. Confirm in Backend (non-blocking - NFT is already minted on-chain)
+                try {
+                    await api.post('/nft/confirm-mint', {
+                        asset_id: image.id,
+                        tx_hash: "0xConfirmedByProvider",
+                        token_id: null
+                    });
+                } catch (confirmErr) {
+                    console.warn("DB confirmation failed, but NFT was minted successfully:", confirmErr);
+                }
 
                 setMintStatus('success');
             } else {
