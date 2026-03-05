@@ -7,7 +7,6 @@ from core.config import settings
 import aiohttp
 import uuid
 import json
-import base64
 
 router = APIRouter(prefix="/nft", tags=["NFT Minting"])
 ipfs_service = IPFSService()
@@ -15,7 +14,7 @@ ipfs_service = IPFSService()
 HAS_PINATA = bool(settings.PINATA_API_KEY and settings.PINATA_API_KEY.strip())
 
 @router.post("/prepare-metadata")
-async def prepare_nft_metadata(payload: Dict[str, Any] = Body(...), db=Depends(get_database)):
+async def prepare_nft_metadata(payload: Dict[str, Any] = Body(...)):
     """
     Receives an asset URL and its prompt/details.
     If Pinata is configured: uploads to IPFS.
@@ -43,32 +42,43 @@ async def prepare_nft_metadata(payload: Dict[str, Any] = Body(...), db=Depends(g
     }
 
     try:
+        metadata_uri = url_or_ipfs_uri
+        
         if HAS_PINATA:
-            # Upload to IPFS via Pinata
-            async with aiohttp.ClientSession() as session:
-                async with session.get(asset_url) as response:
-                    if response.status == 200:
-                        file_content = await response.read()
-                        content_type = response.headers.get("Content-Type", "image/png")
-                        ext = "png" if "image" in content_type else "mp4"
-                        filename = f"zexai_{uuid.uuid4().hex[:8]}.{ext}"
-                        image_ipfs_uri = await ipfs_service.upload_file(file_content, filename, content_type)
-                        if image_ipfs_uri:
-                            metadata["image"] = image_ipfs_uri
+            try:
+                # Upload to IPFS via Pinata
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(asset_url) as response:
+                        if response.status == 200:
+                            file_content = await response.read()
+                            content_type = response.headers.get("Content-Type", "image/png")
+                            ext = "png" if "image" in content_type else "mp4"
+                            filename = f"zexai_{uuid.uuid4().hex[:8]}.{ext}"
+                            image_ipfs_uri = await ipfs_service.upload_file(file_content, filename, content_type)
+                            if image_ipfs_uri:
+                                metadata["image"] = image_ipfs_uri
+            except Exception as inner_e:
+                logger.warning(f"Failed to fetch/upload asset to IPFS, falling back to original URL: {inner_e}")
 
-            metadata_uri = await ipfs_service.upload_json(metadata, token_name=metadata["name"])
-            if not metadata_uri:
-                # Fallback to asset URL if IPFS upload fails
-                metadata_uri = asset_url
+            # Always try to upload the JSON metadata to IPFS, even if the image upload failed
+            try:
+                uploaded_metadata_uri = await ipfs_service.upload_json(metadata, token_name=metadata["name"])
+                if uploaded_metadata_uri:
+                    metadata_uri = uploaded_metadata_uri
+            except Exception as json_e:
+                logger.warning(f"Failed to upload JSON metadata to IPFS, using fallback: {json_e}")
+                
         else:
             # No Pinata configured: use asset URL directly
             logger.warning("Pinata not configured, using asset URL as metadata URI")
-            metadata_uri = asset_url
 
+        # Set final gateway URL for the frontend
+        gateway_url = ipfs_service.get_gateway_url(metadata_uri) if metadata_uri.startswith("ipfs://") else metadata_uri
+        
         return {
             "success": True,
             "metadata_uri": metadata_uri,
-            "gateway_url": ipfs_service.get_gateway_url(metadata_uri) if metadata_uri.startswith("ipfs://") else metadata_uri
+            "gateway_url": gateway_url
         }
 
     except Exception as e:
