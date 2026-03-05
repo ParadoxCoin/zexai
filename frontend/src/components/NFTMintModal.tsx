@@ -122,17 +122,29 @@ const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) =
                             </p>
 
                             <div className="flex flex-col gap-3 mt-6">
+                                {/* OpenSea - Polygon */}
                                 <a
-                                    href={`https://opensea.io/${account}`}
+                                    href={`https://opensea.io/assets/matic/0x7562Da91986B72453DC5aE6cc89d524ba03e38dA`}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium transition flex items-center justify-center gap-2"
+                                    className="w-full py-3 bg-[#2081E2] hover:bg-[#1868B7] text-white rounded-xl font-medium transition flex items-center justify-center gap-2"
                                 >
                                     <img src="https://opensea.io/static/images/logos/opensea-logo.svg" alt="OpenSea" className="w-5 h-5 invert" />
                                     OpenSea'de Görüntüle
                                 </a>
+                                {/* Blur - Polygon */}
                                 <a
-                                    href={`https://zora.co/${account}`}
+                                    href={`https://blur.io/eth/collection/0x7562Da91986B72453DC5aE6cc89d524ba03e38dA`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="w-full py-3 bg-[#FF6B00] hover:bg-[#E55E00] text-white rounded-xl font-medium transition flex items-center justify-center gap-2"
+                                >
+                                    <span className="font-black text-lg tracking-tighter">BLUR</span>
+                                    Blur'da Görüntüle
+                                </a>
+                                {/* Zora - Polygon */}
+                                <a
+                                    href={`https://zora.co/collect/matic:0x7562Da91986B72453DC5aE6cc89d524ba03e38dA`}
                                     target="_blank"
                                     rel="noreferrer"
                                     className="w-full py-3 bg-black hover:bg-gray-800 text-white rounded-xl font-medium transition flex items-center justify-center gap-2 border border-gray-700"
