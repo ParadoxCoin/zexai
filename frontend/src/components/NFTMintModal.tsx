@@ -124,7 +124,7 @@ const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) =
                             <div className="flex flex-col gap-3 mt-6">
                                 {/* OpenSea - Polygon */}
                                 <a
-                                    href={`https://opensea.io/assets/matic/0x7562Da91986B72453DC5aE6cc89d524ba03e38dA`}
+                                    href={`https://opensea.io/${account}`}
                                     target="_blank"
                                     rel="noreferrer"
                                     className="w-full py-3 bg-[#2081E2] hover:bg-[#1868B7] text-white rounded-xl font-medium transition flex items-center justify-center gap-2"
@@ -134,7 +134,7 @@ const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) =
                                 </a>
                                 {/* Blur - Polygon */}
                                 <a
-                                    href={`https://blur.io/eth/collection/0x7562Da91986B72453DC5aE6cc89d524ba03e38dA`}
+                                    href={`https://blur.io/${account}`}
                                     target="_blank"
                                     rel="noreferrer"
                                     className="w-full py-3 bg-[#FF6B00] hover:bg-[#E55E00] text-white rounded-xl font-medium transition flex items-center justify-center gap-2"
@@ -144,7 +144,7 @@ const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) =
                                 </a>
                                 {/* Zora - Polygon */}
                                 <a
-                                    href={`https://zora.co/collect/matic:0x7562Da91986B72453DC5aE6cc89d524ba03e38dA`}
+                                    href={`https://zora.co/${account}`}
                                     target="_blank"
                                     rel="noreferrer"
                                     className="w-full py-3 bg-black hover:bg-gray-800 text-white rounded-xl font-medium transition flex items-center justify-center gap-2 border border-gray-700"
