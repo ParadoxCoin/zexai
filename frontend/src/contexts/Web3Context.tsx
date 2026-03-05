@@ -124,6 +124,34 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const getContracts = async () => {
         if (!provider || !account) return null;
         try {
+            // Check if connected to Polygon Mainnet (137)
+            const network = await provider.getNetwork();
+            if (network.chainId !== 137n) {
+                try {
+                    console.log("Requesting network switch to Polygon Mainnet");
+                    // @ts-ignore
+                    await window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: '0x89' }], // 137 in hex
+                    });
+                    // Re-instantiate provider after switch
+                    // @ts-ignore
+                    const newProvider = new ethers.BrowserProvider(window.ethereum);
+                    const signer = await newProvider.getSigner();
+                    return {
+                        zexContract: new ethers.Contract(ZEX_TOKEN_ADDRESS, ERC20_ABI, signer),
+                        nftContract: new ethers.Contract(ZEXAI_NFT_ADDRESS, NFT_ABI, signer),
+                        stakingContract: new ethers.Contract(ZEX_STAKING_ADDRESS, STAKING_ABI, signer)
+                    };
+                } catch (switchError: any) {
+                    // This error code indicates that the chain has not been added to MetaMask.
+                    if (switchError.code === 4902) {
+                        throw new Error("Lütfen MetaMask'a Polygon Mainnet ağını ekleyin.");
+                    }
+                    throw new Error("Lütfen işlemi Polygon Mainnet ağında gerçekleştirin.");
+                }
+            }
+
             const signer = await provider.getSigner();
             const zexContract = new ethers.Contract(ZEX_TOKEN_ADDRESS, ERC20_ABI, signer);
             const nftContract = new ethers.Contract(ZEXAI_NFT_ADDRESS, NFT_ABI, signer);
@@ -131,13 +159,19 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
             return { zexContract, nftContract, stakingContract };
         } catch (error) {
             console.error("Error getting contracts:", error);
-            return null;
+            throw error; // Re-throw so caller can display error message instead of failing silently
         }
     };
 
     const checkAndApproveZex = async (targetAddress: string, amountInEther: string): Promise<boolean> => {
-        const contracts = await getContracts();
-        if (!contracts || !account) return false;
+        let contracts;
+        try {
+            contracts = await getContracts();
+            if (!contracts || !account) return false;
+        } catch (error) {
+            console.error("Failed to get contracts (network issue?):", error);
+            throw error; // Re-throw to show the 'Lütfen Polygon ağına geçin' error
+        }
 
         try {
             const amountInWei = ethers.parseEther(amountInEther);
@@ -162,8 +196,11 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (!contracts) return false;
 
         try {
-            // 1. Get current mint fee dynamically from the deployed contract
-            const mintFeeWei: bigint = await contracts.nftContract.mintFee();
+            // 1. Get current mint fee dynamically from the deployed contract 
+            // USING THE DIRECT POLYGON RPC. If we use `contracts.nftContract` (which uses the wallet signer), 
+            // it will throw a 0x empty error if the user's wallet is connected to the wrong network.
+            const nftReadOnly = new ethers.Contract(ZEXAI_NFT_ADDRESS, NFT_ABI, polygonProvider);
+            const mintFeeWei: bigint = await nftReadOnly.mintFee();
             const totalFeeWei = mintFeeWei * BigInt(amount);
             const totalFeeEther = ethers.formatEther(totalFeeWei);
 
