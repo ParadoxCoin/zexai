@@ -54,29 +54,46 @@ const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) =
 
             // 2. Mint via Web3 Smart Contract
             setMintStatus('minting');
-            const txSuccess = await mintNFT(metadataUri, 1);
+            // This will throw if it fails (e.g., user rejected, no gas, etc.)
+            await mintNFT(metadataUri, 1);
 
-            if (txSuccess) {
-                // 3. Confirm in Backend (non-blocking - NFT is already minted on-chain)
-                try {
-                    await api.post('/nft/confirm-mint', {
-                        asset_id: image.id,
-                        tx_hash: "0xConfirmedByProvider",
-                        token_id: null
-                    });
-                } catch (confirmErr) {
-                    console.warn("DB confirmation failed, but NFT was minted successfully:", confirmErr);
-                }
-
-                setMintStatus('success');
-            } else {
-                setMintStatus('error');
-                setErrorMessage("Web3 işlemi kullanıcı tarafından reddedildi veya başarısız oldu.");
+            // 3. Confirm in Backend (non-blocking - NFT is already minted on-chain)
+            try {
+                await api.post('/nft/confirm-mint', {
+                    asset_id: image.id,
+                    tx_hash: "0xConfirmedByProvider",
+                    token_id: null
+                });
+            } catch (confirmErr) {
+                console.warn("DB confirmation failed, but NFT was minted successfully:", confirmErr);
             }
+
+            setMintStatus('success');
+
         } catch (error: any) {
             console.error(error);
             setMintStatus('error');
-            setErrorMessage(error.message || error.response?.data?.detail || "Bir hata oluştu.");
+
+            // Try to extract a clean error message from MetaMask's verbose JSON RPC errors
+            let cleanMsg = "İşlem başarısız oldu.";
+            const errMsg = error?.message || error?.reason || "";
+
+            if (errMsg.includes("user rejected") || error?.code === 4001 || error?.info?.error?.code === 4001) {
+                cleanMsg = "İşlem cüzdanda reddedildi.";
+            } else if (errMsg.includes("insufficient funds") || errMsg.includes("gas required exceeds allowance")) {
+                cleanMsg = "Ağ ücreti (MATIC) veya ZEX bakiyesi yetersiz.";
+            } else if (errMsg.includes("-32603") || errMsg.includes("Unexpected error")) {
+                cleanMsg = "Polygon ağı yoğun veya MetaMask gaz tahmini başarısız. Lütfen tekrar deneyin.";
+            } else if (error?.response?.data?.detail) {
+                cleanMsg = error.response.data.detail; // Backend API config errors
+            } else if (typeof error === 'string') {
+                cleanMsg = error;
+            } else if (errMsg) {
+                // Return up to 60 chars of the actual message to avoid massive JSON blobs on screen
+                cleanMsg = (errMsg.length > 60 && errMsg.includes("{")) ? "Ağ veya sözleşme hatası oluştu." : errMsg;
+            }
+
+            setErrorMessage(cleanMsg);
         } finally {
             setIsMinting(false);
         }

@@ -170,7 +170,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (!contracts || !account) return false;
         } catch (error) {
             console.error("Failed to get contracts (network issue?):", error);
-            throw error; // Re-throw to show the 'Lütfen Polygon ağına geçin' error
+            throw error;
         }
 
         try {
@@ -181,13 +181,17 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             if (currentAllowance < amountInWei) {
                 // Need to approve
-                const tx = await contracts.zexContract.approve(targetAddress, amountInWei);
+                // Add explicit gas limit to prevent MetaMask -32603 "Unexpected Error" on Polygon during estimation
+                const tx = await contracts.zexContract.approve(targetAddress, amountInWei, {
+                    gasLimit: 100000n // Standard ERC20 approve usually takes ~45k gas. 100k is a safe buffer.
+                });
                 await tx.wait(); // Wait for confirmation
             }
             return true;
-        } catch (error) {
+        } catch (error: any) {
             console.error("Approval failed:", error);
-            return false;
+            // Re-throw the error so the UI can catch and display the exact MetaMask error message
+            throw error;
         }
     };
 
@@ -209,7 +213,10 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (!approved) return false;
 
             // 3. Mint
-            const tx = await contracts.nftContract.mintWithZex(metadataURI, amount);
+            // Add explicit gas limit to prevent MetaMask -32603 "Unexpected Error" on Polygon during estimation
+            const tx = await contracts.nftContract.mintWithZex(metadataURI, amount, {
+                gasLimit: 300000n // Safe buffer for 1155 minting
+            });
             await tx.wait();
 
             // Refresh balance
@@ -218,9 +225,10 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
 
             return true;
-        } catch (error) {
+        } catch (error: any) {
             console.error("Minting failed:", error);
-            return false;
+            // Re-throw so the UI can catch and display the exact MetaMask error message (e.g., user rejected)
+            throw error;
         }
     };
 
