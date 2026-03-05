@@ -176,12 +176,6 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 if settings.ENVIRONMENT == "production":
     # HTTPS redirect
     app.add_middleware(HTTPSRedirectMiddleware)
-    
-    # Trusted host middleware
-    app.add_middleware(
-        TrustedHostMiddleware,
-        allowed_hosts=["yourdomain.com", "*.yourdomain.com"]
-    )
 
 # Global exception handlers
 @app.exception_handler(AIException)
