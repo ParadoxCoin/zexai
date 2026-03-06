@@ -19,6 +19,9 @@ export const config = defaultWagmiConfig({
     chains,
     projectId,
     metadata,
+    enableEIP6963: true, // Crucial for multi-wallet discovery (Phantom + MetaMask)
+    enableInjected: true, // Fallback for standard MetaMask injection
+    enableCoinbase: true,
     auth: {
         email: true,
         showWallets: true,
