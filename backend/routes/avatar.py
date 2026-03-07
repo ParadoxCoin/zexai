@@ -133,3 +133,69 @@ async def get_credits_cost():
             "description": "Kredi maliyetleri saniye başına"
         }
     }
+
+
+@router.get("/voices/premium")
+async def get_premium_voices(
+    current_user = Depends(get_current_user)
+):
+    """Get premium ElevenLabs voices for avatar generation"""
+    try:
+        from services.voice_clone_service import voice_clone_service
+        
+        # Get ElevenLabs available voices
+        el_voices = await voice_clone_service.get_available_voices()
+        
+        # Format for frontend
+        premium_voices = []
+        for v in el_voices[:20]:  # Limit to 20 voices
+            premium_voices.append({
+                "id": v.get("voice_id", ""),
+                "name": v.get("name", "Unknown"),
+                "language": "multilingual",
+                "gender": v.get("labels", {}).get("gender", "neutral"),
+                "provider": "ElevenLabs",
+                "flag": "🌍",
+                "preview_url": v.get("preview_url", ""),
+                "category": v.get("category", "premade"),
+            })
+        
+        return {"success": True, "data": premium_voices}
+        
+    except Exception as e:
+        logger.error(f"Get premium voices error: {str(e)}")
+        return {"success": True, "data": []}
+
+
+@router.get("/voices/cloned")
+async def get_cloned_voices(
+    current_user = Depends(get_current_user)
+):
+    """Get user's cloned voices"""
+    try:
+        from services.voice_clone_service import voice_clone_service
+        
+        user_id = getattr(current_user, 'id', None)
+        if not user_id:
+            return {"success": True, "data": []}
+        
+        cloned = await voice_clone_service.list_user_voices(user_id)
+        
+        voices = []
+        for v in cloned:
+            if v.get("status") == "ready":
+                voices.append({
+                    "id": v.get("elevenlabs_voice_id", v.get("id", "")),
+                    "name": v.get("name", "Klonlanmış Ses"),
+                    "language": "multilingual",
+                    "gender": "neutral",
+                    "provider": "clone",
+                    "flag": "🎤",
+                    "clone_id": v.get("id"),
+                })
+        
+        return {"success": True, "data": voices}
+        
+    except Exception as e:
+        logger.error(f"Get cloned voices error: {str(e)}")
+        return {"success": True, "data": []}

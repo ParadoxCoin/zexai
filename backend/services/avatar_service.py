@@ -30,14 +30,31 @@ class AvatarService:
     # XP reward for avatar generation
     XP_REWARD = 25  # Same as video
     
-    # Available voices (D-ID + ElevenLabs)
+    # Available voices (D-ID + Microsoft Neural)
     VOICES = [
-        {"id": "tr-TR-AhmetNeural", "name": "Ahmet", "language": "tr-TR", "gender": "male"},
-        {"id": "tr-TR-EmelNeural", "name": "Emel", "language": "tr-TR", "gender": "female"},
-        {"id": "en-US-JennyNeural", "name": "Jenny", "language": "en-US", "gender": "female"},
-        {"id": "en-US-GuyNeural", "name": "Guy", "language": "en-US", "gender": "male"},
-        {"id": "de-DE-KatjaNeural", "name": "Katja", "language": "de-DE", "gender": "female"},
-        {"id": "fr-FR-DeniseNeural", "name": "Denise", "language": "fr-FR", "gender": "female"},
+        # Turkish
+        {"id": "tr-TR-AhmetNeural", "name": "Ahmet", "language": "tr-TR", "gender": "male", "flag": "🇹🇷", "preview_text": "Merhaba, ben Ahmet. Size nasıl yardımcı olabilirim?"},
+        {"id": "tr-TR-EmelNeural", "name": "Emel", "language": "tr-TR", "gender": "female", "flag": "🇹🇷", "preview_text": "Merhaba, ben Emel. Bugün size nasıl yardımcı olabilirim?"},
+        # English
+        {"id": "en-US-JennyNeural", "name": "Jenny", "language": "en-US", "gender": "female", "flag": "🇺🇸", "preview_text": "Hi, I'm Jenny. How can I help you today?"},
+        {"id": "en-US-GuyNeural", "name": "Guy", "language": "en-US", "gender": "male", "flag": "🇺🇸", "preview_text": "Hey there, I'm Guy. What can I do for you?"},
+        {"id": "en-US-AriaNeural", "name": "Aria", "language": "en-US", "gender": "female", "flag": "🇺🇸", "preview_text": "Hello, I'm Aria. Let me assist you with anything you need."},
+        {"id": "en-GB-SoniaNeural", "name": "Sonia", "language": "en-GB", "gender": "female", "flag": "🇬🇧", "preview_text": "Hello, I'm Sonia. How may I help you?"},
+        # German
+        {"id": "de-DE-KatjaNeural", "name": "Katja", "language": "de-DE", "gender": "female", "flag": "🇩🇪", "preview_text": "Hallo, ich bin Katja. Wie kann ich Ihnen helfen?"},
+        {"id": "de-DE-ConradNeural", "name": "Conrad", "language": "de-DE", "gender": "male", "flag": "🇩🇪", "preview_text": "Hallo, ich bin Conrad. Was kann ich für Sie tun?"},
+        # French
+        {"id": "fr-FR-DeniseNeural", "name": "Denise", "language": "fr-FR", "gender": "female", "flag": "🇫🇷", "preview_text": "Bonjour, je suis Denise. Comment puis-je vous aider?"},
+        {"id": "fr-FR-HenriNeural", "name": "Henri", "language": "fr-FR", "gender": "male", "flag": "🇫🇷", "preview_text": "Bonjour, je suis Henri. Que puis-je faire pour vous?"},
+        # Spanish
+        {"id": "es-ES-ElviraNeural", "name": "Elvira", "language": "es-ES", "gender": "female", "flag": "🇪🇸", "preview_text": "Hola, soy Elvira. ¿En qué puedo ayudarte?"},
+        {"id": "es-ES-AlvaroNeural", "name": "Álvaro", "language": "es-ES", "gender": "male", "flag": "🇪🇸", "preview_text": "Hola, soy Álvaro. ¿Cómo puedo ayudarte?"},
+        # Japanese
+        {"id": "ja-JP-NanamiNeural", "name": "Nanami", "language": "ja-JP", "gender": "female", "flag": "🇯🇵", "preview_text": "こんにちは、ナナミです。何かお手伝いできますか？"},
+        # Korean
+        {"id": "ko-KR-SunHiNeural", "name": "Sun-Hi", "language": "ko-KR", "gender": "female", "flag": "🇰🇷", "preview_text": "안녕하세요, 선희입니다. 무엇을 도와드릴까요?"},
+        # Arabic
+        {"id": "ar-SA-HamedNeural", "name": "Hamed", "language": "ar-SA", "gender": "male", "flag": "🇸🇦", "preview_text": "مرحبًا، أنا حامد. كيف يمكنني مساعدتك؟"},
     ]
     
     def __init__(self):
@@ -248,6 +265,112 @@ class AvatarService:
             "message": "Demo modu. DID_API_KEY ekleyerek gerçek video üretebilirsiniz."
         }
     
+    async def create_talk_with_audio(
+        self,
+        user_id: str,
+        image_url: str,
+        audio_url: str
+    ) -> Dict[str, Any]:
+        """
+        Create a talking avatar video using custom audio file
+        """
+        try:
+            credit_cost = 20  # Fixed cost for audio mode
+            
+            # Demo mode - no API key
+            if not self.api_key or self.api_key == "demo":
+                job_id = f"demo_{uuid.uuid4().hex[:8]}"
+                logger.info(f"[DEMO MODE] Avatar with audio for user {user_id}")
+                return {
+                    "success": True,
+                    "job_id": job_id,
+                    "status": "demo",
+                    "result_url": "https://d-id-talks-prod.s3.us-west-2.amazonaws.com/sample.mp4",
+                    "credit_cost": credit_cost,
+                    "demo_mode": True,
+                    "xp_earned": 0,
+                    "message": "Demo modu. DID_API_KEY ekleyerek gerçek video üretebilirsiniz."
+                }
+            
+            # Real API mode - check credits
+            has_credits, current_credits = await self._check_user_credits(user_id, credit_cost)
+            
+            if not has_credits:
+                return {
+                    "success": False,
+                    "error": "insufficient_credits",
+                    "message": f"Yetersiz kredi. Gerekli: {credit_cost}💎, Mevcut: {current_credits}💎"
+                }
+            
+            # Create talk request to D-ID with audio
+            payload = {
+                "source_url": image_url,
+                "script": {
+                    "type": "audio",
+                    "audio_url": audio_url
+                },
+                "config": {
+                    "stitch": True,
+                    "result_format": "mp4"
+                }
+            }
+            
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{self.BASE_URL}/talks",
+                    json=payload,
+                    headers=self._get_headers(),
+                    timeout=30.0
+                )
+                
+                if response.status_code != 201:
+                    logger.error(f"D-ID API error (audio): {response.text}")
+                    return {
+                        "success": False,
+                        "error": "api_error",
+                        "message": "Ses dosyası ile video oluşturma hatası"
+                    }
+                
+                result = response.json()
+                talk_id = result.get("id")
+                
+                # Deduct credits
+                await self._deduct_credits(user_id, credit_cost)
+                
+                # Add XP
+                xp_result = await self._add_xp(user_id)
+                
+                # Save to database
+                try:
+                    self.supabase.table('avatar_jobs').insert({
+                        'user_id': user_id,
+                        'job_id': talk_id,
+                        'status': 'processing',
+                        'image_url': image_url,
+                        'text': '[audio_file]',
+                        'voice_id': 'custom_audio',
+                        'credit_cost': credit_cost
+                    }).execute()
+                except Exception as e:
+                    logger.warning(f"Avatar job save error: {e}")
+                
+                return {
+                    "success": True,
+                    "job_id": talk_id,
+                    "status": "processing",
+                    "credit_cost": credit_cost,
+                    "xp_earned": self.XP_REWARD,
+                    "level_up": xp_result.get("level_up", False)
+                }
+                
+        except Exception as e:
+            logger.error(f"Avatar with audio error: {str(e)}")
+            return {
+                "success": False,
+                "error": "internal_error",
+                "message": str(e)
+            }
+
     async def get_talk_status(self, job_id: str) -> Dict[str, Any]:
         """Get the status of a talk job"""
         try:
