@@ -22,41 +22,57 @@ async def prepare_nft_metadata(payload: Dict[str, Any] = Body(...)):
     """
     asset_id = payload.get("asset_id")
     asset_url = payload.get("asset_url")
+    thumbnail_url = payload.get("thumbnail_url", asset_url) # For video/audio cover
+    service_type = payload.get("service_type", "image").lower() # image, video, audio, avatar
     prompt = payload.get("prompt", "ZexAI Generated Asset")
     model = payload.get("model", "ZexAI AI Model")
 
     if not asset_url:
         raise HTTPException(status_code=400, detail="Missing asset_url")
 
-    # Build the metadata
+    # Build the base metadata
     metadata = {
         "name": f"ZexAI #{str(uuid.uuid4())[:6]}",
         "description": f"AI Generated masterpiece created using {model}.\n\nPrompt: {prompt}",
-        "image": asset_url,
         "external_url": "https://zexai.io",
         "attributes": [
             {"trait_type": "Generator", "value": "ZexAI Platform"},
             {"trait_type": "Model", "value": model},
+            {"trait_type": "Type", "value": service_type.capitalize()},
             {"trait_type": "Platform", "value": "Polygon Mainnet"}
         ]
     }
 
+    # Handle media types properly for OpenSea/Zora rendering
+    if service_type in ['video', 'audio']:
+        metadata["animation_url"] = asset_url
+        # For audio without a thumbnail, use a generic ZexAI audio cover template
+        metadata["image"] = thumbnail_url if thumbnail_url != asset_url else "https://zexai.io/assets/images/zexai-audio-cover.png"
+    else:
+        metadata["image"] = asset_url
+
     try:
-        metadata_uri = asset_url
-        
+        metadata_uri = '' # We will construct this
+
         if HAS_PINATA:
             try:
-                # Upload to IPFS via Pinata
+                # Upload media to IPFS via Pinata
                 async with aiohttp.ClientSession() as session:
                     async with session.get(asset_url) as response:
                         if response.status == 200:
                             file_content = await response.read()
                             content_type = response.headers.get("Content-Type", "image/png")
-                            ext = "png" if "image" in content_type else "mp4"
-                            filename = f"zexai_{uuid.uuid4().hex[:8]}.{ext}"
-                            image_ipfs_uri = await ipfs_service.upload_file(file_content, filename, content_type)
-                            if image_ipfs_uri:
-                                metadata["image"] = image_ipfs_uri
+                            
+                            ext_map = {"image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "video/mp4": "mp4", "audio/mpeg": "mp3", "audio/wav": "wav"}
+                            ext = ext_map.get(content_type, "bin")
+
+                            filename = f"zexai_{service_type}_{uuid.uuid4().hex[:8]}.{ext}"
+                            ipfs_uri = await ipfs_service.upload_file(file_content, filename, content_type)
+                            if ipfs_uri:
+                                if service_type in ['video', 'audio']:
+                                    metadata["animation_url"] = ipfs_uri
+                                else:
+                                    metadata["image"] = ipfs_uri
             except Exception as inner_e:
                 logger.warning(f"Failed to fetch/upload asset to IPFS, falling back to original URL: {inner_e}")
 

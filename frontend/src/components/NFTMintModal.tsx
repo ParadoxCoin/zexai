@@ -41,6 +41,8 @@ const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) =
             const prepareRes = await api.post('/nft/prepare-metadata', {
                 asset_id: image.id,
                 asset_url: image.file_url || image.thumbnail_url,
+                thumbnail_url: image.thumbnail_url || image.file_url,
+                service_type: image.service_type || image.content_type || 'image',
                 prompt: nftDescription,
                 model: image.model_name || 'ZexAI Model'
             });
@@ -169,13 +171,36 @@ const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) =
                         </div>
                     ) : (
                         <>
-                            {/* Image Preview */}
-                            <div className="aspect-video bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden relative">
-                                <img
-                                    src={image.file_url || image.thumbnail_url}
-                                    alt="Preview"
-                                    className="w-full h-full object-contain"
-                                />
+                            {/* Media Preview */}
+                            <div className="aspect-video bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden relative flex items-center justify-center">
+                                {(image.service_type || image.content_type || 'image').toLowerCase() === 'video' ? (
+                                    <video
+                                        src={image.file_url || image.thumbnail_url}
+                                        className="w-full h-full object-cover"
+                                        controls
+                                    />
+                                ) : (image.service_type || image.content_type || 'image').toLowerCase() === 'audio' ? (
+                                    <div className="w-full p-4 flex flex-col items-center gap-4">
+                                        {image.thumbnail_url && image.thumbnail_url !== image.file_url ? (
+                                            <img src={image.thumbnail_url} alt="Cover" className="h-32 w-32 object-cover rounded-lg shadow-md" />
+                                        ) : (
+                                            <div className="w-24 h-24 bg-purple-500/20 rounded-full flex items-center justify-center">
+                                                <span className="text-4xl">🎵</span>
+                                            </div>
+                                        )}
+                                        <audio
+                                            src={image.file_url}
+                                            controls
+                                            className="w-full"
+                                        />
+                                    </div>
+                                ) : (
+                                    <img
+                                        src={image.file_url || image.thumbnail_url}
+                                        alt="Preview"
+                                        className="w-full h-full object-contain"
+                                    />
+                                )}
                             </div>
 
                             {/* Form */}
