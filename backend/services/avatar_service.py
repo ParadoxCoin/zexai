@@ -257,7 +257,7 @@ class AvatarService:
             "success": True,
             "job_id": job_id,
             "status": "demo",
-            "result_url": "https://d-id-talks-prod.s3.us-west-2.amazonaws.com/sample.mp4",
+            "result_url": "https://www.w3schools.com/html/mov_bbb.mp4",
             "estimated_duration": max(15, len(text) // 10),
             "credit_cost": credit_cost,
             "demo_mode": True,
@@ -285,7 +285,7 @@ class AvatarService:
                     "success": True,
                     "job_id": job_id,
                     "status": "demo",
-                    "result_url": "https://d-id-talks-prod.s3.us-west-2.amazonaws.com/sample.mp4",
+                    "result_url": "https://www.w3schools.com/html/mov_bbb.mp4",
                     "credit_cost": credit_cost,
                     "demo_mode": True,
                     "xp_earned": 0,
@@ -379,7 +379,7 @@ class AvatarService:
                     "success": True,
                     "job_id": job_id,
                     "status": "done",
-                    "result_url": "https://d-id-talks-prod.s3.us-west-2.amazonaws.com/sample.mp4",
+                    "result_url": "https://www.w3schools.com/html/mov_bbb.mp4",
                     "demo_mode": True
                 }
             

@@ -113,7 +113,7 @@ export const AvatarPage = () => {
                     reason: 'Avatar video üretimi'
                 });
                 if (data.demo_mode) {
-                    setResultUrl('https://d-id-talks-prod.s3.us-west-2.amazonaws.com/sample.mp4');
+                    setResultUrl('https://www.w3schools.com/html/mov_bbb.mp4');
                     setIsGenerating(false);
                     setShowCelebration(true);
                     setShowCreditToast(true);
@@ -143,7 +143,7 @@ export const AvatarPage = () => {
                     reason: 'Avatar video üretimi (ses dosyası)'
                 });
                 if (data.demo_mode) {
-                    setResultUrl('https://d-id-talks-prod.s3.us-west-2.amazonaws.com/sample.mp4');
+                    setResultUrl('https://www.w3schools.com/html/mov_bbb.mp4');
                     setIsGenerating(false);
                     setShowCelebration(true);
                     setShowCreditToast(true);
@@ -314,10 +314,10 @@ export const AvatarPage = () => {
                 <div className="flex items-center gap-3">
                     {/* Avatar */}
                     <div className={`relative w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${voice.gender === 'male'
-                            ? 'bg-gradient-to-br from-blue-500/30 to-cyan-500/30 text-blue-300'
-                            : voice.gender === 'female'
-                                ? 'bg-gradient-to-br from-pink-500/30 to-rose-500/30 text-pink-300'
-                                : 'bg-gradient-to-br from-purple-500/30 to-violet-500/30 text-purple-300'
+                        ? 'bg-gradient-to-br from-blue-500/30 to-cyan-500/30 text-blue-300'
+                        : voice.gender === 'female'
+                            ? 'bg-gradient-to-br from-pink-500/30 to-rose-500/30 text-pink-300'
+                            : 'bg-gradient-to-br from-purple-500/30 to-violet-500/30 text-purple-300'
                         }`}>
                         {voice.flag || (voice.gender === 'male' ? '♂' : voice.gender === 'female' ? '♀' : '🎤')}
                         {isSelected && (
@@ -352,8 +352,8 @@ export const AvatarPage = () => {
                         <button
                             onClick={(e) => { e.stopPropagation(); handlePlayPreview(voice); }}
                             className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all ${isPlaying
-                                    ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30'
-                                    : 'bg-gray-700/50 text-gray-400 hover:bg-gray-600/50 hover:text-white opacity-0 group-hover:opacity-100'
+                                ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30'
+                                : 'bg-gray-700/50 text-gray-400 hover:bg-gray-600/50 hover:text-white opacity-0 group-hover:opacity-100'
                                 }`}
                         >
                             {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 ml-0.5" />}
@@ -468,8 +468,8 @@ export const AvatarPage = () => {
                                         <button
                                             onClick={() => setInputMode('text')}
                                             className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${inputMode === 'text'
-                                                    ? 'bg-purple-600 text-white shadow-md'
-                                                    : 'text-gray-400 hover:text-white'
+                                                ? 'bg-purple-600 text-white shadow-md'
+                                                : 'text-gray-400 hover:text-white'
                                                 }`}
                                         >
                                             ✍️ Metin
@@ -477,8 +477,8 @@ export const AvatarPage = () => {
                                         <button
                                             onClick={() => setInputMode('audio')}
                                             className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${inputMode === 'audio'
-                                                    ? 'bg-purple-600 text-white shadow-md'
-                                                    : 'text-gray-400 hover:text-white'
+                                                ? 'bg-purple-600 text-white shadow-md'
+                                                : 'text-gray-400 hover:text-white'
                                                 }`}
                                         >
                                             🎵 Ses Dosyası
@@ -575,8 +575,8 @@ export const AvatarPage = () => {
                                                     key={tab.id}
                                                     onClick={() => { setVoiceTab(tab.id); setVoiceLanguageFilter('all'); }}
                                                     className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium transition-all ${voiceTab === tab.id
-                                                            ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20'
-                                                            : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
+                                                        ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20'
+                                                        : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
                                                         }`}
                                                 >
                                                     <Icon className="w-3.5 h-3.5" />
@@ -598,8 +598,8 @@ export const AvatarPage = () => {
                                             <button
                                                 onClick={() => setVoiceLanguageFilter('all')}
                                                 className={`px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all ${voiceLanguageFilter === 'all'
-                                                        ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
-                                                        : 'bg-gray-800/50 text-gray-400 border border-gray-700 hover:text-gray-200'
+                                                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+                                                    : 'bg-gray-800/50 text-gray-400 border border-gray-700 hover:text-gray-200'
                                                     }`}
                                             >
                                                 🌍 Tümü
@@ -612,8 +612,8 @@ export const AvatarPage = () => {
                                                         key={lang}
                                                         onClick={() => setVoiceLanguageFilter(lang)}
                                                         className={`px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all ${voiceLanguageFilter === lang
-                                                                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
-                                                                : 'bg-gray-800/50 text-gray-400 border border-gray-700 hover:text-gray-200'
+                                                            ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+                                                            : 'bg-gray-800/50 text-gray-400 border border-gray-700 hover:text-gray-200'
                                                             }`}
                                                     >
                                                         {langFlags[lang] || '🌐'} {langNames[lang] || lang.toUpperCase()}

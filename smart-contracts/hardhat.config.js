@@ -21,5 +21,8 @@ module.exports = {
             url: process.env.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org",
             accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : []
         }
+    },
+    etherscan: {
+        apiKey: "HG376ZS2R5UV9FFVFXCNU4SM5BG4YEU233"
     }
 };
