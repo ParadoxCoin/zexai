@@ -259,24 +259,29 @@ class AvatarService:
         text: str = "[audio_file]",
         voice_id: str = "custom_audio"
     ) -> Dict[str, Any]:
-        """Submits the image and audio to Kie.ai Kling model"""
+        """Submits the image to Kie.ai Kling 2.6 via Market API (createTask)"""
         try:
             kie_api_key = os.getenv("KIE_API_KEY")
             
-            kie_model = "kling-2.6-audio-5s"
+            kie_model = "kling-2.6/image-to-video"
+            duration = "5"
             if credit_cost > 110:
-                kie_model = "kling-2.6-audio-10s"
+                duration = "10"
 
             payload = {
                 "model": kie_model,
-                "prompt": "Professional talking avatar, clear facial expression, front facing",
-                "image": image_url,
-                "audio": audio_url
+                "input": {
+                    "prompt": "A person speaking naturally, clear lip movements synchronized with audio, front facing, professional talking head video",
+                    "sound": True,
+                    "duration": duration,
+                    "aspect_ratio": "16:9",
+                    "image_urls": [image_url]
+                }
             }
             
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    "https://api.kie.ai/v1/video/generate",
+                    "https://api.kie.ai/api/v1/jobs/createTask",
                     headers={
                         "Authorization": f"Bearer {kie_api_key}",
                         "Content-Type": "application/json"
@@ -285,16 +290,18 @@ class AvatarService:
                     timeout=30.0
                 )
                 
-                if response.status_code != 200:
-                    logger.error(f"Kie.ai CPU/Kling API error: {response.text}")
+                result = response.json()
+                
+                if result.get("code") != 200:
+                    error_msg = result.get("msg", "Unknown error")
+                    logger.error(f"Kie.ai createTask error: {error_msg}")
                     return {
                         "success": False,
                         "error": "api_error",
-                        "message": "Video oluşturma hatası (Kie.ai red)"
+                        "message": f"Video oluşturma hatası: {error_msg}"
                     }
                 
-                result = response.json()
-                task_id = result.get("task_id", result.get("id"))
+                task_id = result["data"]["taskId"]
                 
                 # Deduct credits
                 await self._deduct_credits(user_id, credit_cost)
