@@ -42,6 +42,7 @@ const AudioPage = () => {
   const [activeTab, setActiveTab] = useState("text-to-video");
 
   const [text, setText] = useState("");
+  const [musicPrompt, setMusicPrompt] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
   const [selectedVoice, setSelectedVoice] = useState("");
   const [selectedGenre, setSelectedGenre] = useState("");
@@ -114,10 +115,28 @@ const AudioPage = () => {
     onSuccess: () => refetchVoices()
   });
 
+  const { mutate: generateMusic, isPending: isGeneratingMusic } = useMutation({
+    mutationFn: (data: any) => apiService.post("/audio/music", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["userAudio"] });
+      setMusicPrompt("");
+      setActiveTab("library");
+    },
+  });
+
   const handleTTSSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim() || !selectedModel) return;
     generateTTS({ text: text.trim(), model_id: selectedModel, voice: selectedVoice || "default", speed });
+  };
+
+  const handleMusicSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!musicPrompt.trim() && !selectedGenre) return;
+    const genreText = selectedGenre ? `${t('audioGen.musicGenres.' + selectedGenre, selectedGenre)} tarzında, ` : '';
+    const moodText = mood ? `${t('audioGen.musicMoods.' + mood, mood)} ruh halinde ` : '';
+    const finalPrompt = `${genreText}${moodText}${musicPrompt}`.trim();
+    generateMusic({ prompt: finalPrompt, model_id: "kie_suno_v35" });
   };
 
   const handleVoiceClone = () => {
@@ -379,14 +398,20 @@ const AudioPage = () => {
               </div>
 
               <textarea
+                value={musicPrompt}
+                onChange={(e) => setMusicPrompt(e.target.value)}
                 placeholder={t('audioGen.musicPlaceholder', "Müziğinizi tanımlayın... (Örn: Sabah koşusu için enerjik, motive edici elektronik müzik)")}
                 rows={3}
+                disabled={isGeneratingMusic}
                 className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl resize-none focus:ring-2 focus:ring-pink-500 mb-4"
               />
 
-              <button className="w-full py-4 bg-gradient-to-r from-rose-500 to-pink-500 text-white font-semibold rounded-xl shadow-lg flex items-center justify-center gap-2">
-                <Music className="w-5 h-5" />
-                {t('audioGen.musicGenerateBtn', 'Müzik Oluştur')}
+              <button
+                onClick={handleMusicSubmit}
+                disabled={isGeneratingMusic || (!musicPrompt.trim() && !selectedGenre)}
+                className="w-full py-4 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all">
+                {isGeneratingMusic ? <Loader2 className="w-5 h-5 animate-spin" /> : <Music className="w-5 h-5" />}
+                {isGeneratingMusic ? t('audioGen.generating', 'Oluşturuluyor...') : t('audioGen.musicGenerateBtn', 'Müzik Oluştur')}
               </button>
             </div>
           </div>
