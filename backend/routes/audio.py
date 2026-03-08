@@ -75,10 +75,11 @@ async def get_audio_models(type: Optional[str] = None, db = Depends(get_db)):
             ))
     
     # Add all model types
-    add_models(TTS_MODELS, "text_to_speech")
+    # Legacy models hidden to strictly use Kie.ai as requested by the user
+    # add_models(TTS_MODELS, "text_to_speech")
     add_models(KIE_TTS_MODELS, "text_to_speech") # Premium kie.ai TTS
     add_models(VOICE_CLONE_MODELS, "voice_clone")
-    add_models(MUSIC_MODELS, "music_generation")
+    # add_models(MUSIC_MODELS, "music_generation")
     add_models(KIE_MUSIC_MODELS, "music_generation")  # Premium kie.ai music
     add_models(SFX_MODELS, "sound_effects")
     
@@ -90,8 +91,8 @@ async def get_tts_models(db = Depends(get_db)):
     from core.audio_models_extended import TTS_MODELS
     from core.kie_models import KIE_TTS_MODELS
     
-    # Combine original and new premium models for TTS picker
-    all_tts_models = {**TTS_MODELS, **KIE_TTS_MODELS}
+    # Exclusively use new premium models for TTS picker to use Kie.ai API
+    all_tts_models = KIE_TTS_MODELS
     
     result = []
     for model_id, m in all_tts_models.items():
