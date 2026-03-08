@@ -315,6 +315,56 @@ class KieAIService:
         }
 
     # ============================================
+    # TEXT TO SPEECH (ElevenLabs models via Kie.ai)
+    # ============================================
+    
+    async def generate_tts(
+        self,
+        model_id: str,
+        text: str,
+        voice_id: str = "alloy",
+        **kwargs
+    ) -> Dict[str, Any]:
+        """
+        Generate Text-to-Speech using Kie.ai API.
+        This uses the OpenAI-compatible audio/speech endpoint if supported,
+        or a custom endpoint.
+        """
+        payload = {
+            "model": model_id,
+            "input": text,
+            "voice": voice_id
+        }
+        
+        payload.update(kwargs)
+        
+        # Audio generation is usually sync, but if it is large it might stream
+        # Try standard OpenAI compatible path first
+        result = await self._make_request("POST", "audio/speech", payload, timeout=60)
+        
+        # Depending on if Kie.ai returns binary or JSON with URL
+        if isinstance(result, dict) and "url" in result:
+            return {
+                "success": True,
+                "audio_url": result.get("url"),
+                "model": model_id
+            }
+        elif isinstance(result, dict) and "task_id" in result:
+             return {
+                "success": True,
+                "task_id": result.get("task_id"),
+                "status": "processing",
+                "model": model_id
+            }
+        else:
+             # Assume it's a direct URL or base64 structure
+             return {
+                 "success": True,
+                 "data": result,
+                 "model": model_id
+             }
+
+    # ============================================
     # ACCOUNT & CREDITS
     # ============================================
     
@@ -364,3 +414,13 @@ async def kie_generate_music(
 ) -> Dict[str, Any]:
     """Quick helper for music generation"""
     return await kie_service.generate_music(model_id, prompt, **kwargs)
+
+
+async def kie_generate_tts(
+    model_id: str,
+    text: str,
+    voice_id: str = "alloy",
+    **kwargs
+) -> Dict[str, Any]:
+    """Quick helper for Text-to-Speech generation"""
+    return await kie_service.generate_tts(model_id, text, voice_id, **kwargs)

@@ -848,13 +848,73 @@ KIE_MUSIC_MODELS = {
 }
 
 # ============================================
+# TTS / AUDIO MODELS
+# ============================================
+
+KIE_TTS_MODELS = {
+    "kie_elevenlabs_turbo_25": {
+        "provider": "kie.ai",
+        "name": "Elevenlabs Turbo 2.5",
+        "type": "text_to_speech",
+        "model_id": "elevenlabs-text-to-speech-turbo-2.5",
+        "kie_credits": 6,  # 6.0 per 1000 characters
+        "cost_usd": 0.03,  # per 1000 characters
+        "quality": 5,
+        "speed": "fast",
+        "badge": "⚡ Turbo",
+        "description": "Hızlı, gerçekçi İngilizce seslendirme",
+        "capabilities": {"multilingual": False}
+    },
+    "kie_elevenlabs_multilingual_v2": {
+        "provider": "kie.ai",
+        "name": "Elevenlabs Multilingual V2",
+        "type": "text_to_speech",
+        "model_id": "elevenlabs-text-to-speech-multilingual-v2",
+        "kie_credits": 12, # 12.0 per 1000 characters
+        "cost_usd": 0.06,  # per 1000 characters
+        "quality": 5,
+        "speed": "medium",
+        "badge": "🌍 Çok Dilli",
+        "description": "29 dilde yüksek kaliteli seslendirme",
+        "capabilities": {"multilingual": True}
+    },
+    "kie_elevenlabs_v3": {
+        "provider": "kie.ai",
+        "name": "Elevenlabs V3 (Text to Dialogue)",
+        "type": "text_to_speech",
+        "model_id": "elevenlabs-v3-text-to-dialogue",
+        "kie_credits": 14, # 14 per 1000 characters
+        "cost_usd": 0.07,  # per 1000 characters
+        "quality": 5,
+        "speed": "medium",
+        "badge": "🗣️ Diyalog",
+        "description": "Diyaloglar için özel tasarlanmış v3 modeli",
+        "capabilities": {"multilingual": True, "dialogue": True}
+    },
+    "kie_elevenlabs_sfx": {
+        "provider": "kie.ai",
+        "name": "Elevenlabs Sound Effect V2",
+        "type": "sound_effects",
+        "model_id": "elevenlabs-sound-effect-v2",
+        "kie_credits": 0.24, # per second
+        "cost_usd": 0.0012,  # per second
+        "quality": 5,
+        "speed": "fast",
+        "badge": "🔊 SFX",
+        "description": "Profesyonel ses efektleri",
+        "capabilities": {"sound_effects": True}
+    }
+}
+
+# ============================================
 # ALL MODELS COMBINED
 # ============================================
 
 KIE_ALL_MODELS = {
     **KIE_IMAGE_MODELS,
     **KIE_VIDEO_MODELS,
-    **KIE_MUSIC_MODELS
+    **KIE_MUSIC_MODELS,
+    **KIE_TTS_MODELS
 }
 
 # Model counts
@@ -862,6 +922,7 @@ KIE_MODEL_STATS = {
     "image_models": len(KIE_IMAGE_MODELS),
     "video_models": len(KIE_VIDEO_MODELS),
     "music_models": len(KIE_MUSIC_MODELS),
+    "tts_models": len(KIE_TTS_MODELS),
     "total_models": len(KIE_ALL_MODELS)
 }
 
@@ -884,3 +945,7 @@ def get_kie_video_models():
 def get_kie_music_models():
     """Get all kie.ai music models"""
     return KIE_MUSIC_MODELS
+
+def get_kie_tts_models():
+    """Get all kie.ai tts models"""
+    return KIE_TTS_MODELS

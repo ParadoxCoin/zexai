@@ -48,7 +48,7 @@ class AudioModelInfo(BaseModel):
 async def get_audio_models(type: Optional[str] = None, db = Depends(get_db)):
     """Get all available audio models (TTS, Music, SFX)"""
     from core.audio_models_extended import TTS_MODELS, VOICE_CLONE_MODELS, MUSIC_MODELS, SFX_MODELS, AUDIO_TOOLS
-    from core.kie_models import KIE_MUSIC_MODELS  # Premium kie.ai music models
+    from core.kie_models import KIE_MUSIC_MODELS, KIE_TTS_MODELS  # Premium kie.ai audio models
     
     result = []
     
@@ -76,6 +76,7 @@ async def get_audio_models(type: Optional[str] = None, db = Depends(get_db)):
     
     # Add all model types
     add_models(TTS_MODELS, "text_to_speech")
+    add_models(KIE_TTS_MODELS, "text_to_speech") # Premium kie.ai TTS
     add_models(VOICE_CLONE_MODELS, "voice_clone")
     add_models(MUSIC_MODELS, "music_generation")
     add_models(KIE_MUSIC_MODELS, "music_generation")  # Premium kie.ai music
@@ -87,12 +88,19 @@ async def get_audio_models(type: Optional[str] = None, db = Depends(get_db)):
 async def get_tts_models(db = Depends(get_db)):
     """Get TTS models only"""
     from core.audio_models_extended import TTS_MODELS
+    from core.kie_models import KIE_TTS_MODELS
+    
+    # Combine original and new premium models for TTS picker
+    all_tts_models = {**TTS_MODELS, **KIE_TTS_MODELS}
     
     result = []
-    for model_id, m in TTS_MODELS.items():
-        # Calculate credits - TTS uses cost_per_char
-        cost = m.get("cost_per_char", 0.0001)
-        credits = max(int(cost * 1000 * 100 * 2), 5)  # Per 1000 chars, x2 multiplier
+    for model_id, m in all_tts_models.items():
+        # Calculate credits - TTS uses cost_per_char or kie_credits
+        if "kie_credits" in m:
+            credits = max(int(m["kie_credits"]), 5) # Per 1000 chars roughly
+        else:
+            cost = m.get("cost_per_char", 0.0001)
+            credits = max(int(cost * 1000 * 100 * 2), 5)  # Per 1000 chars, x2 multiplier
         
         result.append(AudioModelInfo(
             id=model_id,
@@ -212,6 +220,24 @@ async def text_to_speech(req: TTSRequest, user = Depends(get_current_user), db =
                 output_url = "https://placeholder.url/openai_audio.mp3" # TODO: Replace with actual upload
                 status_val = "completed"
 
+        elif provider_id == "kie.ai":
+            from services.kie_service import kie_service
+            result = await kie_service.generate_tts(
+                model_id=model.get("provider_model_id", req.model_id),
+                text=req.text,
+                voice_id=req.voice_id if req.voice_id != "default" else "alloy"
+            )
+            
+            if result.get("success"):
+                if result.get("audio_url"):
+                    output_url = result.get("audio_url")
+                    status_val = "completed"
+                elif result.get("task_id"):
+                    provider_task_id = result.get("task_id")
+                    status_val = "processing"
+            else:
+                raise HTTPException(500, f"Kie.ai TTS API error: {result}")
+
         else:
              # Fallback for other providers or async providers
              pass
@@ -328,6 +354,21 @@ async def generate_music(req: MusicRequest, user = Depends(get_current_user), db
                 if response.status_code == 200:
                     data = response.json()
                     provider_task_id = data.get("task_id")
+        
+        elif provider_id == "kie.ai" or not provider_id:
+            # Fallback to kie.ai if provider is kie.ai or none
+            from services.kie_service import kie_service
+            
+            # Note: req.duration is int (e.g. 30), pass it appropriately
+            result = await kie_service.generate_music(
+                model_id=model.get("provider_model_id", req.model_id),
+                prompt=req.prompt,
+                duration=req.duration
+            )
+            
+            if result.get("success"):
+                provider_task_id = result.get("task_id")
+
     except Exception:
         pass # Log error but continue to create record as processing
     
@@ -373,5 +414,38 @@ async def get_my_audio(limit: int = 20, user = Depends(get_current_user), db = D
         .limit(limit)\
         .execute()
         
-    return {"audio": response.data}
+    generations = response.data or []
+    from services.kie_service import kie_service
+    
+    # Dynamically resolve any processing tasks
+    updated = False
+    for gen in generations:
+        if gen.get("status") == "processing":
+            provider_task_id = gen.get("metadata", {}).get("provider_task_id")
+            if provider_task_id:
+                try:
+                    # Depending on type, check status
+                    if gen.get("type") == "audio_music":
+                        status_res = await kie_service.get_music_status(provider_task_id)
+                        if status_res and status_res.get("status") == "success" and status_res.get("audio_url"):
+                            gen["status"] = "completed"
+                            gen["output_url"] = status_res.get("audio_url")
+                            # update DB
+                            db.table("generations").update({
+                                "status": "completed",
+                                "output_url": status_res.get("audio_url")
+                            }).eq("id", gen["id"]).execute()
+                            updated = True
+                        elif status_res and status_res.get("status") == "failed":
+                            gen["status"] = "failed"
+                            db.table("generations").update({"status": "failed"}).eq("id", gen["id"]).execute()
+                            updated = True
+                except Exception:
+                    pass
+
+    # Map output_url to file_url for the frontend if needed
+    for gen in generations:
+        gen["file_url"] = gen.get("output_url", "")
+        
+    return {"outputs": generations}
 
