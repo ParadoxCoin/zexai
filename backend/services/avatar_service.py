@@ -134,6 +134,68 @@ class AvatarService:
             logger.warning(f"Credit check failed: {e}, allowing by default")
             return True, 1000
     
+    async def _generate_tts_audio(self, text: str, voice_id: str) -> Optional[str]:
+        """Generate TTS and upload to storage, returning audio URL"""
+        import base64
+        import uuid
+        import httpx
+        from services.storage_service import storage_service
+        
+        audio_bytes = None
+        
+        # If it's a built-in neural voice (previously D-ID/Azure), we fallback to OpenAI TTS or default ElevenLabs
+        if "Neural" in voice_id or "-" in voice_id:
+            logger.info("Using OpenAI TTS as fallback for built-in voice")
+            openai_key = os.getenv("OPENAI_API_KEY")
+            if not openai_key:
+                logger.error("OPENAI_API_KEY not found")
+                return None
+                
+            # Map gender to OpenAI voices roughly
+            voice = "alloy" # neutral
+            if "female" in str(voice_id).lower() or any(x in voice_id for x in ["Emel", "Jenny", "Aria", "Sonia", "Katja", "Elvira"]):
+                voice = "nova"
+            elif "male" in str(voice_id).lower() or any(x in voice_id for x in ["Ahmet", "Guy", "Conrad", "Henri"]):
+                voice = "echo"
+                
+            async with httpx.AsyncClient() as client:
+                resp = await client.post(
+                    "https://api.openai.com/v1/audio/speech",
+                    headers={
+                        "Authorization": f"Bearer {openai_key}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "model": "tts-1",
+                        "input": text,
+                        "voice": voice
+                    },
+                    timeout=30.0
+                )
+                if resp.status_code == 200:
+                    audio_bytes = resp.content
+                else:
+                    logger.error(f"OpenAI TTS error: {resp.text}")
+                    return None
+        else:
+            # ElevenLabs Premium/Cloned Voice
+            from services.voice_clone_service import voice_clone_service
+            logger.info(f"Using ElevenLabs TTS for voice_id {voice_id}")
+            tts_result = await voice_clone_service.generate_speech(voice_id, text)
+            if tts_result.get("success") and tts_result.get("audio_base64"):
+                audio_bytes = base64.b64decode(tts_result["audio_base64"])
+            else:
+                logger.error(f"ElevenLabs TTS failed: {tts_result.get('error')}")
+                return None
+                
+        # Upload to Storage
+        if audio_bytes:
+            file_name = f"avatar_audio/{uuid.uuid4().hex[:12]}.mp3"
+            audio_url = storage_service.upload_file(audio_bytes, file_name, "audio/mpeg")
+            return audio_url
+            
+        return None
+
     async def create_talk(
         self,
         user_id: str,
@@ -143,15 +205,14 @@ class AvatarService:
         driver_url: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Create a talking avatar video
+        Create a talking avatar video via Kie.ai Kling using internal TTS
         """
         try:
-            estimated_duration = max(15, min(120, len(text) // 10))
-            credit_cost = self.get_credit_cost(estimated_duration)
-            
-            # Demo mode - no API key
-            if not self.api_key or self.api_key == "demo":
-                return await self._create_demo_talk(user_id, image_url, text, voice_id, credit_cost)
+            estimated_duration = max(5, min(30, len(text) // 10))
+            # Kling 5s or 10s. Let's charge a fixed credit cost for Kling 2.6 Audio
+            credit_cost = 110 # Kling 2.6 Audio 5s cost
+            if estimated_duration > 5:
+                credit_cost = 220 # 10s cost
             
             # Real API mode - check credits
             has_credits, current_credits = await self._check_user_credits(user_id, credit_cost)
@@ -162,45 +223,78 @@ class AvatarService:
                     "error": "insufficient_credits",
                     "message": f"Yetersiz kredi. Gerekli: {credit_cost}💎, Mevcut: {current_credits}💎"
                 }
-            
-            # Create talk request to D-ID
-            payload = {
-                "source_url": image_url,
-                "script": {
-                    "type": "text",
-                    "input": text,
-                    "provider": {
-                        "type": "microsoft",
-                        "voice_id": voice_id
-                    }
-                },
-                "config": {
-                    "stitch": True,
-                    "result_format": "mp4"
+
+            kie_api_key = os.getenv("KIE_API_KEY")
+            if not kie_api_key or kie_api_key == "demo":
+                return {
+                    "success": False,
+                    "error": "missing_api_key",
+                    "message": "KIE_API_KEY is not configured."
                 }
+            # 1. Generate Audio URL
+            audio_url = await self._generate_tts_audio(text, voice_id)
+            if not audio_url:
+                return {
+                    "success": False,
+                    "error": "tts_failed",
+                    "message": "Ses oluşturulamadı. Lütfen API ayarlarını kontrol edin."
+                }
+                
+            return await self._submit_kie_avatar(user_id, image_url, audio_url, credit_cost, text=text, voice_id=voice_id)
+            
+        except Exception as e:
+            logger.error(f"Avatar creation error: {str(e)}")
+            return {
+                "success": False,
+                "error": "internal_error",
+                "message": str(e)
             }
             
-            if driver_url:
-                payload["driver_url"] = driver_url
+    async def _submit_kie_avatar(
+        self, 
+        user_id: str, 
+        image_url: str, 
+        audio_url: str, 
+        credit_cost: int,
+        text: str = "[audio_file]",
+        voice_id: str = "custom_audio"
+    ) -> Dict[str, Any]:
+        """Submits the image and audio to Kie.ai Kling model"""
+        try:
+            kie_api_key = os.getenv("KIE_API_KEY")
+            
+            kie_model = "kling-2.6-audio-5s"
+            if credit_cost > 110:
+                kie_model = "kling-2.6-audio-10s"
+
+            payload = {
+                "model": kie_model,
+                "prompt": "Professional talking avatar, clear facial expression, front facing",
+                "image": image_url,
+                "audio": audio_url
+            }
             
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    f"{self.BASE_URL}/talks",
+                    "https://api.kie.ai/v1/video/generate",
+                    headers={
+                        "Authorization": f"Bearer {kie_api_key}",
+                        "Content-Type": "application/json"
+                    },
                     json=payload,
-                    headers=self._get_headers(),
                     timeout=30.0
                 )
                 
-                if response.status_code != 201:
-                    logger.error(f"D-ID API error: {response.text}")
+                if response.status_code != 200:
+                    logger.error(f"Kie.ai CPU/Kling API error: {response.text}")
                     return {
                         "success": False,
                         "error": "api_error",
-                        "message": "Video oluşturma hatası"
+                        "message": "Video oluşturma hatası (Kie.ai red)"
                     }
                 
                 result = response.json()
-                talk_id = result.get("id")
+                task_id = result.get("task_id", result.get("id"))
                 
                 # Deduct credits
                 await self._deduct_credits(user_id, credit_cost)
@@ -212,7 +306,7 @@ class AvatarService:
                 try:
                     self.supabase.table('avatar_jobs').insert({
                         'user_id': user_id,
-                        'job_id': talk_id,
+                        'job_id': task_id,
                         'status': 'processing',
                         'image_url': image_url,
                         'text': text,
@@ -224,46 +318,19 @@ class AvatarService:
                 
                 return {
                     "success": True,
-                    "job_id": talk_id,
+                    "job_id": task_id,
                     "status": "processing",
-                    "estimated_duration": estimated_duration,
                     "credit_cost": credit_cost,
                     "xp_earned": self.XP_REWARD,
                     "level_up": xp_result.get("level_up", False)
                 }
-                
         except Exception as e:
-            logger.error(f"Avatar creation error: {str(e)}")
+            logger.error(f"Kie Avatar submit error: {str(e)}")
             return {
                 "success": False,
                 "error": "internal_error",
                 "message": str(e)
             }
-    
-    async def _create_demo_talk(
-        self, 
-        user_id: str, 
-        image_url: str, 
-        text: str, 
-        voice_id: str,
-        credit_cost: int
-    ) -> Dict[str, Any]:
-        """Create a demo talk (simulated) - no DB operations"""
-        job_id = f"demo_{uuid.uuid4().hex[:8]}"
-        
-        logger.info(f"[DEMO MODE] Avatar generation for user {user_id}")
-        
-        return {
-            "success": True,
-            "job_id": job_id,
-            "status": "demo",
-            "result_url": "https://www.w3schools.com/html/mov_bbb.mp4",
-            "estimated_duration": max(15, len(text) // 10),
-            "credit_cost": credit_cost,
-            "demo_mode": True,
-            "xp_earned": 0,
-            "message": "Demo modu. DID_API_KEY ekleyerek gerçek video üretebilirsiniz."
-        }
     
     async def create_talk_with_audio(
         self,
@@ -272,25 +339,10 @@ class AvatarService:
         audio_url: str
     ) -> Dict[str, Any]:
         """
-        Create a talking avatar video using custom audio file
+        Create a talking avatar video using custom audio file via Kie.ai Kling
         """
         try:
-            credit_cost = 20  # Fixed cost for audio mode
-            
-            # Demo mode - no API key
-            if not self.api_key or self.api_key == "demo":
-                job_id = f"demo_{uuid.uuid4().hex[:8]}"
-                logger.info(f"[DEMO MODE] Avatar with audio for user {user_id}")
-                return {
-                    "success": True,
-                    "job_id": job_id,
-                    "status": "demo",
-                    "result_url": "https://www.w3schools.com/html/mov_bbb.mp4",
-                    "credit_cost": credit_cost,
-                    "demo_mode": True,
-                    "xp_earned": 0,
-                    "message": "Demo modu. DID_API_KEY ekleyerek gerçek video üretebilirsiniz."
-                }
+            credit_cost = 110  # Kling 5s default cost for audio mode
             
             # Real API mode - check credits
             has_credits, current_credits = await self._check_user_credits(user_id, credit_cost)
@@ -301,68 +353,16 @@ class AvatarService:
                     "error": "insufficient_credits",
                     "message": f"Yetersiz kredi. Gerekli: {credit_cost}💎, Mevcut: {current_credits}💎"
                 }
-            
-            # Create talk request to D-ID with audio
-            payload = {
-                "source_url": image_url,
-                "script": {
-                    "type": "audio",
-                    "audio_url": audio_url
-                },
-                "config": {
-                    "stitch": True,
-                    "result_format": "mp4"
-                }
-            }
-            
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f"{self.BASE_URL}/talks",
-                    json=payload,
-                    headers=self._get_headers(),
-                    timeout=30.0
-                )
-                
-                if response.status_code != 201:
-                    logger.error(f"D-ID API error (audio): {response.text}")
-                    return {
-                        "success": False,
-                        "error": "api_error",
-                        "message": "Ses dosyası ile video oluşturma hatası"
-                    }
-                
-                result = response.json()
-                talk_id = result.get("id")
-                
-                # Deduct credits
-                await self._deduct_credits(user_id, credit_cost)
-                
-                # Add XP
-                xp_result = await self._add_xp(user_id)
-                
-                # Save to database
-                try:
-                    self.supabase.table('avatar_jobs').insert({
-                        'user_id': user_id,
-                        'job_id': talk_id,
-                        'status': 'processing',
-                        'image_url': image_url,
-                        'text': '[audio_file]',
-                        'voice_id': 'custom_audio',
-                        'credit_cost': credit_cost
-                    }).execute()
-                except Exception as e:
-                    logger.warning(f"Avatar job save error: {e}")
-                
+
+            kie_api_key = os.getenv("KIE_API_KEY")
+            if not kie_api_key or kie_api_key == "demo":
                 return {
-                    "success": True,
-                    "job_id": talk_id,
-                    "status": "processing",
-                    "credit_cost": credit_cost,
-                    "xp_earned": self.XP_REWARD,
-                    "level_up": xp_result.get("level_up", False)
-                }
-                
+                    "success": False,
+                    "error": "missing_api_key",
+                    "message": "KIE_API_KEY is not configured."
+                }                
+            return await self._submit_kie_avatar(user_id, image_url, audio_url, credit_cost, text="[audio_file]", voice_id="custom_audio")
+            
         except Exception as e:
             logger.error(f"Avatar with audio error: {str(e)}")
             return {
@@ -372,7 +372,7 @@ class AvatarService:
             }
 
     async def get_talk_status(self, job_id: str) -> Dict[str, Any]:
-        """Get the status of a talk job"""
+        """Get the status of an avatar job from Kie.ai (Market API)"""
         try:
             if job_id.startswith("demo_"):
                 return {
@@ -383,13 +383,18 @@ class AvatarService:
                     "demo_mode": True
                 }
             
-            if not self.api_key:
+            kie_api_key = os.getenv("KIE_API_KEY")
+            if not kie_api_key:
                 return {"success": False, "error": "no_api_key"}
             
             async with httpx.AsyncClient() as client:
                 response = await client.get(
-                    f"{self.BASE_URL}/talks/{job_id}",
-                    headers=self._get_headers(),
+                    "https://api.kie.ai/api/v1/jobs/recordInfo",
+                    params={"taskId": job_id},
+                    headers={
+                        "Authorization": f"Bearer {kie_api_key}",
+                        "Content-Type": "application/json"
+                    },
                     timeout=30.0
                 )
                 
@@ -397,25 +402,46 @@ class AvatarService:
                     return {"success": False, "error": "not_found"}
                 
                 result = response.json()
-                status = result.get("status")
+                if result.get("code") != 200:
+                    return {"success": False, "error": "api_error"}
                 
-                result_url = result.get("result_url") if status == "done" else None
-                error_msg = result.get("error") if status == "error" else None
+                task_data = result.get("data", {})
+                raw_state = task_data.get("state", "processing")
+                
+                # Check status
+                status = "processing"
+                result_url = None
+                error_msg = None
+                
+                if raw_state == "success":
+                    status = "done"
+                    # Parse resultJson string
+                    import json
+                    try:
+                        res_json_str = task_data.get("resultJson", "{}")
+                        res_json = json.loads(res_json_str) if isinstance(res_json_str, str) else res_json_str
+                        urls = res_json.get("resultUrls", [])
+                        if urls:
+                            result_url = urls[0]
+                    except:
+                        pass
+                elif raw_state == "fail":
+                    status = "error"
+                    error_msg = task_data.get("failMsg", "Unknown error")
 
+                # Update database & notify
                 if status in ["done", "error"]:
                     try:
-                        # Check current DB status to avoid duplicate notifications
                         job_record = self.supabase.table("avatar_jobs").select("status", "user_id").eq("job_id", job_id).single().execute()
                         if job_record.data and job_record.data.get("status") not in ["done", "error"]:
-                            # Update DB
                             self.supabase.table("avatar_jobs").update({
                                 "status": status,
                                 "result_url": result_url
                             }).eq("job_id", job_id).execute()
                             
-                            # Fire notification
                             if status == "done":
                                 from core.notification_service import notify_generation_complete
+                                import asyncio
                                 user_id = job_record.data.get("user_id")
                                 asyncio.create_task(notify_generation_complete(
                                     user_id=user_id,
@@ -436,74 +462,6 @@ class AvatarService:
         except Exception as e:
             logger.error(f"Get talk status error: {str(e)}")
             return {"success": False, "error": str(e)}
-    
-    async def create_talk_with_audio(
-        self,
-        user_id: str,
-        image_url: str,
-        audio_url: str
-    ) -> Dict[str, Any]:
-        """Create a talking avatar video with custom audio"""
-        try:
-            credit_cost = 20
-            
-            if not self.api_key or self.api_key == "demo":
-                return await self._create_demo_talk(user_id, image_url, "Audio upload", "custom", credit_cost)
-            
-            has_credits, current = await self._check_user_credits(user_id, credit_cost)
-            
-            if not has_credits:
-                return {
-                    "success": False,
-                    "error": "insufficient_credits",
-                    "message": f"Yetersiz kredi. Gerekli: {credit_cost}💎"
-                }
-            
-            payload = {
-                "source_url": image_url,
-                "script": {
-                    "type": "audio",
-                    "audio_url": audio_url
-                },
-                "config": {
-                    "stitch": True,
-                    "result_format": "mp4"
-                }
-            }
-            
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f"{self.BASE_URL}/talks",
-                    json=payload,
-                    headers=self._get_headers(),
-                    timeout=30.0
-                )
-                
-                if response.status_code != 201:
-                    return {"success": False, "error": "api_error"}
-                
-                result = response.json()
-                talk_id = result.get("id")
-                
-                # Deduct credits
-                await self._deduct_credits(user_id, credit_cost)
-                
-                # Add XP
-                xp_result = await self._add_xp(user_id)
-                
-                return {
-                    "success": True,
-                    "job_id": talk_id,
-                    "status": "processing",
-                    "credit_cost": credit_cost,
-                    "xp_earned": self.XP_REWARD,
-                    "level_up": xp_result.get("level_up", False)
-                }
-                
-        except Exception as e:
-            logger.error(f"Avatar with audio error: {str(e)}")
-            return {"success": False, "error": str(e)}
-
 
 # Singleton instance
 avatar_service = AvatarService()
