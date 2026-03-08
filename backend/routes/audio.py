@@ -133,12 +133,12 @@ async def text_to_speech(req: TTSRequest, user = Depends(get_current_user), db =
     # If cost_per_unit is 0.005 (USD per 1k chars)
     
     char_count = len(req.text)
-    cost_per_unit = float(model.get("cost_per_unit", 0))
+    # The database uses cost_usd (or cost_per_char/unit on old models)
+    cost_per_unit = float(model.get("cost_usd", model.get("cost_per_unit", 0.0001)))
     multiplier = float(model.get("cost_multiplier", 2.0))
     
     # Normalize: (char_count / 1000) * cost_per_unit * multiplier
-    # Or if cost_per_unit is per character (e.g. 0.00003)
-    # Let's assume the DB value is per 1000 characters for consistency with tokens
+    # Assuming the DB value is per 1000 characters for consistency with tokens
     
     cost_usd = (char_count / 1000.0) * cost_per_unit
     credits = int(cost_usd * settings.DEFAULT_USD_TO_CREDIT_RATE * multiplier)
