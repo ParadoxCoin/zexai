@@ -205,16 +205,18 @@ class AvatarService:
         driver_url: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Create a talking avatar video via Kie.ai Kling using internal TTS
+        Create a talking avatar video via Kie.ai Kling.
+        The user's text is used as the video prompt.
+        Kling generates the video with native sound (sound=true).
         """
         try:
             estimated_duration = max(5, min(30, len(text) // 10))
-            # Kling 5s or 10s. Let's charge a fixed credit cost for Kling 2.6 Audio
-            credit_cost = 110 # Kling 2.6 Audio 5s cost
+            # Kling 5s or 10s credit cost
+            credit_cost = 110  # Kling 2.6 5s cost
             if estimated_duration > 5:
-                credit_cost = 220 # 10s cost
+                credit_cost = 220  # 10s cost
             
-            # Real API mode - check credits
+            # Check credits
             has_credits, current_credits = await self._check_user_credits(user_id, credit_cost)
             
             if not has_credits:
@@ -231,16 +233,12 @@ class AvatarService:
                     "error": "missing_api_key",
                     "message": "KIE_API_KEY is not configured."
                 }
-            # 1. Generate Audio URL
-            audio_url = await self._generate_tts_audio(text, voice_id)
-            if not audio_url:
-                return {
-                    "success": False,
-                    "error": "tts_failed",
-                    "message": "Ses oluşturulamadı. Lütfen API ayarlarını kontrol edin."
-                }
-                
-            return await self._submit_kie_avatar(user_id, image_url, audio_url, credit_cost, text=text, voice_id=voice_id)
+
+            # Submit directly to Kie.ai - the user's text becomes the video prompt
+            return await self._submit_kie_avatar(
+                user_id, image_url, None, credit_cost,
+                text=text, voice_id=voice_id
+            )
             
         except Exception as e:
             logger.error(f"Avatar creation error: {str(e)}")
@@ -254,7 +252,7 @@ class AvatarService:
         self, 
         user_id: str, 
         image_url: str, 
-        audio_url: str, 
+        audio_url: Optional[str], 
         credit_cost: int,
         text: str = "[audio_file]",
         voice_id: str = "custom_audio"
@@ -268,10 +266,18 @@ class AvatarService:
             if credit_cost > 110:
                 duration = "10"
 
+            # Use the user's text as part of the prompt for context
+            user_prompt = text if text and text != "[audio_file]" else ""
+            base_prompt = "A person speaking naturally, clear lip movements, front facing, professional talking head video"
+            if user_prompt:
+                prompt = f"{base_prompt}. The person says: {user_prompt}"
+            else:
+                prompt = base_prompt
+
             payload = {
                 "model": kie_model,
                 "input": {
-                    "prompt": "A person speaking naturally, clear lip movements synchronized with audio, front facing, professional talking head video",
+                    "prompt": prompt,
                     "sound": True,
                     "duration": duration,
                     "aspect_ratio": "16:9",
