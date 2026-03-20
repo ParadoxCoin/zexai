@@ -221,7 +221,7 @@ async def text_to_speech(req: TTSRequest, user = Depends(get_current_user), db =
                 output_url = "https://placeholder.url/openai_audio.mp3" # TODO: Replace with actual upload
                 status_val = "completed"
 
-        elif provider_id == "kie.ai":
+        elif provider_id == "kie":
             from services.kie_service import kie_service
             result = await kie_service.generate_tts(
                 model_id=model.get("provider_model_id", req.model_id),
@@ -355,8 +355,7 @@ async def generate_music(req: MusicRequest, user = Depends(get_current_user), db
                 if response.status_code == 200:
                     data = response.json()
                     provider_task_id = data.get("task_id")
-        
-        elif provider_id == "kie.ai" or not provider_id:
+        elif provider_id in ("kie", "kie.ai") or not provider_id:
             # Fallback to kie.ai if provider is kie.ai or none
             from services.kie_service import kie_service
             

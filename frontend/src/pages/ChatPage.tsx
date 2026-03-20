@@ -107,6 +107,32 @@ const ChatPage = () => {
   const isProcessingRef = useRef(false);
   const queryClient = useQueryClient();
 
+  // Swipe logic for sidebar
+  const touchStartX = useRef(0);
+  const touchEndY = useRef(0); // For identifying vertical vs horizontal
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchEndY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndYDiff = Math.abs(e.changedTouches[0].clientY - touchEndY.current);
+    const touchEndXDiff = Math.abs(touchEndX - touchStartX.current);
+
+    // Only trigger if horizontal swipe is larger than vertical (prevents accidental triggers during scrolling)
+    if (touchEndXDiff > 50 && touchEndXDiff > touchEndYDiff) {
+      if (touchEndX > touchStartX.current) {
+        // Swipe Right -> Open Sidebar
+        setShowSidebar(true);
+      } else {
+        // Swipe Left -> Close Sidebar
+        setShowSidebar(false);
+      }
+    }
+  };
+
   const { data: conversations, isLoading: isLoadingConversations } = useQuery({
     queryKey: ["conversations"],
     queryFn: async () => {
@@ -326,7 +352,11 @@ const ChatPage = () => {
   const premiumModels = filteredModels.filter(m => m.tier === 'premium');
 
   return (
-    <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-white dark:bg-gray-900">
+    <div 
+      className="flex h-[calc(100vh-64px)] overflow-hidden bg-white dark:bg-gray-900"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* ═══ Left Sidebar (overlay on mobile) ═══ */}
       {showSidebar && (
         <>
@@ -475,7 +505,7 @@ const ChatPage = () => {
                   {showSidebar ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
                 </button>
                 <div className="flex items-center gap-2">
-                  <div className={`w-6 h-6 rounded-lg bg-gradient-to-br ${currentModel.color} flex items-center justify-center text-xs`}>
+                  <div className={`w-6 h-6 rounded-lg bg-gradient-to-br ${(currentModel as any).color || 'from-emerald-400 to-teal-500'} flex items-center justify-center text-xs`}>
                     {currentModel.icon}
                   </div>
                   <div>

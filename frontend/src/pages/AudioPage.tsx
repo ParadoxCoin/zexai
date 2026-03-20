@@ -9,6 +9,7 @@ import {
 import PromptEnhancer from "@/components/PromptEnhancer";
 import NFTMintModal from "@/components/NFTMintModal";
 import { useTranslation } from "react-i18next";
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Voice Characters
 const voiceCharacters = [
@@ -39,7 +40,19 @@ const audioPakages = [
 
 const AudioPage = () => {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState("text-to-video");
+  const [activeTab, setActiveTab] = useState("tts");
+
+  const tabIds = ["tts", "music", "voice", "packages", "library"];
+  const handleDragEnd = (event: any, info: any) => {
+    const swipeThreshold = 50;
+    if (info.offset.x < -swipeThreshold) {
+      const currentIndex = tabIds.indexOf(activeTab);
+      if (currentIndex < tabIds.length - 1) setActiveTab(tabIds[currentIndex + 1]);
+    } else if (info.offset.x > swipeThreshold) {
+      const currentIndex = tabIds.indexOf(activeTab);
+      if (currentIndex > 0) setActiveTab(tabIds[currentIndex - 1]);
+    }
+  };
 
   const [text, setText] = useState("");
   const [musicPrompt, setMusicPrompt] = useState("");
@@ -214,8 +227,21 @@ const AudioPage = () => {
         </div>
 
         {/* TTS Tab */}
+        <AnimatePresence mode="wait">
         {activeTab === "tts" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <motion.div
+             key="tts"
+             initial={{ opacity: 0, x: -20 }}
+             animate={{ opacity: 1, x: 0 }}
+             exit={{ opacity: 0, x: 20 }}
+             transition={{ duration: 0.2 }}
+             drag="x"
+             dragConstraints={{ left: 0, right: 0 }}
+             dragElastic={0.2}
+             dragDirectionLock
+             onDragEnd={handleDragEnd}
+             className="grid grid-cols-1 lg:grid-cols-3 gap-6 touch-pan-y"
+          >
             <div className="lg:col-span-2 space-y-6">
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
                 <div className="p-6">
@@ -343,12 +369,24 @@ const AudioPage = () => {
                 )}
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Music Tab */}
         {activeTab === "music" && (
-          <div className="space-y-6">
+          <motion.div
+             key="music"
+             initial={{ opacity: 0, x: 20 }}
+             animate={{ opacity: 1, x: 0 }}
+             exit={{ opacity: 0, x: -20 }}
+             transition={{ duration: 0.2 }}
+             drag="x"
+             dragConstraints={{ left: 0, right: 0 }}
+             dragElastic={0.2}
+             dragDirectionLock
+             onDragEnd={handleDragEnd}
+             className="space-y-6 touch-pan-y"
+          >
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-6">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
                 <Music className="w-6 h-6 text-pink-500" />
@@ -414,12 +452,24 @@ const AudioPage = () => {
                 {isGeneratingMusic ? t('audioGen.generating', 'Oluşturuluyor...') : t('audioGen.musicGenerateBtn', 'Müzik Oluştur')}
               </button>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Voice Cloning Tab */}
         {activeTab === "voice" && (
-          <div className="max-w-2xl mx-auto space-y-6">
+          <motion.div
+             key="voice"
+             initial={{ opacity: 0, x: 20 }}
+             animate={{ opacity: 1, x: 0 }}
+             exit={{ opacity: 0, x: -20 }}
+             transition={{ duration: 0.2 }}
+             drag="x"
+             dragConstraints={{ left: 0, right: 0 }}
+             dragElastic={0.2}
+             dragDirectionLock
+             onDragEnd={handleDragEnd}
+             className="max-w-2xl mx-auto space-y-6 touch-pan-y"
+          >
             {/* Clone New Voice */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-8">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
@@ -559,12 +609,24 @@ const AudioPage = () => {
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Packages Tab */}
         {activeTab === "packages" && (
-          <div className="space-y-6">
+          <motion.div
+             key="packages"
+             initial={{ opacity: 0, x: 20 }}
+             animate={{ opacity: 1, x: 0 }}
+             exit={{ opacity: 0, x: -20 }}
+             transition={{ duration: 0.2 }}
+             drag="x"
+             dragConstraints={{ left: 0, right: 0 }}
+             dragElastic={0.2}
+             dragDirectionLock
+             onDragEnd={handleDragEnd}
+             className="space-y-6 touch-pan-y"
+          >
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                 <Package className="w-6 h-6 text-pink-500" />
@@ -593,12 +655,24 @@ const AudioPage = () => {
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Library Tab */}
         {activeTab === "library" && (
-          <div className="space-y-6">
+          <motion.div
+             key="library"
+             initial={{ opacity: 0, x: 20 }}
+             animate={{ opacity: 1, x: 0 }}
+             exit={{ opacity: 0, x: -20 }}
+             transition={{ duration: 0.2 }}
+             drag="x"
+             dragConstraints={{ left: 0, right: 0 }}
+             dragElastic={0.2}
+             dragDirectionLock
+             onDragEnd={handleDragEnd}
+             className="space-y-6 touch-pan-y"
+          >
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('audioGen.libraryTitle', 'Seslerim')}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {isLoadingAudio ? (
@@ -646,8 +720,9 @@ const AudioPage = () => {
                 ))
               )}
             </div>
-          </div>
+          </motion.div>
         )}
+        </AnimatePresence>
       </div>
 
       {/* NFT Mint Modal */}

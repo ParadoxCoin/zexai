@@ -301,9 +301,58 @@ const Layout: React.FC = () => {
       </header>
 
       {/* Main Content - Full width with better proportions */}
-      <main className="w-full overflow-x-hidden">
+      <main className="w-full overflow-x-hidden pb-20 lg:pb-0">
         <Outlet />
       </main>
+
+      {/* Mobile Bottom Navigation Bar */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-700/50 safe-area-bottom">
+        <div className="flex items-stretch justify-around h-16 px-1">
+          {[
+            { name: t('nav.dashboard', 'Dashboard'), href: '/dashboard', icon: Home, color: 'from-blue-500 to-cyan-500' },
+            { name: t('nav.images', 'Images'), href: '/images', icon: Image, color: 'from-pink-500 to-rose-500' },
+            { name: t('nav.chat', 'Chat'), href: '/chat', icon: MessageCircle, color: 'from-emerald-500 to-teal-500' },
+            { name: t('nav.videos', 'Videos'), href: '/videos', icon: Video, color: 'from-purple-500 to-violet-500' },
+          ].map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.href;
+            return (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={`flex flex-col items-center justify-center flex-1 gap-0.5 transition-all ${
+                  isActive
+                    ? 'text-purple-600 dark:text-purple-400'
+                    : 'text-gray-400 dark:text-gray-500 active:text-gray-600 dark:active:text-gray-300'
+                }`}
+              >
+                <div className={`p-1.5 rounded-xl transition-all ${isActive ? 'bg-purple-100 dark:bg-purple-900/30' : ''}`}>
+                  <Icon className={`h-5 w-5 ${isActive ? 'scale-110' : ''} transition-transform`} />
+                </div>
+                <span className={`text-[10px] font-semibold leading-none ${isActive ? 'text-purple-600 dark:text-purple-400' : ''}`}>
+                  {item.name}
+                </span>
+              </Link>
+            );
+          })}
+          {/* More button to reveal full menu */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className={`flex flex-col items-center justify-center flex-1 gap-0.5 transition-all ${
+              isMobileMenuOpen
+                ? 'text-purple-600 dark:text-purple-400'
+                : 'text-gray-400 dark:text-gray-500 active:text-gray-600 dark:active:text-gray-300'
+            }`}
+          >
+            <div className={`p-1.5 rounded-xl transition-all ${isMobileMenuOpen ? 'bg-purple-100 dark:bg-purple-900/30' : ''}`}>
+              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </div>
+            <span className={`text-[10px] font-semibold leading-none ${isMobileMenuOpen ? 'text-purple-600 dark:text-purple-400' : ''}`}>
+              {t('nav.more', 'More')}
+            </span>
+          </button>
+        </div>
+      </nav>
 
       {/* Global Achievement Popup */}
       <AchievementPopup />

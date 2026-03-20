@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import PromptEnhancer from "@/components/PromptEnhancer";
 import { useTranslation } from "react-i18next";
+import { motion, AnimatePresence } from 'framer-motion';
 
 import SocialButtons from "@/components/SocialButtons";
 import NFTMintModal from "@/components/NFTMintModal";
@@ -82,6 +83,22 @@ const ImageGenerationPage = () => {
   const [generatedTaskIds, setGeneratedTaskIds] = useState<string[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<'generate' | 'gallery' | 'compare'>('generate');
+
+  const tabs: ('generate' | 'gallery' | 'compare')[] = ['generate', 'gallery', 'compare'];
+
+  const handleDragEnd = (event: any, info: any) => {
+    const swipeThreshold = 50;
+    if (info.offset.x < -swipeThreshold) {
+      // Swiped left -> next
+      const currentIndex = tabs.indexOf(activeTab);
+      if (currentIndex < tabs.length - 1) setActiveTab(tabs[currentIndex + 1]);
+    } else if (info.offset.x > swipeThreshold) {
+      // Swiped right -> prev
+      const currentIndex = tabs.indexOf(activeTab);
+      if (currentIndex > 0) setActiveTab(tabs[currentIndex - 1]);
+    }
+  };
+
   const [selectedModelsForCompare, setSelectedModelsForCompare] = useState<string[]>([]);
   const [compareResults, setCompareResults] = useState<any[]>([]);
   const [isComparing, setIsComparing] = useState(false);
@@ -385,8 +402,21 @@ const ImageGenerationPage = () => {
       {/* ═══════════════════════════════════════════════════════ */}
       {/* GENERATE TAB */}
       {/* ═══════════════════════════════════════════════════════ */}
+      <AnimatePresence mode="wait">
       {activeTab === 'generate' && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <motion.div
+           key="generate"
+           initial={{ opacity: 0, x: -20 }}
+           animate={{ opacity: 1, x: 0 }}
+           exit={{ opacity: 0, x: 20 }}
+           transition={{ duration: 0.2 }}
+           drag="x"
+           dragConstraints={{ left: 0, right: 0 }}
+           dragElastic={0.2}
+           dragDirectionLock
+           onDragEnd={handleDragEnd}
+           className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 touch-pan-y"
+        >
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
             {/* Left Panel - Creation Tools */}
@@ -746,7 +776,7 @@ const ImageGenerationPage = () => {
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       )}
 
 
@@ -755,7 +785,19 @@ const ImageGenerationPage = () => {
       {/* GALLERY TAB (Persistent from backend) */}
       {/* ═══════════════════════════════════════════════════════ */}
       {activeTab === 'gallery' && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <motion.div
+           key="gallery"
+           initial={{ opacity: 0, x: 20 }}
+           animate={{ opacity: 1, x: 0 }}
+           exit={{ opacity: 0, x: -20 }}
+           transition={{ duration: 0.2 }}
+           drag="x"
+           dragConstraints={{ left: 0, right: 0 }}
+           dragElastic={0.2}
+           dragDirectionLock
+           onDragEnd={handleDragEnd}
+           className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 touch-pan-y"
+        >
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -962,14 +1004,26 @@ const ImageGenerationPage = () => {
               </div>
             </div>
           )}
-        </div>
+        </motion.div>
       )}
 
       {/* ═══════════════════════════════════════════════════════ */}
       {/* COMPARE TAB (with proper async polling) */}
       {/* ═══════════════════════════════════════════════════════ */}
       {activeTab === 'compare' && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <motion.div
+           key="compare"
+           initial={{ opacity: 0, x: 20 }}
+           animate={{ opacity: 1, x: 0 }}
+           exit={{ opacity: 0, x: -20 }}
+           transition={{ duration: 0.2 }}
+           drag="x"
+           dragConstraints={{ left: 0, right: 0 }}
+           dragElastic={0.2}
+           dragDirectionLock
+           onDragEnd={handleDragEnd}
+           className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 touch-pan-y"
+        >
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-6">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
               <GitCompare className="w-5 h-5 text-orange-500" />
@@ -1115,8 +1169,9 @@ const ImageGenerationPage = () => {
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
 
       {/* Lightbox Modal */}
       {generateLightboxImage && (

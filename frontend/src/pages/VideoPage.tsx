@@ -11,8 +11,10 @@ import {
 } from "lucide-react";
 import PromptEnhancer from "@/components/PromptEnhancer";
 import MotionBrushEditor from "@/components/video/MotionBrushEditor";
+import MotionBrushEditor from "@/components/video/MotionBrushEditor";
 import NFTMintModal from "@/components/NFTMintModal";
 import { useTranslation } from "react-i18next";
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Provider styling
 const providerStyles: Record<string, { bg: string; text: string; icon: string }> = {
@@ -45,6 +47,21 @@ const VideoPage = () => {
     { id: "packages", name: t('videoGen.tabPackages', 'Paketler'), icon: Package, description: t('videoGen.packagesDesc', "Efekt paketleri") },
     { id: "gallery", name: t('videoGen.tabGallery', 'Galerim'), icon: FolderOpen, description: t('videoGen.galleryDesc', "Videolarım") },
   ];
+
+  const tabs = contentTypes.map(c => c.id);
+  const handleDragEnd = (event: any, info: any) => {
+    const swipeThreshold = 50;
+    if (info.offset.x < -swipeThreshold) {
+      // Swiped left -> next
+      const currentIndex = tabs.indexOf(activeTab);
+      if (currentIndex < tabs.length - 1) setActiveTab(tabs[currentIndex + 1]);
+    } else if (info.offset.x > swipeThreshold) {
+      // Swiped right -> prev
+      const currentIndex = tabs.indexOf(activeTab);
+      if (currentIndex > 0) setActiveTab(tabs[currentIndex - 1]);
+    }
+  };
+
   const [prompt, setPrompt] = useState("");
   const [modelId, setModelId] = useState("");
   const [selectedStyle, setSelectedStyle] = useState("");
@@ -619,8 +636,21 @@ const VideoPage = () => {
         </div>
 
         {/* Text to Video / Image to Video / Video to Video Tabs */}
+        <AnimatePresence mode="wait">
         {(activeTab === "text-to-video" || activeTab === "image-to-video" || activeTab === "video-to-video") && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <motion.div
+             key="video-generation"
+             initial={{ opacity: 0, x: -20 }}
+             animate={{ opacity: 1, x: 0 }}
+             exit={{ opacity: 0, x: 20 }}
+             transition={{ duration: 0.2 }}
+             drag="x"
+             dragConstraints={{ left: 0, right: 0 }}
+             dragElastic={0.2}
+             dragDirectionLock
+             onDragEnd={handleDragEnd}
+             className="grid grid-cols-1 lg:grid-cols-3 gap-6 touch-pan-y"
+          >
 
             {/* Left Panel - Model Selection */}
             <div className="lg:col-span-1 space-y-4">
@@ -967,12 +997,24 @@ const VideoPage = () => {
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Compare Tab */}
         {activeTab === "compare" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <motion.div
+             key="compare"
+             initial={{ opacity: 0, x: 20 }}
+             animate={{ opacity: 1, x: 0 }}
+             exit={{ opacity: 0, x: -20 }}
+             transition={{ duration: 0.2 }}
+             drag="x"
+             dragConstraints={{ left: 0, right: 0 }}
+             dragElastic={0.2}
+             dragDirectionLock
+             onDragEnd={handleDragEnd}
+             className="grid grid-cols-1 lg:grid-cols-3 gap-6 touch-pan-y"
+          >
 
             {/* Left Panel - Model Selection */}
             <div className="lg:col-span-1 space-y-4">
@@ -1172,12 +1214,24 @@ const VideoPage = () => {
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Effects Tab */}
         {activeTab === "effects" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <motion.div
+             key="effects"
+             initial={{ opacity: 0, x: 20 }}
+             animate={{ opacity: 1, x: 0 }}
+             exit={{ opacity: 0, x: -20 }}
+             transition={{ duration: 0.2 }}
+             drag="x"
+             dragConstraints={{ left: 0, right: 0 }}
+             dragElastic={0.2}
+             dragDirectionLock
+             onDragEnd={handleDragEnd}
+             className="grid grid-cols-1 lg:grid-cols-3 gap-6 touch-pan-y"
+          >
 
             {/* Left Panel - Effect Selection */}
             <div className="lg:col-span-1 space-y-4">
@@ -1392,12 +1446,24 @@ const VideoPage = () => {
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Packages Tab */}
         {activeTab === "packages" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <motion.div
+             key="packages"
+             initial={{ opacity: 0, x: 20 }}
+             animate={{ opacity: 1, x: 0 }}
+             exit={{ opacity: 0, x: -20 }}
+             transition={{ duration: 0.2 }}
+             drag="x"
+             dragConstraints={{ left: 0, right: 0 }}
+             dragElastic={0.2}
+             dragDirectionLock
+             onDragEnd={handleDragEnd}
+             className="grid grid-cols-1 lg:grid-cols-3 gap-6 touch-pan-y"
+          >
 
             {/* Left Panel - Package Selection */}
             <div className="lg:col-span-1 space-y-4">
@@ -1561,12 +1627,24 @@ const VideoPage = () => {
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Gallery Tab */}
         {activeTab === "gallery" && (
-          <div className="space-y-6">
+          <motion.div
+             key="gallery"
+             initial={{ opacity: 0, x: 20 }}
+             animate={{ opacity: 1, x: 0 }}
+             exit={{ opacity: 0, x: -20 }}
+             transition={{ duration: 0.2 }}
+             drag="x"
+             dragConstraints={{ left: 0, right: 0 }}
+             dragElastic={0.2}
+             dragDirectionLock
+             onDragEnd={handleDragEnd}
+             className="space-y-6 touch-pan-y"
+          >
             <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <FolderOpen className="w-6 h-6 text-purple-500" />
               {t('videoGen.galleryTitle', 'Videolarım')}
@@ -1784,8 +1862,9 @@ const VideoPage = () => {
                 ))
               )}
             </div>
-          </div>
+          </motion.div>
         )}
+        </AnimatePresence>
         {/* Motion Brush Modal */}
         {showMotionBrush && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
