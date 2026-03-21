@@ -11,15 +11,15 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * Used for generative AI API payments and utility within the platform.
  */
 contract ZexToken is ERC20, ERC20Burnable, Ownable {
-    uint256 public constant MAX_SUPPLY = 100_000_000 * 10**18;
-    uint256 public constant MIN_SUPPLY = 50_000_000 * 10**18; // Cease deflationary burn below this
+    uint256 public constant MAX_SUPPLY = 1_000_000_000 * 10**18;
+    uint256 public constant MIN_SUPPLY = 500_000_000 * 10**18; // Cease deflationary burn below this
     
     // V3 Base Transfer Tax: 0.5% (5 basis points out of 1000)
     uint256 public transferFeeBasisPoints = 5; 
     mapping(address => bool) public isExcludedFromFee;
 
     // V3 Anti-Whale max tx amount (1% of MAX_SUPPLY)
-    uint256 public maxTxAmount = 1_000_000 * 10**18;
+    uint256 public maxTxAmount = 10_000_000 * 10**18;
 
     // V3 Staking Rewards / Auto-Liquidity Wallet
     address public stakingRewardWallet;
@@ -54,9 +54,9 @@ contract ZexToken is ERC20, ERC20Burnable, Ownable {
         uint256 currentSupply = totalSupply();
         if (currentSupply <= MIN_SUPPLY) {
             return 0; // No deflationary fee once min supply is reached
-        } else if (currentSupply <= 60_000_000 * 10**18) {
+        } else if (currentSupply <= 600_000_000 * 10**18) {
             return 1; // 0.1% (1 basis point)
-        } else if (currentSupply <= 75_000_000 * 10**18) {
+        } else if (currentSupply <= 750_000_000 * 10**18) {
             return 3; // 0.3% (3 basis points)
         } else {
             return transferFeeBasisPoints; // Base fee (usually 5 = 0.5%)

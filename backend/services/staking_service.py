@@ -29,7 +29,7 @@ STAKING_ABI = [
     }
 ]
 
-ZEX_STAKING_ADDRESS = os.environ.get("ZEX_STAKING_ADDRESS", "0x6cBF98411AFd652E6AC01E18F6158B519Fb59410")
+ZEX_STAKING_ADDRESS = os.environ.get("ZEX_STAKING_ADDRESS", "0xbee8cb1f28Dfd0713311f3b46bFf3F24eAc72733")
 POLYGON_RPC_URL = os.environ.get("POLYGON_RPC_URL", "https://polygon-mainnet.g.alchemy.com/v2/4OECI-BgprApuDWzNqcNL")
 
 # Connect to Polygon RPC
@@ -77,13 +77,13 @@ class StakingService:
     @staticmethod
     def get_tier_for_balance(staked_balance: float) -> Tuple[str, int]:
         """Returns the tier name and the monthly credit reward for the given balance."""
-        if staked_balance >= 50000:
+        if staked_balance >= 500000:
             return "Diamond", 15000
-        elif staked_balance >= 10000:
+        elif staked_balance >= 100000:
             return "Gold", 3000
-        elif staked_balance >= 2000:
+        elif staked_balance >= 20000:
             return "Silver", 500
-        elif staked_balance >= 500:
+        elif staked_balance >= 5000:
             return "Bronze", 100
         return "None", 0
 
@@ -109,10 +109,10 @@ class StakingService:
 
         # 3. Read Staked Balance directly from Polygon Mainnet Blockchain
         staked_balance = StakingService.get_staked_balance(wallet_address)
-        if staked_balance < 500:
+        if staked_balance < 5000:
             return {
                 "success": False, 
-                "message": f"Kredi kazanabilmek için ZexStaking kontratında en az 500 ZEX kilitli tutmalısınız. Sizin miktarınız: {staked_balance} ZEX"
+                "message": f"Kredi kazanabilmek için ZexStaking kontratında en az 5000 ZEX kilitli tutmalısınız. Sizin miktarınız: {staked_balance} ZEX"
             }
 
         # 4. Calculate Tier and Credits

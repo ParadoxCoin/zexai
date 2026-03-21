@@ -918,8 +918,8 @@
       ]
     },
     "C:\\Users\\my\\Desktop\\ZexAi\\Zex\\smart-contracts\\contracts\\ZexToken.sol": {
-      "lastModificationDate": 1772630487508,
-      "contentHash": "e1b312a11a9745cd2e627ea955749ed8",
+      "lastModificationDate": 1774106821007,
+      "contentHash": "65c67f9cc9d2894d369d82479eb4f24b",
       "sourceName": "contracts/ZexToken.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -958,8 +958,8 @@
       ]
     },
     "C:\\Users\\my\\Desktop\\ZexAi\\Zex\\smart-contracts\\contracts\\ZexStaking.sol": {
-      "lastModificationDate": 1772189325789,
-      "contentHash": "abd91acb84bfac6725c8c9abf7d56f9a",
+      "lastModificationDate": 1774102225199,
+      "contentHash": "d0ccf99bf81eaa5c6c1f04af9e3e3530",
       "sourceName": "contracts/ZexStaking.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -1032,6 +1032,87 @@
       ],
       "artifacts": [
         "ReentrancyGuard"
+      ]
+    },
+    "C:\\Users\\my\\Desktop\\ZexAi\\Zex\\smart-contracts\\contracts\\ZexVesting.sol": {
+      "lastModificationDate": 1774104696060,
+      "contentHash": "af699b0a695fca8f5ce58d36df4b6960",
+      "sourceName": "contracts/ZexVesting.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "@openzeppelin/contracts/access/Ownable.sol",
+        "@openzeppelin/contracts/utils/ReentrancyGuard.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "ZexVesting"
+      ]
+    },
+    "C:\\Users\\my\\Desktop\\ZexAi\\Zex\\smart-contracts\\contracts\\ZexPresale.sol": {
+      "lastModificationDate": 1774104444476,
+      "contentHash": "aaa117a4efad23340ce3046f16cb1ba8",
+      "sourceName": "contracts/ZexPresale.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "@openzeppelin/contracts/access/Ownable.sol",
+        "@openzeppelin/contracts/utils/ReentrancyGuard.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "IBurnableERC20",
+        "ZexPresale"
       ]
     }
   }

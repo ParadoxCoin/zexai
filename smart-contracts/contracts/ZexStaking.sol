@@ -13,7 +13,7 @@ contract ZexStaking is ReentrancyGuard, Ownable {
     IBurnableERC20 public token;
 
     uint256 public apy = 50; // 50% Annual Percentage Yield
-    uint256 public lockupDuration = 14 days;
+    uint256 public lockupDuration = 30 days;
     uint256 public earlyPenalty = 10; // 10% penalty
     uint256 public constant SECONDS_IN_YEAR = 31536000;
 
@@ -24,10 +24,14 @@ contract ZexStaking is ReentrancyGuard, Ownable {
         uint256 lastStakeTime;
         uint256 lockupEndTime;
         uint256 pendingRewards;
+        uint256 rewardDebt; // Added for O(1) redistributed penalty bonus
     }
 
     mapping(address => Staker) public stakers;
     uint256 public totalStaked;
+    
+    // Global accumulator for redistributed penalty tokens
+    uint256 public penaltyAccumulatorPerShare;
 
     event Staked(address indexed user, uint256 amount, uint256 lockupEndTime);
     event Withdrawn(address indexed user, uint256 amount, uint256 penalty);
@@ -43,15 +47,22 @@ contract ZexStaking is ReentrancyGuard, Ownable {
         if (staker.balance == 0) {
             return staker.pendingRewards;
         }
+        
+        // 1. Calculate Fixed APY Reward
         uint256 timeStaked = block.timestamp - staker.lastStakeTime;
-        uint256 newReward = (staker.balance * apy * timeStaked) / (100 * SECONDS_IN_YEAR);
-        return staker.pendingRewards + newReward;
+        uint256 fixedReward = (staker.balance * apy * timeStaked) / (100 * SECONDS_IN_YEAR);
+        
+        // 2. Calculate Redistributed Bonus Reward
+        uint256 bonusReward = (staker.balance * (penaltyAccumulatorPerShare - staker.rewardDebt)) / 1e18;
+        
+        return staker.pendingRewards + fixedReward + bonusReward;
     }
 
     modifier updateReward(address account) {
         if (account != address(0)) {
             stakers[account].pendingRewards = earned(account);
             stakers[account].lastStakeTime = block.timestamp;
+            stakers[account].rewardDebt = penaltyAccumulatorPerShare;
         }
         _;
     }
@@ -83,8 +94,21 @@ contract ZexStaking is ReentrancyGuard, Ownable {
         uint256 payout = amount - penalty;
 
         if (penalty > 0) {
-            token.burn(penalty);
+            // Split penalty: 50% burned, 50% redistributed
+            uint256 burnAmount = penalty / 2;
+            uint256 distAmount = penalty - burnAmount;
+            
+            token.burn(burnAmount);
+            
+            // Redistribute to remaining stakers to increase their APY
+            if (totalStaked > 0) {
+                penaltyAccumulatorPerShare += (distAmount * 1e18) / totalStaked;
+            } else {
+                // If no one is staking anymore, just burn it all to prevent getting stuck
+                token.burn(distAmount);
+            }
         }
+        
         require(token.transfer(msg.sender, payout), "Payout transfer failed");
 
         emit Withdrawn(msg.sender, amount, penalty);

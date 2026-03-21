@@ -7,6 +7,7 @@ import { FailoverPanel } from '@/components/admin/FailoverPanel';
 import { RoleManagementPanel } from '@/components/admin/RoleManagementPanel';
 import { PricingManagementPanel } from '@/components/admin/PricingManagementPanel';
 import AdminGamificationPanel from '@/components/admin/AdminGamificationPanel';
+import { VestingPanel } from '@/components/admin/VestingPanel';
 import {
   Users, DollarSign, Activity, TrendingUp, Search, Edit, Ban, CheckCircle,
   Plus, Minus, Bell, Settings, BarChart3, PieChart, LineChart, AlertCircle,
@@ -47,7 +48,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-type TabType = 'overview' | 'users' | 'analytics' | 'monitoring' | 'models' | 'settings' | 'audit' | 'gamification';
+type TabType = 'overview' | 'users' | 'analytics' | 'monitoring' | 'models' | 'settings' | 'audit' | 'gamification' | 'vesting';
 
 export const AdminDashboardEnhanced: React.FC = () => {
   const toast = useToast();
@@ -267,6 +268,7 @@ export const AdminDashboardEnhanced: React.FC = () => {
             { id: 'models', label: 'Modeller', icon: LayoutGrid },
             { id: 'monitoring', label: 'Monitoring', icon: Server },
             { id: 'gamification', label: 'Gamification', icon: Trophy },
+            { id: 'vesting', label: 'Vesting (Token Kilit)', icon: Shield },
             { id: 'audit', label: 'Audit Log', icon: Shield },
             { id: 'settings', label: 'Ayarlar', icon: Settings }
           ].map((tab) => {
@@ -669,6 +671,11 @@ export const AdminDashboardEnhanced: React.FC = () => {
       {/* Gamification Tab */}
       {activeTab === 'gamification' && (
         <AdminGamificationPanel />
+      )}
+
+      {/* Vesting Tab */}
+      {activeTab === 'vesting' && (
+        <VestingPanel />
       )}
     </div>
   );

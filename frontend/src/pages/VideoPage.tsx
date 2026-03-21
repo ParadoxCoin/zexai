@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import PromptEnhancer from "@/components/PromptEnhancer";
 import MotionBrushEditor from "@/components/video/MotionBrushEditor";
-import MotionBrushEditor from "@/components/video/MotionBrushEditor";
 import NFTMintModal from "@/components/NFTMintModal";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from 'framer-motion';

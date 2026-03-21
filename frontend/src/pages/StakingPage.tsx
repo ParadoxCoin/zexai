@@ -150,7 +150,7 @@ export const StakingPage: React.FC = () => {
         // Warn about early penalty
         if (isLocked) {
             const confirmWithdraw = window.confirm(
-                "⚠️ DİKKAT: Kilit süreniz henüz dolmadı!\n\nŞu an kilitli tokenlarınızı çekerseniz %10 Erken Çekim Cezası (Unstake Penalty) kesilecektir. Gerçekten ZEX'lerinizin %10'undan vazgeçerek işlemi onaylıyor musunuz?"
+                "⚠️ DİKKAT: Kilit süreniz henüz dolmadı!\n\nŞu an kilitli tokenlarınızı çekerseniz %10 Erken Çekim Cezası (%5 Yakım, %5 Staking Havuzuna İade) kesilecektir. Gerçekten ZEX'lerinizin %10'undan vazgeçerek işlemi onaylıyor musunuz?"
             );
             if (!confirmWithdraw) return;
         }
@@ -319,7 +319,7 @@ export const StakingPage: React.FC = () => {
                             </div>
 
                             <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
-                                Staking (Tier) seviyenize göre her ay ücretsiz AI Kredisi talep edebilirsiniz (Min 500 ZEX kilitli olmalı).
+                                Staking (Tier) seviyenize göre her ay ücretsiz AI Kredisi talep edebilirsiniz (Min 5,000 ZEX kilitli olmalı).
                             </p>
 
                             <button
@@ -341,9 +341,9 @@ export const StakingPage: React.FC = () => {
                                 )}
                             </button>
 
-                            {parseFloat(stakedBalance) < 500 && !hasClaimedCredits && (
+                            {parseFloat(stakedBalance) < 5000 && !hasClaimedCredits && (
                                 <p className="text-center text-xs text-red-500 mt-3 font-medium">
-                                    Tier 1 (Bronze) için en az 500 ZEX kilitlemelisiniz.
+                                    Tier 1 (Bronze) için en az 5,000 ZEX kilitlemelisiniz.
                                 </p>
                             )}
                         </motion.div>
@@ -444,9 +444,9 @@ export const StakingPage: React.FC = () => {
                                             <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-xl p-4 mb-8 flex items-start gap-3">
                                                 <AlertCircle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
                                                 <div className="space-y-1">
-                                                    <p className="text-xs font-bold text-blue-900 dark:text-blue-300">Yeni Staking Kuralları (V2)</p>
+                                                    <p className="text-xs font-bold text-blue-900 dark:text-blue-300">Yeni Staking Kuralları (V3)</p>
                                                     <p className="text-xs text-blue-800 dark:text-blue-400 leading-relaxed">
-                                                        Tokenlarınızı kilitlediğiniz andan itibaren **14 Günlük** bir zorunlu kilit süresi (Lock-up) başlar. Kazançlarınız saniye saniye yansımaya başlar ve %{rewardRateDisplay} APY (Yıllık Getiri) ile değerlendirilir.
+                                                        Tokenlarınızı kilitlediğiniz andan itibaren **30 Günlük** bir zorunlu kilit süresi (Lock-up) başlar. Kazançlarınız saniye saniye yansımaya başlar ve %{rewardRateDisplay} APY (Yıllık Getiri) ile değerlendirilir.
                                                     </p>
                                                 </div>
                                             </div>
@@ -499,7 +499,7 @@ export const StakingPage: React.FC = () => {
                                                         <div className="p-2.5 bg-red-100 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-lg">
                                                             <p className="text-xs font-bold text-red-600 dark:text-red-400 mb-0.5">⚠️ Erken Çekim Uyarısı</p>
                                                             <p className="text-[11px] text-red-500 dark:text-red-300">
-                                                                Kilit sürenizin dolmasına kalan süre nedeniyle, şu an para çekerseniz çekilen miktar üzerinden <b>%10 oranında ceza (Burn)</b> kesilecektir.
+                                                                Kilit sürenizin dolmasına kalan süre nedeniyle, şu an para çekerseniz çekilen miktar üzerinden <b>%10 oranında ceza (%5 Yakım, %5 Havuza İade)</b> kesilecektir.
                                                             </p>
                                                             <p className="text-[10px] text-red-500 dark:text-red-400 mt-2 font-mono bg-red-500/10 p-2 rounded border border-red-500/20">
                                                                 Kalan Süre: <span className="font-bold text-red-600 dark:text-red-400 text-xs">{timeRemaining}</span>

@@ -12,7 +12,9 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1',
 });
 
-type TabType = 'overview' | 'users' | 'analytics' | 'settings';
+import { VestingPanel } from '../components/admin/VestingPanel';
+
+type TabType = 'overview' | 'users' | 'analytics' | 'settings' | 'vesting';
 
 export const AdminDashboard: React.FC = () => {
   const toast = useToast();
@@ -288,6 +290,7 @@ export const AdminDashboard: React.FC = () => {
             { id: 'overview', label: 'Genel Bakış', icon: BarChart3 },
             { id: 'users', label: 'Kullanıcılar', icon: Users },
             { id: 'analytics', label: 'Analitik', icon: PieChart },
+            { id: 'vesting', label: 'Vesting (Token Kilit)', icon: CheckCircle },
             { id: 'settings', label: 'Ayarlar', icon: Settings }
           ].map((tab) => {
             const Icon = tab.icon;
@@ -702,6 +705,11 @@ export const AdminDashboard: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Vesting Tab */}
+      {activeTab === 'vesting' && (
+        <VestingPanel />
       )}
     </div>
   );
