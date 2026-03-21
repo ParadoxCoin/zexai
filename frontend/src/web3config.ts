@@ -3,7 +3,7 @@ import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
 import { polygon, mainnet, bsc } from 'wagmi/chains'
 
 // Get projectId from https://cloud.walletconnect.com
-export const projectId = '7618ae03fb9e1bd4fcdaeb7f1ca5c165';
+export const projectId = '42e0fa2294608f4479aecb7f5798fd90';
 
 const metadata = {
     name: 'ZexAI Platform',
