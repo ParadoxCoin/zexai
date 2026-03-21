@@ -1,8 +1,6 @@
-import { createWeb3Modal } from '@web3modal/wagmi/react';
-import { defaultWagmiConfig } from '@web3modal/wagmi/react/config';
-
-import { cookieStorage, createStorage } from 'wagmi';
-import { mainnet, polygon, bsc, sepolia } from 'wagmi/chains';
+import { createAppKit } from '@reown/appkit/react'
+import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
+import { polygon, mainnet, bsc } from 'wagmi/chains'
 
 // Get projectId from https://cloud.walletconnect.com
 export const projectId = '7618ae03fb9e1bd4fcdaeb7f1ca5c165';
@@ -14,30 +12,32 @@ const metadata = {
     icons: ['https://zexai.io/logo192.png']
 }
 
-const chains = [polygon, mainnet, bsc, sepolia] as const;
-export const config = defaultWagmiConfig({
-    chains,
+const networks = [polygon, mainnet, bsc]
+
+export const wagmiAdapter = new WagmiAdapter({
+    projectId,
+    networks
+})
+
+// Create Modal with MetaMask & Trust Wallet featured
+createAppKit({
+    adapters: [wagmiAdapter],
+    networks,
+    defaultNetwork: polygon,
     projectId,
     metadata,
-    enableEIP6963: true, // Crucial for multi-wallet discovery (Phantom + MetaMask)
-    enableInjected: true, // Fallback for standard MetaMask injection
-    enableCoinbase: true,
-    auth: {
-        email: true,
-        showWallets: true,
-        walletFeatures: true
+    featuredWalletIds: [
+        // MetaMask
+        'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96',
+        // Trust Wallet
+        '4622a2b2d6af1c9844944291e5e7351a6aa24cd7b23099efac1b2fd875da31a0',
+    ],
+    features: {
+        analytics: false,
+        email: false,
+        socials: false,
+        emailShowWallets: true,
     },
-    storage: createStorage({
-        storage: cookieStorage
-    }),
-});
-
-// Create Modal
-createWeb3Modal({
-    wagmiConfig: config,
-    projectId,
-    enableAnalytics: false,
-    enableOnramp: true,
     themeMode: 'dark',
     themeVariables: {
         '--w3m-accent': '#7C3AED',
@@ -46,4 +46,6 @@ createWeb3Modal({
         '--w3m-border-radius-master': '16px',
         '--w3m-font-family': 'Inter, sans-serif'
     }
-});
+})
+
+export const config = wagmiAdapter.wagmiConfig

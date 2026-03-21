@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { ethers, BrowserProvider, Contract, JsonRpcProvider } from 'ethers';
 import { useAccount, useDisconnect } from 'wagmi';
-import { useWeb3Modal } from '@web3modal/wagmi/react';
+import { useAppKit } from '@reown/appkit/react';
 
 // Contract Addresses (Polygon Mainnet - Deployed March 2026)
 export const ZEX_TOKEN_ADDRESS = "0x63A489B9214b89606a12cAe3e7B9275c175f7268";
@@ -55,7 +55,7 @@ const Web3Context = createContext<Web3ContextType | undefined>(undefined);
 export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { address: account, isConnecting } = useAccount();
     const { disconnect } = useDisconnect();
-    const { open } = useWeb3Modal();
+    const { open } = useAppKit();
 
     const [zexBalance, setZexBalance] = useState<string>("0");
     const [provider, setProvider] = useState<BrowserProvider | null>(null);
