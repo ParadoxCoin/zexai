@@ -85,8 +85,10 @@ async def prepare_nft_metadata(payload: Dict[str, Any] = Body(...)):
                 logger.warning(f"Failed to upload JSON metadata to IPFS, using fallback: {json_e}")
                 
         else:
-            # No Pinata configured: use asset URL directly
+            # No Pinata configured: use asset URL directly as the metadata URI
+            # This allows NFT minting to work without IPFS - the smart contract just stores the URL
             logger.warning("Pinata not configured, using asset URL as metadata URI")
+            metadata_uri = asset_url
 
         # Set final gateway URL for the frontend
         gateway_url = ipfs_service.get_gateway_url(metadata_uri) if metadata_uri.startswith("ipfs://") else metadata_uri
