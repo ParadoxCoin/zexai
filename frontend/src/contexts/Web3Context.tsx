@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { ethers, BrowserProvider, Contract, JsonRpcProvider } from 'ethers';
-import { useAccount, useDisconnect } from 'wagmi';
+import { useAccount, useDisconnect, useWalletClient } from 'wagmi';
 import { useAppKit } from '@reown/appkit/react';
 
 // Contract Addresses (Polygon Mainnet - Deployed March 2026)
@@ -54,6 +54,7 @@ const Web3Context = createContext<Web3ContextType | undefined>(undefined);
 
 export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { address: account, isConnecting } = useAccount();
+    const { data: walletClient } = useWalletClient();
     const { disconnect } = useDisconnect();
     const { open } = useAppKit();
 
@@ -62,7 +63,22 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     useEffect(() => {
         const initProvider = async () => {
-            if (window.ethereum) {
+            if (walletClient) {
+                try {
+                    const { chain, transport } = walletClient;
+                    const network = {
+                        chainId: chain?.id || 137,
+                        name: chain?.name || 'polygon'
+                    };
+                    const _provider = new ethers.BrowserProvider(transport, network);
+                    setProvider(_provider);
+                    if (account) updateBalance(account, _provider);
+                    else setZexBalance("0");
+                } catch (e) {
+                    console.error("WalletClient conversion error:", e);
+                    if (account) updateBalance(account);
+                }
+            } else if (window.ethereum) {
                 const _provider = new ethers.BrowserProvider(window.ethereum as any);
                 setProvider(_provider);
                 if (account) {
@@ -70,10 +86,17 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 } else {
                     setZexBalance("0");
                 }
+            } else {
+                // Ultimate fallback for mobile read-only where we just need the balance
+                if (account) {
+                    updateBalance(account);
+                } else {
+                    setZexBalance("0");
+                }
             }
         };
         initProvider();
-    }, [account]);
+    }, [account, walletClient]);
 
     const updateBalance = async (address: string, _provider?: BrowserProvider) => {
         if (!ZEX_TOKEN_ADDRESS) return;
@@ -122,37 +145,46 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const getContracts = async () => {
-        if (!provider || !account) return null;
+        if (!account) return null;
+        let signer;
+
         try {
-            // Check if connected to Polygon Mainnet (137)
-            const network = await provider.getNetwork();
-            if (network.chainId !== 137n) {
-                try {
-                    console.log("Requesting network switch to Polygon Mainnet");
-                    // @ts-ignore
-                    await window.ethereum.request({
-                        method: 'wallet_switchEthereumChain',
-                        params: [{ chainId: '0x89' }], // 137 in hex
-                    });
-                    // Re-instantiate provider after switch
-                    // @ts-ignore
-                    const newProvider = new ethers.BrowserProvider(window.ethereum);
-                    const signer = await newProvider.getSigner();
-                    return {
-                        zexContract: new ethers.Contract(ZEX_TOKEN_ADDRESS, ERC20_ABI, signer),
-                        nftContract: new ethers.Contract(ZEXAI_NFT_ADDRESS, NFT_ABI, signer),
-                        stakingContract: new ethers.Contract(ZEX_STAKING_ADDRESS, STAKING_ABI, signer)
-                    };
-                } catch (switchError: any) {
-                    // This error code indicates that the chain has not been added to MetaMask.
-                    if (switchError.code === 4902) {
-                        throw new Error("Lütfen MetaMask'a Polygon Mainnet ağını ekleyin.");
-                    }
-                    throw new Error("Lütfen işlemi Polygon Mainnet ağında gerçekleştirin.");
+            if (walletClient) {
+                // Check if connected to Polygon Mainnet (137)
+                if (walletClient.chain?.id !== 137) {
+                    throw new Error("Lütfen cüzdanınızdan Polygon Mainnet ağını seçin.");
                 }
+                const network = {
+                    chainId: walletClient.chain.id,
+                    name: walletClient.chain.name
+                };
+                const _provider = new ethers.BrowserProvider(walletClient.transport, network);
+                // Note: getSigner(account) requires exactly 1 arg in ethers v6
+                signer = await _provider.getSigner(account);
+            } else if (provider) {
+                const network = await provider.getNetwork();
+                if (network.chainId !== 137n && window.ethereum) {
+                    try {
+                        console.log("Requesting network switch to Polygon Mainnet");
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: '0x89' }], // 137 in hex
+                        });
+                        const newProvider = new ethers.BrowserProvider(window.ethereum as any);
+                        signer = await newProvider.getSigner();
+                    } catch (switchError: any) {
+                        if (switchError.code === 4902) {
+                            throw new Error("Lütfen MetaMask'a Polygon Mainnet ağını ekleyin.");
+                        }
+                        throw new Error("Lütfen işlemi Polygon Mainnet ağında gerçekleştirin.");
+                    }
+                } else {
+                    signer = await provider.getSigner();
+                }
+            } else {
+                throw new Error("Cüzdan bağlantısı bulunamadı veya ağ desteklenmiyor.");
             }
 
-            const signer = await provider.getSigner();
             const zexContract = new ethers.Contract(ZEX_TOKEN_ADDRESS, ERC20_ABI, signer);
             const nftContract = new ethers.Contract(ZEXAI_NFT_ADDRESS, NFT_ABI, signer);
             const stakingContract = new ethers.Contract(ZEX_STAKING_ADDRESS, STAKING_ABI, signer);
