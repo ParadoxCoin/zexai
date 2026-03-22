@@ -8,7 +8,7 @@ export const ZEX_TOKEN_ADDRESS = "0x28De651aCA0f8584FA2E072cE7c1F4EE774a8B4a";
 export const ZEX_STAKING_ADDRESS = "0xbee8cb1f28Dfd0713311f3b46bFf3F24eAc72733";
 export const ZEX_VESTING_ADDRESS = "0x93467b1eBd6215Bc1810488C98eCad787B59101c";
 export const ZEX_PRESALE_ADDRESS = "0x37CAd7cf190059c6716967CB429cD4CD13c390fC";
-export const ZEXAI_NFT_ADDRESS = "0x7562Da91986B72453DC5aE6cc89d524ba03e38dA";
+export const ZEXAI_NFT_ADDRESS = "0x5938F1a7038997642a4446c20Df72224acba9A60";
 
 // Polygon Mainnet read-only provider (Alchemy)
 const POLYGON_RPC = "https://polygon-mainnet.g.alchemy.com/v2/4OECI-BgprApuDWzNqcNL";
