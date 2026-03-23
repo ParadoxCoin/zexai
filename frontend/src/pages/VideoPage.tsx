@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { apiService } from "@/services/api";
 import {
   Video, Sparkles, Package, FolderOpen, Play, Upload,
@@ -7,7 +8,7 @@ import {
   Zap, Film, Wand2, Palette, ChevronRight, Eye, Filter,
   Scissors, Camera, Move, RotateCcw, Volume2, Maximize,
   Timer, Crown, Search, Image, RefreshCcw, X, Share2, Twitter, Facebook, Link2,
-  GitCompare, Check
+  GitCompare, Check, User
 } from "lucide-react";
 import PromptEnhancer from "@/components/PromptEnhancer";
 import MotionBrushEditor from "@/components/video/MotionBrushEditor";
@@ -35,6 +36,7 @@ const videoStyles = [
 
 const VideoPage = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("text-to-video");
 
   // Content type tabs with translations
@@ -42,6 +44,7 @@ const VideoPage = () => {
     { id: "text-to-video", name: t('videoGen.tabT2V', 'Metin → Video'), icon: Film, description: t('videoGen.t2vDesc', "Metinden video oluştur") },
     { id: "image-to-video", name: t('videoGen.tabI2V', 'Görsel → Video'), icon: Image, description: t('videoGen.i2vDesc', "Görseli hareketlendir") },
     { id: "compare", name: t('videoGen.tabCompare', 'Karşılaştır'), icon: GitCompare, description: t('videoGen.compareDescModels', "Modelleri karşılaştır") },
+    { id: "avatar", name: t('videoGen.tabAvatar', 'Avatar'), icon: User, description: t('videoGen.avatarDesc', "Avatar oluştur") },
     { id: "effects", name: t('videoGen.tabEffects', 'Efektler'), icon: Sparkles, description: t('videoGen.effectsDesc', "Video efektleri") },
     { id: "packages", name: t('videoGen.tabPackages', 'Paketler'), icon: Package, description: t('videoGen.packagesDesc', "Efekt paketleri") },
     { id: "gallery", name: t('videoGen.tabGallery', 'Galerim'), icon: FolderOpen, description: t('videoGen.galleryDesc', "Videolarım") },
@@ -618,6 +621,10 @@ const VideoPage = () => {
                 <button
                   key={type.id}
                   onClick={() => {
+                    if (type.id === 'avatar') {
+                      navigate('/avatar');
+                      return;
+                    }
                     setActiveTab(type.id);
                     setModelId("");
                   }}

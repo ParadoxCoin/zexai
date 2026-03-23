@@ -326,59 +326,10 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
-    const createCollectionContract = async (name: string, symbol: string, maxSupply: number, royaltyBps: number) => {
-        const contracts = await getContracts();
-        if (!contracts) return null;
-
-        try {
-            // 1. Calculate the required ZEX fee for the Factory
-            const factoryReadOnly = new ethers.Contract(ZEXAI_FACTORY_ADDRESS, FACTORY_ABI, polygonProvider);
-            const baseFeeWei: bigint = await factoryReadOnly.baseFee();
-            const perNftFeeWei: bigint = await factoryReadOnly.perNftFee();
-            const totalFeeWei = baseFeeWei + (perNftFeeWei * BigInt(maxSupply));
-            const totalFeeEther = ethers.formatEther(totalFeeWei);
-
-            // 2. Ensure allowance for Factory
-            const approved = await checkAndApproveZex(ZEXAI_FACTORY_ADDRESS, totalFeeEther);
-            if (!approved) return null;
-
-            // 3. Deploy new collection clone via Factory
-            const tx = await (contracts as any).factoryContract.createCollection(
-                name,
-                symbol,
-                maxSupply,
-                royaltyBps,
-                { gasLimit: 3000000n } // Contract deployment uses more gas
-            );
-            
-            const receipt = await tx.wait();
-
-            // 4. Extract the contract address from the CollectionCreated event
-            const event = receipt.logs.find((log: any) => {
-                try {
-                    const parsed = (contracts as any).factoryContract.interface.parseLog({ topics: [...log.topics], data: log.data });
-                    return parsed?.name === 'CollectionCreated';
-                } catch {
-                    return false;
-                }
-            });
-
-            if (event) {
-                const parsedLog = (contracts as any).factoryContract.interface.parseLog({ topics: [...event.topics], data: event.data });
-                return parsedLog?.args[1]; // collectionAddress
-            }
-
-            return null;
-        } catch (error: any) {
-            console.error("Collection deployment failed:", error);
-            throw error;
-        }
-    };
-
     return (
         <Web3Context.Provider value={{
             account, zexBalance, isConnecting, connectWallet, disconnectWallet,
-            provider, getContracts, checkAndApproveZex, mintNFT, createCollectionContract, createCollectionContract
+            provider, getContracts, checkAndApproveZex, mintNFT, createCollectionContract
         }}>
             {children}
         </Web3Context.Provider>

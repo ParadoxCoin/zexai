@@ -44,12 +44,10 @@ const Layout: React.FC = () => {
     { name: t('nav.images', 'Images'), href: '/images', icon: Image, color: 'from-pink-500 to-rose-500' },
     { name: t('nav.videos', 'Videos'), href: '/videos', icon: Video, color: 'from-purple-500 to-violet-500' },
     { name: t('nav.audio', 'Audio'), href: '/audio', icon: Volume2, color: 'from-rose-500 to-pink-500' },
-    { name: t('nav.avatar', 'Avatar'), href: '/avatar', icon: User, color: 'from-fuchsia-500 to-purple-500' },
     { name: t('nav.chat', 'Chat'), href: '/chat', icon: MessageCircle, color: 'from-emerald-500 to-teal-500' },
     { name: t('nav.synapse', 'Synapse'), href: '/synapse', icon: Bot, color: 'from-amber-500 to-orange-500' },
     { name: t('nav.collections', 'NFT Collection'), href: '/collections/my', icon: Layers, color: 'from-blue-500 to-indigo-500' },
     { name: t('nav.staking', 'Staking'), href: '/staking', icon: Diamond, color: 'from-indigo-500 to-purple-500' },
-    { name: t('nav.showcase', 'Showcase'), href: '/showcase', icon: Award, color: 'from-yellow-500 to-orange-500' },
   ];
 
   const adminNavigation = [
