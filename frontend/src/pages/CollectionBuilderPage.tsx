@@ -8,7 +8,7 @@ import { ethers } from 'ethers';
 const CollectionBuilderPage: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams(); // URL'den id gelirse mevcut koleksiyonu yükleriz
-    const { account, createCollectionContract, tokenBalance } = useWeb3();
+    const { account, createCollectionContract, tokenBalance, setupAndMintCollection } = useWeb3();
 
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
@@ -98,9 +98,17 @@ const CollectionBuilderPage: React.FC = () => {
             if (!contractAddress) throw new Error("Contract deploy iptal edildi veya başarısız.");
 
             // 2. Publish metadata to IPFS via Backend
-            await apiService.post(`/collections/${collectionId}/publish`, {
+            const publishRes = await apiService.post(`/collections/${collectionId}/publish`, {
                 contract_address: contractAddress
             });
+
+            // 3. Complete Setup & Minting on Blockchain
+            if (publishRes && publishRes.base_uri) {
+                // Ensure base_uri is stored, then interact directly with the clone contract to set URI and mint!
+                await setupAndMintCollection(contractAddress, publishRes.base_uri, items.length);
+            } else {
+                throw new Error("Backend IPFS metadata URI döndürmedi.");
+            }
 
             setStep(5); // Success!
         } catch (e: any) {

@@ -49,6 +49,13 @@ const FACTORY_ABI = [
     "event CollectionCreated(address indexed owner, address collectionAddress, string name, string symbol, uint256 maxSupply, uint96 royaltyBps)"
 ];
 
+// Minimal ABI for ZexAICollection
+const COLLECTION_ABI = [
+    "function setBaseURI(string calldata newBaseURI) external",
+    "function mintBatch(address to, uint256 quantity) external",
+    "function totalSupply() view returns (uint256)"
+];
+
 interface Web3ContextType {
     account: string | undefined;
     zexBalance: string;
@@ -56,10 +63,12 @@ interface Web3ContextType {
     connectWallet: () => Promise<void>;
     disconnectWallet: () => void;
     provider: BrowserProvider | null;
-    getContracts: () => Promise<{ zexContract: Contract; nftContract: Contract; stakingContract: Contract } | null>;
+    getContracts: () => Promise<any>;
     checkAndApproveZex: (targetAddress: string, amountInEther: string) => Promise<boolean>;
     mintNFT: (metadataURI: string, amount: number) => Promise<boolean>;
     createCollectionContract: (name: string, symbol: string, maxSupply: number, royaltyBps: number) => Promise<string | null>;
+    setupAndMintCollection: (collectionAddress: string, baseUri: string, quantity: number) => Promise<boolean>;
+    tokenBalance: number | null;
 }
 
 const Web3Context = createContext<Web3ContextType | undefined>(undefined);
@@ -357,10 +366,30 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
+    const setupAndMintCollection = async (collectionAddress: string, baseUri: string, quantity: number) => {
+        if (!signer || !account) return false;
+        try {
+            const collectionContract = new ethers.Contract(collectionAddress, COLLECTION_ABI, signer);
+            
+            // 1. Set Base URI
+            const tx1 = await collectionContract.setBaseURI(baseUri);
+            await tx1.wait();
+
+            // 2. Mint Batch
+            const tx2 = await collectionContract.mintBatch(account, quantity);
+            await tx2.wait();
+
+            return true;
+        } catch (error) {
+            console.error("Setup & Mint failed:", error);
+            throw error;
+        }
+    };
+
     return (
         <Web3Context.Provider value={{
             account, zexBalance, isConnecting, connectWallet, disconnectWallet,
-            provider, getContracts, checkAndApproveZex, mintNFT, createCollectionContract
+            provider, getContracts, checkAndApproveZex, mintNFT, createCollectionContract, setupAndMintCollection, tokenBalance: null
         }}>
             {children}
         </Web3Context.Provider>

@@ -117,7 +117,12 @@ class CollectionService:
             
         collection = col_res.data[0]
         if collection["status"] == "published":
-            raise HTTPException(400, "Already published")
+            # Idempotent return to allow UI to retry blockchain minting if user rejected TX
+            return {
+                "status": "success",
+                "base_uri": collection.get("base_uri"),
+                "contract_address": collection.get("contract_address")
+            }
             
         # 1. Fetch all items
         items_res = db.table("nft_collection_items").select("*").eq("collection_id", collection_id).order("item_index").execute()
