@@ -162,33 +162,57 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         try {
             if (walletClient) {
-                // Check if connected to Polygon Mainnet (137)
-                if (walletClient.chain?.id !== 137) {
-                    throw new Error("Lütfen cüzdanınızdan Polygon Mainnet ağını seçin.");
+                // Robust chain check
+                let currentChainId = walletClient.chain?.id;
+                
+                // Fallback for some wallets where chain might be undefined initially
+                if (!currentChainId && window.ethereum) {
+                    const hexChainId = await window.ethereum.request({ method: 'eth_chainId' });
+                    currentChainId = parseInt(hexChainId, 16);
                 }
+
+                if (currentChainId !== 137) {
+                    try {
+                        console.log("Attempting to switch to Polygon Mainnet...");
+                        if (window.ethereum) {
+                            await window.ethereum.request({
+                                method: 'wallet_switchEthereumChain',
+                                params: [{ chainId: '0x89' }], // 137 in hex
+                            });
+                            currentChainId = 137;
+                        } else {
+                            // Fallback for WalletConnect if available
+                            await (walletClient as any).switchChain({ id: 137 });
+                            currentChainId = 137;
+                        }
+                    } catch (switchError: any) {
+                        console.error("Switch chain failed:", switchError);
+                        // If chain not added to wallet (Error 4902)
+                        if (switchError.code === 4902) {
+                            throw new Error("Lütfen MetaMask'a Polygon Mainnet ağını ekleyin.");
+                        }
+                        throw new Error("Lütfen cüzdanınızdan Polygon Mainnet ağını seçin.");
+                    }
+                }
+
                 const network = {
-                    chainId: walletClient.chain.id,
-                    name: walletClient.chain.name
+                    chainId: 137,
+                    name: "polygon"
                 };
                 const _provider = new ethers.BrowserProvider(walletClient.transport, network);
-                // Note: getSigner(account) requires exactly 1 arg in ethers v6
                 signer = await _provider.getSigner(account);
             } else if (provider) {
                 const network = await provider.getNetwork();
                 if (network.chainId !== 137n && window.ethereum) {
                     try {
-                        console.log("Requesting network switch to Polygon Mainnet");
                         await window.ethereum.request({
                             method: 'wallet_switchEthereumChain',
-                            params: [{ chainId: '0x89' }], // 137 in hex
+                            params: [{ chainId: '0x89' }],
                         });
                         const newProvider = new ethers.BrowserProvider(window.ethereum as any);
                         signer = await newProvider.getSigner();
-                    } catch (switchError: any) {
-                        if (switchError.code === 4902) {
-                            throw new Error("Lütfen MetaMask'a Polygon Mainnet ağını ekleyin.");
-                        }
-                        throw new Error("Lütfen işlemi Polygon Mainnet ağında gerçekleştirin.");
+                    } catch (err) {
+                        throw new Error("Lütfen cüzdanınızdan Polygon Mainnet ağını seçin.");
                     }
                 } else {
                     signer = await provider.getSigner();
