@@ -105,7 +105,8 @@ const CollectionBuilderPage: React.FC = () => {
             setStep(5); // Success!
         } catch (e: any) {
             console.error(e);
-            alert("Yayınlama başarısız: " + (e.message || "Bilinmeyen hata"));
+            const errorMsg = e.response?.data?.detail || e.message || "Bilinmeyen hata";
+            alert("Yayınlama başarısız: " + errorMsg);
         } finally {
             setLoading(false);
         }
@@ -238,7 +239,14 @@ const CollectionBuilderPage: React.FC = () => {
                         </div>
 
                         <div className="flex justify-end mt-8">
-                            <button onClick={()=>setStep(3)} className="px-8 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-bold flex items-center gap-2 hover:opacity-90">
+                            <button 
+                                onClick={()=>setStep(3)} 
+                                disabled={items.length === 0}
+                                className={`px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition ${
+                                    items.length === 0 
+                                    ? 'bg-gray-300 dark:bg-gray-800 text-gray-500 cursor-not-allowed' 
+                                    : 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:opacity-90'
+                                }`}>
                                 Devam Et <ArrowRight className="w-5 h-5" />
                             </button>
                         </div>
