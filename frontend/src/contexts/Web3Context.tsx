@@ -162,32 +162,31 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         try {
             if (walletClient) {
-                // Robust chain check
-                let currentChainId = walletClient.chain?.id;
-                
-                // Fallback for some wallets where chain might be undefined initially
-                if (!currentChainId && window.ethereum) {
+                // Check current chain ID
+                let chainId;
+                if (window.ethereum) {
                     const hexChainId = await window.ethereum.request({ method: 'eth_chainId' });
-                    currentChainId = parseInt(hexChainId, 16);
+                    chainId = parseInt(hexChainId, 16);
+                } else {
+                    chainId = walletClient.chain?.id;
                 }
 
-                if (currentChainId !== 137) {
+                if (chainId !== 137) {
                     try {
-                        console.log("Attempting to switch to Polygon Mainnet...");
+                        console.log(`Current chain ${chainId} != 137. Requesting switch...`);
                         if (window.ethereum) {
                             await window.ethereum.request({
                                 method: 'wallet_switchEthereumChain',
-                                params: [{ chainId: '0x89' }], // 137 in hex
+                                params: [{ chainId: '0x89' }],
                             });
-                            currentChainId = 137;
+                            // Small delay for the provider to sync
+                            await new Promise(resolve => setTimeout(resolve, 1000));
                         } else {
-                            // Fallback for WalletConnect if available
                             await (walletClient as any).switchChain({ id: 137 });
-                            currentChainId = 137;
+                            await new Promise(resolve => setTimeout(resolve, 1000));
                         }
                     } catch (switchError: any) {
                         console.error("Switch chain failed:", switchError);
-                        // If chain not added to wallet (Error 4902)
                         if (switchError.code === 4902) {
                             throw new Error("Lütfen MetaMask'a Polygon Mainnet ağını ekleyin.");
                         }
@@ -195,11 +194,8 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     }
                 }
 
-                const network = {
-                    chainId: 137,
-                    name: "polygon"
-                };
-                const _provider = new ethers.BrowserProvider(walletClient.transport, network);
+                // Initialize provider WITHOUT a hardcoded network to avoid "network changed" errors
+                const _provider = new ethers.BrowserProvider(walletClient.transport);
                 signer = await _provider.getSigner(account);
             } else if (provider) {
                 const network = await provider.getNetwork();
@@ -209,6 +205,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
                             method: 'wallet_switchEthereumChain',
                             params: [{ chainId: '0x89' }],
                         });
+                        await new Promise(resolve => setTimeout(resolve, 800));
                         const newProvider = new ethers.BrowserProvider(window.ethereum as any);
                         signer = await newProvider.getSigner();
                     } catch (err) {
