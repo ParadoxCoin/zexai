@@ -194,8 +194,13 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     }
                 }
 
-                // Initialize provider WITHOUT a hardcoded network to avoid "network changed" errors
-                const _provider = new ethers.BrowserProvider(walletClient.transport);
+                // Initialize provider using the live window.ethereum to capture the fresh network switch
+                let _provider;
+                if (window.ethereum) {
+                    _provider = new ethers.BrowserProvider(window.ethereum as any);
+                } else {
+                    _provider = new ethers.BrowserProvider(walletClient.transport);
+                }
                 signer = await _provider.getSigner(account);
             } else if (provider) {
                 const network = await provider.getNetwork();
