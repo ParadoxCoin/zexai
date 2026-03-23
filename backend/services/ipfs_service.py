@@ -157,3 +157,5 @@ class IPFSService:
         except Exception as e:
             logger.error(f"Error connecting to Pinata IPFS for Directory: {e}")
             return None
+
+ipfs_service = IPFSService()
