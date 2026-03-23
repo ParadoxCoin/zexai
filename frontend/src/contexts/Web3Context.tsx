@@ -9,6 +9,7 @@ export const ZEX_STAKING_ADDRESS = "0xbee8cb1f28Dfd0713311f3b46bFf3F24eAc72733";
 export const ZEX_VESTING_ADDRESS = "0x93467b1eBd6215Bc1810488C98eCad787B59101c";
 export const ZEX_PRESALE_ADDRESS = "0x37CAd7cf190059c6716967CB429cD4CD13c390fC";
 export const ZEXAI_NFT_ADDRESS = "0x5938F1a7038997642a4446c20Df72224acba9A60";
+export const ZEXAI_FACTORY_ADDRESS = "0xf0917c8450Fb5aEB2B3a471BCc2E98D2312dfD92";
 
 // Polygon Mainnet read-only provider (Alchemy)
 const POLYGON_RPC = "https://polygon-mainnet.g.alchemy.com/v2/4OECI-BgprApuDWzNqcNL";
@@ -40,6 +41,14 @@ const STAKING_ABI = [
     "function getStakerInfo(address account) external view returns (uint256 balance, uint256 currentEarned, uint256 lockupEnd, bool isLocked)"
 ];
 
+// Minimal ABI for ZexCollectionFactory
+const FACTORY_ABI = [
+    "function baseFee() view returns (uint256)",
+    "function perNftFee() view returns (uint256)",
+    "function createCollection(string memory name, string memory symbol, uint256 maxSupply, uint96 royaltyBasisPoints) external returns (address)",
+    "event CollectionCreated(address indexed owner, address collectionAddress, string name, string symbol, uint256 maxSupply, uint96 royaltyBps)"
+];
+
 interface Web3ContextType {
     account: string | undefined;
     zexBalance: string;
@@ -50,6 +59,7 @@ interface Web3ContextType {
     getContracts: () => Promise<{ zexContract: Contract; nftContract: Contract; stakingContract: Contract } | null>;
     checkAndApproveZex: (targetAddress: string, amountInEther: string) => Promise<boolean>;
     mintNFT: (metadataURI: string, amount: number) => Promise<boolean>;
+    createCollectionContract: (name: string, symbol: string, maxSupply: number, royaltyBps: number) => Promise<string | null>;
 }
 
 const Web3Context = createContext<Web3ContextType | undefined>(undefined);
@@ -190,7 +200,8 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const zexContract = new ethers.Contract(ZEX_TOKEN_ADDRESS, ERC20_ABI, signer);
             const nftContract = new ethers.Contract(ZEXAI_NFT_ADDRESS, NFT_ABI, signer);
             const stakingContract = new ethers.Contract(ZEX_STAKING_ADDRESS, STAKING_ABI, signer);
-            return { zexContract, nftContract, stakingContract };
+            const factoryContract = new ethers.Contract(ZEXAI_FACTORY_ADDRESS, FACTORY_ABI, signer);
+            return { zexContract, nftContract, stakingContract, factoryContract };
         } catch (error) {
             console.error("Error getting contracts:", error);
             throw error; // Re-throw so caller can display error message instead of failing silently
@@ -266,10 +277,108 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
+    const createCollectionContract = async (name: string, symbol: string, maxSupply: number, royaltyBps: number) => {
+        const contracts = await getContracts();
+        if (!contracts) return null;
+
+        try {
+            // 1. Calculate the required ZEX fee for the Factory
+            const factoryReadOnly = new ethers.Contract(ZEXAI_FACTORY_ADDRESS, FACTORY_ABI, polygonProvider);
+            const baseFeeWei: bigint = await factoryReadOnly.baseFee();
+            const perNftFeeWei: bigint = await factoryReadOnly.perNftFee();
+            const totalFeeWei = baseFeeWei + (perNftFeeWei * BigInt(maxSupply));
+            const totalFeeEther = ethers.formatEther(totalFeeWei);
+
+            // 2. Ensure allowance for Factory
+            const approved = await checkAndApproveZex(ZEXAI_FACTORY_ADDRESS, totalFeeEther);
+            if (!approved) return null;
+
+            // 3. Deploy new collection clone via Factory
+            const tx = await contracts.factoryContract.createCollection(
+                name,
+                symbol,
+                maxSupply,
+                royaltyBps,
+                { gasLimit: 3000000n } // Contract deployment uses more gas
+            );
+            
+            const receipt = await tx.wait();
+
+            // 4. Extract the contract address from the CollectionCreated event
+            const event = receipt.logs.find((log: any) => {
+                try {
+                    const parsed = contracts.factoryContract.interface.parseLog({ topics: [...log.topics], data: log.data });
+                    return parsed?.name === 'CollectionCreated';
+                } catch {
+                    return false;
+                }
+            });
+
+            if (event) {
+                const parsedLog = contracts.factoryContract.interface.parseLog({ topics: [...event.topics], data: event.data });
+                return parsedLog?.args[1]; // collectionAddress
+            }
+
+            return null;
+        } catch (error: any) {
+            console.error("Collection deployment failed:", error);
+            throw error;
+        }
+    };
+
+    const createCollectionContract = async (name: string, symbol: string, maxSupply: number, royaltyBps: number) => {
+        const contracts = await getContracts();
+        if (!contracts) return null;
+
+        try {
+            // 1. Calculate the required ZEX fee for the Factory
+            const factoryReadOnly = new ethers.Contract(ZEXAI_FACTORY_ADDRESS, FACTORY_ABI, polygonProvider);
+            const baseFeeWei: bigint = await factoryReadOnly.baseFee();
+            const perNftFeeWei: bigint = await factoryReadOnly.perNftFee();
+            const totalFeeWei = baseFeeWei + (perNftFeeWei * BigInt(maxSupply));
+            const totalFeeEther = ethers.formatEther(totalFeeWei);
+
+            // 2. Ensure allowance for Factory
+            const approved = await checkAndApproveZex(ZEXAI_FACTORY_ADDRESS, totalFeeEther);
+            if (!approved) return null;
+
+            // 3. Deploy new collection clone via Factory
+            const tx = await (contracts as any).factoryContract.createCollection(
+                name,
+                symbol,
+                maxSupply,
+                royaltyBps,
+                { gasLimit: 3000000n } // Contract deployment uses more gas
+            );
+            
+            const receipt = await tx.wait();
+
+            // 4. Extract the contract address from the CollectionCreated event
+            const event = receipt.logs.find((log: any) => {
+                try {
+                    const parsed = (contracts as any).factoryContract.interface.parseLog({ topics: [...log.topics], data: log.data });
+                    return parsed?.name === 'CollectionCreated';
+                } catch {
+                    return false;
+                }
+            });
+
+            if (event) {
+                const parsedLog = (contracts as any).factoryContract.interface.parseLog({ topics: [...event.topics], data: event.data });
+                return parsedLog?.args[1]; // collectionAddress
+            }
+
+            return null;
+        } catch (error: any) {
+            console.error("Collection deployment failed:", error);
+            throw error;
+        }
+    };
+
     return (
         <Web3Context.Provider value={{
             account, zexBalance, isConnecting, connectWallet, disconnectWallet,
-            provider, getContracts, checkAndApproveZex, mintNFT
+            provider, getContracts, checkAndApproveZex, mintNFT, createCollectionContract, createCollectionContract
         }}>
             {children}
         </Web3Context.Provider>

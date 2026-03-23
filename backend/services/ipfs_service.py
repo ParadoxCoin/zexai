@@ -103,3 +103,57 @@ class IPFSService:
             
         cid = ipfs_uri.replace("ipfs://", "")
         return f"{self.gateway_url}/{cid}"
+
+    async def upload_metadata_directory(self, metadata_list: list, folder_name: str = "nft_collection") -> Optional[str]:
+        """
+        Upload multiple JSON metadata files as a single IPFS directory.
+        Returns the base CID: ipfs://<folder_CID>
+        """
+        if not self.api_key and not self.jwt:
+            logger.error("Pinata credentials missing")
+            return None
+            
+        url = f"{self.base_url}/pinning/pinFileToIPFS"
+        
+        try:
+            async with aiohttp.ClientSession() as session:
+                data = aiohttp.FormData()
+                
+                # Add each metadata JSON as a separate file in the directory
+                for index, metadata in enumerate(metadata_list):
+                    # ERC721A standard: token IDs start at 0 or 1. Let's assume 1-based indexing for filenames if 1st item is 1
+                    # Or zero-based. Usually 0.json, 1.json
+                    file_name = f"{folder_name}/{index}.json"
+                    json_str = json.dumps(metadata)
+                    
+                    data.add_field(
+                        'file',
+                        json_str.encode('utf-8'),
+                        filename=file_name,
+                        content_type='application/json'
+                    )
+                
+                # Pinata metadata
+                pinata_metadata = {
+                    "name": folder_name,
+                    "keyvalues": {"project": "ZexAI Collection Factory"}
+                }
+                data.add_field('pinataMetadata', json.dumps(pinata_metadata))
+                
+                pinata_options = {
+                    "cidVersion": 1
+                }
+                data.add_field('pinataOptions', json.dumps(pinata_options))
+                
+                async with session.post(url, headers=self._get_headers(), data=data) as response:
+                    if response.status == 200:
+                        result = await response.json()
+                        ipfs_hash = result.get('IpfsHash')
+                        return f"ipfs://{ipfs_hash}"
+                    else:
+                        error_text = await response.text()
+                        logger.error(f"Pinata IPFS Directory upload failed: {error_text}")
+                        return None
+        except Exception as e:
+            logger.error(f"Error connecting to Pinata IPFS for Directory: {e}")
+            return None

@@ -26,6 +26,8 @@ import { ApiKeysPage } from '@/pages/ApiKeysPage';
 import ReferralPage from '@/pages/ReferralPage';
 import MarketplacePage from '@/pages/MarketplacePage';
 import StakingPage from '@/pages/StakingPage'; // Added StakingPage import
+import MyCollectionsPage from '@/pages/MyCollectionsPage';
+import CollectionBuilderPage from '@/pages/CollectionBuilderPage';
 import { useAuthStore } from '@/store/authStore';
 import { ToastProvider } from './components/ui/toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -98,6 +100,11 @@ function AppContent() {
           <Route path="/audio" element={<ProtectedRoute><PageTransition><AudioPage /></PageTransition></ProtectedRoute>} />
           <Route path="/avatar" element={<ProtectedRoute><PageTransition><AvatarPage /></PageTransition></ProtectedRoute>} />
           <Route path="/showcase" element={<ProtectedRoute><PageTransition><ShowcasePage /></PageTransition></ProtectedRoute>} />
+          
+          {/* AI NFT Collection Builder Routes */}
+          <Route path="/collections/my" element={<ProtectedRoute><PageTransition><MyCollectionsPage /></PageTransition></ProtectedRoute>} />
+          <Route path="/collections/create" element={<ProtectedRoute><PageTransition><CollectionBuilderPage /></PageTransition></ProtectedRoute>} />
+          <Route path="/collections/builder/:id" element={<ProtectedRoute><PageTransition><CollectionBuilderPage /></PageTransition></ProtectedRoute>} />
           <Route path="/compare" element={<ProtectedRoute><PageTransition><ComparisonChatPage /></PageTransition></ProtectedRoute>} />
           <Route path="/billing" element={<ProtectedRoute><PageTransition><BillingPage /></PageTransition></ProtectedRoute>} />
           <Route path="/marketplace" element={<ProtectedRoute><PageTransition><MarketplacePage /></PageTransition></ProtectedRoute>} />

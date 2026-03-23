@@ -6,7 +6,7 @@ import { useAuthStore } from '@/store/authStore';
 import {
   Home, Image, Video, Volume2, MessageCircle, Bot, FolderOpen,
   User, Settings, LogOut, Menu, X, Shield, Key, Moon, Sun, Globe,
-  Wallet, Gift, Star, Sparkles, ChevronDown, Award, Zap, Diamond
+  Wallet, Gift, Star, Sparkles, ChevronDown, Award, Zap, Diamond, Layers
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
@@ -47,6 +47,7 @@ const Layout: React.FC = () => {
     { name: t('nav.avatar', 'Avatar'), href: '/avatar', icon: User, color: 'from-fuchsia-500 to-purple-500' },
     { name: t('nav.chat', 'Chat'), href: '/chat', icon: MessageCircle, color: 'from-emerald-500 to-teal-500' },
     { name: t('nav.synapse', 'Synapse'), href: '/synapse', icon: Bot, color: 'from-amber-500 to-orange-500' },
+    { name: t('nav.collections', 'NFT Collection'), href: '/collections/my', icon: Layers, color: 'from-blue-500 to-indigo-500' },
     { name: t('nav.staking', 'Staking'), href: '/staking', icon: Diamond, color: 'from-indigo-500 to-purple-500' },
     { name: t('nav.showcase', 'Showcase'), href: '/showcase', icon: Award, color: 'from-yellow-500 to-orange-500' },
   ];
