@@ -179,11 +179,16 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
                                 method: 'wallet_switchEthereumChain',
                                 params: [{ chainId: '0x89' }],
                             });
-                            // Small delay for the provider to sync
-                            await new Promise(resolve => setTimeout(resolve, 1000));
+                            
+                            // Actively poll until MetaMask's internal state updates to 137
+                            for (let i = 0; i < 15; i++) {
+                                const newChainHex = await window.ethereum.request({ method: 'eth_chainId' });
+                                if (parseInt(newChainHex, 16) === 137) break;
+                                await new Promise(resolve => setTimeout(resolve, 400));
+                            }
                         } else {
                             await (walletClient as any).switchChain({ id: 137 });
-                            await new Promise(resolve => setTimeout(resolve, 1000));
+                            await new Promise(resolve => setTimeout(resolve, 2000));
                         }
                     } catch (switchError: any) {
                         console.error("Switch chain failed:", switchError);
@@ -197,9 +202,9 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 // Initialize provider using the live window.ethereum to capture the fresh network switch
                 let _provider;
                 if (window.ethereum) {
-                    _provider = new ethers.BrowserProvider(window.ethereum as any);
+                    _provider = new ethers.BrowserProvider(window.ethereum as any, { chainId: 137, name: 'polygon' });
                 } else {
-                    _provider = new ethers.BrowserProvider(walletClient.transport);
+                    _provider = new ethers.BrowserProvider(walletClient.transport, { chainId: 137, name: 'polygon' });
                 }
                 signer = await _provider.getSigner(account);
             } else if (provider) {
