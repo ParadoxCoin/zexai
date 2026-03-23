@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Layers, Image as ImageIcon, Settings, CheckCircle, Zap, Shield, ArrowRight, Upload, Loader2, Sparkles } from 'lucide-react';
+import { Layers, Image as ImageIcon, Settings, CheckCircle, Zap, Shield, ArrowRight, Upload, Loader2, Sparkles, Plus, Info } from 'lucide-react';
 import { apiService } from '../services/api';
 import { useWeb3 } from '../contexts/Web3Context';
 import { ethers } from 'ethers';
