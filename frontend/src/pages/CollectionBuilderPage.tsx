@@ -40,7 +40,7 @@ const CollectionBuilderPage: React.FC = () => {
                 name, symbol, description, max_supply: maxSupply, 
                 mint_price: mintPrice, royalty_bps: royaltyBps
             };
-            const res = await apiService.post('/api/v1/collections', req);
+            const res = await apiService.post('/collections', req);
             setCollectionId(res.id);
             setStep(2);
         } catch (e: any) {
@@ -62,7 +62,7 @@ const CollectionBuilderPage: React.FC = () => {
         setLoading(true);
         try {
             const req = { image_url: imageUrl, attributes: currentTraits };
-            const res = await apiService.post(`/api/v1/collections/${collectionId}/items`, req);
+            const res = await apiService.post(`/collections/${collectionId}/items`, req);
             setItems([...items, res]);
             setImageUrl('');
             setCurrentTraits([]);
@@ -77,9 +77,9 @@ const CollectionBuilderPage: React.FC = () => {
         if (!collectionId) return;
         setLoading(true);
         try {
-            await apiService.post(`/api/v1/collections/${collectionId}/rarity`);
+            await apiService.post(`/collections/${collectionId}/rarity`);
             // Yükle
-            const res = await apiService.get(`/api/v1/collections/${collectionId}/items`);
+            const res = await apiService.get(`/collections/${collectionId}/items`);
             setItems(res);
             setStep(4);
         } catch (e) {
@@ -98,7 +98,7 @@ const CollectionBuilderPage: React.FC = () => {
             if (!contractAddress) throw new Error("Contract deploy iptal edildi veya başarısız.");
 
             // 2. Publish metadata to IPFS via Backend
-            await apiService.post(`/api/v1/collections/${collectionId}/publish`, {
+            await apiService.post(`/collections/${collectionId}/publish`, {
                 contract_address: contractAddress
             });
 

@@ -32,8 +32,8 @@ const MyCollectionsPage: React.FC = () => {
         setLoading(true);
         setError('');
         try {
-            const res = await apiService.get('/api/v1/collections/my');
-            setCollections(res);
+            const res = await apiService.get('/collections/my');
+            setCollections(res as any);
         } catch (err: any) {
             console.error("Failed to fetch collections", err);
             setError('Koleksiyonlar yüklenirken bir hata oluştu.');
