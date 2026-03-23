@@ -367,16 +367,27 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const setupAndMintCollection = async (collectionAddress: string, baseUri: string, quantity: number) => {
-        if (!signer || !account) return false;
+        if (!account) return false;
         try {
-            const collectionContract = new ethers.Contract(collectionAddress, COLLECTION_ABI, signer);
+            // Get a fresh signer from window.ethereum (same approach as getContracts)
+            let freshSigner;
+            if (window.ethereum) {
+                const freshProvider = new ethers.BrowserProvider(window.ethereum as any);
+                freshSigner = await freshProvider.getSigner(account);
+            } else if (provider) {
+                freshSigner = await provider.getSigner();
+            } else {
+                throw new Error("Cüzdan bağlantısı bulunamadı.");
+            }
+
+            const collectionContract = new ethers.Contract(collectionAddress, COLLECTION_ABI, freshSigner);
             
-            // 1. Set Base URI
+            // 1. Set Base URI (MetaMask onay #2)
             const tx1 = await collectionContract.setBaseURI(baseUri);
             await tx1.wait();
 
-            // 2. Mint Batch
-            const tx2 = await collectionContract.mintBatch(account, quantity);
+            // 2. Mint Batch (MetaMask onay #3)
+            const tx2 = await collectionContract.mintBatch(account, quantity, { gasLimit: 3000000n });
             await tx2.wait();
 
             return true;
