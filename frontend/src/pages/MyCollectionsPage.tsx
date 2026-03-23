@@ -136,10 +136,11 @@ const MyCollectionsPage: React.FC = () => {
                                 <div className="flex gap-2">
                                     {col.status === 'published' ? (
                                         <a
-                                            href={`https://opensea.io/assets/polygon/${col.contract_address}`}
+                                            href={`https://opensea.io/assets/polygon/${col.contract_address}/0`}
+                                            title="OpenSea'nin kontratı endekslemesi 5-10 dakika sürebilir"
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="flex-1 py-2.5 bg-[#2081E2] hover:bg-[#1868B7] text-white rounded-xl font-medium transition text-center text-sm flex items-center justify-center gap-2"
+                                            className="flex-1 py-2.5 bg-[#2081E2] hover:bg-[#1868B7] title text-white rounded-xl font-medium transition text-center text-sm flex items-center justify-center gap-2"
                                         >
                                             <ExternalLink className="w-4 h-4" />
                                             OpenSea'de Gör
