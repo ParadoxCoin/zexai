@@ -76,8 +76,11 @@ class BlockchainVerifier:
             except Exception as e:
                 logger.error(f"Failed to initialize Web3: {e}")
     
-    async def verify_transaction(self, tx_hash: str, expected_amount: float, expected_recipient: str) -> Dict[str, Any]:
-        """Verify blockchain transaction"""
+    async def verify_transaction(self, tx_hash: str, expected_amount: float, expected_recipient: str, token_contract: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Verify blockchain transaction.
+        Supports both native token (POL/ETH) and ERC-20 tokens ($ZEX).
+        """
         if not self.w3:
             return {"verified": False, "error": "Web3 not initialized"}
         
@@ -89,41 +92,71 @@ class BlockchainVerifier:
             
             # Check if transaction was successful
             if tx_receipt.status != 1:
-                return {"verified": False, "error": "Transaction failed"}
+                return {"verified": False, "error": "Transaction failed or reverted"}
             
             # Get transaction details
             tx = self.w3.eth.get_transaction(tx_hash)
             
-            # Verify recipient address
-            if tx['to'].lower() != expected_recipient.lower():
-                return {"verified": False, "error": "Recipient address mismatch"}
+            # Case 1: ERC-20 Token Verification (e.g., $ZEX)
+            if token_contract:
+                # Check if transaction was sent to the token contract
+                if tx['to'].lower() != token_contract.lower():
+                    return {"verified": False, "error": "Transaction was not sent to the token contract"}
+                
+                # ERC-20 Transfer Event Signature: Transfer(address,address,uint256)
+                transfer_event_hash = self.w3.keccak(text="Transfer(address,address,uint256)").hex()
+                
+                transfer_found = False
+                actual_amount = 0
+                
+                for log in tx_receipt['logs']:
+                    # Check if log is from our token contract and is a Transfer event
+                    if log['address'].lower() == token_contract.lower() and log['topics'][0].hex() == transfer_event_hash:
+                        # topics[1] is 'from', topics[2] is 'to'
+                        # We use topics matching to verify recipient
+                        recipient_in_log = "0x" + log['topics'][2].hex()[-40:]
+                        
+                        if recipient_in_log.lower() == expected_recipient.lower():
+                            # data contains the amount
+                            actual_amount_wei = int(log['data'].hex(), 16)
+                            actual_amount = actual_amount_wei / 10**18  # Assuming 18 decimals for $ZEX
+                            transfer_found = True
+                            break
+                
+                if not transfer_found:
+                    return {"verified": False, "error": "Transfer event to recipient not found in logs"}
+                
+            # Case 2: Native Token Verification (POL/ETH)
+            else:
+                if tx['to'].lower() != expected_recipient.lower():
+                    return {"verified": False, "error": "Recipient address mismatch"}
+                
+                # Convert Wei to Ether for amount comparison
+                actual_amount = float(self.w3.from_wei(tx['value'], 'ether'))
             
-            # Convert Wei to Ether for amount comparison
-            amount_eth = self.w3.from_wei(tx['value'], 'ether')
+            # Verify amount (Allow small tolerance for gas fees/calculations)
+            # For stablecoins or fixed price tokens, tolerance should be very low
+            tolerance = expected_amount * 0.001 
+            if abs(actual_amount - expected_amount) > tolerance:
+                return {"verified": False, "error": f"Amount mismatch: Expected {expected_amount}, Got {actual_amount}"}
             
-            # Allow small tolerance for gas fees and price fluctuations (1%)
-            tolerance = expected_amount * 0.01
-            if abs(float(amount_eth) - expected_amount) > tolerance:
-                return {"verified": False, "error": "Amount mismatch"}
-            
-            # Check transaction age (should be recent)
+            # Check transaction age (should be recent, e.g., within 24 hours)
             block = self.w3.eth.get_block(tx_receipt.blockNumber)
             tx_timestamp = datetime.fromtimestamp(block.timestamp)
-            if datetime.utcnow() - tx_timestamp > timedelta(hours=1):
-                return {"verified": False, "error": "Transaction too old"}
+            if datetime.utcnow() - tx_timestamp > timedelta(hours=24):
+                return {"verified": False, "error": "Transaction is too old (over 24 hours)"}
             
             return {
                 "verified": True,
-                "amount": float(amount_eth),
-                "recipient": tx['to'],
+                "amount": actual_amount,
+                "recipient": expected_recipient,
                 "block_number": tx_receipt.blockNumber,
-                "gas_used": tx_receipt.gasUsed,
                 "timestamp": tx_timestamp
             }
             
         except Exception as e:
-            logger.error(f"Blockchain verification failed: {e}")
-            return {"verified": False, "error": str(e)}
+            logger.error(f"Blockchain verification error: {e}")
+            return {"verified": False, "error": f"Verification system error: {str(e)}"}
 
 class PaymentIdempotency:
     """Payment idempotency control to prevent duplicate processing"""

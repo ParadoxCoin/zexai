@@ -72,7 +72,7 @@ export const CreditPurchasePage: React.FC = () => {
     const [calculation, setCalculation] = useState<PriceCalculation | null>(null);
     const [calculating, setCalculating] = useState(false);
     const [purchasing, setPurchasing] = useState(false);
-    const [selectedPayment, setSelectedPayment] = useState<string>('card');
+    const [selectedPayment, setSelectedPayment] = useState<string>('lemonsqueezy');
     const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([]);
     const [selectedPlan, setSelectedPlan] = useState<any>(null);
     const [selectedPackage, setSelectedPackage] = useState<SpecialPackage | null>(null);
@@ -581,10 +581,10 @@ export const CreditPurchasePage: React.FC = () => {
                             <p className="text-sm text-purple-200 mb-2">Ödeme Yöntemi</p>
                             <div className="grid grid-cols-2 gap-2">
                                 {[
-                                    { id: 'card', label: '💳 Kart', discount: 0 },
-                                    { id: 'crypto', label: '₿ Crypto', discount: 5 },
-                                    { id: 'binance', label: '🔶 Binance', discount: 5 },
-                                    { id: 'metamask', label: '🦊 MetaMask', discount: 15 }
+                                    { id: 'lemonsqueezy', label: '💳 Kart', discount: 0 },
+                                    { id: 'nowpayments', label: '₿ Crypto', discount: 5 },
+                                    { id: 'binance', label: '🔶 Binance Pay', discount: 5 },
+                                    { id: 'metamask', label: '🦊 ZEX Token (Polygon)', discount: 15 }
                                 ].map((method) => (
                                     <button
                                         key={method.id}

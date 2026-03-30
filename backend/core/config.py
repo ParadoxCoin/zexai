@@ -89,6 +89,7 @@ class Settings(BaseSettings):
     METAMASK_CONTRACT_ADDRESS: str = ""
     COMPANY_WALLET_ADDRESS: str = ""
     METAMASK_DISCOUNT_PERCENT: float = 15.0  # 15% discount for MetaMask payments
+    WEB3_PROVIDER_URL: str = "https://polygon-rpc.com"  # Default Polygon RPC
     
     # Manus Agent API (for Synapse service)
     MANUS_API_KEY: str = ""

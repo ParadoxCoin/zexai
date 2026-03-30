@@ -143,15 +143,15 @@ async def get_payment_methods(item_price: float = 10.0):
         PaymentOption(
             method=PaymentMethod.BINANCE,
             name="Binance Pay",
-            description="Pay with your Binance account",
+            description="Pay instantly with your Binance app",
             logo_url="/assets/binance-logo.png",
-            discount_percent=0,
-            final_price=item_price
+            discount_percent=5,
+            final_price=round(item_price * 0.95, 2)
         ),
         PaymentOption(
             method=PaymentMethod.METAMASK,
-            name="MetaMask (Your Token)",
-            description=f"Pay with our token and get {settings.METAMASK_DISCOUNT_PERCENT}% extra discount!",
+            name="ZEX Token (Polygon)",
+            description=f"Pay with $ZEX on Polygon and get {settings.METAMASK_DISCOUNT_PERCENT}% extra discount!",
             logo_url="/assets/metamask-logo.png",
             discount_percent=settings.METAMASK_DISCOUNT_PERCENT,
             final_price=round(item_price * (1 - settings.METAMASK_DISCOUNT_PERCENT / 100), 2)
@@ -567,13 +567,61 @@ async def create_nowpayments_invoice(session_id: str, item_name: str, price: flo
 
 async def create_binance_payment(session_id: str, item_name: str, price: float) -> str:
     """Create Binance Pay order"""
-    if not settings.BINANCE_API_KEY:
-        raise ValueError("Binance API key not configured")
+    if not settings.BINANCE_API_KEY or not settings.BINANCE_SECRET:
+        raise ValueError("Binance Pay API keys not configured")
     
-    # Binance Pay API implementation
-    # https://developers.binance.com/docs/binance-pay/introduction
-    # Placeholder - implement based on Binance docs
-    return f"https://pay.binance.com/checkout/{session_id}"
+    # Binance Pay API Base URL
+    base_url = "https://bpay.binanceapi.com/binancepay/openapi/v2/order"
+    
+    # Header requirements for Binance Pay
+    # https://developers.binance.com/docs/binance-pay/api-order-create
+    nonce = str(uuid.uuid4())[:32]
+    timestamp = str(int(datetime.utcnow().timestamp() * 1000))
+    
+    payload = {
+        "env": {"terminalType": "WEB"},
+        "orderAmount": price,
+        "orderCurrency": "USD",
+        "merchantTradeNo": session_id,
+        "goods": {
+            "goodsType": "01",
+            "goodsCategory": "D000",
+            "referenceGoodsId": "credits",
+            "goodsName": item_name,
+        },
+        "returnUrl": f"{settings.FRONTEND_URL}/payment/success?session={session_id}",
+        "cancelUrl": f"{settings.FRONTEND_URL}/pricing"
+    }
+    
+    json_payload = json.dumps(payload)
+    signature_payload = f"{timestamp}\n{nonce}\n{json_payload}\n"
+    signature = hmac.new(
+        settings.BINANCE_SECRET.encode('utf-8'),
+        signature_payload.encode('utf-8'),
+        hashlib.sha512
+    ).hexdigest().upper()
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            base_url,
+            headers={
+                "Content-Type": "application/json",
+                "BinancePay-Timestamp": timestamp,
+                "BinancePay-Nonce": nonce,
+                "BinancePay-Certificate-SN": settings.BINANCE_API_KEY,
+                "BinancePay-Signature": signature
+            },
+            data=json_payload
+        )
+        
+        if response.status_code != 200:
+            raise ValueError(f"Binance Pay error: {response.text}")
+        
+        data = response.json()
+        if data.get("status") != "SUCCESS":
+            raise ValueError(f"Binance Pay failed: {data.get('errorMessage')}")
+        
+        return data["data"]["checkoutUrl"]
 
 
 @router.post("/webhooks/lemonsqueezy")
@@ -655,12 +703,13 @@ async def metamask_webhook(request: Request, db = Depends(get_database)):
         if await PaymentIdempotency.is_duplicate_payment(tx_hash, "metamask"):
             return {"status": "ok", "message": "Already processed"}
         
-        # Verify transaction on blockchain
+        # Verify transaction on blockchain (Polygon)
         blockchain_verifier = BlockchainVerifier()
         verification_result = await blockchain_verifier.verify_transaction(
             tx_hash,
             payment["final_price"],
-            settings.COMPANY_WALLET_ADDRESS
+            settings.COMPANY_WALLET_ADDRESS,
+            token_contract=settings.METAMASK_CONTRACT_ADDRESS  # $ZEX Token Address
         )
         
         if not verification_result["verified"]:
