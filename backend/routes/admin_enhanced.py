@@ -259,6 +259,20 @@ async def get_users_advanced(
             except Exception as e:
                 logger.warning(f"Failed to fetch 30d generation counts: {e}")
         
+        # Fetch real last_sign_in_at from auth.users (Supabase Admin API)
+        auth_login_map = {}
+        try:
+            auth_response = db.auth.admin.list_users()
+            if auth_response:
+                auth_users = auth_response if isinstance(auth_response, list) else getattr(auth_response, 'users', [])
+                for au in auth_users:
+                    uid = au.id if hasattr(au, 'id') else au.get('id', '')
+                    last_sign = au.last_sign_in_at if hasattr(au, 'last_sign_in_at') else au.get('last_sign_in_at')
+                    if uid and last_sign:
+                        auth_login_map[uid] = last_sign
+        except Exception as e:
+            logger.warning(f"Failed to fetch auth.users last_sign_in_at: {e}")
+        
         # Enrich user data
         enriched_users = []
         for user in users:
@@ -266,13 +280,16 @@ async def get_users_advanced(
             credits_balance = credit_map.get(uid, 0)
             gen_count = gen_30d_map.get(uid, 0)
             
+            # Use auth.users last_sign_in_at (real login time), fallback to public.users fields
+            real_last_login = auth_login_map.get(uid) or user.get("last_sign_in_at") or user.get("updated_at")
+            
             enriched_user = {
                 **user,
                 "credits_balance": credits_balance,
-                "last_login": user.get("last_sign_in_at") or user.get("updated_at"),
+                "last_login": real_last_login,
                 "generation_count_30d": gen_count,
                 "usage_30d": {"total_requests": gen_count, "total_credits": 0},
-                "last_activity": user.get("last_sign_in_at") or user.get("updated_at"),
+                "last_activity": real_last_login,
                 "total_spent": 0
             }
             

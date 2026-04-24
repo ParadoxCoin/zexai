@@ -248,11 +248,26 @@ async def list_users(
             except Exception as gen_err:
                 logger.warning(f"Could not fetch 30d generation counts: {gen_err}")
         
+        # Fetch real last_sign_in_at from auth.users (Supabase Admin API)
+        auth_login_map = {}
+        try:
+            auth_response = db.auth.admin.list_users()
+            if auth_response:
+                auth_users = auth_response if isinstance(auth_response, list) else getattr(auth_response, 'users', [])
+                for au in auth_users:
+                    uid = au.id if hasattr(au, 'id') else au.get('id', '')
+                    last_sign = au.last_sign_in_at if hasattr(au, 'last_sign_in_at') else au.get('last_sign_in_at')
+                    if uid and last_sign:
+                        auth_login_map[uid] = last_sign
+        except Exception as auth_err:
+            logger.warning(f"Could not fetch auth.users last_sign_in_at: {auth_err}")
+        
         # Build response
         user_list = []
         for user in users:
             uid = user["id"]
             credits_balance = credit_map.get(uid, 0.0)
+            real_last_login = auth_login_map.get(uid) or user.get("last_sign_in_at") or user.get("updated_at")
             
             user_list.append(AdminUserListItem(
                 id=uid,
@@ -263,7 +278,7 @@ async def list_users(
                 is_active=user.get("is_active", True),
                 credits_balance=credits_balance,
                 created_at=user["created_at"],
-                last_login=user.get("last_sign_in_at") or user.get("updated_at"),
+                last_login=real_last_login,
                 generation_count_30d=gen_30d_map.get(uid, 0)
             ))
         
