@@ -11,7 +11,7 @@ class ReferralService:
     def generate_referral_code(self, length=8) -> str:
         """Generates a random alphanumeric code."""
         chars = string.ascii_uppercase + string.digits
-        return "MANUS-" + ''.join(random.choice(chars) for _ in range(length))
+        return "ZEXAI-" + ''.join(random.choice(chars) for _ in range(length))
 
     async def create_referral_code_for_user(self, user_id: str) -> str:
         """Creates a unique referral code for a user if they don't have one."""
@@ -83,10 +83,8 @@ class ReferralService:
             
         referrer_id = referral.data[0]["referrer_id"]
         
-        # Determine Rate (Mock: Check if Staker)
-        # TODO: Implement actual Staker check logic
-        is_staker = False 
-        commission_rate = 0.02 if is_staker else 0.01
+        # Determine Rate - 5% commission for all referrers
+        commission_rate = 0.05
         
         commission_amount = purchase_amount * commission_rate
         
@@ -97,8 +95,24 @@ class ReferralService:
             "amount": commission_amount,
             "purchase_amount": purchase_amount,
             "commission_rate": commission_rate,
-            "status": "pending"
+            "status": "completed"
         }).execute()
+        
+        # Add commission as CREDITS to referrer's account
+        try:
+            credit_resp = self.supabase.table("user_credits").select("credits_balance").eq("user_id", referrer_id).execute()
+            if credit_resp.data:
+                current_credits = float(credit_resp.data[0].get("credits_balance") or 0)
+                self.supabase.table("user_credits").update({
+                    "credits_balance": current_credits + commission_amount
+                }).eq("user_id", referrer_id).execute()
+            else:
+                self.supabase.table("user_credits").insert({
+                    "user_id": referrer_id,
+                    "credits_balance": commission_amount
+                }).execute()
+        except Exception as e:
+            print(f"Referral credit addition error: {e}")
         
         # Update Total Earnings
         current_stats = self.supabase.table("referral_codes").select("total_earnings").eq("user_id", referrer_id).execute()

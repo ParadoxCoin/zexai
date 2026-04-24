@@ -388,14 +388,18 @@ class GamificationService:
             'user_id, level, total_xp, streak_days'
         ).order('total_xp', desc=True).limit(limit).execute()
         
-        # Get user emails
+        # Get user emails from users table
         leaderboard = []
         for i, entry in enumerate(result.data):
-            user = self.supabase.table('profiles').select('email, full_name').eq('id', entry['user_id']).single().execute()
+            try:
+                user = self.supabase.table('users').select('email, full_name').eq('id', entry['user_id']).single().execute()
+                username = user.data.get('full_name') or user.data.get('email', 'Anonim').split('@')[0] if user.data else 'Anonim'
+            except Exception:
+                username = 'Anonim'
             leaderboard.append({
                 'rank': i + 1,
                 'user_id': entry['user_id'],
-                'username': user.data.get('full_name') or user.data.get('email', 'Anonim').split('@')[0] if user.data else 'Anonim',
+                'username': username,
                 'level': entry['level'],
                 'total_xp': entry['total_xp'],
                 'streak_days': entry['streak_days']

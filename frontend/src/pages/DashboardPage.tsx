@@ -48,6 +48,8 @@ interface UsageSummary {
 export const DashboardPage: React.FC = () => {
   const { user } = useAuthStore();
   const { t } = useTranslation();
+  const [marketplaceModels, setMarketplaceModels] = useState<string[]>([]);
+  const [marketplaceTotal, setMarketplaceTotal] = useState(0);
   const navigate = useNavigate();
   const { account, zexBalance, polBalance, isConnecting, connectWallet, disconnectWallet, mintNFT } = useWeb3();
   const [loading, setLoading] = useState(true);
@@ -367,17 +369,21 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* Gamification & Leaderboard Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <div className="lg:col-span-2">
-          <GamificationWidget
-            imagesCount={stats.images}
-            videosCount={stats.videos}
-            audioCount={stats.audio}
-            chatsCount={stats.chats}
-          />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 items-stretch">
+        <div className="lg:col-span-2 flex">
+          <div className="w-full">
+            <GamificationWidget
+              imagesCount={stats.images}
+              videosCount={stats.videos}
+              audioCount={stats.audio}
+              chatsCount={stats.chats}
+            />
+          </div>
         </div>
-        <div className="lg:col-span-1">
-          <LeaderboardWidget />
+        <div className="lg:col-span-1 flex">
+          <div className="w-full">
+            <LeaderboardWidget />
+          </div>
         </div>
       </div>
 
@@ -445,9 +451,9 @@ export const DashboardPage: React.FC = () => {
           ].map((template, idx) => (
             <motion.div
               key={idx}
-              whileHover={{ y: -8, scale: 1.02 }}
+              whileHover={{ y: -6, scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="relative aspect-[4/5] rounded-[2rem] overflow-hidden group cursor-pointer shadow-xl isolate"
+              className="relative aspect-[4/4] rounded-2xl overflow-hidden group cursor-pointer shadow-lg isolate"
               onClick={() => navigate(`/images?prompt=${encodeURIComponent(template.prompt)}`)}
             >
               <img
@@ -456,9 +462,9 @@ export const DashboardPage: React.FC = () => {
                 alt={template.title}
               />
               <div className={`absolute inset-0 bg-gradient-to-t ${template.color} opacity-40 group-hover:opacity-60 transition-opacity`} />
-              <div className="absolute inset-x-0 bottom-0 p-6 flex flex-col justify-end h-1/2 bg-gradient-to-t from-gray-950 via-gray-950/40 to-transparent">
-                <p className="text-white font-black text-xl mb-1">{template.title}</p>
-                <div className="flex items-center gap-2 text-white/80 text-xs font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">
+              <div className="absolute inset-x-0 bottom-0 p-4 flex flex-col justify-end h-1/2 bg-gradient-to-t from-gray-950 via-gray-950/40 to-transparent">
+                <p className="text-white font-bold text-base mb-1">{template.title}</p>
+                <div className="flex items-center gap-2 text-white/80 text-[10px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">
                   {t('dashboard.useTemplate')} <ArrowRight className="w-3 h-3" />
                 </div>
               </div>
@@ -577,29 +583,7 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Marketplace Promo Card */}
-        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white shadow-xl shadow-emerald-500/25 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Star className="w-6 h-6" />
-              <h3 className="font-semibold">{t('dashboard.marketplacePromoTitle')}</h3>
-            </div>
-            <p className="text-emerald-100 text-sm mb-2">
-              {t('dashboard.marketplacePromoDesc')}
-            </p>
-            <div className="flex flex-wrap gap-2 mb-4">
-              <span className="px-2 py-1 bg-white/20 rounded-full text-xs">FLUX</span>
-              <span className="px-2 py-1 bg-white/20 rounded-full text-xs">Kling</span>
-              <span className="px-2 py-1 bg-white/20 rounded-full text-xs">GPT-4</span>
-              <span className="px-2 py-1 bg-white/20 rounded-full text-xs">+37</span>
-            </div>
-          </div>
-          <button
-            onClick={() => navigate('/marketplace')}
-            className="w-full py-2.5 bg-white text-emerald-600 hover:bg-emerald-50 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2"
-          >
-            {t('dashboard.discoverBtn')} <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
+        <MarketplacePromoCard navigate={navigate} t={t} />
       </div>
 
       {/* Referral Promo Card */}
@@ -625,10 +609,10 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           <h3 className="text-xl font-bold mb-1">
-            {t('dashboard.lifetimeEarnTitle')}
+            5% Lifetime Earnings
           </h3>
           <p className="text-purple-100 text-sm mb-4">
-            {t('dashboard.lifetimeEarnDesc')}
+            From all purchases of the people you invite
           </p>
 
           <button
@@ -639,6 +623,57 @@ export const DashboardPage: React.FC = () => {
           </button>
         </div>
       </div>
+    </div>
+  );
+};
+
+// Dynamic Marketplace Promo Card
+const MarketplacePromoCard: React.FC<{ navigate: any; t: any }> = ({ navigate, t }) => {
+  const [topModels, setTopModels] = React.useState<string[]>([]);
+  const [totalCount, setTotalCount] = React.useState(0);
+
+  React.useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const res = await apiService.get<any>('/marketplace/models?page_size=5&sort_by=popular');
+        const models = res.models || [];
+        setTopModels(models.slice(0, 4).map((m: any) => m.name));
+        setTotalCount(res.total || 0);
+      } catch {
+        setTopModels(['FLUX', 'Kling', 'GPT-4']);
+        setTotalCount(40);
+      }
+    };
+    fetchModels();
+  }, []);
+
+  const remaining = Math.max(0, totalCount - topModels.length);
+
+  return (
+    <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white shadow-xl shadow-emerald-500/25 flex flex-col justify-between">
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <Star className="w-6 h-6" />
+          <h3 className="font-semibold">{t('dashboard.marketplacePromoTitle')}</h3>
+        </div>
+        <p className="text-emerald-100 text-sm mb-2">
+          {totalCount > 0 ? `${totalCount}+` : ''} AI model — {t('dashboard.marketplacePromoDesc')}
+        </p>
+        <div className="flex flex-wrap gap-2 mb-4">
+          {topModels.map((name) => (
+            <span key={name} className="px-2 py-1 bg-white/20 rounded-full text-xs">{name}</span>
+          ))}
+          {remaining > 0 && (
+            <span className="px-2 py-1 bg-white/20 rounded-full text-xs">+{remaining}</span>
+          )}
+        </div>
+      </div>
+      <button
+        onClick={() => navigate('/marketplace')}
+        className="w-full py-2.5 bg-white text-emerald-600 hover:bg-emerald-50 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+      >
+        {t('dashboard.discoverBtn')} <ArrowRight className="w-4 h-4" />
+      </button>
     </div>
   );
 };
