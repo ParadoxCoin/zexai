@@ -12,6 +12,7 @@ class AdminUserListItem(BaseModel):
     credits_balance: float
     created_at: datetime
     last_login: Optional[datetime] = None
+    generation_count_30d: int = 0
 
 class AdminUserListResponse(BaseModel):
     users: List[AdminUserListItem]

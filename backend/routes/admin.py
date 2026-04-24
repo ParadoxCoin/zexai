@@ -226,22 +226,45 @@ async def list_users(
         users = response.data
         total = response.count
         
-        # Enrich with credit balance
+        # Collect all user IDs for batch queries
+        user_ids = [u["id"] for u in users]
+        
+        # Batch fetch credit balances
+        credit_map = {}
+        if user_ids:
+            credit_resp = db.table("user_credits").select("user_id, credits_balance").in_("user_id", user_ids).execute()
+            for c in credit_resp.data:
+                credit_map[c["user_id"]] = float(c["credits_balance"])
+        
+        # Batch fetch 30-day generation counts from usage_logs
+        gen_30d_map = {}
+        if user_ids:
+            thirty_days_ago = (datetime.utcnow() - timedelta(days=30)).isoformat()
+            try:
+                gen_resp = db.table("usage_logs").select("user_id").in_("user_id", user_ids).gte("created_at", thirty_days_ago).execute()
+                for log in gen_resp.data:
+                    uid = log["user_id"]
+                    gen_30d_map[uid] = gen_30d_map.get(uid, 0) + 1
+            except Exception as gen_err:
+                logger.warning(f"Could not fetch 30d generation counts: {gen_err}")
+        
+        # Build response
         user_list = []
         for user in users:
-            credit_resp = db.table("user_credits").select("credits_balance").eq("user_id", user["id"]).execute()
-            credits_balance = float(credit_resp.data[0]["credits_balance"]) if credit_resp.data else 0.0
+            uid = user["id"]
+            credits_balance = credit_map.get(uid, 0.0)
             
             user_list.append(AdminUserListItem(
-                id=user["id"],
+                id=uid,
                 email=user["email"],
                 full_name=user.get("full_name", ""),
                 role=user.get("role", "user"),
                 package=user.get("package", "free"),
-                is_active=True, # Default
+                is_active=user.get("is_active", True),
                 credits_balance=credits_balance,
                 created_at=user["created_at"],
-                last_login=user.get("updated_at") # Proxy
+                last_login=user.get("last_sign_in_at") or user.get("updated_at"),
+                generation_count_30d=gen_30d_map.get(uid, 0)
             ))
         
         return AdminUserListResponse(
@@ -513,8 +536,106 @@ async def suspend_user(
     """
     Suspend a user account
     """
-    # Not fully implemented in schema yet, just a placeholder
-    return {"message": "User suspended successfully"}
+    try:
+        # Set is_active to false
+        response = db.table("users").update({"is_active": False}).eq("id", user_id).execute()
+        
+        if not response.data:
+            raise HTTPException(404, "User not found")
+        
+        # Log admin action
+        try:
+            db.table("admin_logs").insert({
+                "admin_id": admin_user.id,
+                "action": "suspend_user",
+                "target_user_id": user_id
+            }).execute()
+        except Exception:
+            pass
+        
+        logger.info(f"Admin {admin_user.id} suspended user {user_id}")
+        return {"message": "User suspended successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error suspending user: {str(e)}")
+        raise HTTPException(500, "Failed to suspend user")
+
+
+@router.post("/users/{user_id}/activate")
+@limiter.limit(RateLimits.ADMIN_WRITE)
+async def activate_user(
+    request: Request,
+    user_id: str,
+    admin_user = Depends(get_current_admin_user),
+    db = Depends(get_db)
+):
+    """
+    Re-activate a suspended user account
+    """
+    try:
+        response = db.table("users").update({"is_active": True}).eq("id", user_id).execute()
+        
+        if not response.data:
+            raise HTTPException(404, "User not found")
+        
+        try:
+            db.table("admin_logs").insert({
+                "admin_id": admin_user.id,
+                "action": "activate_user",
+                "target_user_id": user_id
+            }).execute()
+        except Exception:
+            pass
+        
+        logger.info(f"Admin {admin_user.id} activated user {user_id}")
+        return {"message": "User activated successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error activating user: {str(e)}")
+        raise HTTPException(500, "Failed to activate user")
+
+
+@router.post("/users/{user_id}/role")
+@limiter.limit(RateLimits.ADMIN_WRITE)
+async def change_user_role(
+    request: Request,
+    user_id: str,
+    payload: Dict[str, Any],
+    admin_user = Depends(get_current_admin_user),
+    db = Depends(get_db)
+):
+    """
+    Change a user's role (user <-> admin)
+    """
+    new_role = payload.get("role", "user")
+    if new_role not in ("user", "admin"):
+        raise HTTPException(400, "Invalid role. Must be 'user' or 'admin'.")
+    
+    try:
+        response = db.table("users").update({"role": new_role}).eq("id", user_id).execute()
+        
+        if not response.data:
+            raise HTTPException(404, "User not found")
+        
+        try:
+            db.table("admin_logs").insert({
+                "admin_id": admin_user.id,
+                "action": "change_role",
+                "target_user_id": user_id,
+                "details": {"new_role": new_role}
+            }).execute()
+        except Exception:
+            pass
+        
+        logger.info(f"Admin {admin_user.id} changed role of user {user_id} to {new_role}")
+        return {"message": f"User role changed to {new_role}"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error changing user role: {str(e)}")
+        raise HTTPException(500, "Failed to change user role")
 
 
 # ============================================

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 interface ThemeContextType {
   theme: string;
@@ -8,17 +8,33 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | null>(null);
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState('light');
+function getInitialTheme(): string {
+  // Check localStorage for saved preference
+  const saved = localStorage.getItem('zexai_theme');
+  if (saved === 'light' || saved === 'dark') return saved;
+  // Default to dark
+  return 'dark';
+}
 
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
-    // Also update document class for Tailwind
-    if (theme === 'light') {
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [theme, setThemeState] = useState(getInitialTheme);
+
+  // Apply theme class to <html> on mount and whenever theme changes
+  useEffect(() => {
+    if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
+    localStorage.setItem('zexai_theme', theme);
+  }, [theme]);
+
+  const setTheme = (newTheme: string) => {
+    setThemeState(newTheme);
+  };
+
+  const toggleTheme = () => {
+    setThemeState(prev => prev === 'light' ? 'dark' : 'light');
   };
 
   return (
