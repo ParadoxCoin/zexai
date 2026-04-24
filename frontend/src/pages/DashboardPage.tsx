@@ -374,13 +374,74 @@ export const DashboardPage: React.FC = () => {
       {/* Gamification & Leaderboard Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 items-stretch">
         <div className="lg:col-span-2 flex">
-          <div className="w-full">
+          <div className="w-full flex flex-col gap-6">
             <GamificationWidget
               imagesCount={stats.images}
               videosCount={stats.videos}
               audioCount={stats.audio}
               chatsCount={stats.chats}
             />
+
+            {/* Recent Activity */}
+            <div className="w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden flex-1 flex flex-col">
+              <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-gray-400" />
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {t('dashboard.recentActivitiesTitle')}
+                  </h2>
+                </div>
+                <button
+                  onClick={() => navigate('/media')}
+                  className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 flex items-center gap-1"
+                >
+                  {t('dashboard.seeAll')} <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+
+              {recentActivity.length === 0 ? (
+                <div className="flex-1 flex flex-col justify-center">
+                  <NoData title={t('dashboard.noActivityTitle')} description={t('dashboard.noActivityDesc')} />
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-100 dark:divide-gray-700 overflow-y-auto max-h-[400px]">
+                  {recentActivity.map((activity) => {
+                    const { icon, color } = getActivityIcon(activity.type);
+                    return (
+                      <div
+                        key={activity.id}
+                        className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-4">
+                          {activity.thumbnail_url ? (
+                            <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0">
+                              <img src={activity.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                            </div>
+                          ) : (
+                            <div className={`p-2 rounded-xl ${color}`}>
+                              {icon}
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-medium text-gray-900 dark:text-white text-sm line-clamp-1">
+                              {activity.title || t('dashboard.aiGeneration')}
+                            </p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              {formatRelativeTime(activity.created_at)}
+                            </p>
+                          </div>
+                        </div>
+                        {activity.credits_charged > 0 && (
+                          <span className="px-3 py-1 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full text-sm font-medium flex-shrink-0">
+                            {t('dashboard.creditsSpentRow', { count: Math.round(activity.credits_charged) })}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <div className="lg:col-span-1 flex">
@@ -524,67 +585,7 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Bottom Row: Recent Activity */}
-      <div className="grid grid-cols-1 gap-6">
-        {/* Recent Activity */}
-        <div className="w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-gray-400" />
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {t('dashboard.recentActivitiesTitle')}
-              </h2>
-            </div>
-            <button
-              onClick={() => navigate('/media')}
-              className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 flex items-center gap-1"
-            >
-              {t('dashboard.seeAll')} <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-
-          {recentActivity.length === 0 ? (
-            <NoData title={t('dashboard.noActivityTitle')} description={t('dashboard.noActivityDesc')} />
-          ) : (
-            <div className="divide-y divide-gray-100 dark:divide-gray-700">
-              {recentActivity.map((activity) => {
-                const { icon, color } = getActivityIcon(activity.type);
-                return (
-                  <div
-                    key={activity.id}
-                    className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      {activity.thumbnail_url ? (
-                        <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0">
-                          <img src={activity.thumbnail_url} alt="" className="w-full h-full object-cover" />
-                        </div>
-                      ) : (
-                        <div className={`p-2 rounded-xl ${color}`}>
-                          {icon}
-                        </div>
-                      )}
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white text-sm line-clamp-1">
-                          {activity.title || t('dashboard.aiGeneration')}
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {formatRelativeTime(activity.created_at)}
-                        </p>
-                      </div>
-                    </div>
-                    {activity.credits_charged > 0 && (
-                      <span className="px-3 py-1 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full text-sm font-medium flex-shrink-0">
-                        {t('dashboard.creditsSpentRow', { count: Math.round(activity.credits_charged) })}
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Removed old Recent Activities Row */}
 
       {/* Referral Promo Card */}
       <div className="relative overflow-hidden bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-6 shadow-xl mt-8">
