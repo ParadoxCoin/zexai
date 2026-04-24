@@ -96,7 +96,7 @@ export const LeaderboardWidget: React.FC = () => {
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
                                             <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
-                                                {user.username}
+                                                {user.username ? user.username.split(' ').map(p => p.length > 2 ? p.substring(0, 2) + '*'.repeat(p.length - 2) : p).join(' ') : 'Anonymous'}
                                             </p>
                                             {user.rank <= 3 && (
                                                 <span className="shrink-0 flex items-center px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 text-[10px] font-black uppercase text-amber-600 dark:text-amber-400">

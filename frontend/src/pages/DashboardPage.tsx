@@ -368,6 +368,9 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Model Marquee */}
+      <ModelMarquee t={t} />
+
       {/* Gamification & Leaderboard Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 items-stretch">
         <div className="lg:col-span-2 flex">
@@ -453,7 +456,7 @@ export const DashboardPage: React.FC = () => {
               key={idx}
               whileHover={{ y: -6, scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="relative aspect-[4/4] rounded-2xl overflow-hidden group cursor-pointer shadow-lg isolate"
+              className="relative aspect-video rounded-2xl overflow-hidden group cursor-pointer shadow-lg isolate"
               onClick={() => navigate(`/images?prompt=${encodeURIComponent(template.prompt)}`)}
             >
               <img
@@ -521,10 +524,10 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Bottom Row: Recent Activity + Marketplace Promo */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Bottom Row: Recent Activity */}
+      <div className="grid grid-cols-1 gap-6">
         {/* Recent Activity */}
-        <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div className="w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Clock className="w-5 h-5 text-gray-400" />
@@ -581,43 +584,40 @@ export const DashboardPage: React.FC = () => {
             </div>
           )}
         </div>
-
-        {/* Marketplace Promo Card */}
-        <MarketplacePromoCard navigate={navigate} t={t} />
       </div>
 
       {/* Referral Promo Card */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 rounded-2xl p-6 text-white shadow-xl shadow-purple-500/30 mt-8">
+      <div className="relative overflow-hidden bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-6 shadow-xl mt-8">
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute w-32 h-32 bg-white/10 rounded-full -top-16 -right-16 animate-pulse" />
-          <div className="absolute w-24 h-24 bg-white/5 rounded-full bottom-8 -left-12 animate-bounce" style={{ animationDuration: '3s' }} />
+          <div className="absolute w-32 h-32 bg-purple-500/10 rounded-full -top-16 -right-16 animate-pulse" />
+          <div className="absolute w-24 h-24 bg-indigo-500/10 rounded-full bottom-8 -left-12 animate-bounce" style={{ animationDuration: '3s' }} />
         </div>
 
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-3">
             <div className="relative">
-              <div className="absolute inset-0 bg-yellow-400 rounded-full animate-ping opacity-50" />
+              <div className="absolute inset-0 bg-yellow-400 rounded-full animate-ping opacity-20" />
               <div className="relative p-2.5 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full shadow-lg">
                 <span className="text-lg">💰</span>
               </div>
             </div>
             <div>
-              <span className="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">
+              <span className="text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-1 rounded-full">
                 {t('dashboard.passiveIncomeBadge')}
               </span>
             </div>
           </div>
 
-          <h3 className="text-xl font-bold mb-1">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
             5% Lifetime Earnings
           </h3>
-          <p className="text-purple-100 text-sm mb-4">
+          <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
             From all purchases of the people you invite
           </p>
 
           <button
             onClick={() => navigate('/referral')}
-            className="w-full py-2.5 bg-white text-purple-600 hover:bg-purple-50 rounded-xl text-sm font-bold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-8 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl text-sm font-bold transition-all hover:scale-105 shadow-lg flex items-center justify-center gap-2"
           >
             {t('dashboard.startNowBtn')}
           </button>
@@ -627,53 +627,60 @@ export const DashboardPage: React.FC = () => {
   );
 };
 
-// Dynamic Marketplace Promo Card
-const MarketplacePromoCard: React.FC<{ navigate: any; t: any }> = ({ navigate, t }) => {
-  const [topModels, setTopModels] = React.useState<string[]>([]);
-  const [totalCount, setTotalCount] = React.useState(0);
+// Dynamic Model Marquee
+const ModelMarquee: React.FC<{ t: any }> = ({ t }) => {
+  const [models, setModels] = React.useState<any[]>([]);
 
   React.useEffect(() => {
     const fetchModels = async () => {
       try {
-        const res = await apiService.get<any>('/marketplace/models?page_size=5&sort_by=popular');
-        const models = res.models || [];
-        setTopModels(models.slice(0, 4).map((m: any) => m.name));
-        setTotalCount(res.total || 0);
+        const res = await apiService.get<any>('/marketplace/models?page_size=20&sort_by=popular');
+        setModels(res.models || []);
       } catch {
-        setTopModels(['FLUX', 'Kling', 'GPT-4']);
-        setTotalCount(40);
+        // Fallback
+        setModels([
+          { name: 'FLUX.1 Pro', category: 'image', is_active: true },
+          { name: 'Kling Video', category: 'video', is_active: true },
+          { name: 'GPT-4o', category: 'chat', is_active: true },
+          { name: 'Midjourney V6', category: 'image', is_active: true },
+          { name: 'Claude 3.5 Sonnet', category: 'chat', is_active: true }
+        ]);
       }
     };
     fetchModels();
   }, []);
 
-  const remaining = Math.max(0, totalCount - topModels.length);
+  if (models.length === 0) return null;
 
   return (
-    <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white shadow-xl shadow-emerald-500/25 flex flex-col justify-between">
-      <div>
-        <div className="flex items-center gap-2 mb-3">
-          <Star className="w-6 h-6" />
-          <h3 className="font-semibold">{t('dashboard.marketplacePromoTitle')}</h3>
-        </div>
-        <p className="text-emerald-100 text-sm mb-2">
-          {totalCount > 0 ? `${totalCount}+` : ''} AI model — {t('dashboard.marketplacePromoDesc')}
-        </p>
-        <div className="flex flex-wrap gap-2 mb-4">
-          {topModels.map((name) => (
-            <span key={name} className="px-2 py-1 bg-white/20 rounded-full text-xs">{name}</span>
-          ))}
-          {remaining > 0 && (
-            <span className="px-2 py-1 bg-white/20 rounded-full text-xs">+{remaining}</span>
-          )}
-        </div>
+    <div className="mb-8 bg-gray-900 rounded-2xl overflow-hidden relative border border-gray-800 shadow-inner flex items-center">
+      <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-gray-900 to-transparent z-10 pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-gray-900 to-transparent z-10 pointer-events-none" />
+      
+      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-3 font-bold text-sm z-20 shadow-xl flex items-center gap-2 flex-shrink-0">
+        <Sparkles className="w-4 h-4" />
+        Marketplace
       </div>
-      <button
-        onClick={() => navigate('/marketplace')}
-        className="w-full py-2.5 bg-white text-emerald-600 hover:bg-emerald-50 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2"
-      >
-        {t('dashboard.discoverBtn')} <ArrowRight className="w-4 h-4" />
-      </button>
+
+      <marquee className="py-3 flex-1 flex items-center" scrollamount="6">
+        <div className="flex items-center">
+          {models.map((model, idx) => (
+            <span key={idx} className="mx-6 text-sm font-medium text-gray-300 flex items-center gap-2">
+              {model.category === 'video' ? '🎬' : model.category === 'image' ? '🖼️' : model.category === 'audio' ? '🎵' : '💬'}
+              {model.name}
+              {model.is_active && <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse ml-1" />}
+            </span>
+          ))}
+          {/* Duplicate for seamless effect if list is short */}
+          {models.map((model, idx) => (
+            <span key={`dup-${idx}`} className="mx-6 text-sm font-medium text-gray-300 flex items-center gap-2">
+              {model.category === 'video' ? '🎬' : model.category === 'image' ? '🖼️' : model.category === 'audio' ? '🎵' : '💬'}
+              {model.name}
+              {model.is_active && <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse ml-1" />}
+            </span>
+          ))}
+        </div>
+      </marquee>
     </div>
   );
 };
