@@ -586,7 +586,7 @@ const VideoPage = () => {
       {/* Hero Header */}
       <div className="relative overflow-hidden bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTRzMiAyIDIgNC0yIDQtMiA0LTItMi0yLTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30" />
-        <div className="relative px-6 py-8 lg:px-8">
+        <div className="relative px-4 sm:px-6 py-4 sm:py-6 lg:px-8">
           <div className="max-w-4xl mx-auto text-center text-white">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm mb-3">
               <Video className="w-4 h-4" />
@@ -599,7 +599,7 @@ const VideoPage = () => {
           </div>
         </div>
         <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 60" fill="none"><path d="M0 60V0C240 40 480 60 720 60C960 60 1200 40 1440 0V60H0Z" fill="currentColor" className="text-gray-50 dark:text-gray-900" /></svg>
+          <svg viewBox="0 0 1440 60" fill="none" className="h-6 sm:h-8 w-full text-gray-50 dark:text-gray-900" preserveAspectRatio="none"><path d="M0 60V0C240 40 480 60 720 60C960 60 1200 40 1440 0V60H0Z" fill="currentColor" /></svg>
         </div>
       </div>
 
