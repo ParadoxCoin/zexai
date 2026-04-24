@@ -43,8 +43,14 @@ class ReferralService:
         if not referral_code:
             return
             
-        # Find referrer
+        # Find referrer - support both ZEXAI- and legacy MANUS- prefixes
         referrer_data = self.supabase.table("referral_codes").select("user_id").eq("code", referral_code).execute()
+        
+        # If not found and code starts with ZEXAI-, try MANUS- prefix (backward compat)
+        if not referrer_data.data and referral_code.startswith("ZEXAI-"):
+            legacy_code = referral_code.replace("ZEXAI-", "MANUS-", 1)
+            referrer_data = self.supabase.table("referral_codes").select("user_id").eq("code", legacy_code).execute()
+        
         if not referrer_data.data:
             return # Invalid code
             

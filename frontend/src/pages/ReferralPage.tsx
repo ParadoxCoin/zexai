@@ -39,7 +39,7 @@ const ReferralPage: React.FC = () => {
         }
     };
 
-    const referralUrl = stats?.code ? `${REFERRAL_BASE_URL}${stats.code}` : '';
+    const referralUrl = stats?.code ? `${REFERRAL_BASE_URL}${stats.code.replace('MANUS-', 'ZEXAI-')}` : '';
 
     const copyUrl = () => {
         if (referralUrl) {
@@ -50,17 +50,17 @@ const ReferralPage: React.FC = () => {
     };
 
     const shareTwitter = () => {
-        const text = `🤖 ZexAI ile yapay zeka araçlarına erişin! Benim referans linkim ile kayıt olun ve avantajlardan yararlanın 🚀\n\n${referralUrl}`;
+        const text = `🤖 Unlock the power of AI with ZexAI! Sign up with my referral link and get started 🚀\n\n${referralUrl}`;
         window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
     };
 
     const shareTelegram = () => {
-        const text = `🤖 ZexAI ile yapay zeka araçlarına erişin! ${referralUrl}`;
+        const text = `🤖 Create stunning AI content with ZexAI — images, videos, music & more! Join now: ${referralUrl}`;
         window.open(`https://t.me/share/url?url=${encodeURIComponent(referralUrl)}&text=${encodeURIComponent(text)}`, '_blank');
     };
 
     const shareWhatsApp = () => {
-        const text = `🤖 ZexAI ile yapay zeka araçlarına erişin! Benim referans linkim: ${referralUrl}`;
+        const text = `🤖 Hey! Check out ZexAI — the ultimate AI content platform. Use my referral link to sign up: ${referralUrl}`;
         window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
     };
 
@@ -124,7 +124,7 @@ const ReferralPage: React.FC = () => {
             ) : (
                 <>
                     {/* Referral Link Card */}
-                    <Card className="p-6 bg-gray-900/50 border-gray-800 backdrop-blur-sm">
+                    <Card className="p-6 bg-gray-800/60 border-gray-700 backdrop-blur-sm">
                         <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                             <Share2 className="w-5 h-5 text-purple-400" />
                             Your Referral Link
@@ -147,7 +147,7 @@ const ReferralPage: React.FC = () => {
                         </div>
 
                         {/* Social Media Share Buttons */}
-                        <div className="flex items-center gap-3 mt-4 pt-4 border-t border-gray-800">
+                        <div className="flex items-center gap-3 mt-4 pt-4 border-t border-gray-700">
                             <span className="text-sm text-gray-500">Share on:</span>
                             <button
                                 onClick={shareTwitter}
