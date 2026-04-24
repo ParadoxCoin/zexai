@@ -37,8 +37,11 @@ const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) =
         setMintStatus('approving');
         setErrorMessage('');
 
+        let metadataUri = '';
+
         try {
             // 1. Prepare Metadata via Backend (Upload to Pinata IPFS)
+            console.log('[NFT Mint] Step 1: Preparing metadata...');
             const prepareRes = await api.post('/nft/prepare-metadata', {
                 asset_id: image.id,
                 asset_url: image.file_url || image.thumbnail_url,
@@ -48,17 +51,38 @@ const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) =
                 model: image.model_name || 'ZexAI Model'
             });
 
+            console.log('[NFT Mint] Metadata response:', prepareRes);
+
             if (!prepareRes?.success || !prepareRes?.metadata_uri) {
-                console.error("Prepare metadata failed:", prepareRes);
+                console.error("[NFT Mint] Prepare metadata failed:", prepareRes);
                 throw new Error(t('nft.errorIpfs'));
             }
 
-            const metadataUri = prepareRes.metadata_uri;
+            metadataUri = prepareRes.metadata_uri;
+            console.log('[NFT Mint] Step 1 OK. URI:', metadataUri);
 
+        } catch (prepError: any) {
+            console.error('[NFT Mint] Step 1 FAILED:', prepError);
+            // Fallback: use the image URL directly as metadata URI so minting can still work
+            const fallbackUri = image.file_url || image.thumbnail_url;
+            if (fallbackUri) {
+                console.warn('[NFT Mint] Using fallback URI:', fallbackUri);
+                metadataUri = fallbackUri;
+            } else {
+                setMintStatus('error');
+                setErrorMessage(prepError?.message || t('nft.errorIpfs'));
+                setIsMinting(false);
+                return;
+            }
+        }
+
+        try {
             // 2. Mint via Web3 Smart Contract
+            console.log('[NFT Mint] Step 2: Calling mintNFT on smart contract...');
             setMintStatus('minting');
             // This will throw if it fails (e.g., user rejected, no gas, etc.)
             await mintNFT(metadataUri, 1);
+            console.log('[NFT Mint] Step 2 OK. Mint successful!');
 
             // 3. Confirm in Backend (non-blocking - NFT is already minted on-chain)
             try {
@@ -68,13 +92,13 @@ const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) =
                     token_id: null
                 });
             } catch (confirmErr) {
-                console.warn("DB confirmation failed, but NFT was minted successfully:", confirmErr);
+                console.warn("[NFT Mint] DB confirmation failed, but NFT was minted successfully:", confirmErr);
             }
 
             setMintStatus('success');
 
         } catch (error: any) {
-            console.error(error);
+            console.error('[NFT Mint] Minting error:', error);
             setMintStatus('error');
 
             // Try to extract a clean error message from MetaMask's verbose JSON RPC errors
@@ -87,13 +111,15 @@ const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) =
                 cleanMsg = t('nft.errorInsufficientFunds');
             } else if (errMsg.includes("-32603") || errMsg.includes("Unexpected error")) {
                 cleanMsg = t('nft.errorNetwork');
+            } else if (errMsg.includes("Polygon") || errMsg.includes("wallet") || errMsg.includes("Cüzdan") || errMsg.includes("ağ")) {
+                cleanMsg = errMsg; // Show wallet/network errors directly
             } else if (error?.response?.data?.detail) {
                 cleanMsg = error.response.data.detail; // Backend API config errors
             } else if (typeof error === 'string') {
                 cleanMsg = error;
             } else if (errMsg) {
-                // Return up to 60 chars of the actual message to avoid massive JSON blobs on screen
-                cleanMsg = (errMsg.length > 60 && errMsg.includes("{")) ? t('nft.errorContract') : errMsg;
+                // Return up to 80 chars of the actual message to avoid massive JSON blobs on screen
+                cleanMsg = (errMsg.length > 80 && errMsg.includes("{")) ? t('nft.errorContract') : errMsg;
             }
 
             setErrorMessage(cleanMsg);
@@ -101,6 +127,7 @@ const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) =
             setIsMinting(false);
         }
     };
+
 
     return (
         <div

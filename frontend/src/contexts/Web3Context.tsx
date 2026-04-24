@@ -189,7 +189,12 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const getContracts = async () => {
-        if (!account) return null;
+        console.log('[Web3] getContracts called. account:', account, 'walletClient:', !!walletClient, 'provider:', !!provider, 'window.ethereum:', !!window.ethereum);
+        if (!account) {
+            console.warn('[Web3] No account available. Opening wallet modal...');
+            try { await open(); } catch (e) { console.error('[Web3] Wallet modal failed:', e); }
+            return null;
+        }
         let signer;
 
         try {
@@ -203,9 +208,11 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     chainId = walletClient.chain?.id;
                 }
 
+                console.log('[Web3] Current chainId:', chainId);
+
                 if (chainId !== 137) {
                     try {
-                        console.log(`Current chain ${chainId} != 137. Requesting switch...`);
+                        console.log(`[Web3] Current chain ${chainId} != 137. Requesting switch...`);
                         if (window.ethereum) {
                             await window.ethereum.request({
                                 method: 'wallet_switchEthereumChain',
@@ -222,8 +229,9 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
                             await (walletClient as any).switchChain({ id: 137 });
                             await new Promise(resolve => setTimeout(resolve, 2000));
                         }
+                        console.log('[Web3] Chain switch successful');
                     } catch (switchError: any) {
-                        console.error("Switch chain failed:", switchError);
+                        console.error("[Web3] Switch chain failed:", switchError);
                         if (switchError.code === 4902) {
                             throw new Error(t('web3.addPolygon'));
                         }
@@ -238,8 +246,11 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 } else {
                     _provider = new ethers.BrowserProvider(walletClient.transport, { chainId: 137, name: 'polygon' });
                 }
+                console.log('[Web3] Getting signer for account:', account);
                 signer = await _provider.getSigner(account);
+                console.log('[Web3] Signer obtained successfully');
             } else if (provider) {
+                console.log('[Web3] Using existing provider (no walletClient)');
                 const network = await provider.getNetwork();
                 if (network.chainId !== 137n && window.ethereum) {
                     try {
@@ -256,6 +267,31 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 } else {
                     signer = await provider.getSigner();
                 }
+            } else if (window.ethereum) {
+                // Fallback: walletClient and provider are both null, but MetaMask exists
+                console.log('[Web3] Fallback: creating provider from window.ethereum directly');
+                try {
+                    // Request accounts access first in case MetaMask is locked
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    
+                    // Check/switch to Polygon
+                    const hexChainId = await window.ethereum.request({ method: 'eth_chainId' });
+                    const chainId = parseInt(hexChainId, 16);
+                    if (chainId !== 137) {
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: '0x89' }],
+                        });
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
+                    
+                    const _provider = new ethers.BrowserProvider(window.ethereum as any, { chainId: 137, name: 'polygon' });
+                    signer = await _provider.getSigner();
+                    console.log('[Web3] Fallback signer obtained');
+                } catch (fallbackErr) {
+                    console.error('[Web3] Fallback provider failed:', fallbackErr);
+                    throw new Error(t('web3.selectPolygon'));
+                }
             } else {
                 throw new Error(t('web3.noWallet'));
             }
@@ -264,12 +300,14 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const nftContract = new ethers.Contract(ZEXAI_NFT_ADDRESS, NFT_ABI, signer);
             const stakingContract = new ethers.Contract(ZEX_STAKING_ADDRESS, STAKING_ABI, signer);
             const factoryContract = new ethers.Contract(ZEXAI_FACTORY_ADDRESS, FACTORY_ABI, signer);
+            console.log('[Web3] All contracts initialized successfully');
             return { zexContract, nftContract, stakingContract, factoryContract };
         } catch (error) {
-            console.error("Error getting contracts:", error);
+            console.error("[Web3] Error getting contracts:", error);
             throw error; // Re-throw so caller can display error message instead of failing silently
         }
     };
+
 
     const checkAndApproveZex = async (targetAddress: string, amountInEther: string): Promise<boolean> => {
         let contracts;
