@@ -12,7 +12,8 @@ import {
   Users, DollarSign, Activity, TrendingUp, Search, Edit, Ban, CheckCircle,
   Plus, Minus, Bell, Settings, BarChart3, PieChart, LineChart, AlertCircle,
   Server, Zap, Clock, UserCheck, CreditCard, Package, Wifi, WifiOff,
-  RefreshCw, Download, Upload, Eye, Shield, Database, LayoutGrid, XCircle, Trophy
+  RefreshCw, Download, Upload, Eye, Shield, Database, LayoutGrid, XCircle, Trophy,
+  UserPlus, Sparkles
 } from 'lucide-react';
 import axios from 'axios';
 import { useToast } from '@/components/ui/toast';
@@ -155,6 +156,42 @@ export const AdminDashboardEnhanced: React.FC = () => {
     } catch (error: any) {
       toast.error('Hata', error.response?.data?.detail || 'Rol değiştirilemedi');
     }
+  };
+
+  const handleSuspendUser = async (userId: string) => {
+    if (!confirm('Kullanıcıyı askıya almak istediğinizden emin misiniz?')) return;
+    try {
+      await api.post(`/admin/users/${userId}/suspend`);
+      toast.success('Başarılı', 'Kullanıcı askıya alındı');
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_active: false } : u));
+    } catch (error: any) {
+      toast.error('Hata', error.response?.data?.detail || 'İşlem başarısız');
+    }
+  };
+
+  const handleActivateUser = async (userId: string) => {
+    try {
+      await api.post(`/admin/users/${userId}/activate`);
+      toast.success('Başarılı', 'Kullanıcı aktif edildi');
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_active: true } : u));
+    } catch (error: any) {
+      toast.error('Hata', error.response?.data?.detail || 'İşlem başarısız');
+    }
+  };
+
+  const formatLastLogin = (dateStr?: string) => {
+    if (!dateStr) return '—';
+    const d = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return 'Şimdi';
+    if (diffMins < 60) return `${diffMins}dk önce`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}s önce`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays}g önce`;
+    return d.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: '2-digit' });
   };
 
   const filteredUsers = users.filter(user =>
@@ -495,11 +532,11 @@ export const AdminDashboardEnhanced: React.FC = () => {
           </div>
 
           {/* Users Table */}
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-300">
-              <thead className="bg-gray-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-300 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-800/50">
                 <tr>
-                  <th className="px-6 py-3 text-left">
+                  <th className="px-4 py-3 text-left">
                     <input
                       type="checkbox"
                       onChange={(e) => {
@@ -513,19 +550,20 @@ export const AdminDashboardEnhanced: React.FC = () => {
                       className="rounded border-gray-300"
                     />
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">İsim</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rol</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kredi</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kullanım (30g)</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durum</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">İşlemler</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">İsim</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rol</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kredi</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Son Giriş</th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">30g Üretim</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durum</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">İşlemler</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
+                  <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                    <td className="px-4 py-4">
                       <input
                         type="checkbox"
                         checked={selectedUsers.includes(user.id)}
@@ -533,9 +571,9 @@ export const AdminDashboardEnhanced: React.FC = () => {
                         className="rounded border-gray-300"
                       />
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.email}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.full_name || '-'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{user.email}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{user.full_name || '-'}</td>
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <select
                         value={user.role || 'customer'}
                         onChange={(e) => handleRoleChange(user.id, e.target.value)}
@@ -558,20 +596,29 @@ export const AdminDashboardEnhanced: React.FC = () => {
                         </optgroup>
                       </select>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                       {user.credits_balance?.toLocaleString() || 0}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {user.usage_30d?.total_requests || 0} istek
-                      <br />
-                      <span className="text-xs text-gray-500">
-                        {user.usage_30d?.total_credits || 0} kredi
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                        <Clock className="h-3 w-3" />
+                        <span>{formatLastLogin(user.last_login)}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-center">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-bold rounded-full ${
+                        (user.generation_count_30d || 0) > 50 ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
+                        : (user.generation_count_30d || 0) > 10 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                      }`}>
+                        <Sparkles className="h-3 w-3" />
+                        {user.generation_count_30d || 0}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${user.is_active !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                         }`}>
-                        {user.is_active ? (
+                        {user.is_active !== false ? (
                           <>
                             <CheckCircle className="h-3 w-3 mr-1" />
                             Aktif
@@ -584,17 +631,23 @@ export const AdminDashboardEnhanced: React.FC = () => {
                         )}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <div className="flex space-x-2">
-                        <button className="text-blue-600 hover:text-blue-900" title="Detay">
-                          <Eye className="h-4 w-4" />
-                        </button>
-                        <button className="text-green-600 hover:text-green-900" title="Düzenle">
-                          <Edit className="h-4 w-4" />
-                        </button>
-                        <button className="text-red-600 hover:text-red-900" title="Askıya Al">
-                          <Ban className="h-4 w-4" />
-                        </button>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm">
+                      <div className="flex space-x-1">
+                        {user.is_active !== false ? (
+                          <button
+                            onClick={() => handleSuspendUser(user.id)}
+                            className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+                            title="Askıya Al">
+                            <Ban className="h-4 w-4" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleActivateUser(user.id)}
+                            className="p-1.5 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-all"
+                            title="Aktif Et">
+                            <UserPlus className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

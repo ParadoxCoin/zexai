@@ -234,21 +234,45 @@ async def get_users_advanced(
         total = response.count or 0
         users = response.data or []
         
-        # Enrich user data with credits
+        # Collect user IDs for batch queries
+        user_ids = [u["id"] for u in users]
+        
+        # Batch fetch credit balances
+        credit_map = {}
+        if user_ids:
+            try:
+                credit_resp = db.table("user_credits").select("user_id, credits_balance").in_("user_id", user_ids).execute()
+                for c in credit_resp.data:
+                    credit_map[c["user_id"]] = float(c.get("credits_balance", 0) or 0)
+            except Exception as e:
+                logger.warning(f"Failed to batch fetch credits: {e}")
+        
+        # Batch fetch 30-day generation counts from usage_logs
+        gen_30d_map = {}
+        if user_ids:
+            try:
+                thirty_days_ago = (datetime.utcnow() - timedelta(days=30)).isoformat()
+                gen_resp = db.table("usage_logs").select("user_id").in_("user_id", user_ids).gte("created_at", thirty_days_ago).execute()
+                for log in gen_resp.data:
+                    uid = log["user_id"]
+                    gen_30d_map[uid] = gen_30d_map.get(uid, 0) + 1
+            except Exception as e:
+                logger.warning(f"Failed to fetch 30d generation counts: {e}")
+        
+        # Enrich user data
         enriched_users = []
         for user in users:
-            # Get credit balance (with error handling)
-            try:
-                credit_resp = db.table("user_credits").select("credits_balance").eq("user_id", user["id"]).execute()
-                credits_balance = float(credit_resp.data[0].get("credits_balance", 0)) if credit_resp.data else 0
-            except Exception:
-                credits_balance = 0
+            uid = user["id"]
+            credits_balance = credit_map.get(uid, 0)
+            gen_count = gen_30d_map.get(uid, 0)
             
             enriched_user = {
                 **user,
                 "credits_balance": credits_balance,
-                "usage_30d": {"total_requests": 0, "total_credits": 0},
-                "last_activity": None,
+                "last_login": user.get("last_sign_in_at") or user.get("updated_at"),
+                "generation_count_30d": gen_count,
+                "usage_30d": {"total_requests": gen_count, "total_credits": 0},
+                "last_activity": user.get("last_sign_in_at") or user.get("updated_at"),
                 "total_spent": 0
             }
             
