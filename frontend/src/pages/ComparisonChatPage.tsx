@@ -6,6 +6,7 @@ import {
     Loader2, Trophy, Star, ArrowLeft, BarChart3, Timer, RefreshCw
 } from 'lucide-react';
 import CodeBlock from '@/components/CodeBlock';
+import { useTranslation } from 'react-i18next';
 
 interface Model {
     id: string; name: string; icon: string; color: string; tier: 'free' | 'premium'; available: boolean;
@@ -47,6 +48,7 @@ const ResponseContent = ({ content }: { content: string }) => {
 };
 
 export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
+    const { t } = useTranslation();
     const [prompt, setPrompt] = useState('');
     const [selectedModels, setSelectedModels] = useState<string[]>([]);
     const [results, setResults] = useState<ComparisonResult[]>([]);
@@ -74,7 +76,7 @@ export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
             setResults(data.results || []);
         },
         onError: (err: any) => {
-            const errorMsg = err?.response?.data?.detail || err?.message || 'Karşılaştırma sırasında bir hata oluştu.';
+            const errorMsg = err?.response?.data?.detail || err?.message || t('comparison.errorOccurred');
             setGeneralError(errorMsg);
             setResults([]);
         }
@@ -128,14 +130,14 @@ export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
                             <Sparkles className="w-4 h-4 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">Model Karşılaştırma</h1>
-                            <p className="text-[10px] sm:text-[11px] text-gray-500 hidden sm:block">AI modellerini yan yana test edin</p>
+                            <h1 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">{t('comparison.title')}</h1>
+                            <p className="text-[10px] sm:text-[11px] text-gray-500 hidden sm:block">{t('comparison.subtitle')}</p>
                         </div>
                     </div>
                     {results.length > 0 && (
                         <button onClick={() => { setResults([]); setPrompt(''); setGeneralError(null); }}
                             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 bg-gray-100 dark:bg-gray-800 rounded-lg transition-colors">
-                            <RefreshCw className="w-3 h-3" /> <span className="hidden sm:inline">Yeni </span>Sıfırla
+                            <RefreshCw className="w-3 h-3" /> <span className="hidden sm:inline">{t('comparison.new')} </span>{t('comparison.reset')}
                         </button>
                     )}
                 </div>
@@ -153,12 +155,12 @@ export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
                                 <div className="flex items-center justify-between mb-4">
                                     <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                                         <BarChart3 className="w-4 h-4 text-purple-500" />
-                                        Model Seçimi
+                                        {t('comparison.modelSelection')}
                                         <span className="text-xs font-normal text-gray-400 ml-1">({selectedModels.length}/6)</span>
                                     </h3>
                                     {selectedModels.length > 0 && (
                                         <button onClick={() => setSelectedModels([])} className="text-xs text-gray-400 hover:text-red-500 transition-colors">
-                                            Temizle
+                                            {t('comparison.clear')}
                                         </button>
                                     )}
                                 </div>
@@ -166,7 +168,7 @@ export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
                                 {/* Free Models */}
                                 {freeModels.length > 0 && (
                                     <div className="mb-3">
-                                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">🆓 Ücretsiz</p>
+                                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">🆓 {t('comparison.free')}</p>
                                         <div className="flex flex-wrap gap-2">
                                             {freeModels.map((model) => (
                                                 <button key={model.id} onClick={() => toggleModel(model.id)} disabled={!model.available}
@@ -187,7 +189,7 @@ export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
                                 {/* Premium Models */}
                                 {premiumModels.length > 0 && (
                                     <div>
-                                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">💎 Premium</p>
+                                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">💎 {t('comparison.premium')}</p>
                                         <div className="flex flex-wrap gap-2">
                                             {premiumModels.map((model) => (
                                                 <button key={model.id} onClick={() => toggleModel(model.id)} disabled={!model.available}
@@ -211,7 +213,7 @@ export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
                                 <textarea
                                     value={prompt}
                                     onChange={(e) => setPrompt(e.target.value)}
-                                    placeholder="Karşılaştırmak istediğiniz soruyu yazın..."
+                                    placeholder={t('comparison.placeholder')}
                                     rows={3}
                                     className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 resize-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 dark:focus:border-purple-600 text-sm transition-all"
                                     onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleCompare(); } }}
@@ -219,16 +221,16 @@ export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
                                 <div className="flex justify-between items-center mt-3">
                                     <p className="text-xs text-gray-400">
                                         {selectedModels.length < 2
-                                            ? <span className="text-amber-500">⚠ En az 2 model seçin</span>
-                                            : <span className="text-emerald-500">✓ {selectedModels.length} model hazır</span>}
+                                            ? <span className="text-amber-500">{t('comparison.minModelsWarning')}</span>
+                                            : <span className="text-emerald-500">{t('comparison.modelsReady', { count: selectedModels.length })}</span>}
                                     </p>
                                     <button onClick={handleCompare}
                                         disabled={compareMutation.isPending || prompt.trim().length < 1 || selectedModels.length < 2}
                                         className="px-6 py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:from-gray-300 disabled:to-gray-400 dark:disabled:from-gray-600 dark:disabled:to-gray-700 text-white font-medium rounded-xl shadow-lg shadow-purple-500/20 disabled:shadow-none flex items-center gap-2 transition-all text-sm active:scale-95">
                                         {compareMutation.isPending ? (
-                                            <><Loader2 className="w-4 h-4 animate-spin" /> Karşılaştırılıyor...</>
+                                            <><Loader2 className="w-4 h-4 animate-spin" /> {t('comparison.comparing')}</>
                                         ) : (
-                                            <><Zap className="w-4 h-4" /> Karşılaştır</>
+                                            <><Zap className="w-4 h-4" /> {t('comparison.compare')}</>
                                         )}
                                     </button>
                                 </div>
@@ -252,7 +254,7 @@ export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
                                                 <div className="absolute inset-0 bg-purple-500/20 rounded-full blur-xl animate-pulse" />
                                                 <Loader2 className="relative w-8 h-8 animate-spin text-purple-500" />
                                             </div>
-                                            <p className="text-gray-400 text-xs mt-4">Yanıt bekleniyor...</p>
+                                            <p className="text-gray-400 text-xs mt-4">{t('comparison.waitingResponse')}</p>
                                         </div>
                                     </div>
                                 );
@@ -267,13 +269,13 @@ export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
                                 <span>❌</span>
                             </div>
                             <div>
-                                <h4 className="text-sm font-semibold text-red-800 dark:text-red-400">Hata Oluştu</h4>
+                                <h4 className="text-sm font-semibold text-red-800 dark:text-red-400">{t('comparison.errorOccurred')}</h4>
                                 <p className="text-sm text-red-600 dark:text-red-300 mt-1">{generalError}</p>
                                 <button
                                     onClick={() => compareMutation.mutate()}
                                     className="mt-3 px-4 py-1.5 bg-red-100 dark:bg-red-900/50 hover:bg-red-200 dark:hover:bg-red-800/80 text-red-700 dark:text-red-300 text-xs font-medium rounded-lg transition-colors border border-red-200 dark:border-red-800"
                                 >
-                                    Tekrar Dene
+                                    {t('comparison.retry')}
                                 </button>
                             </div>
                         </div>
@@ -294,21 +296,21 @@ export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
                                     <div className="bg-gradient-to-br from-yellow-500/10 to-amber-500/10 border border-yellow-200 dark:border-yellow-800 rounded-xl px-4 py-3 flex items-center gap-3">
                                         <Trophy className="w-5 h-5 text-yellow-500" />
                                         <div>
-                                            <p className="text-[10px] text-gray-500 uppercase tracking-wider">En Hızlı</p>
+                                            <p className="text-[10px] text-gray-500 uppercase tracking-wider">{t('comparison.fastest')}</p>
                                             <p className="text-sm font-bold text-gray-900 dark:text-white">{winner.icon} {winner.name}</p>
                                         </div>
                                     </div>
                                     <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-3 flex items-center gap-3">
                                         <Timer className="w-5 h-5 text-blue-500" />
                                         <div>
-                                            <p className="text-[10px] text-gray-500 uppercase tracking-wider">Süre</p>
+                                            <p className="text-[10px] text-gray-500 uppercase tracking-wider">{t('comparison.duration')}</p>
                                             <p className="text-sm font-bold text-gray-900 dark:text-white">{(winner.metrics!.duration_ms / 1000).toFixed(1)}s</p>
                                         </div>
                                     </div>
                                     <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-200 dark:border-emerald-800 rounded-xl px-4 py-3 flex items-center gap-3">
                                         <Star className="w-5 h-5 text-emerald-500" />
                                         <div>
-                                            <p className="text-[10px] text-gray-500 uppercase tracking-wider">Token</p>
+                                            <p className="text-[10px] text-gray-500 uppercase tracking-wider">{t('comparison.tokens')}</p>
                                             <p className="text-sm font-bold text-gray-900 dark:text-white">{winner.metrics!.token_count}</p>
                                         </div>
                                     </div>
@@ -372,9 +374,9 @@ export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
                                                 <button onClick={() => copyToClipboard(result.response || '', result.model_id)}
                                                     className="w-full py-1.5 text-xs font-medium text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 flex items-center justify-center gap-1.5 transition-colors">
                                                     {copiedId === result.model_id ? (
-                                                        <><Check className="w-3 h-3 text-emerald-500" /> Kopyalandı</>
+                                                        <><Check className="w-3 h-3 text-emerald-500" /> {t('comparison.copied')}</>
                                                     ) : (
-                                                        <><Copy className="w-3 h-3" /> Yanıtı Kopyala</>
+                                                        <><Copy className="w-3 h-3" /> {t('comparison.copyResponse')}</>
                                                     )}
                                                 </button>
                                             </div>
@@ -389,5 +391,3 @@ export const ComparisonChatPage = ({ onBack }: { onBack?: () => void }) => {
         </div>
     );
 };
-
-// No default export to avoid confusion with named export

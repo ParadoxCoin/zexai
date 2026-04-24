@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 /**
  * OAuth callback handler.
@@ -10,6 +11,7 @@ import { Loader2 } from 'lucide-react';
  * We extract the session and redirect to dashboard.
  */
 const AuthCallbackPage = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const [error, setError] = useState<string | null>(null);
@@ -26,7 +28,7 @@ const AuthCallbackPage = () => {
                     console.error('OAuth error from Supabase:', { urlError, errorCode, errorDescription });
                     throw new Error(
                         errorDescription ||
-                        `OAuth hatası: ${urlError}${errorCode ? ` (${errorCode})` : ''}`
+                        `${t('auth.oauthError', 'OAuth hatası')}: ${urlError}${errorCode ? ` (${errorCode})` : ''}`
                     );
                 }
 
@@ -37,7 +39,7 @@ const AuthCallbackPage = () => {
 
                 if (hashError) {
                     console.error('OAuth hash error:', { hashError, hashErrorDescription });
-                    throw new Error(hashErrorDescription || `OAuth hatası: ${hashError}`);
+                    throw new Error(hashErrorDescription || `${t('auth.oauthError', 'OAuth hatası')}: ${hashError}`);
                 }
 
                 // Get session from URL hash (Supabase puts tokens in URL fragment)
@@ -96,17 +98,17 @@ const AuthCallbackPage = () => {
 
                     navigate('/dashboard', { replace: true });
                 } else {
-                    throw new Error('Oturum alınamadı. Lütfen tekrar deneyin.');
+                    throw new Error(t('auth.sessionError', 'Oturum alınamadı. Lütfen tekrar deneyin.'));
                 }
             } catch (err: any) {
                 console.error('OAuth callback error:', err);
-                setError(err.message || 'Giriş sırasında bir hata oluştu');
+                setError(err.message || t('auth.loginError', 'Giriş sırasında bir hata oluştu'));
                 setTimeout(() => navigate('/login', { replace: true }), 5000);
             }
         };
 
         handleCallback();
-    }, [navigate, searchParams]);
+    }, [navigate, searchParams, t]);
 
     if (error) {
         return (
@@ -115,15 +117,15 @@ const AuthCallbackPage = () => {
                     <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/10 flex items-center justify-center">
                         <span className="text-2xl">❌</span>
                     </div>
-                    <p className="text-red-400 text-lg font-medium mb-2">Giriş Hatası</p>
+                    <p className="text-red-400 text-lg font-medium mb-2">{t('auth.loginErrorTitle', 'Giriş Hatası')}</p>
                     <p className="text-gray-500 text-sm mb-4">{error}</p>
                     <button
                         onClick={() => navigate('/login', { replace: true })}
                         className="px-6 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium transition-colors"
                     >
-                        Giriş Sayfasına Dön
+                        {t('auth.backToLogin', 'Giriş Sayfasına Dön')}
                     </button>
-                    <p className="text-gray-600 text-xs mt-3">5 saniye içinde otomatik yönlendirileceksiniz...</p>
+                    <p className="text-gray-600 text-xs mt-3">{t('auth.redirecting', '5 saniye içinde otomatik yönlendirileceksiniz...')}</p>
                 </div>
             </div>
         );
@@ -133,8 +135,8 @@ const AuthCallbackPage = () => {
         <div className="min-h-screen flex items-center justify-center bg-[#0a0a1a]">
             <div className="text-center">
                 <Loader2 className="w-12 h-12 text-purple-500 animate-spin mx-auto mb-4" />
-                <p className="text-white text-lg font-medium">Giriş yapılıyor...</p>
-                <p className="text-gray-500 text-sm mt-1">Lütfen bekleyin</p>
+                <p className="text-white text-lg font-medium">{t('auth.loggingIn', 'Giriş yapılıyor...')}</p>
+                <p className="text-gray-500 text-sm mt-1">{t('auth.pleaseWait', 'Lütfen bekleyin')}</p>
             </div>
         </div>
     );

@@ -4,16 +4,18 @@ import { useQuery } from '@tanstack/react-query';
 import { apiService } from '@/services/api';
 import { Award, Image, Video, Music, User, Heart, Share2, Filter, Loader2, Wand2 } from 'lucide-react';
 import SocialButtons from '@/components/SocialButtons';
+import { useTranslation } from 'react-i18next';
 
 const contentTypes = [
-    { id: 'all', name: 'Tümü', icon: Award },
-    { id: 'image', name: 'Görseller', icon: Image },
-    { id: 'video', name: 'Videolar', icon: Video },
-    { id: 'audio', name: 'Sesler', icon: Music },
-    { id: 'avatar', name: 'Avatarlar', icon: User }
+    { id: 'all', name: 'showcase.all', icon: Award },
+    { id: 'image', name: 'showcase.images', icon: Image },
+    { id: 'video', name: 'showcase.videos', icon: Video },
+    { id: 'audio', name: 'showcase.audioTab', icon: Music },
+    { id: 'avatar', name: 'showcase.avatars', icon: User }
 ];
 
 export const ShowcasePage = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const [filter, setFilter] = useState('all');
 
@@ -32,13 +34,13 @@ export const ShowcasePage = () => {
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-500/20 border border-yellow-500/30 rounded-full mb-4">
                         <Award className="w-4 h-4 text-yellow-400" />
-                        <span className="text-yellow-300 text-sm font-medium">Topluluk Galerisi</span>
+                        <span className="text-yellow-300 text-sm font-medium">{t('showcase.badge')}</span>
                     </div>
                     <h1 className="text-4xl font-bold text-white mb-2">
                         <span className="bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">Showcase</span>
                     </h1>
                     <p className="text-gray-400 max-w-xl mx-auto">
-                        Topluluk tarafından oluşturulan en iyi AI içeriklerini keşfet
+                        {t('showcase.subtitle')}
                     </p>
                 </div>
 
@@ -54,7 +56,7 @@ export const ShowcasePage = () => {
                                 }`}
                         >
                             <type.icon className="w-4 h-4" />
-                            {type.name}
+                            {t(type.name)}
                         </button>
                     ))}
                 </div>
@@ -86,8 +88,8 @@ export const ShowcasePage = () => {
                 ) : items.length === 0 ? (
                     <div className="text-center py-16">
                         <Award className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                        <h3 className="text-xl font-semibold text-white mb-2">Henüz içerik yok</h3>
-                        <p className="text-gray-400">İlk showcase içeriğini sen ekle!</p>
+                        <h3 className="text-xl font-semibold text-white mb-2">{t('showcase.noContentYet')}</h3>
+                        <p className="text-gray-400">{t('showcase.beFirst')}</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -165,7 +167,7 @@ export const ShowcasePage = () => {
                                             className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-medium rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all flex items-center gap-2"
                                         >
                                             <Wand2 className="w-4 h-4" />
-                                            Kodu Kopyala ve Üret
+                                            {t('showcase.copyAndGenerate')}
                                         </button>
                                     </div>
                                 </div>
@@ -180,7 +182,7 @@ export const ShowcasePage = () => {
                                             {item.service_type || item.content_type || 'content'}
                                         </span>
                                         <span className="text-xs text-gray-500">
-                                            {item.created_at && new Date(item.created_at).toLocaleDateString('tr-TR')}
+                                            {item.created_at && new Date(item.created_at).toLocaleDateString()}
                                         </span>
                                     </div>
                                 </div>

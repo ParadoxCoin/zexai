@@ -16,35 +16,35 @@ import { useTranslation } from 'react-i18next';
 // Available AI Models - Free (Groq + OpenRouter Free) + Premium (OpenRouter Paid)
 const availableModels = [
   // 🆓 Free Models (Groq)
-  { id: "llama-3.3-70b", name: "Llama 3.3 70B", icon: "🦙", tier: "free", desc: "Güçlü ve ücretsiz", cost: 0 },
-  { id: "llama-3.1-8b", name: "Llama 3.1 8B", icon: "🦙", tier: "free", desc: "Ultra hızlı", cost: 0 },
+  { id: "llama-3.3-70b", name: "Llama 3.3 70B", icon: "🦙", tier: "free", desc: "Powerful & free", cost: 0 },
+  { id: "llama-3.1-8b", name: "Llama 3.1 8B", icon: "🦙", tier: "free", desc: "Ultra fast", cost: 0 },
   // 🆓 Free Models (OpenRouter Free)
-  { id: "openrouter-auto-free", name: "Auto Free", icon: "🤖", tier: "free", desc: "En iyi ücretsiz", cost: 0 },
-  { id: "step-3.5-flash", name: "Step 3.5 Flash", icon: "⚡", tier: "free", desc: "Çok hızlı", cost: 0 },
-  { id: "trinity-large", name: "Trinity Large", icon: "🧠", tier: "free", desc: "Güçlü preview", cost: 0 },
-  { id: "solar-pro-3", name: "Solar Pro 3", icon: "☀️", tier: "free", desc: "Upstage modeli", cost: 0 },
-  { id: "lfm-thinking", name: "LFM Thinking", icon: "💭", tier: "free", desc: "Düşünen model", cost: 0 },
+  { id: "openrouter-auto-free", name: "Auto Free", icon: "🤖", tier: "free", desc: "Best free model", cost: 0 },
+  { id: "step-3.5-flash", name: "Step 3.5 Flash", icon: "⚡", tier: "free", desc: "Very fast", cost: 0 },
+  { id: "trinity-large", name: "Trinity Large", icon: "🧠", tier: "free", desc: "Strong preview", cost: 0 },
+  { id: "solar-pro-3", name: "Solar Pro 3", icon: "☀️", tier: "free", desc: "Upstage model", cost: 0 },
+  { id: "lfm-thinking", name: "LFM Thinking", icon: "💭", tier: "free", desc: "Thinking model", cost: 0 },
   // 💎 Premium Models (OpenRouter Paid)
-  { id: "gpt-5.2", name: "GPT-5.2", icon: "🧠", tier: "premium", desc: "En akıllı model", cost: 10 },
-  { id: "claude-opus-4.6", name: "Claude Opus 4.6", icon: "👑", tier: "premium", desc: "En yaratıcı zeka", cost: 15 },
+  { id: "gpt-5.2", name: "GPT-5.2", icon: "🧠", tier: "premium", desc: "Smartest model", cost: 10 },
+  { id: "claude-opus-4.6", name: "Claude Opus 4.6", icon: "👑", tier: "premium", desc: "Most creative AI", cost: 15 },
   { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro", icon: "✨", tier: "premium", desc: "1M context", cost: 3 },
   { id: "deepseek-r1", name: "DeepSeek R1", icon: "🐋", tier: "premium", desc: "Logic Master", cost: 2 },
-  { id: "grok-4", name: "Grok 4", icon: "⚡", tier: "premium", desc: "xAI en yeni", cost: 5 },
+  { id: "grok-4", name: "Grok 4", icon: "⚡", tier: "premium", desc: "xAI latest", cost: 5 },
   { id: "qwen3-max", name: "Qwen3 Max", icon: "💬", tier: "premium", desc: "MoE 262K ctx", cost: 2 },
-  { id: "mistral-large", name: "Mistral Large", icon: "🌪️", tier: "premium", desc: "Avrupa'nın en iyisi", cost: 3 },
-  { id: "minimax-m1", name: "MiniMax M1", icon: "🔥", tier: "premium", desc: "1M ctx, üretken", cost: 1 },
+  { id: "mistral-large", name: "Mistral Large", icon: "🌪️", tier: "premium", desc: "Europe's best", cost: 3 },
+  { id: "minimax-m1", name: "MiniMax M1", icon: "🔥", tier: "premium", desc: "1M ctx, creative", cost: 1 },
   { id: "kimi-k2.5", name: "Kimi K2.5", icon: "🌙", tier: "premium", desc: "Multimodal agent", cost: 1 },
-  { id: "llama-405b", name: "Llama 3.1 405B", icon: "🦙", tier: "premium", desc: "Dev açık kaynak", cost: 4 },
+  { id: "llama-405b", name: "Llama 3.1 405B", icon: "🦙", tier: "premium", desc: "Giant open source", cost: 4 },
 ];
 
 // Suggested Prompts
 const suggestedPrompts = [
-  { icon: '💡', title: 'Kod Yardımı', prompt: 'React componenti nasıl optimize ederim?', gradient: 'from-blue-500/10 to-purple-500/10 border-blue-200 dark:border-blue-800' },
-  { icon: '📝', title: 'İçerik Yazımı', prompt: 'Blog yazısı için SEO uyumlu başlık öner', gradient: 'from-emerald-500/10 to-teal-500/10 border-emerald-200 dark:border-emerald-800' },
-  { icon: '🎯', title: 'Strateji', prompt: 'SaaS ürünü için büyüme stratejisi öner', gradient: 'from-amber-500/10 to-orange-500/10 border-amber-200 dark:border-amber-800' },
-  { icon: '🔍', title: 'Analiz', prompt: 'Rakip analizi nasıl yapılır?', gradient: 'from-pink-500/10 to-rose-500/10 border-pink-200 dark:border-pink-800' },
-  { icon: '🌍', title: 'Çeviri', prompt: 'Bu metni İngilizce\'ye çevir:', gradient: 'from-violet-500/10 to-indigo-500/10 border-violet-200 dark:border-violet-800' },
-  { icon: '📊', title: 'Veri Analizi', prompt: 'Excel formülü nasıl yazılır?', gradient: 'from-cyan-500/10 to-sky-500/10 border-cyan-200 dark:border-cyan-800' },
+  { icon: '💡', title: 'Code Help', prompt: 'How do I optimize a React component?', gradient: 'from-blue-500/10 to-purple-500/10 border-blue-200 dark:border-blue-800' },
+  { icon: '📝', title: 'Content Writing', prompt: 'Suggest SEO-friendly blog titles', gradient: 'from-emerald-500/10 to-teal-500/10 border-emerald-200 dark:border-emerald-800' },
+  { icon: '🎯', title: 'Strategy', prompt: 'Suggest a growth strategy for a SaaS product', gradient: 'from-amber-500/10 to-orange-500/10 border-amber-200 dark:border-amber-800' },
+  { icon: '🔍', title: 'Analysis', prompt: 'How to do competitive analysis?', gradient: 'from-pink-500/10 to-rose-500/10 border-pink-200 dark:border-pink-800' },
+  { icon: '🌍', title: 'Translation', prompt: 'Translate this text to English:', gradient: 'from-violet-500/10 to-indigo-500/10 border-violet-200 dark:border-violet-800' },
+  { icon: '📊', title: 'Data Analysis', prompt: 'How to write Excel formulas?', gradient: 'from-cyan-500/10 to-sky-500/10 border-cyan-200 dark:border-cyan-800' },
 ];
 
 // Token streaming delay (ms) for natural typing feel
@@ -387,7 +387,7 @@ const ChatPage = () => {
                     <button onClick={() => setShowFreeModels(!showFreeModels)}
                       className="w-full flex items-center gap-1.5 px-1 py-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-md transition-colors">
                       {showFreeModels ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                      🆓 Ücretsiz ({freeModels.length})
+                      🆓 Free ({freeModels.length})
                     </button>
                     {showFreeModels && freeModels.map((model) => (
                       <button key={model.id} onClick={() => setSelectedModel(model.id)}
@@ -522,7 +522,7 @@ const ChatPage = () => {
                       <span className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                       <span className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                     </span>
-                    Yazıyor
+                    {t('chat.typing', 'Typing')}
                   </span>
                 )}
                 <button onClick={startNewConversation} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all" title="Yeni Sohbet">
@@ -541,8 +541,8 @@ const ChatPage = () => {
                       <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full blur-2xl opacity-15 scale-150" />
                       <img src="/logo192.png" alt="ZexAi" className="relative w-16 h-16 object-contain" />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Nasıl yardımcı olabilirim?</h2>
-                    <p className="text-sm text-gray-500 mb-8">Sormak istediğiniz her şeyi yazabilirsiniz</p>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{t('chat.emptyTitle', 'How can I help you?')}</h2>
+                    <p className="text-sm text-gray-500 mb-8">{t('chat.emptyDesc', 'You can ask anything you want')}</p>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 w-full max-w-xl">
                       {suggestedPrompts.map((item, idx) => (
                         <button key={idx} onClick={() => setMessage(item.prompt)}

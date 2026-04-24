@@ -66,9 +66,9 @@ export const ProfilePage: React.FC = () => {
     try {
       setPurchaseLoading(packageId);
       await api.post('/billing/purchase', { package_id: packageId });
-      toast.success('Başarılı', 'Satın alma işlemi başlatıldı!');
+      toast.success(t('common.success'), t('profile.purchaseSuccessDesc'));
     } catch (error: any) {
-      toast.error('Hata', error.response?.data?.detail || 'Satın alma başarısız');
+      toast.error(t('common.error'), error.response?.data?.detail || t('profile.purchaseErrorDesc'));
     } finally {
       setPurchaseLoading(null);
     }

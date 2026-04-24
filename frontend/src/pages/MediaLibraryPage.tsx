@@ -10,10 +10,12 @@ import { Trash2, Loader2, Terminal, BadgeCheck, Coins, X } from "lucide-react";
 import SocialButtons from "@/components/SocialButtons";
 import { useWeb3 } from "@/contexts/Web3Context";
 import { useToast } from "@/components/ui/toast";
+import { useTranslation } from "react-i18next";
 
 const ITEMS_PER_PAGE = 12;
 
 const MediaLibraryPage = () => {
+  const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -64,16 +66,16 @@ const MediaLibraryPage = () => {
 
   const handleMint = async () => {
     if (!account) {
-      toast.info("Cüzdan", "Mint için önce cüzdan bağlamalısın.");
+      toast.info(t('common.info'), t('media.walletRequired'));
       return;
     }
     const uri = mintUri.trim();
     if (!uri) {
-      toast.warning("URI", "Lütfen geçerli bir metadata URI gir.");
+      toast.warning(t('common.warning'), t('media.invalidUri'));
       return;
     }
     if (mintAmount < 1) {
-      toast.warning("Adet", "Mint adedi en az 1 olmalı.");
+      toast.warning(t('common.warning'), t('media.minAmountError'));
       return;
     }
 
@@ -81,13 +83,13 @@ const MediaLibraryPage = () => {
     try {
       const ok = await mintNFT(uri, mintAmount);
       if (ok) {
-        toast.success("Mint", "NFT mint işlemi başarılı.");
+        toast.success(t('media.mintNft'), t('media.mintSuccess'));
         closeMint();
       } else {
-        toast.error("Mint", "Mint başarısız. MetaMask onaylarını ve ZEX bakiyeni kontrol et.");
+        toast.error(t('media.mintNft'), t('media.mintFailed'));
       }
     } catch (e: any) {
-      toast.error("Mint", e?.message || "Mint sırasında hata oluştu.");
+      toast.error(t('media.mintNft'), e?.message || t('common.error'));
     } finally {
       setMintBusy(false);
     }
@@ -97,9 +99,9 @@ const MediaLibraryPage = () => {
     return (
       <Alert className="m-4 border-red-200 bg-red-50">
         <Terminal className="h-4 w-4 text-red-600" />
-        <AlertTitle className="text-red-800">Hata!</AlertTitle>
+        <AlertTitle className="text-red-800">{t('common.error')}!</AlertTitle>
         <AlertDescription className="text-red-700">
-          Medya kütüphanesi yüklenirken bir sorun oluştu.
+          {t('media.errorLoad', 'Medya kütüphanesi yüklenirken bir sorun oluştu.')}
         </AlertDescription>
       </Alert>
     );
@@ -117,7 +119,7 @@ const MediaLibraryPage = () => {
 
   return (
     <div className="container mx-auto p-4 space-y-6">
-      <h1 className="text-3xl font-bold">Medya Kütüphanesi</h1>
+      <h1 className="text-3xl font-bold">{t('media.title')}</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {isLoading
@@ -138,14 +140,14 @@ const MediaLibraryPage = () => {
                     contentType={getContentType(item)}
                     contentId={String(item.id)}
                     contentUrl={item.file_url || item.thumbnail_url}
-                    contentTitle="ZexAI ile oluşturdum!"
+                    contentTitle={t('media.genWithZex')}
                     size="sm"
                   />
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => openMint(item)}
-                    title="Bu içeriği NFT olarak mint et"
+                    title={t('media.mintDesc')}
                   >
                     <Coins className="h-4 w-4 text-emerald-500" />
                   </Button>
@@ -153,7 +155,11 @@ const MediaLibraryPage = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => deleteMedia(item.id)}
+                  onClick={() => {
+                    if (window.confirm(t('media.deleteConfirm'))) {
+                        deleteMedia(item.id);
+                    }
+                  }}
                   disabled={isDeleting}
                 >
                   {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 text-red-500" />}
@@ -164,17 +170,17 @@ const MediaLibraryPage = () => {
       </div>
 
       {mediaItems.length === 0 && !isLoading && (
-        <p className="text-center text-gray-500">Kütüphanenizde henüz medya bulunmuyor.</p>
+        <p className="text-center text-gray-500">{t('media.noMedia')}</p>
       )}
 
       {totalPages > 1 && (
         <div className="flex items-center justify-center space-x-2">
           <Button onClick={() => setPage(p => Math.max(p - 1, 1))} disabled={page === 1}>
-            Önceki
+            {t('common.previous')}
           </Button>
-          <span>Sayfa {page} / {totalPages}</span>
+          <span>{t('common.page')} {page} / {totalPages}</span>
           <Button onClick={() => setPage(p => Math.min(p + 1, totalPages))} disabled={page === totalPages}>
-            Sonraki
+            {t('common.next')}
           </Button>
         </div>
       )}
@@ -189,9 +195,9 @@ const MediaLibraryPage = () => {
                   <BadgeCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">NFT Mint</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('media.mintNft')}</h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Galerideki içeriği mintle (ZEX ile ücret).
+                    {t('media.mintDesc')}
                   </p>
                 </div>
               </div>
@@ -199,7 +205,7 @@ const MediaLibraryPage = () => {
                 onClick={closeMint}
                 disabled={mintBusy}
                 className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-60"
-                aria-label="Kapat"
+                aria-label={t('common.close')}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -207,21 +213,18 @@ const MediaLibraryPage = () => {
 
             <div className="p-5 space-y-4">
               <div className="space-y-1">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Metadata URI</p>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t('media.mintUri')}</p>
                 <input
                   value={mintUri}
                   onChange={(e) => setMintUri(e.target.value)}
-                  placeholder="ipfs://... veya https://..."
+                  placeholder={t('media.mintUriPlaceholder')}
                   className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 outline-none focus:ring-2 focus:ring-emerald-500"
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  İdeal: IPFS’te JSON metadata (image, name, description).
-                </p>
               </div>
 
               <div className="flex gap-3 items-end">
                 <div className="w-32 space-y-1">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Adet</p>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t('media.mintAmount')}</p>
                   <input
                     type="number"
                     min={1}
@@ -238,15 +241,15 @@ const MediaLibraryPage = () => {
                     disabled={mintBusy}
                     className="flex-1"
                   >
-                    İptal
+                    {t('common.cancel')}
                   </Button>
                   <Button
                     onClick={handleMint}
                     disabled={mintBusy || !account}
                     className="flex-1"
-                    title={!account ? "Önce cüzdan bağla" : undefined}
+                    title={!account ? t('media.walletRequired') : undefined}
                   >
-                    {mintBusy ? "Mint ediliyor..." : "Mint Et"}
+                    {mintBusy ? t('media.minting') : t('media.mintBtn')}
                   </Button>
                 </div>
               </div>

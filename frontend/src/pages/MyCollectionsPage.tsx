@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layers, Plus, ExternalLink, RefreshCw, BarChart2 } from 'lucide-react';
 import { apiService } from '../services/api';
+import { useTranslation } from 'react-i18next';
 
 interface Collection {
     id: string;
@@ -20,6 +21,7 @@ interface Collection {
 
 const MyCollectionsPage: React.FC = () => {
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const [collections, setCollections] = useState<Collection[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -36,7 +38,7 @@ const MyCollectionsPage: React.FC = () => {
             setCollections(res as any);
         } catch (err: any) {
             console.error("Failed to fetch collections", err);
-            setError('Koleksiyonlar yüklenirken bir hata oluştu.');
+            setError(t('collections.loadError'));
         } finally {
             setLoading(false);
         }
@@ -47,10 +49,10 @@ const MyCollectionsPage: React.FC = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
                     <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#2081E2] to-[#E42575]">
-                        AI NFT Koleksiyonlarım
+                        {t('collections.myCollections')}
                     </h1>
                     <p className="text-gray-500 dark:text-gray-400 mt-2">
-                        Kendi AI üretimi NFT koleksiyonlarınızı oluşturun ve yönetin.
+                        {t('collections.myCollectionsDesc')}
                     </p>
                 </div>
                 <button
@@ -58,7 +60,7 @@ const MyCollectionsPage: React.FC = () => {
                     className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-medium transition-all shadow-lg hover:shadow-indigo-500/25"
                 >
                     <Plus className="w-5 h-5" />
-                    Yeni Koleksiyon Oluştur
+                    {t('collections.createNew')}
                 </button>
             </div>
 
@@ -77,17 +79,16 @@ const MyCollectionsPage: React.FC = () => {
                     <div className="w-20 h-20 bg-indigo-50 dark:bg-indigo-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
                         <Layers className="w-10 h-10 text-indigo-500" />
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Henüz Koleksiyonunuz Yok</h3>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{t('collections.noCollections')}</h3>
                     <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-8">
-                        AI yeteneklerini kullanarak 10K, 5K veya benzersiz sanatsal koleksiyonlar oluşturabilir, 
-                        Rarible, OpenSea ve Magic Eden'da yayınlayabilirsiniz.
+                        {t('collections.noCollectionsDesc')}
                     </p>
                     <button
                         onClick={() => navigate('/collections/create')}
                         className="px-6 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-medium hover:opacity-90 transition inline-flex items-center gap-2"
                     >
                         <Plus className="w-5 h-5" />
-                        Hemen İlk Koleksiyonunu Başlat
+                        {t('collections.startFirst')}
                     </button>
                 </div>
             ) : (
@@ -108,25 +109,25 @@ const MyCollectionsPage: React.FC = () => {
                                         col.status === 'publishing' ? 'bg-yellow-500 text-white' : 
                                         'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                                     }`}>
-                                        {col.status === 'published' ? 'YAYINLANDI' : col.status === 'publishing' ? 'YAYINLANLANMIYOR...' : 'TASLAK'}
+                                        {col.status === 'published' ? t('collections.published') : col.status === 'publishing' ? t('collections.publishing') : t('collections.draft')}
                                     </span>
                                 </div>
                             </div>
                             <div className="p-6">
                                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">{col.name}</h3>
                                 <p className="text-gray-500 dark:text-gray-400 text-sm mb-4 line-clamp-2">
-                                    {col.description || "Koleksiyon açıklaması yok."}
+                                    {col.description || t('collections.noDescription')}
                                 </p>
                                 
                                 <div className="grid grid-cols-2 gap-4 mb-6">
                                     <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl">
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">Üretilen / Hedef</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">{t('collections.generated')}</p>
                                         <p className="font-bold text-gray-900 dark:text-white">
                                             {col.items_count} <span className="text-sm font-normal text-gray-500">/ {col.max_supply}</span>
                                         </p>
                                     </div>
                                     <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl">
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">Mint Fiyatı & Royalty</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">{t('collections.mintAndRoyalty')}</p>
                                         <p className="font-bold text-gray-900 dark:text-white">
                                             {col.mint_price} POL <span className="text-sm font-normal text-gray-500">/ %{col.royalty_bps / 100}</span>
                                         </p>
@@ -143,7 +144,7 @@ const MyCollectionsPage: React.FC = () => {
                                             className="flex-1 py-2.5 bg-[#2081E2] hover:bg-[#1868B7] title text-white rounded-xl font-medium transition text-center text-sm flex items-center justify-center gap-2"
                                         >
                                             <ExternalLink className="w-4 h-4" />
-                                            OpenSea'de Gör
+                                            {t('collections.viewOnOpenSea')}
                                         </a>
                                     ) : (
                                         <button
@@ -151,7 +152,7 @@ const MyCollectionsPage: React.FC = () => {
                                             className="flex-1 py-2.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-xl font-medium transition text-sm flex items-center justify-center gap-2"
                                         >
                                             <BarChart2 className="w-4 h-4" />
-                                            İnşaya Devam Et
+                                            {t('collections.continueBuilding')}
                                         </button>
                                     )}
                                 </div>

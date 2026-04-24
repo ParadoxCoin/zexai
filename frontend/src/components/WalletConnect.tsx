@@ -9,7 +9,7 @@ interface WalletConnectProps {
 }
 
 const WalletConnect: React.FC<WalletConnectProps> = ({ className = '', showBalance = true }) => {
-    const { account, zexBalance, isConnecting, connectWallet, disconnectWallet } = useWeb3();
+    const { account, zexBalance, polBalance, isConnecting, connectWallet, disconnectWallet } = useWeb3();
     const { t } = useTranslation();
 
     // Shorten address format: 0x1234...5678
@@ -21,9 +21,15 @@ const WalletConnect: React.FC<WalletConnectProps> = ({ className = '', showBalan
         return (
             <div className={`flex items-center gap-2 ${className}`}>
                 {showBalance && (
-                    <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg text-sm font-medium border border-purple-100 dark:border-purple-800/50">
-                        <span>{Number(zexBalance).toFixed(2)}</span>
-                        <span className="text-xs uppercase tracking-wider font-bold">ZEX</span>
+                    <div className="hidden sm:flex items-center gap-3">
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg text-sm font-medium border border-purple-100 dark:border-purple-800/50">
+                            <span>{Number(zexBalance).toFixed(2)}</span>
+                            <span className="text-xs uppercase tracking-wider font-bold">ZEX</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg text-sm font-medium border border-blue-100 dark:border-blue-800/50">
+                            <span>{Number(polBalance).toFixed(3)}</span>
+                            <span className="text-xs uppercase tracking-wider font-bold">POL</span>
+                        </div>
                     </div>
                 )}
                 <div className="relative group">

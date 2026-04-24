@@ -3,6 +3,7 @@ import { Key, Plus, Copy, Trash2, Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { useToast } from '@/components/ui/toast';
 import { LoadingSpinner } from '@/components/ui/skeleton';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1',
@@ -17,6 +18,7 @@ interface ApiKey {
 }
 
 export const ApiKeysPage: React.FC = () => {
+  const { t } = useTranslation();
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNewKeyModal, setShowNewKeyModal] = useState(false);
@@ -35,7 +37,7 @@ export const ApiKeysPage: React.FC = () => {
       const response = await api.get('/user/api-keys');
       setApiKeys(response.data?.data || []);
     } catch (error) {
-      toast.error('Hata', 'API anahtarları yüklenemedi');
+      toast.error(t('common.error'), t('apiKeys.errorLoad', 'API anahtarları yüklenemedi'));
     } finally {
       setLoading(false);
     }
@@ -43,7 +45,7 @@ export const ApiKeysPage: React.FC = () => {
 
   const createApiKey = async () => {
     if (!newKeyName.trim()) {
-      toast.warning('Uyarı', 'Lütfen bir isim girin');
+      toast.warning(t('common.warning'), t('apiKeys.enterName', 'Lütfen bir isim girin'));
       return;
     }
 
@@ -53,27 +55,27 @@ export const ApiKeysPage: React.FC = () => {
       setCreatedKey(newKey.key);
       setApiKeys([...apiKeys, newKey]);
       setNewKeyName('');
-      toast.success('Başarılı', 'API anahtarı oluşturuldu');
+      toast.success(t('common.success'), t('apiKeys.createSuccess'));
     } catch (error: any) {
-      toast.error('Hata', error.response?.data?.detail || 'API anahtarı oluşturulamadı');
+      toast.error(t('common.error'), error.response?.data?.detail || t('apiKeys.createError', 'API anahtarı oluşturulamadı'));
     }
   };
 
   const deleteApiKey = async (id: string) => {
-    if (!confirm('Bu API anahtarını silmek istediğinizden emin misiniz?')) return;
+    if (!confirm(t('apiKeys.deleteConfirm'))) return;
 
     try {
       await api.delete(`/user/api-keys/${id}`);
       setApiKeys(apiKeys.filter(key => key.id !== id));
-      toast.success('Başarılı', 'API anahtarı silindi');
+      toast.success(t('common.success'), t('apiKeys.deleteSuccess'));
     } catch (error: any) {
-      toast.error('Hata', error.response?.data?.detail || 'API anahtarı silinemedi');
+      toast.error(t('common.error'), error.response?.data?.detail || t('apiKeys.deleteError', 'API anahtarı silinemedi'));
     }
   };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast.success('Kopyalandı', 'API anahtarı panoya kopyalandı');
+    toast.success(t('apiKeys.copySuccess'), t('apiKeys.copyNote', 'API anahtarı panoya kopyalandı'));
   };
 
   const toggleKeyVisibility = (id: string) => {
@@ -103,9 +105,9 @@ export const ApiKeysPage: React.FC = () => {
       {/* Header */}
       <div className="sm:flex sm:items-center sm:justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">API Anahtarları</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">{t('apiKeys.title')}</h1>
           <p className="mt-2 text-sm text-gray-700">
-            Programatik erişim için API anahtarlarınızı yönetin
+            {t('apiKeys.subtitle')}
           </p>
         </div>
         <button
@@ -113,7 +115,7 @@ export const ApiKeysPage: React.FC = () => {
           className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Yeni Anahtar
+          {t('apiKeys.newKey')}
         </button>
       </div>
 
@@ -123,7 +125,7 @@ export const ApiKeysPage: React.FC = () => {
           <AlertCircle className="h-5 w-5 text-yellow-400" />
           <div className="ml-3">
             <p className="text-sm text-yellow-700">
-              API anahtarlarınızı güvenli tutun. Bu anahtarlar hesabınıza tam erişim sağlar.
+              {t('apiKeys.warning')}
             </p>
           </div>
         </div>
@@ -133,9 +135,9 @@ export const ApiKeysPage: React.FC = () => {
       {apiKeys.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-lg shadow">
           <Key className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">API anahtarı yok</h3>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">{t('apiKeys.noKeys')}</h3>
           <p className="mt-1 text-sm text-gray-500">
-            Başlamak için yeni bir API anahtarı oluşturun
+            {t('apiKeys.noKeysDesc')}
           </p>
         </div>
       ) : (
@@ -165,8 +167,8 @@ export const ApiKeysPage: React.FC = () => {
                           </button>
                         </div>
                         <p className="text-xs text-gray-500 mt-1">
-                          Oluşturulma: {new Date(apiKey.created_at).toLocaleDateString('tr-TR')}
-                          {apiKey.last_used && ` • Son kullanım: ${new Date(apiKey.last_used).toLocaleDateString('tr-TR')}`}
+                          {t('common.created', 'Oluşturulma')}: {new Date(apiKey.created_at).toLocaleDateString()}
+                          {apiKey.last_used && ` • ${t('common.lastUsed', 'Son kullanım')}: ${new Date(apiKey.last_used).toLocaleDateString()}`}
                         </p>
                       </div>
                     </div>
@@ -175,14 +177,14 @@ export const ApiKeysPage: React.FC = () => {
                     <button
                       onClick={() => copyToClipboard(apiKey.key)}
                       className="p-2 text-gray-400 hover:text-gray-600"
-                      title="Kopyala"
+                      title={t('common.copy')}
                     >
                       <Copy className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => deleteApiKey(apiKey.id)}
                       className="p-2 text-red-400 hover:text-red-600"
-                      title="Sil"
+                      title={t('common.delete')}
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -198,12 +200,12 @@ export const ApiKeysPage: React.FC = () => {
       {showNewKeyModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">Yeni API Anahtarı</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('apiKeys.createTitle')}</h3>
             {createdKey ? (
               <div className="space-y-4">
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                   <p className="text-sm text-green-800 mb-2">
-                    API anahtarınız oluşturuldu! Bu anahtarı güvenli bir yerde saklayın.
+                    {t('apiKeys.createdNote')}
                   </p>
                   <code className="block text-xs font-mono bg-white p-3 rounded border break-all">
                     {createdKey}
@@ -213,7 +215,7 @@ export const ApiKeysPage: React.FC = () => {
                     className="mt-2 w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200"
                   >
                     <Copy className="h-4 w-4 mr-2" />
-                    Kopyala
+                    {t('common.copy')}
                   </button>
                 </div>
                 <button
@@ -223,20 +225,20 @@ export const ApiKeysPage: React.FC = () => {
                   }}
                   className="w-full px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
                 >
-                  Kapat
+                  {t('common.close')}
                 </button>
               </div>
             ) : (
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Anahtar İsmi
+                    {t('apiKeys.createName')}
                   </label>
                   <input
                     type="text"
                     value={newKeyName}
                     onChange={(e) => setNewKeyName(e.target.value)}
-                    placeholder="Örn: Production API Key"
+                    placeholder={t('apiKeys.createNamePlaceholder')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
                   />
                 </div>
@@ -245,7 +247,7 @@ export const ApiKeysPage: React.FC = () => {
                     onClick={createApiKey}
                     className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
                   >
-                    Oluştur
+                    {t('apiKeys.createBtn')}
                   </button>
                   <button
                     onClick={() => {
@@ -254,7 +256,7 @@ export const ApiKeysPage: React.FC = () => {
                     }}
                     className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
                   >
-                    İptal
+                    {t('common.cancel')}
                   </button>
                 </div>
               </div>
@@ -265,19 +267,19 @@ export const ApiKeysPage: React.FC = () => {
 
       {/* API Documentation */}
       <div className="mt-8 bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold mb-4">API Kullanımı</h2>
+        <h2 className="text-lg font-semibold mb-4">{t('apiKeys.usageTitle')}</h2>
         <div className="space-y-4">
           <div>
-            <h3 className="text-sm font-medium text-gray-900 mb-2">Authentication</h3>
+            <h3 className="text-sm font-medium text-gray-900 mb-2">{t('apiKeys.authTitle')}</h3>
             <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg text-xs overflow-x-auto">
 {`curl -H "Authorization: Bearer YOUR_API_KEY" \\
-  https://api.example.com/v1/endpoint`}
+  https://api.zexai.io/v1/endpoint`}
             </pre>
           </div>
           <div>
-            <h3 className="text-sm font-medium text-gray-900 mb-2">Örnek İstek</h3>
+            <h3 className="text-sm font-medium text-gray-900 mb-2">{t('apiKeys.exampleTitle')}</h3>
             <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg text-xs overflow-x-auto">
-{`curl -X POST https://api.example.com/v1/image/generate \\
+{`curl -X POST https://api.zexai.io/v1/image/generate \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"prompt": "A beautiful sunset", "model": "flux-pro"}'`}
@@ -288,3 +290,5 @@ export const ApiKeysPage: React.FC = () => {
     </div>
   );
 };
+
+export default ApiKeysPage;

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { Celebration, CreditToast, LevelUpCelebration, AchievementCelebration } from './Celebration';
 import playHapticFeedback from '@/utils/haptics';
+import { useTranslation } from 'react-i18next';
 
 interface GamificationStats {
     level: number;
@@ -55,6 +56,7 @@ export const GamificationWidget: React.FC<GamificationProps> = ({
     chatsCount,
     referralsCount
 }) => {
+    const { t } = useTranslation();
     const queryClient = useQueryClient();
     const [showClaimSuccess, setShowClaimSuccess] = useState(false);
     const [showAchievements, setShowAchievements] = useState(false);
@@ -146,7 +148,7 @@ export const GamificationWidget: React.FC<GamificationProps> = ({
                 // Show credit toast
                 setCreditEarned({
                     amount: data.total_credits || data.credits_earned || 5,
-                    reason: `Günlük ödül - ${data.streak_days || 1} gün streak! 🔥`
+                    reason: t('gamification.dailyRewardStreak', { days: data.streak_days || 1 })
                 });
                 setShowCreditToast(true);
 
@@ -179,7 +181,7 @@ export const GamificationWidget: React.FC<GamificationProps> = ({
     if (isError) {
         return (
             <div className="bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-xl p-3 text-center">
-                <span className="text-sm text-gray-500">🎮 Gamification yükleniyor...</span>
+                <span className="text-sm text-gray-500">🎮 {t('gamification.loading')}</span>
             </div>
         );
     }
@@ -251,7 +253,7 @@ export const GamificationWidget: React.FC<GamificationProps> = ({
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
                                     <span className="text-base font-bold text-gray-900 dark:text-white">
-                                        Seviye {stats.level}
+                                        {t('gamification.level')} {stats.level}
                                     </span>
                                     <span className="px-2 py-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-[10px] font-bold rounded-full uppercase tracking-wider">
                                         {stats.level_name}
@@ -289,7 +291,7 @@ export const GamificationWidget: React.FC<GamificationProps> = ({
                                 <div className="flex justify-between items-center mt-1">
                                     <span className="text-[10px] font-medium text-gray-400">{stats.current_xp} / {stats.xp_to_next_level + stats.current_xp} XP</span>
                                     {stats.xp_to_next_level > 0 && (
-                                        <span className="text-[10px] font-bold text-indigo-500">+{stats.xp_to_next_level} XP sonrakine</span>
+                                        <span className="text-[10px] font-bold text-indigo-500">+{stats.xp_to_next_level} XP {t('gamification.toNext')}</span>
                                     )}
                                 </div>
                             </div>
@@ -310,7 +312,7 @@ export const GamificationWidget: React.FC<GamificationProps> = ({
                                 >
                                     <Flame className={`w-5 h-5 ${stats.streak_days > 0 ? 'text-orange-500 fill-orange-500' : 'text-gray-400'}`} />
                                 </motion.div>
-                                <span className="text-sm font-black text-orange-600 dark:text-orange-400">{stats.streak_days} GÜN</span>
+                                <span className="text-sm font-black text-orange-600 dark:text-orange-400">{stats.streak_days} {t('gamification.dayLabel')}</span>
                             </motion.div>
 
                             {/* Daily Claim Button */}
@@ -334,7 +336,7 @@ export const GamificationWidget: React.FC<GamificationProps> = ({
                                         className="px-4 py-2 bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 text-white text-xs font-black rounded-xl shadow-lg border border-white/20 flex items-center gap-2 group"
                                     >
                                         {isClaiming ? <Clock className="w-4 h-4 animate-spin" /> : <Gift className="w-4 h-4 group-hover:rotate-12 transition-transform" />}
-                                        GÜNLÜK ÖDÜLÜ AL
+                                        {t('gamification.claimDaily')}
                                     </motion.button>
                                 ) : showClaimSuccess ? (
                                     <motion.div
@@ -343,14 +345,14 @@ export const GamificationWidget: React.FC<GamificationProps> = ({
                                         animate={{ scale: 1, opacity: 1 }}
                                         className="px-4 py-2 bg-green-500 text-white text-xs font-black rounded-xl flex items-center gap-2"
                                     >
-                                        <CheckCircle className="w-4 h-4" /> ALINDI!
+                                        <CheckCircle className="w-4 h-4" /> {t('gamification.claimed')}
                                     </motion.div>
                                 ) : (
                                     <motion.div
                                         key="wait-badge"
                                         className="px-4 py-2 bg-gray-100 dark:bg-gray-700/50 text-gray-400 text-xs font-bold rounded-xl flex items-center gap-2"
                                     >
-                                        <Clock className="w-3.5 h-3.5" /> YARIN TEKRAR GEL
+                                        <Clock className="w-3.5 h-3.5" /> {t('gamification.comeBackTomorrow')}
                                     </motion.div>
                                 )}
                             </AnimatePresence>
@@ -360,10 +362,10 @@ export const GamificationWidget: React.FC<GamificationProps> = ({
                     {/* Streak Progress Chart (7 Day Cycle) */}
                     <div className="mt-5 p-3 bg-gray-50 dark:bg-gray-900/40 rounded-2xl border border-gray-100 dark:border-gray-800">
                         <div className="flex justify-between items-center mb-3">
-                            <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Haftalık Seri Takibi</span>
+                            <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('gamification.weeklyStreak')}</span>
                             <div className="flex items-center gap-1">
                                 <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
-                                <span className="text-[10px] font-black text-amber-600">7. GÜN: +50 KREDİ</span>
+                                <span className="text-[10px] font-black text-amber-600">{t('gamification.day7Bonus')}</span>
                             </div>
                         </div>
                         <div className="flex justify-between gap-1">
@@ -396,7 +398,7 @@ export const GamificationWidget: React.FC<GamificationProps> = ({
                                             {day === 7 ? '🎁' : isCompleted ? '✓' : day}
                                         </motion.div>
                                         <span className={`text-[8px] font-bold uppercase ${isCompleted ? 'text-indigo-500' : 'text-gray-400'}`}>
-                                            {day}. GÜN
+                                            {t('gamification.dayN', { day })}
                                         </span>
                                     </div>
                                 );
@@ -412,7 +414,7 @@ export const GamificationWidget: React.FC<GamificationProps> = ({
                         >
                             <div className="flex items-center gap-2">
                                 <Trophy className="w-4 h-4 text-amber-500" />
-                                <span className="text-gray-700 dark:text-gray-300">BAŞARILAR</span>
+                                <span className="text-gray-700 dark:text-gray-300">{t('gamification.achievements')}</span>
                                 <span className="px-1.5 py-0.5 bg-amber-500 text-white rounded text-[9px] font-black">
                                     {unlockedCount}/{totalCount}
                                 </span>
@@ -457,7 +459,7 @@ export const GamificationWidget: React.FC<GamificationProps> = ({
                                         </motion.div>
                                     )) : (
                                         <div className="w-full text-center py-4 text-gray-400 text-xs italic">
-                                            Başarılar yükleniyor...
+                                            {t('gamification.achievementsLoading')}
                                         </div>
                                     )}
                                 </div>
@@ -469,19 +471,19 @@ export const GamificationWidget: React.FC<GamificationProps> = ({
                     <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800 grid grid-cols-4 gap-2">
                         <div className="bg-blue-50/50 dark:bg-blue-500/5 rounded-lg p-1.5 text-center transition-transform hover:scale-105">
                             <div className="text-[10px] font-black text-blue-600 dark:text-blue-400">{imagesCount ?? stats.stats.images}</div>
-                            <div className="text-[8px] font-bold text-gray-400 uppercase">Görsel</div>
+                            <div className="text-[8px] font-bold text-gray-400 uppercase">{t('gamification.statImages')}</div>
                         </div>
                         <div className="bg-purple-50/50 dark:bg-purple-500/5 rounded-lg p-1.5 text-center transition-transform hover:scale-105">
                             <div className="text-[10px] font-black text-purple-600 dark:text-purple-400">{videosCount ?? stats.stats.videos}</div>
-                            <div className="text-[8px] font-bold text-gray-400 uppercase">Video</div>
+                            <div className="text-[8px] font-bold text-gray-400 uppercase">{t('gamification.statVideos')}</div>
                         </div>
                         <div className="bg-emerald-50/50 dark:bg-emerald-500/5 rounded-lg p-1.5 text-center transition-transform hover:scale-105">
                             <div className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">{audioCount ?? stats.stats.audio}</div>
-                            <div className="text-[8px] font-bold text-gray-400 uppercase">Ses</div>
+                            <div className="text-[8px] font-bold text-gray-400 uppercase">{t('gamification.statAudio')}</div>
                         </div>
                         <div className="bg-orange-50/50 dark:bg-orange-500/5 rounded-lg p-1.5 text-center transition-transform hover:scale-105">
                             <div className="text-[10px] font-black text-orange-600 dark:text-orange-400">{referralsCount ?? stats.stats.referrals}</div>
-                            <div className="text-[8px] font-bold text-gray-400 uppercase">Davet</div>
+                            <div className="text-[8px] font-bold text-gray-400 uppercase">{t('gamification.statReferrals')}</div>
                         </div>
                     </div>
                 </div>

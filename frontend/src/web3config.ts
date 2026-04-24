@@ -1,6 +1,6 @@
 import { createAppKit } from '@reown/appkit/react'
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
-import { polygon, mainnet, bsc } from 'wagmi/chains'
+import { polygon } from 'wagmi/chains'
 
 // Get projectId from https://cloud.walletconnect.com
 export const projectId = '42e0fa2294608f4479aecb7f5798fd90';
@@ -12,7 +12,7 @@ const metadata = {
     icons: ['https://zexai.io/logo192.png']
 }
 
-const networks = [polygon, mainnet, bsc]
+const networks = [polygon]
 
 export const wagmiAdapter = new WagmiAdapter({
     projectId,

@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Star, Medal, Users, ArrowUp, ArrowDown, ExternalLink } from 'lucide-react';
 import { useLeaderboard, LeaderboardUser } from '@/services/useGamification';
+import { useTranslation } from 'react-i18next';
 
 export const LeaderboardWidget: React.FC = () => {
+    const { t } = useTranslation();
     const [period, setPeriod] = useState<'weekly' | 'all_time'>('weekly');
     const { data: leaderboardData, isLoading, isError } = useLeaderboard(period, 10);
 
@@ -36,7 +38,7 @@ export const LeaderboardWidget: React.FC = () => {
                         <Users className="w-5 h-5" />
                     </div>
                     <h2 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-wider">
-                        Sıralama
+                        {t('leaderboard.title')}
                     </h2>
                 </div>
 
@@ -46,13 +48,13 @@ export const LeaderboardWidget: React.FC = () => {
                         onClick={() => setPeriod('weekly')}
                         className={`px-3 py-1.5 rounded-md transition-all ${period === 'weekly' ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
                     >
-                        Haftalık
+                        {t('leaderboard.weekly')}
                     </button>
                     <button
                         onClick={() => setPeriod('all_time')}
                         className={`px-3 py-1.5 rounded-md transition-all ${period === 'all_time' ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
                     >
-                        Tüm Zamanlar
+                        {t('leaderboard.allTime')}
                     </button>
                 </div>
             </div>
@@ -68,13 +70,13 @@ export const LeaderboardWidget: React.FC = () => {
                 ) : isError ? (
                     <div className="h-full flex flex-col items-center justify-center text-center px-4">
                         <Trophy className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" />
-                        <p className="text-gray-500 dark:text-gray-400 font-medium">Liderlik tablosu yüklenemedi</p>
+                        <p className="text-gray-500 dark:text-gray-400 font-medium">{t('leaderboard.loadFailed')}</p>
                     </div>
                 ) : entries.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-center px-4">
                         <Star className="w-12 h-12 text-amber-200 dark:text-amber-900/30 mb-3 fill-current" />
-                        <p className="text-gray-500 dark:text-gray-400 font-medium pb-1">Henüz kimse sıralamaya girmedi.</p>
-                        <p className="text-xs text-gray-400 dark:text-gray-500">Üretim yapıp XP kazanarak listede ilk sen ol!</p>
+                        <p className="text-gray-500 dark:text-gray-400 font-medium pb-1">{t('leaderboard.noEntries')}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">{t('leaderboard.noEntriesDesc')}</p>
                     </div>
                 ) : (
                     <div className="space-y-2.5">
@@ -103,7 +105,7 @@ export const LeaderboardWidget: React.FC = () => {
                                             )}
                                         </div>
                                         {user.rank > 3 && (
-                                            <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">Lv.{user.level} Üye</p>
+                                            <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">Lv.{user.level} {t('leaderboard.member')}</p>
                                         )}
                                     </div>
 
@@ -114,7 +116,7 @@ export const LeaderboardWidget: React.FC = () => {
                                         </div>
                                         {user.streak_days > 0 && (
                                             <span className="text-[10px] font-bold text-orange-500 flex items-center gap-0.5">
-                                                <span className="text-lg leading-none mt-[-2px]">🔥</span> {user.streak_days} gün
+                                                <span className="text-lg leading-none mt-[-2px]">🔥</span> {user.streak_days} {t('leaderboard.days')}
                                             </span>
                                         )}
                                     </div>
@@ -128,7 +130,7 @@ export const LeaderboardWidget: React.FC = () => {
             {/* Footer Context */}
             <div className="p-3 bg-gray-50 border-t border-gray-100 dark:bg-gray-800/80 dark:border-gray-700 text-center">
                 <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-widest font-bold flex justify-center items-center gap-1">
-                    Haftalık birinciye 500 Kredi + ZEX Ödülü <Trophy className="w-3 h-3 text-amber-500" />
+                    {t('leaderboard.weeklyPrize')} <Trophy className="w-3 h-3 text-amber-500" />
                 </p>
             </div>
         </div>

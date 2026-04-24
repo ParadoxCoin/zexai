@@ -1,13 +1,14 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiService } from '@/services/api';
 import {
     Camera, Upload, Mic, Play, Download, RefreshCw, Sparkles,
-    Volume2, Image, Video, ChevronDown, User, Loader2, Check, X,
+    Volume2, Image as ImageIcon, Video, ChevronDown, User, Loader2, Check, X,
     Globe, Star, Music, Pause, FileAudio, UploadCloud
 } from 'lucide-react';
 import { Celebration, CreditToast } from '@/components/Celebration';
 import PromptEnhancer from '@/components/PromptEnhancer';
+import { useTranslation } from 'react-i18next';
 
 interface Voice {
     id: string;
@@ -36,6 +37,7 @@ type VoiceTab = 'builtin' | 'premium' | 'cloned';
 type InputMode = 'text' | 'audio';
 
 export const AvatarPage = () => {
+    const { t } = useTranslation();
     const queryClient = useQueryClient();
 
     // States
@@ -98,145 +100,147 @@ export const AvatarPage = () => {
         : currentVoices.filter(v => v.language?.startsWith(voiceLanguageFilter));
 
     // Get unique languages for filter
-    const availableLanguages = Array.from(new Set(builtinVoices.map(v => v.language?.split('-')[0]).filter(Boolean)));
+    const languages = Array.from(new Set(currentVoices.map(v => v.language?.split('-')[0]))).filter(Boolean);
 
-    // Generate mutation (text mode)
+    // Upload image
+    const uploadMutation = useMutation({
+        mutationFn: (file: File) => {
+            const formData = new FormData();
+            formData.append('file', file);
+            return apiService.post('/avatar/upload-image', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+        },
+        onSuccess: (data) => {
+            setImageUrl(data.url);
+            setIsUploading(false);
+        },
+        onError: () => {
+            setIsUploading(false);
+            setError(t('avatar.uploadPhotoFirst'));
+        }
+    });
+
+    // Upload audio
+    const uploadAudioMutation = useMutation({
+        mutationFn: (file: File) => {
+            const formData = new FormData();
+            formData.append('file', file);
+            return apiService.post('/avatar/upload-audio', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+        },
+        onSuccess: (data) => {
+            setAudioUrl(data.url);
+            setIsUploadingAudio(false);
+        },
+        onError: () => {
+            setIsUploadingAudio(false);
+            setError(t('avatar.uploadAudioFirst'));
+        }
+    });
+
+    // Generate avatar
     const generateMutation = useMutation({
-        mutationFn: (data: { image_url: string; text: string; voice_id: string }) =>
-            apiService.post('/avatar/generate', data),
+        mutationFn: (params: { image_url: string, text: string, voice_id: string }) =>
+            apiService.post('/avatar/generate', params),
         onSuccess: (data: GenerationResult) => {
-            if (data.success && data.job_id) {
+            if (data.job_id) {
                 setJobId(data.job_id);
-                setIsGenerating(true);
-                setCreditEarned({
-                    amount: data.credit_cost || 0,
-                    reason: 'Avatar video üretimi'
-                });
-                if (data.demo_mode) {
-                    setResultUrl('https://www.w3schools.com/html/mov_bbb.mp4');
-                    setIsGenerating(false);
-                    setShowCelebration(true);
-                    setShowCreditToast(true);
-                } else {
-                    startPolling(data.job_id);
-                }
-            } else {
-                setError(data.message || 'Bir hata oluştu');
+                startPolling(data.job_id);
+            } else if (data.result_url) {
+                setResultUrl(data.result_url);
+                setIsGenerating(false);
+                handleSuccess(data);
             }
         },
         onError: (err: any) => {
-            setError(err.response?.data?.detail || 'Üretim hatası');
             setIsGenerating(false);
+            setError(err?.response?.data?.detail || t('avatar.errorOccurred'));
         }
     });
 
-    // Generate with audio mutation
+    // Generate with audio
     const generateWithAudioMutation = useMutation({
-        mutationFn: (data: { image_url: string; audio_url: string }) =>
-            apiService.post('/avatar/generate-with-audio', data),
+        mutationFn: (params: { image_url: string, audio_url: string }) =>
+            apiService.post('/avatar/generate-audio', params),
         onSuccess: (data: GenerationResult) => {
-            if (data.success && data.job_id) {
+            if (data.job_id) {
                 setJobId(data.job_id);
-                setIsGenerating(true);
-                setCreditEarned({
-                    amount: data.credit_cost || 0,
-                    reason: 'Avatar video üretimi (ses dosyası)'
-                });
-                if (data.demo_mode) {
-                    setResultUrl('https://www.w3schools.com/html/mov_bbb.mp4');
-                    setIsGenerating(false);
-                    setShowCelebration(true);
-                    setShowCreditToast(true);
-                } else {
-                    startPolling(data.job_id);
-                }
-            } else {
-                setError(data.message || 'Bir hata oluştu');
+                startPolling(data.job_id);
+            } else if (data.result_url) {
+                setResultUrl(data.result_url);
+                setIsGenerating(false);
+                handleSuccess(data);
             }
         },
         onError: (err: any) => {
-            setError(err.response?.data?.detail || 'Üretim hatası');
             setIsGenerating(false);
+            setError(err?.response?.data?.detail || t('avatar.errorOccurred'));
         }
     });
 
-    // Start polling
+    const handleSuccess = (data: GenerationResult) => {
+        setShowCelebration(true);
+        if (data.credit_cost) {
+            setCreditEarned({ amount: data.credit_cost, reason: t('avatar.generationComplete') });
+            setShowCreditToast(true);
+        }
+        queryClient.invalidateQueries({ queryKey: ['user-stats'] });
+    };
+
     const startPolling = (id: string) => {
+        setIsGenerating(true);
         if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+
         pollIntervalRef.current = setInterval(async () => {
             try {
-                const status = await apiService.get(`/avatar/status/${id}`);
-                if (status.status === 'done' && status.result_url) {
-                    clearInterval(pollIntervalRef.current!);
-                    setResultUrl(status.result_url);
+                const statusData = await apiService.get(`/avatar/status/${id}`);
+                if (statusData.status === 'completed' && statusData.result_url) {
+                    setResultUrl(statusData.result_url);
                     setIsGenerating(false);
-                    setShowCelebration(true);
-                    setShowCreditToast(true);
-                    queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
-                } else if (status.status === 'error') {
-                    clearInterval(pollIntervalRef.current!);
-                    setError('Video üretimi başarısız');
+                    setJobId(null);
+                    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+                    handleSuccess(statusData);
+                } else if (statusData.status === 'failed') {
+                    setError(statusData.error || t('avatar.errorOccurred'));
                     setIsGenerating(false);
+                    setJobId(null);
+                    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
                 }
-            } catch (e) {
-                clearInterval(pollIntervalRef.current!);
-                setIsGenerating(false);
+            } catch (err) {
+                console.error('Polling error:', err);
             }
         }, 3000);
     };
 
-    // Handle image upload
-    const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (event) => setImagePreview(event.target?.result as string);
-        reader.readAsDataURL(file);
-        setIsUploading(true);
-        setError(null);
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
-            const response = await apiService.upload('/files/upload', formData);
-            if (response.public_url) {
-                setImageUrl(response.public_url);
-            } else {
-                setError('Fotoğraf yüklenemedi, lütfen tekrar deneyin');
-                setImagePreview('');
-            }
-        } catch (err: any) {
-            console.error('Image upload failed:', err);
-            setError(err.response?.data?.detail || 'Fotoğraf yükleme hatası');
-            setImagePreview('');
-        } finally {
-            setIsUploading(false);
-        }
+    useEffect(() => {
+        return () => {
+            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+        };
     }, []);
 
-    // Handle audio upload
-    const handleAudioUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Handle image selection
+    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file) return;
-        setAudioFileName(file.name);
-        setIsUploadingAudio(true);
-        setError(null);
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
-            const response = await apiService.upload('/files/upload', formData);
-            if (response.public_url) {
-                setAudioUrl(response.public_url);
-            } else {
-                setError('Ses dosyası yüklenemedi');
-                setAudioFileName('');
-            }
-        } catch (err: any) {
-            setError(err.response?.data?.detail || 'Ses yükleme hatası');
-            setAudioFileName('');
-        } finally {
-            setIsUploadingAudio(false);
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => setImagePreview(reader.result as string);
+            reader.readAsDataURL(file);
+            setIsUploading(true);
+            uploadMutation.mutate(file);
         }
-    }, []);
+    };
+
+    // Handle audio selection
+    const handleAudioSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setAudioFileName(file.name);
+            setIsUploadingAudio(true);
+            uploadAudioMutation.mutate(file);
+        }
+    };
 
     // Play voice preview
     const handlePlayPreview = (voice: Voice) => {
@@ -256,12 +260,12 @@ export const AvatarPage = () => {
     // Handle generate
     const handleGenerate = () => {
         if (!imageUrl) {
-            setError('Lütfen bir fotoğraf yükleyin');
+            setError(t('avatar.uploadPhotoFirst'));
             return;
         }
         if (inputMode === 'audio') {
             if (!audioUrl) {
-                setError('Lütfen bir ses dosyası yükleyin');
+                setError(t('avatar.uploadAudioFirst'));
                 return;
             }
             setError(null);
@@ -269,7 +273,7 @@ export const AvatarPage = () => {
             generateWithAudioMutation.mutate({ image_url: imageUrl, audio_url: audioUrl });
         } else {
             if (!text.trim()) {
-                setError('Lütfen bir metin girin');
+                setError(t('avatar.enterTextFirst'));
                 return;
             }
             setError(null);
@@ -278,505 +282,379 @@ export const AvatarPage = () => {
         }
     };
 
-    // Reset
-    const handleReset = () => {
-        setImageUrl(''); setImagePreview(''); setText('');
-        setResultUrl(null); setJobId(null); setError(null);
-        setIsGenerating(false); setAudioUrl(''); setAudioFileName('');
-        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-    };
-
-    // Estimate
-    const estimatedDuration = Math.max(15, Math.min(120, text.length / 10));
-    const estimatedCost = inputMode === 'audio' ? 20 : estimatedDuration <= 15 ? 10 : estimatedDuration <= 30 ? 20 : estimatedDuration <= 60 ? 40 : 75;
-
-    // Voice Card Component
-    const VoiceCard = ({ voice }: { voice: Voice }) => {
-        const isSelected = selectedVoice === voice.id;
-        const isPlaying = playingVoiceId === voice.id;
-        const hasPreview = !!voice.preview_url;
-
-        return (
-            <button
-                onClick={() => setSelectedVoice(voice.id)}
-                className={`group relative p-3 rounded-xl border transition-all duration-300 text-left w-full ${isSelected
-                    ? 'border-purple-500 bg-purple-500/15 shadow-lg shadow-purple-500/10 ring-1 ring-purple-500/30'
-                    : 'border-gray-700/60 hover:border-gray-600 hover:bg-gray-800/40'
-                    }`}
-            >
-                {/* Selected checkmark */}
-                {isSelected && (
-                    <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center shadow-lg">
-                        <Check className="w-3 h-3 text-white" />
-                    </div>
-                )}
-
-                <div className="flex items-center gap-3">
-                    {/* Avatar */}
-                    <div className={`relative w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${voice.gender === 'male'
-                        ? 'bg-gradient-to-br from-blue-500/30 to-cyan-500/30 text-blue-300'
-                        : voice.gender === 'female'
-                            ? 'bg-gradient-to-br from-pink-500/30 to-rose-500/30 text-pink-300'
-                            : 'bg-gradient-to-br from-purple-500/30 to-violet-500/30 text-purple-300'
-                        }`}>
-                        {voice.flag || (voice.gender === 'male' ? '♂' : voice.gender === 'female' ? '♀' : '🎤')}
-                        {isSelected && (
-                            <div className="absolute inset-0 rounded-full ring-2 ring-purple-400 animate-pulse" />
-                        )}
-                    </div>
-
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                            <p className={`font-semibold text-sm truncate ${isSelected ? 'text-white' : 'text-gray-200'}`}>
-                                {voice.name}
-                            </p>
-                            {voice.provider === 'ElevenLabs' && (
-                                <span className="px-1.5 py-0.5 text-[9px] font-bold bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 rounded-full border border-amber-500/30">
-                                    PRO
-                                </span>
-                            )}
-                            {voice.provider === 'clone' && (
-                                <span className="px-1.5 py-0.5 text-[9px] font-bold bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-400 rounded-full border border-green-500/30">
-                                    KLON
-                                </span>
-                            )}
-                        </div>
-                        <p className="text-xs text-gray-500 truncate">
-                            {voice.language === 'multilingual' ? '🌍 Çok dilli' : voice.language}
-                        </p>
-                    </div>
-
-                    {/* Preview button */}
-                    {hasPreview && (
-                        <button
-                            onClick={(e) => { e.stopPropagation(); handlePlayPreview(voice); }}
-                            className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all ${isPlaying
-                                ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30'
-                                : 'bg-gray-700/50 text-gray-400 hover:bg-gray-600/50 hover:text-white opacity-0 group-hover:opacity-100'
-                                }`}
-                        >
-                            {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 ml-0.5" />}
-                        </button>
-                    )}
-                </div>
-            </button>
-        );
-    };
-
-    // Voice tabs config
-    const voiceTabs = [
-        { id: 'builtin' as VoiceTab, label: 'Hazır Sesler', icon: Globe, count: builtinVoices.length },
-        { id: 'premium' as VoiceTab, label: 'Premium AI', icon: Star, count: premiumVoices.length },
-        { id: 'cloned' as VoiceTab, label: 'Kendi Sesin', icon: Mic, count: clonedVoices.length },
-    ];
-
     return (
-        <>
-            {/* Celebrations */}
-            <Celebration show={showCelebration} type="stars" onComplete={() => setShowCelebration(false)} />
-            <CreditToast
-                show={showCreditToast}
-                amount={creditEarned.amount}
-                reason={creditEarned.reason}
-                onClose={() => setShowCreditToast(false)}
-            />
-
-            {/* Hidden audio player for previews */}
-            <audio ref={audioPreviewRef} className="hidden" />
-
-            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 py-8 px-4">
-                <div className="max-w-6xl mx-auto">
-                    {/* Header */}
-                    <div className="text-center mb-8">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/20 border border-purple-500/30 rounded-full mb-4">
-                            <Sparkles className="w-4 h-4 text-purple-400" />
-                            <span className="text-purple-300 text-sm font-medium">AI Avatar</span>
+        <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50/50 to-cyan-50 dark:from-gray-900 dark:via-emerald-950/20 dark:to-gray-900 py-8">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                {/* Header */}
+                <div className="mb-8 text-center sm:text-left">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white flex items-center justify-center sm:justify-start gap-3">
+                                <span className="bg-emerald-500 p-2 rounded-xl text-white shadow-lg shadow-emerald-500/20">
+                                    <User className="w-8 h-8" />
+                                </span>
+                                {t('avatar.createTitle')} <span className="text-emerald-500">{t('avatar.createHighlight')}</span>
+                            </h1>
+                            <p className="mt-2 text-gray-600 dark:text-gray-400 text-lg">
+                                {t('avatar.subtitle')}
+                            </p>
                         </div>
-                        <h1 className="text-4xl font-bold text-white mb-2">
-                            Konuşan <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">Avatar</span> Oluştur
-                        </h1>
-                        <p className="text-gray-400 max-w-xl mx-auto">
-                            Fotoğrafını yükle, metni yaz ve AI ile konuşan bir avatar videosu oluştur!
-                        </p>
                     </div>
+                </div>
 
-                    <div className="grid lg:grid-cols-2 gap-8">
-                        {/* Left: Input Section */}
-                        <div className="space-y-6">
-                            {/* Image Upload */}
-                            <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-6">
-                                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                                    <Image className="w-5 h-5 text-purple-400" />
-                                    Fotoğraf
-                                </h3>
-
-                                {imagePreview ? (
-                                    <div className="relative">
-                                        <img
-                                            src={imagePreview}
-                                            alt="Preview"
-                                            className="w-full h-64 object-cover rounded-xl"
-                                        />
-                                        {isUploading && (
-                                            <div className="absolute inset-0 bg-black/60 rounded-xl flex items-center justify-center">
-                                                <div className="flex flex-col items-center gap-2">
-                                                    <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
-                                                    <span className="text-white text-sm">Yükleniyor...</span>
-                                                </div>
-                                            </div>
-                                        )}
-                                        {!isUploading && (
-                                            <button
-                                                onClick={() => { setImagePreview(''); setImageUrl(''); }}
-                                                className="absolute top-2 right-2 p-2 bg-red-500/80 hover:bg-red-500 rounded-full text-white"
-                                            >
-                                                <X className="w-4 h-4" />
-                                            </button>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="border-2 border-dashed border-gray-600 hover:border-purple-500 rounded-xl p-8 text-center cursor-pointer transition-all hover:bg-gray-700/30"
-                                    >
-                                        <div className="w-16 h-16 mx-auto mb-4 bg-purple-500/20 rounded-full flex items-center justify-center">
-                                            <Upload className="w-8 h-8 text-purple-400" />
-                                        </div>
-                                        <p className="text-gray-300 font-medium mb-1">Fotoğraf Yükle</p>
-                                        <p className="text-gray-500 text-sm">veya sürükle bırak</p>
-                                    </div>
-                                )}
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleImageUpload}
-                                    className="hidden"
-                                />
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    {/* Left Side: Setup */}
+                    <div className="lg:col-span-7 space-y-6">
+                        {/* 1. Photo Upload */}
+                        <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-xl shadow-gray-200/50 dark:shadow-none border border-gray-100 dark:border-gray-700">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold">1</div>
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white">{t('avatar.photo')}</h3>
                             </div>
 
-                            {/* Input Mode Toggle */}
-                            <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-6">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                                        <Volume2 className="w-5 h-5 text-purple-400" />
-                                        Ses Kaynağı
-                                    </h3>
-                                    <div className="flex-1" />
-                                    <div className="flex bg-gray-900/60 rounded-lg p-0.5 border border-gray-700">
-                                        <button
-                                            onClick={() => setInputMode('text')}
-                                            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${inputMode === 'text'
-                                                ? 'bg-purple-600 text-white shadow-md'
-                                                : 'text-gray-400 hover:text-white'
-                                                }`}
-                                        >
-                                            ✍️ Metin
+                            <div
+                                onClick={() => fileInputRef.current?.click()}
+                                className={`relative aspect-video rounded-2xl border-2 border-dashed transition-all cursor-pointer group flex flex-col items-center justify-center overflow-hidden
+                                    ${imagePreview ? 'border-emerald-500 bg-emerald-50/10' : 'border-gray-200 dark:border-gray-700 hover:border-emerald-400 dark:hover:border-emerald-600'}`}
+                            >
+                                {imagePreview ? (
+                                    <>
+                                        <img src={imagePreview} className="absolute inset-0 w-full h-full object-cover" alt="Preview" />
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <div className="bg-white/20 backdrop-blur-md px-4 py-2 rounded-full text-white font-medium flex items-center gap-2">
+                                                <RefreshCw className="w-4 h-4" /> {t('avatar.changePhoto')}
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="text-center p-8">
+                                        <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                                            <Camera className="w-8 h-8 text-blue-500" />
+                                        </div>
+                                        <p className="text-gray-900 dark:text-white font-bold text-lg">{t('avatar.uploadPhoto')}</p>
+                                        <p className="text-gray-500 text-sm mt-1">{t('avatar.uploadPhotoFormats')}</p>
+                                        <p className="text-gray-400 text-xs mt-4 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full inline-block">
+                                            {t('avatar.uploadPhotoDesc')}
+                                        </p>
+                                    </div>
+                                )}
+                                {isUploading && (
+                                    <div className="absolute inset-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm flex items-center justify-center">
+                                        <div className="text-center">
+                                            <Loader2 className="w-8 h-8 animate-spin text-emerald-500 mx-auto mb-2" />
+                                            <p className="text-sm font-medium text-gray-900 dark:text-white">{t('avatar.loading')}</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            <input type="file" ref={fileInputRef} onChange={handleImageSelect} accept="image/*" className="hidden" />
+                        </div>
+
+                        {/* 2. Text or Audio Input */}
+                        <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-xl shadow-gray-200/50 dark:shadow-none border border-gray-100 dark:border-gray-700">
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-400 font-bold">2</div>
+                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">{t('avatar.sourceVoice')}</h3>
+                                </div>
+
+                                <div className="flex bg-gray-100 dark:bg-gray-900 p-1 rounded-xl">
+                                    <button
+                                        onClick={() => setInputMode('text')}
+                                        className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${inputMode === 'text' ? 'bg-white dark:bg-gray-800 text-emerald-500 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                    >
+                                        {t('avatar.modeText')}
+                                    </button>
+                                    <button
+                                        onClick={() => setInputMode('audio')}
+                                        className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${inputMode === 'audio' ? 'bg-white dark:bg-gray-800 text-emerald-500 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                    >
+                                        {t('avatar.modeAudio')}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {inputMode === 'text' ? (
+                                <div className="space-y-4">
+                                    <div className="relative">
+                                        <textarea
+                                            value={text}
+                                            onChange={(e) => setText(e.target.value.slice(0, 500))}
+                                            placeholder={t('avatar.enterText')}
+                                            className="w-full h-32 p-4 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none text-base"
+                                        />
+                                        <div className="absolute bottom-4 right-4 flex items-center gap-3">
+                                            <span className="text-[10px] font-bold text-gray-400 bg-white dark:bg-gray-800 px-2 py-1 rounded-full">
+                                                {t('avatar.characters', { count: text.length })} / 500
+                                            </span>
+                                            <span className="text-[10px] font-bold text-emerald-500 bg-white dark:bg-gray-800 px-2 py-1 rounded-full">
+                                                {t('avatar.estimatedVideo', { count: Math.ceil(text.length / 15) })}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <PromptEnhancer onEnhanced={(newText) => setText(newText)} />
+                                </div>
+                            ) : (
+                                <div
+                                    onClick={() => audioInputRef.current?.click()}
+                                    className={`p-6 rounded-2xl border-2 border-dashed transition-all cursor-pointer group flex flex-col items-center justify-center
+                                        ${audioUrl ? 'border-emerald-500 bg-emerald-50/10' : 'border-gray-200 dark:border-gray-700 hover:border-emerald-400'}`}
+                                >
+                                    <div className="w-12 h-12 bg-orange-50 dark:bg-orange-900/20 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                        <FileAudio className="w-6 h-6 text-orange-500" />
+                                    </div>
+                                    {isUploadingAudio ? (
+                                        <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
+                                    ) : audioUrl ? (
+                                        <div className="text-center">
+                                            <p className="text-emerald-600 font-bold flex items-center justify-center gap-2">
+                                                <Check className="w-4 h-4" /> {t('avatar.audioUploaded')}
+                                            </p>
+                                            <p className="text-xs text-gray-500 mt-1">{audioFileName}</p>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center">
+                                            <p className="text-gray-900 dark:text-white font-bold">{t('avatar.uploadAudio')}</p>
+                                            <p className="text-xs text-gray-500 mt-1">{t('avatar.audioFormats')}</p>
+                                        </div>
+                                    )}
+                                    <p className="mt-4 text-[11px] text-gray-400 text-center max-w-sm">
+                                        {t('avatar.audioTip')}
+                                    </p>
+                                    <input type="file" ref={audioInputRef} onChange={handleAudioSelect} accept="audio/*" className="hidden" />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* 3. Voice Selection (Only for text mode) */}
+                        {inputMode === 'text' && (
+                            <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-xl shadow-gray-200/50 dark:shadow-none border border-gray-100 dark:border-gray-700">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 font-bold">3</div>
+                                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">{t('avatar.voiceSelection')}</h3>
+                                    </div>
+
+                                    <div className="flex bg-gray-100 dark:bg-gray-900 p-1 rounded-xl">
+                                        <button onClick={() => setVoiceTab('builtin')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${voiceTab === 'builtin' ? 'bg-white dark:bg-gray-800 text-purple-600 shadow-sm' : 'text-gray-500'}`}>
+                                            {t('avatar.tabBuiltin')}
                                         </button>
-                                        <button
-                                            onClick={() => setInputMode('audio')}
-                                            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${inputMode === 'audio'
-                                                ? 'bg-purple-600 text-white shadow-md'
-                                                : 'text-gray-400 hover:text-white'
-                                                }`}
-                                        >
-                                            🎵 Ses Dosyası
+                                        <button onClick={() => setVoiceTab('premium')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${voiceTab === 'premium' ? 'bg-white dark:bg-gray-800 text-purple-600 shadow-sm' : 'text-gray-500'}`}>
+                                            {t('avatar.tabPremium')}
+                                        </button>
+                                        <button onClick={() => setVoiceTab('cloned')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${voiceTab === 'cloned' ? 'bg-white dark:bg-gray-800 text-purple-600 shadow-sm' : 'text-gray-500'}`}>
+                                            {t('avatar.tabCloned')}
                                         </button>
                                     </div>
                                 </div>
 
-                                {inputMode === 'text' ? (
-                                    <>
-                                        <div className="relative">
-                                            <textarea
-                                                value={text}
-                                                onChange={(e) => setText(e.target.value)}
-                                                placeholder="Avatar'ın söyleyeceği metni yazın..."
-                                                className="w-full h-32 pr-12 bg-gray-900/50 border border-gray-600 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-                                            />
-                                            <div className="absolute right-3 top-3">
-                                                <PromptEnhancer contentType="avatar" currentPrompt={text} onSelectPrompt={(p) => setText(p)} />
+                                {/* Filters */}
+                                <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
+                                    <button
+                                        onClick={() => setVoiceLanguageFilter('all')}
+                                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all whitespace-nowrap ${voiceLanguageFilter === 'all' ? 'bg-purple-500 text-white border-purple-500' : 'bg-white dark:bg-gray-800 text-gray-600 border-gray-200 dark:border-gray-700'}`}
+                                    >
+                                        {t('avatar.allLanguages')}
+                                    </button>
+                                    {languages.map(lang => (
+                                        <button
+                                            key={lang}
+                                            onClick={() => setVoiceLanguageFilter(lang)}
+                                            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all whitespace-nowrap uppercase ${voiceLanguageFilter === lang ? 'bg-purple-500 text-white border-purple-500' : 'bg-white dark:bg-gray-800 text-gray-600 border-gray-200 dark:border-gray-700'}`}
+                                        >
+                                            {lang}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Voice Grid */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                                    {filteredVoices.map((voice) => (
+                                        <div
+                                            key={voice.id}
+                                            onClick={() => setSelectedVoice(voice.id)}
+                                            className={`relative group p-3 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between
+                                                ${selectedVoice === voice.id ? 'border-purple-500 bg-purple-50/30' : 'border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 hover:border-purple-300'}`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm text-lg overflow-hidden border border-gray-100 dark:border-gray-700">
+                                                    {voice.gender === 'female' ? '👩' : '👨'}
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-gray-900 dark:text-white text-sm flex items-center gap-1.5">
+                                                        {voice.name}
+                                                        {voice.category === 'multilingual' && <Globe className="w-3 h-3 text-blue-500" title={t('avatar.multilingual')} />}
+                                                    </p>
+                                                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">{voice.language}</p>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="flex justify-between mt-2 text-sm">
-                                            <span className="text-gray-500">{text.length} karakter</span>
-                                            <span className="text-purple-400">~{Math.ceil(estimatedDuration)}sn video</span>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div className="space-y-3">
-                                        {audioUrl ? (
-                                            <div className="flex items-center gap-3 p-4 bg-gray-900/50 border border-green-500/30 rounded-xl">
-                                                <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center">
-                                                    <FileAudio className="w-5 h-5 text-green-400" />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-white text-sm font-medium truncate">{audioFileName}</p>
-                                                    <p className="text-green-400 text-xs">✓ Yüklendi</p>
-                                                </div>
+
+                                            <div className="flex items-center gap-2">
+                                                {voice.provider === 'elevenlabs' && <span className="text-[8px] bg-purple-600 text-white px-1.5 py-0.5 rounded-md font-bold tracking-widest">{t('avatar.proBadge')}</span>}
+                                                {voice.clone_id && <span className="text-[8px] bg-emerald-500 text-white px-1.5 py-0.5 rounded-md font-bold tracking-widest">{t('avatar.cloneBadge')}</span>}
                                                 <button
-                                                    onClick={() => { setAudioUrl(''); setAudioFileName(''); }}
-                                                    className="p-1.5 bg-red-500/20 hover:bg-red-500/40 rounded-full text-red-400"
+                                                    onClick={(e) => { e.stopPropagation(); handlePlayPreview(voice); }}
+                                                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${playingVoiceId === voice.id ? 'bg-purple-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 hover:bg-purple-100'}`}
                                                 >
-                                                    <X className="w-3.5 h-3.5" />
+                                                    {playingVoiceId === voice.id ? <Pause className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                                                 </button>
                                             </div>
-                                        ) : (
-                                            <div
-                                                onClick={() => audioInputRef.current?.click()}
-                                                className="border-2 border-dashed border-gray-600 hover:border-purple-500 rounded-xl p-6 text-center cursor-pointer transition-all hover:bg-gray-700/30"
-                                            >
-                                                {isUploadingAudio ? (
-                                                    <div className="flex flex-col items-center gap-2">
-                                                        <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
-                                                        <p className="text-gray-300 text-sm">Yükleniyor...</p>
-                                                    </div>
-                                                ) : (
-                                                    <>
-                                                        <div className="w-12 h-12 mx-auto mb-3 bg-purple-500/20 rounded-full flex items-center justify-center">
-                                                            <UploadCloud className="w-6 h-6 text-purple-400" />
-                                                        </div>
-                                                        <p className="text-gray-300 font-medium text-sm mb-1">Ses Dosyası Yükle</p>
-                                                        <p className="text-gray-500 text-xs">MP3, WAV, OGG desteklenir</p>
-                                                    </>
-                                                )}
+
+                                            {selectedVoice === voice.id && (
+                                                <div className="absolute -top-2 -right-2 w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-purple-500/20">
+                                                    <Check className="w-4 h-4" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+
+                                    {filteredVoices.length === 0 && (
+                                        <div className="col-span-full py-12 text-center">
+                                            <Music className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                                            <p className="text-gray-500 font-medium">
+                                                {voiceTab === 'premium' ? t('avatar.premiumRequired') : voiceTab === 'cloned' ? t('avatar.noClonedVoices') : t('avatar.noVoiceFound')}
+                                            </p>
+                                            <p className="text-xs text-gray-400 mt-1">
+                                                {voiceTab === 'premium' ? t('avatar.premiumTip') : voiceTab === 'cloned' ? t('avatar.noClonedVoicesTip') : ''}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Right Side: Result & Controls */}
+                    <div className="lg:col-span-5 space-y-6">
+                        {/* Result Panel */}
+                        <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-xl shadow-gray-200/50 dark:shadow-none border border-gray-100 dark:border-gray-700 sticky top-8">
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <Sparkles className="w-5 h-5 text-emerald-500" />
+                                    {t('avatar.result')}
+                                </h3>
+                                {resultUrl && (
+                                    <button onClick={() => { setResultUrl(null); setJobId(null); }} className="text-xs text-gray-500 hover:text-red-500 flex items-center gap-1 font-bold">
+                                        <RefreshCw className="w-3 h-3" /> {t('avatar.newCreate')}
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className={`aspect-video rounded-2xl overflow-hidden bg-gray-900 flex flex-col items-center justify-center relative shadow-inner
+                                ${isGenerating ? 'ring-4 ring-emerald-500/20 animate-pulse' : ''}`}>
+                                {resultUrl ? (
+                                    <video src={resultUrl} controls className="w-full h-full object-contain" poster={imagePreview} />
+                                ) : isGenerating ? (
+                                    <div className="text-center p-8">
+                                        <div className="relative mb-6">
+                                            <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-2xl animate-pulse" />
+                                            <Loader2 className="w-12 h-12 animate-spin text-emerald-500 mx-auto relative" />
+                                        </div>
+                                        <p className="text-white font-bold text-lg">{t('avatar.generating')}</p>
+                                        <p className="text-gray-400 text-sm mt-2">{t('avatar.generatingDesc')}</p>
+                                        {jobId && (
+                                            <div className="mt-4 px-3 py-1 bg-white/10 rounded-full inline-block">
+                                                <p className="text-[10px] text-gray-300 font-mono">JOB ID: {jobId}</p>
                                             </div>
                                         )}
-                                        <input
-                                            ref={audioInputRef}
-                                            type="file"
-                                            accept="audio/*"
-                                            onChange={handleAudioUpload}
-                                            className="hidden"
-                                        />
-                                        <p className="text-xs text-gray-500">
-                                            💡 Kendi ses kaydınızı yükleyin, avatar dudak hareketlerini senkronize edecek.
+                                    </div>
+                                ) : (
+                                    <div className="text-center p-8">
+                                        <div className="w-20 h-20 bg-gray-800 rounded-3xl flex items-center justify-center mx-auto mb-4 border border-gray-700">
+                                            <Video className="w-10 h-10 text-gray-600" />
+                                        </div>
+                                        <p className="text-white font-bold text-lg">{t('avatar.noResultYet')}</p>
+                                        <p className="text-gray-500 text-sm mt-2">
+                                            {t('avatar.noResultYetDesc')}
                                         </p>
                                     </div>
                                 )}
                             </div>
 
-                            {/* Voice Selection — only shown in text mode */}
-                            {inputMode === 'text' && (
-                                <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-6">
-                                    {/* Section header */}
-                                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                                        <Mic className="w-5 h-5 text-purple-400" />
-                                        Ses Seçimi
-                                    </h3>
-
-                                    {/* Tabs */}
-                                    <div className="flex gap-1 mb-4 bg-gray-900/50 rounded-xl p-1 border border-gray-700/50">
-                                        {voiceTabs.map((tab) => {
-                                            const Icon = tab.icon;
-                                            return (
-                                                <button
-                                                    key={tab.id}
-                                                    onClick={() => { setVoiceTab(tab.id); setVoiceLanguageFilter('all'); }}
-                                                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium transition-all ${voiceTab === tab.id
-                                                        ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20'
-                                                        : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
-                                                        }`}
-                                                >
-                                                    <Icon className="w-3.5 h-3.5" />
-                                                    <span className="hidden sm:inline">{tab.label}</span>
-                                                    {tab.count > 0 && (
-                                                        <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${voiceTab === tab.id ? 'bg-white/20' : 'bg-gray-700'
-                                                            }`}>
-                                                            {tab.count}
-                                                        </span>
-                                                    )}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-
-                                    {/* Language filter (only for builtin) */}
-                                    {voiceTab === 'builtin' && availableLanguages.length > 1 && (
-                                        <div className="flex gap-1.5 mb-3 overflow-x-auto pb-1">
-                                            <button
-                                                onClick={() => setVoiceLanguageFilter('all')}
-                                                className={`px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all ${voiceLanguageFilter === 'all'
-                                                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
-                                                    : 'bg-gray-800/50 text-gray-400 border border-gray-700 hover:text-gray-200'
-                                                    }`}
-                                            >
-                                                🌍 Tümü
-                                            </button>
-                                            {availableLanguages.map((lang) => {
-                                                const langFlags: Record<string, string> = { tr: '🇹🇷', en: '🇺🇸', de: '🇩🇪', fr: '🇫🇷', es: '🇪🇸', ja: '🇯🇵', ko: '🇰🇷', ar: '🇸🇦' };
-                                                const langNames: Record<string, string> = { tr: 'Türkçe', en: 'English', de: 'Deutsch', fr: 'Français', es: 'Español', ja: '日本語', ko: '한국어', ar: 'العربية' };
-                                                return (
-                                                    <button
-                                                        key={lang}
-                                                        onClick={() => setVoiceLanguageFilter(lang)}
-                                                        className={`px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all ${voiceLanguageFilter === lang
-                                                            ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
-                                                            : 'bg-gray-800/50 text-gray-400 border border-gray-700 hover:text-gray-200'
-                                                            }`}
-                                                    >
-                                                        {langFlags[lang] || '🌐'} {langNames[lang] || lang.toUpperCase()}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-
-                                    {/* Voice cards grid */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[280px] overflow-y-auto pr-1 custom-scrollbar">
-                                        {filteredVoices.length > 0 ? (
-                                            filteredVoices.map((voice) => (
-                                                <VoiceCard key={voice.id} voice={voice} />
-                                            ))
-                                        ) : (
-                                            <div className="col-span-2 py-8 text-center text-gray-500">
-                                                {voiceTab === 'premium' ? (
-                                                    <div className="space-y-2">
-                                                        <Star className="w-8 h-8 mx-auto text-gray-600" />
-                                                        <p className="text-sm">ElevenLabs API anahtarı gerekli</p>
-                                                        <p className="text-xs">Premium sesler için ayarlardan API anahtarını ekleyin</p>
-                                                    </div>
-                                                ) : voiceTab === 'cloned' ? (
-                                                    <div className="space-y-2">
-                                                        <Mic className="w-8 h-8 mx-auto text-gray-600" />
-                                                        <p className="text-sm">Henüz klonlanmış sesiniz yok</p>
-                                                        <p className="text-xs">Ses klonlama sayfasından sesinizi klonlayabilirsiniz</p>
-                                                    </div>
-                                                ) : (
-                                                    <p className="text-sm">Bu filtreye uygun ses bulunamadı</p>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Error */}
+                            {/* Error Message */}
                             {error && (
-                                <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-4 text-red-400">
-                                    {error}
+                                <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-2xl flex items-start gap-3">
+                                    <X className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                                    <p className="text-sm text-red-700 dark:text-red-400 font-medium">{error}</p>
                                 </div>
                             )}
 
-                            {/* Generate Button */}
-                            <button
-                                onClick={handleGenerate}
-                                disabled={isGenerating || isUploading || isUploadingAudio || !imageUrl
-                                    || (inputMode === 'text' && !text.trim())
-                                    || (inputMode === 'audio' && !audioUrl)}
-                                className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:from-gray-600 disabled:to-gray-600 text-white font-semibold rounded-2xl transition-all flex items-center justify-center gap-3 text-lg shadow-lg shadow-purple-500/25 disabled:shadow-none"
-                            >
-                                {isGenerating ? (
-                                    <>
-                                        <Loader2 className="w-5 h-5 animate-spin" />
-                                        Oluşturuluyor...
-                                    </>
+                            {/* Actions */}
+                            <div className="mt-6 space-y-3">
+                                {!resultUrl ? (
+                                    <button
+                                        onClick={handleGenerate}
+                                        disabled={isGenerating || isUploading || isUploadingAudio}
+                                        className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 disabled:from-gray-300 disabled:to-gray-400 text-white font-black text-lg rounded-2xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-3"
+                                    >
+                                        {isGenerating ? (
+                                            <Loader2 className="w-6 h-6 animate-spin" />
+                                        ) : (
+                                            <Sparkles className="w-6 h-6" />
+                                        )}
+                                        {isGenerating ? t('avatar.processing') : t('avatar.generateAvatar')}
+                                    </button>
                                 ) : (
-                                    <>
-                                        <Sparkles className="w-5 h-5" />
-                                        Avatar Oluştur
-                                        <span className="text-sm opacity-80">({estimatedCost}💎)</span>
-                                    </>
-                                )}
-                            </button>
-                        </div>
-
-                        {/* Right: Preview / Result */}
-                        <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-6 flex flex-col">
-                            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                                <Video className="w-5 h-5 text-purple-400" />
-                                Sonuç
-                            </h3>
-
-                            <div className="flex-1 flex items-center justify-center">
-                                {isGenerating ? (
-                                    <div className="text-center">
-                                        <div className="w-20 h-20 mx-auto mb-4 relative">
-                                            <div className="absolute inset-0 border-4 border-purple-500/30 rounded-full" />
-                                            <div className="absolute inset-0 border-4 border-transparent border-t-purple-500 rounded-full animate-spin" />
-                                            <div className="absolute inset-2 border-4 border-transparent border-t-pink-500 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
-                                        </div>
-                                        <p className="text-white font-medium mb-1">Video Oluşturuluyor...</p>
-                                        <p className="text-gray-400 text-sm">Bu işlem 30-60 saniye sürebilir</p>
-                                    </div>
-                                ) : resultUrl ? (
-                                    <div className="w-full">
-                                        <video
-                                            src={resultUrl}
-                                            controls
-                                            autoPlay
-                                            className="w-full rounded-xl max-h-[400px]"
-                                        />
-                                        <div className="flex gap-3 mt-4">
-                                            <a
-                                                href={resultUrl}
-                                                download="avatar.mp4"
-                                                className="flex-1 py-3 bg-green-600 hover:bg-green-500 text-white font-medium rounded-xl flex items-center justify-center gap-2"
-                                            >
-                                                <Download className="w-4 h-4" />
-                                                İndir
-                                            </a>
-                                            <button
-                                                onClick={handleReset}
-                                                className="flex-1 py-3 bg-gray-600 hover:bg-gray-500 text-white font-medium rounded-xl flex items-center justify-center gap-2"
-                                            >
-                                                <RefreshCw className="w-4 h-4" />
-                                                Yeni Oluştur
-                                            </button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="text-center text-gray-400">
-                                        <div className="w-24 h-24 mx-auto mb-4 bg-gray-700/50 rounded-full flex items-center justify-center">
-                                            <User className="w-12 h-12 text-gray-500" />
-                                        </div>
-                                        <p>Fotoğraf yükle ve metin gir</p>
-                                        <p className="text-sm mt-1">Avatar videon burada görünecek</p>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <a
+                                            href={resultUrl}
+                                            download="zexai-avatar.mp4"
+                                            className="py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95"
+                                        >
+                                            <Download className="w-5 h-5" /> {t('avatar.download')}
+                                        </a>
+                                        <button
+                                            onClick={() => { setResultUrl(null); setJobId(null); }}
+                                            className="py-3.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-100 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-gray-200 transition-all active:scale-95"
+                                        >
+                                            <RefreshCw className="w-5 h-5" /> {t('avatar.newCreate')}
+                                        </button>
                                     </div>
                                 )}
                             </div>
-                        </div>
-                    </div>
 
-                    {/* Info Cards */}
-                    <div className="grid sm:grid-cols-3 gap-4 mt-8">
-                        <div className="bg-gray-800/30 border border-gray-700 rounded-xl p-4">
-                            <div className="text-2xl mb-2">🎨</div>
-                            <h4 className="font-semibold text-white mb-1">Yüksek Kalite</h4>
-                            <p className="text-gray-400 text-sm">Gerçekçi dudak senkronizasyonu</p>
-                        </div>
-                        <div className="bg-gray-800/30 border border-gray-700 rounded-xl p-4">
-                            <div className="text-2xl mb-2">🌍</div>
-                            <h4 className="font-semibold text-white mb-1">Çoklu Dil</h4>
-                            <p className="text-gray-400 text-sm">15+ ses, 8 dil desteği</p>
-                        </div>
-                        <div className="bg-gray-800/30 border border-gray-700 rounded-xl p-4">
-                            <div className="text-2xl mb-2">⚡</div>
-                            <h4 className="font-semibold text-white mb-1">Hızlı</h4>
-                            <p className="text-gray-400 text-sm">30-60 saniyede hazır</p>
+                            {/* Features Banner */}
+                            <div className="mt-8 grid grid-cols-3 gap-2">
+                                <div className="text-center">
+                                    <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center mx-auto mb-2">
+                                        <Zap className="w-5 h-5 text-blue-500" />
+                                    </div>
+                                    <p className="text-[10px] font-bold text-gray-900 dark:text-white leading-tight">{t('avatar.fast')}</p>
+                                    <p className="text-[8px] text-gray-500 mt-0.5">{t('avatar.fastDesc')}</p>
+                                </div>
+                                <div className="text-center">
+                                    <div className="w-10 h-10 bg-purple-50 dark:bg-purple-900/20 rounded-xl flex items-center justify-center mx-auto mb-2">
+                                        <Star className="w-5 h-5 text-purple-500" />
+                                    </div>
+                                    <p className="text-[10px] font-bold text-gray-900 dark:text-white leading-tight">{t('avatar.highQuality')}</p>
+                                    <p className="text-[8px] text-gray-500 mt-0.5">{t('avatar.highQualityDesc')}</p>
+                                </div>
+                                <div className="text-center">
+                                    <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center mx-auto mb-2">
+                                        <Globe className="w-5 h-5 text-emerald-500" />
+                                    </div>
+                                    <p className="text-[10px] font-bold text-gray-900 dark:text-white leading-tight">{t('avatar.multiLang')}</p>
+                                    <p className="text-[8px] text-gray-500 mt-0.5">{t('avatar.multiLangDesc')}</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Custom scrollbar styles */}
-            <style>{`
-                .custom-scrollbar::-webkit-scrollbar {
-                    width: 4px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-track {
-                    background: transparent;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: rgba(139, 92, 246, 0.3);
-                    border-radius: 4px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background: rgba(139, 92, 246, 0.5);
-                }
-            `}</style>
-        </>
+            {/* Hidden Audio for Preview */}
+            <audio ref={audioPreviewRef} className="hidden" />
+
+            {/* Success Notifications */}
+            {showCelebration && <Celebration onComplete={() => setShowCelebration(false)} />}
+            {showCreditToast && (
+                <CreditToast
+                    amount={creditEarned.amount}
+                    reason={creditEarned.reason}
+                    onClose={() => setShowCreditToast(false)}
+                />
+            )}
+        </div>
     );
 };
 

@@ -8,8 +8,10 @@ import {
 import { ethers } from 'ethers';
 import playHapticFeedback from '@/utils/haptics';
 import api from '@/services/api';
+import { useTranslation } from 'react-i18next';
 
 export const StakingPage: React.FC = () => {
+    const { t, i18n } = useTranslation();
     const { account, zexBalance, getContracts, checkAndApproveZex, connectWallet } = useWeb3();
 
     // Staking State
@@ -97,7 +99,7 @@ export const StakingPage: React.FC = () => {
 
             if (difference <= 0) {
                 setIsLocked(false);
-                setTimeRemaining("Kilit Süresi Doldu!");
+                setTimeRemaining(t('staking.lockExpired'));
                 return;
             }
 
@@ -106,7 +108,7 @@ export const StakingPage: React.FC = () => {
             const minutes = Math.floor((difference / 1000 / 60) % 60);
             const seconds = Math.floor((difference / 1000) % 60);
 
-            setTimeRemaining(`${days}g ${hours}s ${minutes}d ${seconds}sn`);
+            setTimeRemaining(`${days}${t('staking.daysShort')} ${hours}${t('staking.hoursShort')} ${minutes}${t('staking.minutesShort')} ${seconds}${t('staking.secondsShort')}`);
         };
 
         tick(); // Run immediately
@@ -121,7 +123,7 @@ export const StakingPage: React.FC = () => {
             // 1. Approve allowance for Staking Contract
             const approved = await checkAndApproveZex(ZEX_STAKING_ADDRESS, stakeAmount);
             if (!approved) {
-                alert("ERC20 ZEX harcama onayı verilmedi.");
+                alert(t('staking.approvalDenied'));
                 setIsStaking(false);
                 return;
             }
@@ -138,7 +140,7 @@ export const StakingPage: React.FC = () => {
             }
         } catch (error: any) {
             console.error("Staking failed:", error);
-            alert("Stake işlemi başarısız oldu: " + (error?.reason || error?.message));
+            alert(t('staking.stakeFailed') + (error?.reason || error?.message));
         } finally {
             setIsStaking(false);
         }
@@ -150,7 +152,7 @@ export const StakingPage: React.FC = () => {
         // Warn about early penalty
         if (isLocked) {
             const confirmWithdraw = window.confirm(
-                "⚠️ DİKKAT: Kilit süreniz henüz dolmadı!\n\nŞu an kilitli tokenlarınızı çekerseniz %10 Erken Çekim Cezası (%5 Yakım, %5 Staking Havuzuna İade) kesilecektir. Gerçekten ZEX'lerinizin %10'undan vazgeçerek işlemi onaylıyor musunuz?"
+                t('staking.earlyWithdrawConfirm')
             );
             if (!confirmWithdraw) return;
         }
@@ -168,7 +170,7 @@ export const StakingPage: React.FC = () => {
             }
         } catch (error: any) {
             console.error("Withdraw failed:", error);
-            alert("Çekim işlemi başarısız oldu: " + (error?.reason || error?.message));
+            alert(t('staking.withdrawFailed') + (error?.reason || error?.message));
         } finally {
             setIsWithdrawing(false);
         }
@@ -187,7 +189,7 @@ export const StakingPage: React.FC = () => {
             }
         } catch (error: any) {
             console.error("Claim failed:", error);
-            alert("Ödül toplama işlemi başarısız oldu.");
+            alert(t('staking.claimFailed'));
         } finally {
             setIsClaiming(false);
         }
@@ -202,8 +204,8 @@ export const StakingPage: React.FC = () => {
             const browserProvider = new ethers.BrowserProvider(window.ethereum);
             const signer = await browserProvider.getSigner();
 
-            const currentMonth = new Date().toLocaleString('tr-TR', { month: 'long', year: 'numeric' });
-            const message = `ZexAI Aylık Platform Kredisi Talep Ediyorum.\nCüzdan: ${account}\nAy: ${currentMonth}`;
+            const currentMonth = new Date().toLocaleString(i18n.language === 'tr' ? 'tr-TR' : 'en-US', { month: 'long', year: 'numeric' });
+            const message = t('staking.signatureMessage', { account, month: currentMonth });
 
             const signature = await signer.signMessage(message);
 
@@ -221,8 +223,8 @@ export const StakingPage: React.FC = () => {
             }
         } catch (error: any) {
             console.error("Credit claim failed:", error);
-            const msg = error.response?.data?.detail || error.message || "Bilinmeyen bir hata oluştu.";
-            alert("Kredi talep işlemi başarısız: " + msg);
+            const msg = error.response?.data?.detail || error.message || t('staking.unknownError');
+            alert(t('staking.creditClaimFailed') + msg);
         } finally {
             setIsClaimingCredits(false);
         }
@@ -241,7 +243,7 @@ export const StakingPage: React.FC = () => {
                             ZEX Staking
                         </h1>
                         <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">
-                            Tokenlarını kilitle, pasif gelir ve ücretsiz AI kredileri kazan.
+                            {t('staking.subtitle')}
                         </p>
                     </div>
                 </div>
@@ -256,15 +258,15 @@ export const StakingPage: React.FC = () => {
                     <div className="w-20 h-20 mb-6 bg-indigo-50 dark:bg-indigo-900/30 rounded-full flex items-center justify-center">
                         <Wallet className="w-10 h-10 text-indigo-500" />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Web3 Cüzdanınızı Bağlayın</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{t('staking.connectWallet')}</h2>
                     <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-md">
-                        Staking paneline erişmek ve ZEX kilitlemek için Web3 cüzdanınızı (MetaMask vb.) bağlamanız gereklidir.
+                        {t('staking.connectWalletDesc')}
                     </p>
                     <button
                         onClick={connectWallet}
                         className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl font-bold text-lg shadow-xl shadow-indigo-500/30 transition-all hover:scale-105"
                     >
-                        Cüzdanı Bağla 🚀
+                        {t('staking.connectWalletBtn')}
                     </button>
                 </motion.div>
             ) : (
@@ -282,13 +284,13 @@ export const StakingPage: React.FC = () => {
 
                             <div className="relative z-10">
                                 <span className="flex items-center gap-2 text-indigo-100 text-sm font-bold uppercase tracking-wider mb-2">
-                                    <Gift className="w-4 h-4" /> Kazanılan Ödül
+                                    <Gift className="w-4 h-4" /> {t('staking.earnedReward')}
                                 </span>
                                 <div className="text-5xl font-black mb-1 truncate">
                                     {earnedRewards} <span className="text-2xl text-indigo-200">ZEX</span>
                                 </div>
                                 <p className="text-sm text-indigo-200 mb-6">
-                                    ~ ${(parseFloat(earnedRewards) * 0.15).toFixed(2)} Değerinde
+                                    {t('staking.worthValue', { value: (parseFloat(earnedRewards) * 0.15).toFixed(2) })}
                                 </p>
 
                                 <button
@@ -297,7 +299,7 @@ export const StakingPage: React.FC = () => {
                                     className="w-full py-4 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-2xl font-bold text-lg border border-white/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                                 >
                                     {isClaiming ? <Activity className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5" />}
-                                    Ödülleri Topla
+                                    {t('staking.collectRewards')}
                                 </button>
                             </div>
                         </motion.div>
@@ -309,17 +311,17 @@ export const StakingPage: React.FC = () => {
                         >
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                    <Zap className="w-5 h-5 text-yellow-500" /> Platform Kredisi (Aylık)
+                                    <Zap className="w-5 h-5 text-yellow-500" /> {t('staking.platformCredits')}
                                 </h3>
                                 {hasClaimedCredits && (
                                     <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold rounded-full border border-green-200 dark:border-green-800/50">
-                                        Alındı ✓
+                                        {t('staking.claimed')}
                                     </span>
                                 )}
                             </div>
 
                             <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
-                                Staking (Tier) seviyenize göre her ay ücretsiz AI Kredisi talep edebilirsiniz (Min 5,000 ZEX kilitli olmalı).
+                                {t('staking.platformCreditsDesc')}
                             </p>
 
                             <button
@@ -335,15 +337,15 @@ export const StakingPage: React.FC = () => {
                                 {isClaimingCredits ? (
                                     <Activity className="w-5 h-5 animate-spin" />
                                 ) : hasClaimedCredits ? (
-                                    'Bu Ayın Kredisi Alındı'
+                                    t('staking.creditsClaimed')
                                 ) : (
-                                    'Aylık Kredimi İste'
+                                    t('staking.requestCredits')
                                 )}
                             </button>
 
                             {parseFloat(stakedBalance) < 5000 && !hasClaimedCredits && (
                                 <p className="text-center text-xs text-red-500 mt-3 font-medium">
-                                    Tier 1 (Bronze) için en az 5,000 ZEX kilitlemelisiniz.
+                                    {t('staking.minTierNote')}
                                 </p>
                             )}
                         </motion.div>
@@ -352,12 +354,12 @@ export const StakingPage: React.FC = () => {
                         <div className="grid grid-cols-2 gap-4">
                             <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700">
                                 <ShieldCheck className="w-6 h-6 text-emerald-500 mb-3" />
-                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Kilitli My ZEX</h3>
+                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{t('staking.myLockedZex')}</h3>
                                 <p className="text-xl font-black text-gray-900 dark:text-white truncate">{stakedBalance}</p>
                             </div>
                             <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700">
                                 <Wallet className="w-6 h-6 text-blue-500 mb-3" />
-                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Cüzdan Bakiyesi</h3>
+                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{t('staking.walletBalance')}</h3>
                                 <p className="text-xl font-black text-gray-900 dark:text-white truncate">{zexBalance}</p>
                             </div>
                         </div>
@@ -365,20 +367,20 @@ export const StakingPage: React.FC = () => {
                         {/* Global Pool Info */}
                         <div className="bg-gray-50 dark:bg-gray-900/50 p-6 rounded-3xl border border-gray-100 dark:border-gray-700">
                             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                                <Activity className="w-4 h-4 text-indigo-500" /> Havuz İstatistikleri
+                                <Activity className="w-4 h-4 text-indigo-500" /> {t('staking.poolStats')}
                             </h3>
                             <div className="space-y-3">
                                 <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-500 dark:text-gray-400">Havuzdaki Toplam ZEX</span>
+                                    <span className="text-gray-500 dark:text-gray-400">{t('staking.totalZexInPool')}</span>
                                     <span className="font-bold text-gray-900 dark:text-white">{totalStaked}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-500 dark:text-gray-400">Yıllık Sabit Getiri (APY)</span>
+                                    <span className="text-gray-500 dark:text-gray-400">{t('staking.annualYield')}</span>
                                     <span className="font-bold text-emerald-500">%{rewardRateDisplay}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-500 dark:text-gray-400">Desteklenen Ağ</span>
-                                    <span className="font-bold text-gray-900 dark:text-white">Ethereum / BSC</span>
+                                    <span className="text-gray-500 dark:text-gray-400">{t('staking.supportedNetwork')}</span>
+                                    <span className="font-bold text-gray-900 dark:text-white">Polygon (MATIC)</span>
                                 </div>
                             </div>
                         </div>
@@ -396,7 +398,7 @@ export const StakingPage: React.FC = () => {
                                         : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                                         }`}
                                 >
-                                    <Lock className="w-4 h-4" /> TOKEN KİLİTLE (Stake)
+                                    <Lock className="w-4 h-4" /> {t('staking.stakeTab')}
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('withdraw')}
@@ -405,7 +407,7 @@ export const StakingPage: React.FC = () => {
                                         : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                                         }`}
                                 >
-                                    <Unlock className="w-4 h-4" /> KİLİDİ AÇ (Withdraw)
+                                    <Unlock className="w-4 h-4" /> {t('staking.withdrawTab')}
                                 </button>
                             </div>
 
@@ -419,10 +421,10 @@ export const StakingPage: React.FC = () => {
                                         >
                                             <div className="flex justify-between items-end mb-2">
                                                 <label className="text-sm font-bold text-gray-700 dark:text-gray-300">
-                                                    Stake Edilecek Miktar
+                                                    {t('staking.amountToStake')}
                                                 </label>
                                                 <span className="text-xs font-medium text-gray-500">
-                                                    Bakiye: <span className="text-indigo-600 dark:text-indigo-400 font-bold">{zexBalance} ZEX</span>
+                                                    {t('staking.balance')}: <span className="text-indigo-600 dark:text-indigo-400 font-bold">{zexBalance} ZEX</span>
                                                 </span>
                                             </div>
                                             <div className="relative mb-6">
@@ -444,9 +446,9 @@ export const StakingPage: React.FC = () => {
                                             <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-xl p-4 mb-8 flex items-start gap-3">
                                                 <AlertCircle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
                                                 <div className="space-y-1">
-                                                    <p className="text-xs font-bold text-blue-900 dark:text-blue-300">Yeni Staking Kuralları (V3)</p>
+                                                    <p className="text-xs font-bold text-blue-900 dark:text-blue-300">{t('staking.stakingRules')}</p>
                                                     <p className="text-xs text-blue-800 dark:text-blue-400 leading-relaxed">
-                                                        Tokenlarınızı kilitlediğiniz andan itibaren **30 Günlük** bir zorunlu kilit süresi (Lock-up) başlar. Kazançlarınız saniye saniye yansımaya başlar ve %{rewardRateDisplay} APY (Yıllık Getiri) ile değerlendirilir.
+                                                        {t('staking.stakingRulesDesc', { rate: rewardRateDisplay })}
                                                     </p>
                                                 </div>
                                             </div>
@@ -456,7 +458,7 @@ export const StakingPage: React.FC = () => {
                                                 disabled={!stakeAmount || parseFloat(stakeAmount) <= 0 || isStaking}
                                                 className="w-full py-5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white rounded-2xl font-bold text-lg shadow-xl shadow-indigo-500/20 transition-all active:scale-[0.98] flex justify-center items-center gap-2"
                                             >
-                                                {isStaking ? <Activity className="w-6 h-6 animate-spin" /> : 'ZEX Kilitle'}
+                                                {isStaking ? <Activity className="w-6 h-6 animate-spin" /> : t('staking.lockZex')}
                                             </button>
                                         </motion.div>
                                     ) : (
@@ -466,10 +468,10 @@ export const StakingPage: React.FC = () => {
                                         >
                                             <div className="flex justify-between items-end mb-2">
                                                 <label className="text-sm font-bold text-gray-700 dark:text-gray-300">
-                                                    Geri Çekilecek Miktar
+                                                    {t('staking.amountToWithdraw')}
                                                 </label>
                                                 <span className="text-xs font-medium text-gray-500">
-                                                    Kilitli: <span className="text-purple-600 dark:text-purple-400 font-bold">{stakedBalance} ZEX</span>
+                                                    {t('staking.locked')}: <span className="text-purple-600 dark:text-purple-400 font-bold">{stakedBalance} ZEX</span>
                                                 </span>
                                             </div>
                                             <div className="relative mb-6">
@@ -492,19 +494,19 @@ export const StakingPage: React.FC = () => {
                                                 <Unlock className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
                                                 <div className="space-y-2 flex-1">
                                                     <p className="text-xs text-purple-800 dark:text-purple-300 leading-relaxed">
-                                                        Buradan ZEX tokenlarınızı cüzdanınıza geri çekebilirsiniz. Kilitli limitiniz azaldığı için kazanacağınız APY oranı aynı kalsa da miktar azalır.
+                                                        {t('staking.withdrawDesc')}
                                                     </p>
 
                                                     {isLocked && lockupEndTime && parseFloat(stakedBalance) > 0 && (
                                                         <div className="p-2.5 bg-red-100 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-lg">
-                                                            <p className="text-xs font-bold text-red-600 dark:text-red-400 mb-0.5">⚠️ Erken Çekim Uyarısı</p>
+                                                            <p className="text-xs font-bold text-red-600 dark:text-red-400 mb-0.5">⚠️ {t('staking.earlyWithdrawWarning')}</p>
                                                             <p className="text-[11px] text-red-500 dark:text-red-300">
-                                                                Kilit sürenizin dolmasına kalan süre nedeniyle, şu an para çekerseniz çekilen miktar üzerinden <b>%10 oranında ceza (%5 Yakım, %5 Havuza İade)</b> kesilecektir.
+                                                                {t('staking.earlyWithdrawPenalty')}
                                                             </p>
                                                             <p className="text-[10px] text-red-500 dark:text-red-400 mt-2 font-mono bg-red-500/10 p-2 rounded border border-red-500/20">
-                                                                Kalan Süre: <span className="font-bold text-red-600 dark:text-red-400 text-xs">{timeRemaining}</span>
+                                                                {t('staking.timeRemaining')}: <span className="font-bold text-red-600 dark:text-red-400 text-xs">{timeRemaining}</span>
                                                                 <br />
-                                                                <span className="text-gray-500 mt-1 block">Açılış: {new Date(lockupEndTime).toLocaleString()}</span>
+                                                                <span className="text-gray-500 mt-1 block">{t('staking.unlockDate')}: {new Date(lockupEndTime).toLocaleString()}</span>
                                                             </p>
                                                         </div>
                                                     )}
@@ -516,7 +518,7 @@ export const StakingPage: React.FC = () => {
                                                 disabled={!withdrawAmount || parseFloat(withdrawAmount) <= 0 || isWithdrawing}
                                                 className="w-full py-5 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white rounded-2xl font-bold text-lg shadow-xl shadow-purple-500/20 transition-all active:scale-[0.98] flex justify-center items-center gap-2"
                                             >
-                                                {isWithdrawing ? <Activity className="w-6 h-6 animate-spin" /> : 'Kilidi Aç'}
+                                                {isWithdrawing ? <Activity className="w-6 h-6 animate-spin" /> : t('staking.unlock')}
                                             </button>
                                         </motion.div>
                                     )}

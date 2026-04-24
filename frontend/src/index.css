@@ -151,3 +151,10 @@
 .safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+
+/* Ensure WalletConnect/AppKit modal renders above all other modals */
+w3m-modal,
+wcm-modal,
+appkit-modal {
+  z-index: 9999 !important;
+}

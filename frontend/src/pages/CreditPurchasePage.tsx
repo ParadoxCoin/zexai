@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { useToast } from '@/components/ui/toast';
+import { useTranslation } from 'react-i18next';
 
 const api = axios.create({
     baseURL: (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000/api/v1',
@@ -58,6 +59,7 @@ interface PriceCalculation {
 }
 
 export const CreditPurchasePage: React.FC = () => {
+    const { t } = useTranslation();
     const toast = useToast();
     const [loading, setLoading] = useState(true);
     const [config, setConfig] = useState<CreditConfig | null>(null);
@@ -164,16 +166,16 @@ export const CreditPurchasePage: React.FC = () => {
             if (response.data.valid) {
                 setPromoValid(true);
                 setPromoDetails(response.data);
-                toast.success('Promo Kodu Geçerli!', `${response.data.discount?.description || 'İndirim uygulandı'}`);
+                toast.success(t('billing.promoSuccess'), `${response.data.discount?.description || t('billing.promoApplied')}`);
             } else {
                 setPromoValid(false);
                 setPromoDetails(null);
-                toast.error('Geçersiz Kod', response.data.message || 'Kod bulunamadı');
+                toast.error(t('billing.invalidCode'), response.data.message || t('billing.codeNotFound'));
             }
         } catch (error: any) {
             setPromoValid(false);
             setPromoDetails(null);
-            toast.error('Hata', error.response?.data?.detail || 'Kod doğrulanamadı');
+            toast.error(t('billing.error'), error.response?.data?.detail || t('billing.validateError'));
         }
     };
 
@@ -190,10 +192,10 @@ export const CreditPurchasePage: React.FC = () => {
             if (response.data.checkout_url) {
                 window.location.href = response.data.checkout_url;
             } else {
-                toast.success('Başarılı!', 'Satın alma işlemi tamamlandı');
+                toast.success(t('billing.purchaseSuccess'), t('billing.purchaseCompleted'));
             }
         } catch (error: any) {
-            toast.error('Hata', error.response?.data?.detail || 'Satın alma başarısız');
+            toast.error(t('billing.error'), error.response?.data?.detail || t('billing.purchaseFailed'));
         } finally {
             setPurchasing(false);
         }
@@ -219,10 +221,10 @@ export const CreditPurchasePage: React.FC = () => {
             <div className="text-center mb-10">
                 <h1 className="text-3xl font-bold text-gray-900 flex items-center justify-center">
                     <Wallet className="h-8 w-8 mr-3 text-purple-600" />
-                    Kredi Satın Al
+                    {t('billing.title')}
                 </h1>
                 <p className="mt-2 text-gray-600">
-                    AI servislerini kullanmak için kredi satın alın. Toplu alımlarda özel indirimler!
+                    {t('billing.subtitle')}
                 </p>
             </div>
 
@@ -235,11 +237,9 @@ export const CreditPurchasePage: React.FC = () => {
                         </div>
                     </div>
                     <div>
-                        <h3 className="text-xl font-bold">Kredileriniz Asla Sona Ermez!</h3>
+                        <h3 className="text-xl font-bold">{t('billing.noExpiryTitle')}</h3>
                         <p className="text-white/90 mt-1">
-                            Satın aldığınız krediler hesabınızda süresiz kalır. Ay sonunda sıfırlanmaz,
-                            <br className="hidden md:block" />
-                            <span className="font-semibold">dilediğiniz zaman kullanabilirsiniz!</span>
+                            {t('billing.noExpiryDesc')}
                         </p>
                     </div>
                 </div>
@@ -252,9 +252,9 @@ export const CreditPurchasePage: React.FC = () => {
                     <div className="bg-white rounded-2xl shadow-lg p-2 border border-gray-100">
                         <div className="flex space-x-1">
                             {[
-                                { id: 'flexible', label: 'Esnek Kredi', icon: DollarSign },
-                                { id: 'subscription', label: 'Abonelik', icon: CreditCard },
-                                { id: 'package', label: 'Özel Paketler', icon: Gift }
+                                { id: 'flexible', label: t('billing.tabFlexible'), icon: DollarSign },
+                                { id: 'subscription', label: t('billing.tabSubscription'), icon: CreditCard },
+                                { id: 'package', label: t('billing.tabPackages'), icon: Gift }
                             ].map((tab) => (
                                 <button
                                     key={tab.id}
@@ -280,7 +280,7 @@ export const CreditPurchasePage: React.FC = () => {
                         <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
                             <h2 className="text-xl font-semibold mb-4 flex items-center">
                                 <DollarSign className="h-5 w-5 mr-2 text-green-600" />
-                                Tutar Seçin
+                                {t('billing.selectAmount')}
                             </h2>
 
                             {/* Amount Slider */}
@@ -320,7 +320,7 @@ export const CreditPurchasePage: React.FC = () => {
                             <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 mb-6">
                                 <h3 className="text-sm font-semibold text-purple-700 mb-2 flex items-center">
                                     <Zap className="h-4 w-4 mr-1" />
-                                    Toplu Alım İndirimleri
+                                    {t('billing.bulkDiscounts')}
                                 </h3>
                                 <div className="flex flex-wrap gap-2">
                                     {bulkDiscountTiers.map((tier, i) => (
@@ -331,7 +331,7 @@ export const CreditPurchasePage: React.FC = () => {
                                                 : 'bg-gray-100 text-gray-600'
                                                 }`}
                                         >
-                                            ${tier.threshold}+ → %{tier.discount} bonus
+                                            {t('billing.bulkDiscountRow', { threshold: tier.threshold, discount: tier.discount })}
                                         </span>
                                     ))}
                                 </div>
@@ -343,7 +343,7 @@ export const CreditPurchasePage: React.FC = () => {
                                     <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                                     <input
                                         type="text"
-                                        placeholder="Promo kodu girin"
+                                        placeholder={t('billing.promoPlaceholder')}
                                         value={promoCode}
                                         onChange={(e) => {
                                             setPromoCode(e.target.value.toUpperCase());
@@ -359,13 +359,13 @@ export const CreditPurchasePage: React.FC = () => {
                                     onClick={validatePromo}
                                     className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
                                 >
-                                    Uygula
+                                    {t('billing.apply')}
                                 </button>
                             </div>
                             {promoValid && promoDetails && (
                                 <div className="mt-2 text-sm text-green-600 flex items-center">
                                     <CheckCircle className="h-4 w-4 mr-1" />
-                                    {promoDetails.discount?.description || 'İndirim uygulandı!'}
+                                    {promoDetails.discount?.description || t('billing.promoApplied')}
                                 </div>
                             )}
                         </div>
@@ -376,10 +376,10 @@ export const CreditPurchasePage: React.FC = () => {
                         <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
                             <h2 className="text-xl font-semibold mb-4 flex items-center">
                                 <CreditCard className="h-5 w-5 mr-2 text-blue-600" />
-                                Abonelik Planları Seçin
+                                {t('billing.subscriptionPlans')}
                             </h2>
                             <p className="text-sm text-gray-600 mb-4">
-                                Aylık abonelik ile her ay otomatik kredi yüklemesi ve özel avantajlar
+                                {t('billing.subscriptionDesc')}
                             </p>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 {subscriptionPlans.map((plan: any) => (
@@ -395,7 +395,7 @@ export const CreditPurchasePage: React.FC = () => {
                                     >
                                         {plan.is_popular && (
                                             <div className="text-center mb-2">
-                                                <span className="px-3 py-1 bg-purple-600 text-white text-xs font-bold rounded-full">EN POPÜLER</span>
+                                                <span className="px-3 py-1 bg-purple-600 text-white text-xs font-bold rounded-full">{t('billing.popularBadge')}</span>
                                             </div>
                                         )}
                                         <div className="text-center mb-3">
@@ -406,7 +406,7 @@ export const CreditPurchasePage: React.FC = () => {
                                             <span className="text-gray-500">/ay</span>
                                         </div>
                                         <div className="text-center text-sm text-purple-600 font-medium mb-3">
-                                            {plan.monthly_credits?.toLocaleString()} kredi/ay
+                                            {t('billing.creditsPerMonth', { count: plan.monthly_credits?.toLocaleString() })}
                                         </div>
                                         <ul className="space-y-2 text-sm text-gray-600">
                                             {(plan.features || []).slice(0, 4).map((feature: string, i: number) => (
@@ -427,7 +427,7 @@ export const CreditPurchasePage: React.FC = () => {
                         <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
                             <h2 className="text-xl font-semibold mb-4 flex items-center">
                                 <Sparkles className="h-5 w-5 mr-2 text-yellow-500" />
-                                Özel Paket Seçin
+                                {t('billing.specialPackages')}
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {specialPackages.map((pkg) => (
@@ -474,39 +474,39 @@ export const CreditPurchasePage: React.FC = () => {
                     <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl shadow-xl p-6 text-white sticky top-4">
                         <h2 className="text-xl font-semibold mb-4 flex items-center">
                             <Package className="h-5 w-5 mr-2" />
-                            Sipariş Özeti
+                            {t('billing.orderSummary')}
                         </h2>
 
                         {/* Dynamic Order Summary based on purchase type */}
                         {purchaseType === 'flexible' && calculation && (
                             <div className="space-y-3 mb-6">
                                 <div className="flex justify-between text-purple-200">
-                                    <span>Tutar</span>
+                                    <span>{t('billing.amount')}</span>
                                     <span>${calculation.amount_usd}</span>
                                 </div>
                                 <div className="flex justify-between text-purple-200">
-                                    <span>Temel Kredi</span>
+                                    <span>{t('billing.baseCredits')}</span>
                                     <span>{calculation.base_credits.toLocaleString()}</span>
                                 </div>
                                 {calculation.bonus_credits > 0 && (
                                     <div className="flex justify-between text-green-300">
-                                        <span>Bonus Kredi (+%{calculation.discount_percent})</span>
+                                        <span>{t('billing.bonusCredits', { percent: calculation.discount_percent })}</span>
                                         <span>+{calculation.bonus_credits.toLocaleString()}</span>
                                     </div>
                                 )}
                                 {calculation.promo_applied && (
                                     <div className="flex justify-between text-yellow-300">
-                                        <span>Promo İndirim</span>
+                                        <span>{t('billing.promoDiscount')}</span>
                                         <span>-${calculation.promo_discount}</span>
                                     </div>
                                 )}
                                 <div className="border-t border-purple-400 pt-3">
                                     <div className="flex justify-between text-xl font-bold">
-                                        <span>Toplam Kredi</span>
+                                        <span>{t('billing.totalCredits')}</span>
                                         <span>{calculation.total_credits.toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between text-2xl font-bold mt-2">
-                                        <span>Ödeme</span>
+                                        <span>{t('billing.totalPayment')}</span>
                                         <span>${calculation.final_price}</span>
                                     </div>
                                 </div>
@@ -517,15 +517,15 @@ export const CreditPurchasePage: React.FC = () => {
                             <div className="space-y-3 mb-6">
                                 <div className="p-3 bg-purple-500/30 rounded-lg">
                                     <div className="font-semibold text-lg">{selectedPlan.name || selectedPlan.display_name}</div>
-                                    <div className="text-sm text-purple-200">Aylık Abonelik</div>
+                                    <div className="text-sm text-purple-200">{t('billing.monthlySubscription')}</div>
                                 </div>
                                 <div className="flex justify-between text-purple-200">
-                                    <span>Aylık Kredi</span>
+                                    <span>{t('billing.monthlyCredits')}</span>
                                     <span>{(selectedPlan.monthly_credits || 0).toLocaleString()}</span>
                                 </div>
                                 <div className="border-t border-purple-400 pt-3">
                                     <div className="flex justify-between text-2xl font-bold">
-                                        <span>Aylık Ödeme</span>
+                                        <span>{t('billing.monthlyPayment')}</span>
                                         <span>${selectedPlan.monthly_price || 0}/ay</span>
                                     </div>
                                 </div>
@@ -539,28 +539,28 @@ export const CreditPurchasePage: React.FC = () => {
                                     {selectedPackage.badge && <span className="text-xs bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded">{selectedPackage.badge}</span>}
                                 </div>
                                 <div className="flex justify-between text-purple-200">
-                                    <span>Kredi</span>
+                                    <span>{t('billing.baseCredits')}</span>
                                     <span>{selectedPackage.credits.toLocaleString()}</span>
                                 </div>
                                 {selectedPackage.bonus_credits > 0 && (
                                     <div className="flex justify-between text-green-300">
-                                        <span>Bonus</span>
+                                        <span>{t('billing.bonusCredits')}</span>
                                         <span>+{selectedPackage.bonus_credits.toLocaleString()}</span>
                                     </div>
                                 )}
                                 <div className="border-t border-purple-400 pt-3">
                                     <div className="flex justify-between text-xl font-bold">
-                                        <span>Toplam Kredi</span>
+                                        <span>{t('billing.totalCredits')}</span>
                                         <span>{(selectedPackage.credits + selectedPackage.bonus_credits).toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between text-2xl font-bold mt-2">
-                                        <span>Ödeme</span>
+                                        <span>{t('billing.totalPayment')}</span>
                                         <span>${selectedPackage.discounted_price}</span>
                                     </div>
                                     {selectedPackage.original_price > selectedPackage.discounted_price && (
                                         <div className="text-right text-sm text-green-300 mt-1">
                                             <span className="line-through text-gray-400">${selectedPackage.original_price}</span>
-                                            <span className="ml-2">%{Math.round((1 - selectedPackage.discounted_price / selectedPackage.original_price) * 100)} İndirim!</span>
+                                            <span className="ml-2">{t('billing.discountLabel', { percent: Math.round((1 - selectedPackage.discounted_price / selectedPackage.original_price) * 100) })}</span>
                                         </div>
                                     )}
                                 </div>
@@ -572,19 +572,19 @@ export const CreditPurchasePage: React.FC = () => {
                             (purchaseType === 'package' && !selectedPackage) ||
                             (purchaseType === 'flexible' && !calculation)) && (
                                 <div className="text-center py-6 text-purple-200">
-                                    <p>Lütfen bir seçim yapın</p>
+                                    <p>{t('billing.makeSelection')}</p>
                                 </div>
                             )}
 
                         {/* Payment Methods */}
                         <div className="mb-6">
-                            <p className="text-sm text-purple-200 mb-2">Ödeme Yöntemi</p>
+                            <p className="text-sm text-purple-200 mb-2">{t('billing.paymentMethod')}</p>
                             <div className="grid grid-cols-2 gap-2">
                                 {[
-                                    { id: 'lemonsqueezy', label: '💳 Kart', discount: 0 },
-                                    { id: 'nowpayments', label: '₿ Crypto', discount: 5 },
-                                    { id: 'binance', label: '🔶 Binance Pay', discount: 5 },
-                                    { id: 'metamask', label: '🦊 ZEX Token (Polygon)', discount: 15 }
+                                    { id: 'lemonsqueezy', label: t('billing.methodCard'), discount: 0 },
+                                    { id: 'nowpayments', label: t('billing.methodCrypto'), discount: 5 },
+                                    { id: 'binance', label: t('billing.methodBinance'), discount: 5 },
+                                    { id: 'metamask', label: t('billing.methodMetamask'), discount: 15 }
                                 ].map((method) => (
                                     <button
                                         key={method.id}
@@ -613,11 +613,11 @@ export const CreditPurchasePage: React.FC = () => {
                             ) : (
                                 <CreditCard className="h-5 w-5 mr-2" />
                             )}
-                            {purchasing ? 'İşleniyor...' : 'Satın Al'}
+                            {purchasing ? t('billing.processing') : t('billing.buyNow')}
                         </button>
 
                         <p className="text-xs text-purple-200 mt-4 text-center">
-                            Güvenli ödeme. Krediler anında hesabınıza tanımlanır.
+                            {t('billing.secureNote')}
                         </p>
                     </div>
                 </div>

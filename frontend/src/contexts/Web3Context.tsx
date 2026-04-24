@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { ethers, BrowserProvider, Contract, JsonRpcProvider } from 'ethers';
 import { useAccount, useDisconnect, useWalletClient } from 'wagmi';
 import { useAppKit } from '@reown/appkit/react';
+import { useTranslation } from 'react-i18next';
 
 // Contract Addresses (Polygon Mainnet - Deployed V3 Architecture 1B Supply)
 export const ZEX_TOKEN_ADDRESS = "0x28De651aCA0f8584FA2E072cE7c1F4EE774a8B4a";
@@ -59,6 +60,7 @@ const COLLECTION_ABI = [
 interface Web3ContextType {
     account: string | undefined;
     zexBalance: string;
+    polBalance: string;
     isConnecting: boolean;
     connectWallet: () => Promise<void>;
     disconnectWallet: () => void;
@@ -74,12 +76,14 @@ interface Web3ContextType {
 const Web3Context = createContext<Web3ContextType | undefined>(undefined);
 
 export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) => {
+    const { t } = useTranslation();
     const { address: account, isConnecting } = useAccount();
     const { data: walletClient } = useWalletClient();
     const { disconnect } = useDisconnect();
     const { open } = useAppKit();
 
     const [zexBalance, setZexBalance] = useState<string>("0");
+    const [polBalance, setPolBalance] = useState<string>("0");
     const [provider, setProvider] = useState<BrowserProvider | null>(null);
 
     useEffect(() => {
@@ -94,7 +98,10 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     const _provider = new ethers.BrowserProvider(transport, network);
                     setProvider(_provider);
                     if (account) updateBalance(account, _provider);
-                    else setZexBalance("0");
+                    else {
+                        setZexBalance("0");
+                        setPolBalance("0");
+                    }
                 } catch (e) {
                     console.error("WalletClient conversion error:", e);
                     if (account) updateBalance(account);
@@ -106,6 +113,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     updateBalance(account, _provider);
                 } else {
                     setZexBalance("0");
+                    setPolBalance("0");
                 }
             } else {
                 // Ultimate fallback for mobile read-only where we just need the balance
@@ -113,6 +121,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     updateBalance(account);
                 } else {
                     setZexBalance("0");
+                    setPolBalance("0");
                 }
             }
         };
@@ -122,8 +131,20 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const updateBalance = async (address: string, _provider?: BrowserProvider) => {
         if (!ZEX_TOKEN_ADDRESS) return;
         try {
-            // Use our dedicated Polygon Mainnet RPC provider (not MetaMask's provider)
-            // This avoids the 0x empty response error caused by chain mismatch
+            // 1. Fetch native POL balance
+            let nativeBal = BigInt(0);
+            if (_provider) {
+                nativeBal = await _provider.getBalance(address);
+            } else if (window.ethereum) {
+                const tempProvider = new ethers.BrowserProvider(window.ethereum as any);
+                nativeBal = await tempProvider.getBalance(address);
+            } else {
+                nativeBal = await polygonProvider.getBalance(address);
+            }
+            const formattedPol = ethers.formatEther(nativeBal);
+            setPolBalance(parseFloat(formattedPol).toFixed(4));
+
+            // 2. Fetch ZEX balance
             const zexContract = new ethers.Contract(ZEX_TOKEN_ADDRESS, ERC20_ABI, polygonProvider);
             const balance: bigint = await zexContract.balanceOf(address);
 
@@ -133,21 +154,23 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
             // Keep exactly 2 decimal places to prevent extreme lengths or NaN loops
             const roundedBalance = parseFloat(formattedBalance).toFixed(2);
             setZexBalance(roundedBalance);
-            console.log("ZEX Balance updated:", roundedBalance);
+            console.log("Balances updated - ZEX:", roundedBalance, "POL:", formattedPol);
         } catch (error) {
-            console.error("Error fetching ZEX balance:", error);
+            console.error("Error fetching balances:", error);
             // Retry once after 3 seconds (network may not be ready yet)
             setTimeout(async () => {
                 try {
+                    const nativeBal = await polygonProvider.getBalance(address);
+                    setPolBalance(parseFloat(ethers.formatEther(nativeBal)).toFixed(4));
+
                     const zexContract = new ethers.Contract(ZEX_TOKEN_ADDRESS, ERC20_ABI, polygonProvider);
                     const balance: bigint = await zexContract.balanceOf(address);
                     const formattedBalance = ethers.formatUnits(balance, 18);
                     const roundedBalance = parseFloat(formattedBalance).toFixed(2);
                     setZexBalance(roundedBalance);
-                    console.log("ZEX Balance (retry) updated:", roundedBalance);
+                    console.log("Balances (retry) updated - ZEX:", roundedBalance);
                 } catch (retryErr) {
-                    console.error("ZEX balance retry also failed:", retryErr);
-                    setZexBalance("0");
+                    console.error("Balance retry also failed:", retryErr);
                 }
             }, 3000);
         }
@@ -202,9 +225,9 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     } catch (switchError: any) {
                         console.error("Switch chain failed:", switchError);
                         if (switchError.code === 4902) {
-                            throw new Error("Lütfen MetaMask'a Polygon Mainnet ağını ekleyin.");
+                            throw new Error(t('web3.addPolygon'));
                         }
-                        throw new Error("Lütfen cüzdanınızdan Polygon Mainnet ağını seçin.");
+                        throw new Error(t('web3.selectPolygon'));
                     }
                 }
 
@@ -228,13 +251,13 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
                         const newProvider = new ethers.BrowserProvider(window.ethereum as any);
                         signer = await newProvider.getSigner();
                     } catch (err) {
-                        throw new Error("Lütfen cüzdanınızdan Polygon Mainnet ağını seçin.");
+                        throw new Error(t('web3.selectPolygon'));
                     }
                 } else {
                     signer = await provider.getSigner();
                 }
             } else {
-                throw new Error("Cüzdan bağlantısı bulunamadı veya ağ desteklenmiyor.");
+                throw new Error(t('web3.noWallet'));
             }
 
             const zexContract = new ethers.Contract(ZEX_TOKEN_ADDRESS, ERC20_ABI, signer);
@@ -268,9 +291,11 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 // Need to approve
                 // Add explicit gas limit to prevent MetaMask -32603 "Unexpected Error" on Polygon during estimation
                 const tx = await contracts.zexContract.approve(targetAddress, amountInWei, {
-                    gasLimit: 100000n // Standard ERC20 approve usually takes ~45k gas. 100k is a safe buffer.
+                    gasLimit: 120000n // Standard ERC20 approve usually takes ~45k gas. 120k is a safe buffer.
                 });
-                await tx.wait(); // Wait for confirmation
+                console.log("Approval transaction sent:", tx.hash);
+                await tx.wait();
+                console.log("Approval transaction confirmed:", tx.hash);
             }
             return true;
         } catch (error: any) {
@@ -298,11 +323,12 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (!approved) return false;
 
             // 3. Mint
-            // Add explicit gas limit to prevent MetaMask -32603 "Unexpected Error" on Polygon during estimation
             const tx = await contracts.nftContract.mintWithZex(metadataURI, amount, {
-                gasLimit: 300000n // Safe buffer for 1155 minting
+                gasLimit: 500000n // Increased buffer for 1155 minting
             });
+            console.log("Mint transaction sent:", tx.hash);
             await tx.wait();
+            console.log("Mint transaction confirmed:", tx.hash);
 
             // Refresh balance
             if (account && provider) {
@@ -377,7 +403,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
             } else if (provider) {
                 freshSigner = await provider.getSigner();
             } else {
-                throw new Error("Cüzdan bağlantısı bulunamadı.");
+                throw new Error(t('web3.noWallet'));
             }
 
             const collectionContract = new ethers.Contract(collectionAddress, COLLECTION_ABI, freshSigner);
@@ -399,7 +425,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     return (
         <Web3Context.Provider value={{
-            account, zexBalance, isConnecting, connectWallet, disconnectWallet,
+            account, zexBalance, polBalance, isConnecting, connectWallet, disconnectWallet,
             provider, getContracts, checkAndApproveZex, mintNFT, createCollectionContract, setupAndMintCollection, tokenBalance: null
         }}>
             {children}

@@ -26,12 +26,12 @@ const providerStyles: Record<string, { bg: string; text: string; icon: string }>
 
 // Video Styles
 const videoStyles = [
-  { id: 'cinematic', name: 'Sinematik', icon: '🎬' },
-  { id: 'anime', name: 'Anime', icon: '🎨' },
-  { id: 'realistic', name: 'Gerçekçi', icon: '📷' },
-  { id: 'abstract', name: 'Soyut', icon: '🌀' },
-  { id: 'neon', name: 'Neon', icon: '💫' },
-  { id: 'vintage', name: 'Vintage', icon: '📼' },
+  { id: 'cinematic', name: 'videoGen.styles.cinematic', icon: '🎬' },
+  { id: 'anime', name: 'videoGen.styles.anime', icon: '🎨' },
+  { id: 'realistic', name: 'videoGen.styles.realistic', icon: '📷' },
+  { id: 'abstract', name: 'videoGen.styles.abstract', icon: '🌀' },
+  { id: 'neon', name: 'videoGen.styles.neon', icon: '💫' },
+  { id: 'vintage', name: 'videoGen.styles.vintage', icon: '📼' },
 ];
 
 const VideoPage = () => {
@@ -173,11 +173,11 @@ const VideoPage = () => {
     try {
       setPurchaseLoading(true);
       const response = await apiService.post("/packages/purchase", { package_id: pkgId });
-      setPurchaseSuccess(`${pkgName} başarıyla satın alındı! ${credits}c düşüldü.`);
+      setPurchaseSuccess(t('videoGen.purchaseSuccess', { name: pkgName, credits }));
       queryClient.invalidateQueries({ queryKey: ["userCredits"] });
       setTimeout(() => setPurchaseSuccess(null), 5000);
     } catch (error: any) {
-      alert(error?.response?.data?.detail || 'Satın alma başarısız');
+      alert(error?.response?.data?.detail || t('videoGen.purchaseFailed'));
     } finally {
       setPurchaseLoading(false);
     }
@@ -189,7 +189,7 @@ const VideoPage = () => {
 
     const selectedEffect = effects.find((e: any) => e.id === effectId);
     if (selectedEffect?.requires_two_images && !imageFile2) {
-      alert('Bu efekt için 2 görsel gerekli');
+      alert(t('videoGen.twoImagesRequired'));
       return;
     }
 
@@ -206,7 +206,7 @@ const VideoPage = () => {
       console.log('[Effects] Image URL:', imageUrl);
 
       if (!imageUrl) {
-        alert('Görsel URL alınamadı. Lütfen tekrar deneyin.');
+        alert(t('videoGen.imageUrlFailed'));
         return;
       }
 
@@ -227,7 +227,8 @@ const VideoPage = () => {
       });
 
       console.log('[Effects] Effect response:', effectResponse);
-      setEffectSuccess(`${selectedEffect?.name} uygulanıyor! Görev ID: ${effectResponse?.data?.task_id || effectResponse?.task_id}`);
+      const taskId = effectResponse?.data?.task_id || effectResponse?.task_id;
+      setEffectSuccess(t('videoGen.effectApplying', { name: selectedEffect?.name, id: taskId }));
       queryClient.invalidateQueries({ queryKey: ["userCredits"] });
       queryClient.invalidateQueries({ queryKey: ["myVideos"] });
       setImageFile(null);
@@ -239,7 +240,7 @@ const VideoPage = () => {
       console.error('[Effects] Response data:', error?.response?.data);
 
       // Extract error message from any possible format
-      let errorMsg = 'Efekt uygulama başarısız';
+      let errorMsg = t('videoGen.effectFailed');
       const data = error?.response?.data;
 
       if (typeof data === 'string') {
@@ -293,13 +294,14 @@ const VideoPage = () => {
         duration: 5
       });
 
-      alert(`Motion Brush video oluşturuluyor! Görev ID: ${motionRes?.data?.task_id || motionRes?.task_id}`);
+      const taskId = motionRes?.data?.task_id || motionRes?.task_id;
+      alert(t('videoGen.motionBrushSuccess', { id: taskId }));
       queryClient.invalidateQueries({ queryKey: ["userCredits"] });
       queryClient.invalidateQueries({ queryKey: ["myVideos"] });
       setShowMotionBrush(false);
 
     } catch (error: any) {
-      alert(error?.response?.data?.detail || 'Motion Brush başarısız');
+      alert(error?.response?.data?.detail || t('videoGen.motionBrushFailed'));
     } finally {
       setMotionBrushLoading(false);
     }
@@ -312,7 +314,7 @@ const VideoPage = () => {
         return prev.filter(id => id !== modelId);
       }
       if (prev.length >= 4) {
-        alert('En fazla 4 model seçebilirsiniz');
+        alert(t('videoGen.maxModelsWarning'));
         return prev;
       }
       return [...prev, modelId];
@@ -322,7 +324,7 @@ const VideoPage = () => {
   // Handle compare generation - runs all selected models in parallel
   const handleCompare = async () => {
     if (!prompt || selectedCompareModels.length < 2) {
-      alert('Lütfen prompt girin ve en az 2 model seçin');
+      alert(t('videoGen.promptAndModelsRequired'));
       return;
     }
 
@@ -495,11 +497,11 @@ const VideoPage = () => {
           img.onload = () => {
             URL.revokeObjectURL(imgUrl);
             if (img.width < 256 || img.height < 256) {
-              reject(new Error(`Görsel boyutu çok küçük: ${img.width}x${img.height}. Minimum 256x256 piksel gerekli.`));
+              reject(new Error(t('videoGen.imageSizeTooSmall', { width: img.width, height: img.height })));
             }
             resolve();
           };
-          img.onerror = () => reject(new Error('Görsel yüklenemedi'));
+          img.onerror = () => reject(new Error(t('videoGen.imageLoadFailed')));
           img.src = imgUrl;
         });
 
@@ -513,19 +515,19 @@ const VideoPage = () => {
 
         if (!imageUrl) {
           console.error('[I2V] No URL in response:', uploadRes);
-          alert('Görsel URL alınamadı');
+          alert(t('videoGen.imageUrlFailed'));
           return;
         }
 
         // Validate URL is external (not local path)
         if (imageUrl.startsWith('/api/') || imageUrl.startsWith('/files/')) {
           console.error('[I2V] URL is local path, not public:', imageUrl);
-          alert('Görsel yükleme başarısız: Supabase storage yapılandırılmalı.');
+          alert(t('videoGen.localPathError'));
           return;
         }
       } catch (error: any) {
         console.error('[I2V] Image upload failed:', error);
-        alert(error?.message || 'Görsel yükleme başarısız');
+        alert(error?.message || t('videoGen.imageUploadFailed'));
         return;
       }
     }
@@ -545,19 +547,19 @@ const VideoPage = () => {
 
         if (!videoUrl) {
           console.error('[V2V] No URL in response:', uploadRes);
-          alert('Video URL alınamadı');
+          alert(t('videoGen.videoUrlFailed'));
           return;
         }
 
         // Validate URL is external (not local path)
         if (videoUrl.startsWith('/api/') || videoUrl.startsWith('/files/')) {
           console.error('[V2V] URL is local path, not public:', videoUrl);
-          alert('Video yükleme başarısız: Supabase storage yapılandırılmalı.');
+          alert(t('videoGen.localPathError'));
           return;
         }
       } catch (error: any) {
         console.error('[V2V] Video upload failed:', error);
-        alert(error?.message || 'Video yükleme başarısız');
+        alert(error?.message || t('videoGen.videoUploadFailed'));
         return;
       }
     }
@@ -893,7 +895,7 @@ const VideoPage = () => {
                             : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'
                             }`}
                         >
-                          {style.icon} {style.name}
+                          {style.icon} {t(style.name)}
                         </button>
                       ))}
                     </div>
@@ -913,9 +915,9 @@ const VideoPage = () => {
                           : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'
                           }`}
                       >
-                        {ratio === '16:9' && '🖥️ Yatay'}
-                        {ratio === '9:16' && '📱 Dikey'}
-                        {ratio === '1:1' && '⬜ Kare'}
+                        {ratio === '16:9' && `🖥️ ${t('common.horizontal')}`}
+                        {ratio === '9:16' && `📱 ${t('common.vertical')}`}
+                        {ratio === '1:1' && `⬜ ${t('common.square')}`}
                       </button>
                     ))}
                   </div>

@@ -20,10 +20,10 @@ import { addWatermark } from "@/utils/watermark";
 import playHapticFeedback from "@/utils/haptics";
 
 const aspectRatios = [
-  { id: '1:1', name: 'Kare', icon: '⬜', width: 1024, height: 1024 },
-  { id: '16:9', name: 'Geniş', icon: '🖼️', width: 1280, height: 720 },
-  { id: '9:16', name: 'Dikey', icon: '📱', width: 720, height: 1280 },
-  { id: '4:3', name: 'Klasik', icon: '🖥️', width: 1024, height: 768 },
+  { id: '1:1', name: 'imageGen.aspectRatios.square', icon: '⬜', width: 1024, height: 1024 },
+  { id: '16:9', name: 'imageGen.aspectRatios.wide', icon: '🖼️', width: 1280, height: 720 },
+  { id: '9:16', name: 'imageGen.aspectRatios.vertical', icon: '📱', width: 720, height: 1280 },
+  { id: '4:3', name: 'imageGen.aspectRatios.classic', icon: '🖥️', width: 1024, height: 768 },
 ];
 
 
@@ -44,19 +44,19 @@ const pollTask = (taskId: string, onProgress: (status: string) => void): Promise
           resolve(taskData.image_urls || []);
         } else if (taskData?.status === "failed") {
           clearInterval(interval);
-          reject(new Error(taskData.error_message || "Üretim başarısız oldu"));
+          reject(new Error(taskData.error_message || "Generation failed"));
         } else {
-          onProgress(`İşleniyor... (%${Math.min(95, Math.round((attempts / maxAttempts) * 100))})`);
+          onProgress(`Processing... (${Math.min(95, Math.round((attempts / maxAttempts) * 100))}%)`);
         }
       } catch (err) {
         if (attempts >= maxAttempts) {
           clearInterval(interval);
-          reject(new Error("Zaman aşımı"));
+          reject(new Error("Timeout"));
         }
       }
     }, 3000);
 
-    setTimeout(() => { clearInterval(interval); reject(new Error("Zaman aşımı (5dk)")); }, 320000);
+    setTimeout(() => { clearInterval(interval); reject(new Error("Timeout (5min)")); }, 320000);
   });
 };
 
@@ -239,7 +239,7 @@ const ImageGenerationPage = () => {
 
         const taskId = res?.data?.task_id || res?.task_id;
         if (!taskId) {
-          setGenerationError("Sunucudan geçersiz yanıt geldi");
+          setGenerationError(t('imageGen.invalidResponse', 'Invalid server response'));
           return;
         }
 
@@ -254,7 +254,7 @@ const ImageGenerationPage = () => {
       queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
       queryClient.invalidateQueries({ queryKey: ["myImageGallery"] });
     } catch (err: any) {
-      setGenerationError(err?.message || "Görsel üretilirken bir hata oluştu");
+      setGenerationError(err?.message || t('imageGen.generationError', 'An error occurred while generating the image'));
     } finally {
       setIsGenerating(false);
     }
@@ -295,7 +295,7 @@ const ImageGenerationPage = () => {
         model_id: mId,
         model_name: allModels.find((m: any) => m.id === mId)?.name || mId,
         status: 'generating',
-        progress: 'Başlatılıyor...',
+        progress: t('imageGen.starting', 'Starting...'),
         image_url: null,
         error: null,
       }))
@@ -311,7 +311,7 @@ const ImageGenerationPage = () => {
           aspect_ratio: aspectRatio
         });
         const taskId = res?.data?.task_id || res?.task_id;
-        if (!taskId) throw new Error("task_id alınamadı");
+        if (!taskId) throw new Error("Could not retrieve task_id");
 
         // Poll this specific task
         const urls = await pollTask(taskId, (progressMsg) => {
@@ -609,7 +609,7 @@ const ImageGenerationPage = () => {
                               ? 'bg-purple-600 text-white'
                               : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
                               }`}
-                            title={ratio.name}
+                            title={t(ratio.name)}
                           >
                             {ratio.icon}
                           </button>
@@ -769,7 +769,7 @@ const ImageGenerationPage = () => {
                 {generationError && (
                   <div className="p-4 bg-red-50 dark:bg-red-900/20 border-t border-red-200 dark:border-red-800">
                     <p className="text-sm text-red-600 dark:text-red-400">
-                      ❌ Hata: {generationError}
+                      ❌ {t('imageGen.errorLabel', 'Error')}: {generationError}
                     </p>
                   </div>
                 )}
@@ -1141,7 +1141,7 @@ const ImageGenerationPage = () => {
                               if (parent) {
                                 const errDiv = document.createElement('div');
                                 errDiv.className = 'w-full h-full flex items-center justify-center text-gray-400 text-sm';
-                                errDiv.textContent = '⚠️ Görsel yüklenemedi';
+                                errDiv.textContent = '⚠️ Image failed to load';
                                 parent.appendChild(errDiv);
                               }
                             }}
@@ -1159,7 +1159,7 @@ const ImageGenerationPage = () => {
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center text-red-500 p-4 text-center bg-red-50 dark:bg-red-900/10">
                           <X className="w-8 h-8 mb-2 text-red-400" />
-                          <span className="text-sm font-medium">Hata</span>
+                          <span className="text-sm font-medium">{t('imageGen.errorLabel', 'Error')}</span>
                           <span className="text-xs text-red-400 mt-1">{result.error}</span>
                         </div>
                       )}
