@@ -592,10 +592,10 @@ const VideoPage = () => {
               <Video className="w-4 h-4" />
               <span className="text-sm font-medium">{t('videoGen.badge', 'AI Video Stüdyosu')}</span>
             </div>
-            <h1 className="text-3xl lg:text-4xl font-bold mb-2">
+            <h1 className="text-2xl lg:text-3xl font-bold mb-1">
               {t('videoGen.title', 'Video ')}<span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 to-yellow-300">{t('videoGen.titleHighlight', 'Sihirbazı')}</span>
             </h1>
-            <p className="text-purple-100">{t('videoGen.desc', 'Sora 2, Veo 3.1, Kling 2.6, Runway ve daha fazlası')}</p>
+            <p className="text-sm text-purple-100">{t('videoGen.desc', 'Sora 2, Veo 3.1, Kling 2.6, Runway ve daha fazlası')}</p>
           </div>
         </div>
         <div className="absolute bottom-0 left-0 right-0">

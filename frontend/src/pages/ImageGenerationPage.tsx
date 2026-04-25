@@ -345,10 +345,10 @@ const ImageGenerationPage = () => {
               <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span className="text-xs sm:text-sm font-medium">{t('imageGen.badge', 'AI Görsel Üretici')}</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold mb-2 sm:mb-4">
+            <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold mb-1 sm:mb-2">
               {t('imageGen.title', 'Hayal Et, ')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 to-yellow-300">{t('imageGen.titleHighlight', 'Oluştur')}</span>
             </h1>
-            <p className="text-sm sm:text-base lg:text-lg text-purple-100 max-w-2xl mx-auto px-2">
+            <p className="text-xs sm:text-sm lg:text-base text-purple-100 max-w-2xl mx-auto px-2">
               {t('imageGen.desc', 'Düşüncelerinizi saniyeler içinde etkileyici görsellere dönüştürün')}
             </p>
           </div>

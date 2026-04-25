@@ -184,10 +184,10 @@ const AudioPage = () => {
               <Headphones className="w-4 h-4" />
               <span className="text-sm font-medium">{t('audio.badge')}</span>
             </div>
-            <h1 className="text-3xl lg:text-4xl font-bold mb-2">
+            <h1 className="text-2xl lg:text-3xl font-bold mb-1">
               {t('audio.title')}<span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-white">{t('audio.titleHighlight')}</span>
             </h1>
-            <p className="text-pink-100">{t('audio.desc')}</p>
+            <p className="text-sm text-pink-100">{t('audio.desc')}</p>
           </div>
         </div>
         <div className="absolute bottom-0 left-0 right-0">

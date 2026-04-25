@@ -498,36 +498,45 @@ const ChatPage = () => {
           <ComparisonChatPage onBack={() => setActiveTab("chat")} />
         ) : (
           <>
-            {/* Chat Header */}
-            <div className="h-12 px-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex-shrink-0">
-              <div className="flex items-center gap-3">
-                <button onClick={() => setShowSidebar(!showSidebar)} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all">
-                  {showSidebar ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
-                </button>
-                <div className="flex items-center gap-2">
-                  <div className={`w-6 h-6 rounded-lg bg-gradient-to-br ${(currentModel as any).color || 'from-emerald-400 to-teal-500'} flex items-center justify-center text-xs`}>
-                    {currentModel.icon}
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">{currentConversation?.title || t('chat.newChat', "Yeni Sohbet")}</h3>
-                    <p className="text-[10px] text-gray-400">{currentModel.name}</p>
+            {/* Chat Header (Premium Gradient) */}
+            <div className="relative overflow-hidden bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white flex-shrink-0 shadow-md">
+              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTRzMiAyIDIgNC0yIDQtMiA0LTItMi0yLTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30" />
+              <div className="absolute bottom-0 left-0 right-0">
+                <svg viewBox="0 0 1440 40" fill="none" className="h-4 sm:h-6 w-full text-gray-50 dark:text-gray-900" preserveAspectRatio="none"><path d="M0 40V0C240 26.6667 480 40 720 40C960 40 1200 26.6667 1440 0V40H0Z" fill="currentColor" /></svg>
+              </div>
+              
+              <div className="relative h-16 px-4 flex items-center justify-between z-10 pb-2">
+                <div className="flex items-center gap-3">
+                  <button onClick={() => setShowSidebar(!showSidebar)} className="p-1.5 text-emerald-100 hover:text-white hover:bg-white/10 rounded-lg transition-all">
+                    {showSidebar ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeft className="w-5 h-5" />}
+                  </button>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-xl bg-white/20 backdrop-blur-sm shadow-inner flex items-center justify-center text-sm border border-white/30`}>
+                      {currentModel.icon}
+                    </div>
+                    <div>
+                      <h3 className="text-sm sm:text-base font-bold text-white leading-tight drop-shadow-sm">{currentConversation?.title || t('chat.newChat', "Yeni Sohbet")}</h3>
+                      <p className="text-[11px] text-emerald-100 font-medium flex items-center gap-1">
+                        <Cpu className="w-3 h-3" /> {currentModel.name}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-1">
-                {isTyping && (
-                  <span className="flex items-center gap-1.5 text-xs text-emerald-500 mr-2">
-                    <span className="flex gap-0.5">
-                      <span className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" />
-                      <span className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <span className="w-1 h-1 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                <div className="flex items-center gap-2">
+                  {isTyping && (
+                    <span className="hidden sm:flex items-center gap-1.5 text-xs text-emerald-100 mr-2 bg-black/20 px-2 py-1 rounded-full backdrop-blur-sm">
+                      <span className="flex gap-0.5">
+                        <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" />
+                        <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      </span>
+                      {t('chat.typing', 'Yazıyor...')}
                     </span>
-                    {t('chat.typing', 'Typing')}
-                  </span>
-                )}
-                <button onClick={startNewConversation} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all" title="Yeni Sohbet">
-                  <RotateCcw className="w-4 h-4" />
-                </button>
+                  )}
+                  <button onClick={startNewConversation} className="p-2 text-emerald-100 hover:text-white bg-white/10 hover:bg-white/20 rounded-xl transition-all shadow-sm border border-white/10" title="Yeni Sohbet">
+                    <RotateCcw className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -536,20 +545,29 @@ const ChatPage = () => {
               <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
                 {/* Empty State */}
                 {!currentConversation?.messages?.length && (
-                  <div className="flex flex-col items-center justify-center pt-12 pb-8">
-                    <div className="relative mb-6">
-                      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full blur-2xl opacity-15 scale-150" />
-                      <img src="/logo192.png" alt="ZexAi" className="relative w-16 h-16 object-contain" />
+                  <div className="flex flex-col items-center justify-center pt-8 pb-12">
+                    <div className="relative mb-8 group">
+                      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity duration-500" />
+                      <div className="w-24 h-24 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 rounded-3xl shadow-2xl flex items-center justify-center border border-gray-100 dark:border-gray-700 relative z-10">
+                        <img src="/logo192.png" alt="ZexAi" className="w-14 h-14 object-contain" />
+                      </div>
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{t('chat.emptyTitle', 'How can I help you?')}</h2>
-                    <p className="text-sm text-gray-500 mb-8">{t('chat.emptyDesc', 'You can ask anything you want')}</p>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 w-full max-w-xl">
+                    <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 mb-3 text-center">
+                      {t('chat.emptyTitle', 'Size nasıl yardımcı olabilirim?')}
+                    </h2>
+                    <p className="text-gray-500 dark:text-gray-400 mb-10 max-w-md text-center text-sm leading-relaxed">
+                      {t('chat.emptyDesc', 'Yapay zeka asistanınız hazır. İstediğiniz herhangi bir konuda soru sorabilir, kod yazdırabilir veya beyin fırtınası yapabilirsiniz.')}
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl px-4">
                       {suggestedPrompts.map((item, idx) => (
                         <button key={idx} onClick={() => setMessage(item.prompt)}
-                          className={`p-3.5 rounded-xl text-left bg-gradient-to-br ${item.gradient} border hover:scale-[1.02] transition-all group`}>
-                          <span className="text-xl mb-1.5 block">{item.icon}</span>
-                          <span className="font-medium text-gray-800 dark:text-gray-200 text-xs block">{item.title}</span>
-                          <span className="text-[10px] text-gray-500 dark:text-gray-400 line-clamp-1 mt-0.5 block">{item.prompt}</span>
+                          className={`p-4 rounded-2xl text-left bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-xl hover:shadow-emerald-500/10 hover:-translate-y-1 transition-all group relative overflow-hidden`}>
+                          <div className={`absolute top-0 left-0 w-1 h-full bg-gradient-to-b ${item.gradient.split(' ')[0]} opacity-0 group-hover:opacity-100 transition-opacity`} />
+                          <div className="flex items-center gap-3 mb-2">
+                            <span className="text-2xl">{item.icon}</span>
+                            <span className="font-bold text-gray-800 dark:text-gray-200 text-sm">{item.title}</span>
+                          </div>
+                          <span className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{item.prompt}</span>
                         </button>
                       ))}
                     </div>
