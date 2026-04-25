@@ -340,23 +340,19 @@ const ImageGenerationPage = () => {
       <div className="relative overflow-hidden bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 text-white">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTRzMiAyIDIgNC0yIDQtMiA0LTItMi0yLTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30" />
         <div className="relative px-4 sm:px-6 py-4 sm:py-6 lg:px-8">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/10 backdrop-blur-sm mb-3 sm:mb-4">
-              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="text-xs sm:text-sm font-medium">{t('imageGen.badge', 'AI Görsel Üretici')}</span>
+          <div className="max-w-4xl mx-auto text-center text-white">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm mb-3">
+              <Sparkles className="w-4 h-4" />
+              <span className="text-sm font-medium">{t('imageGen.badge', 'AI Görsel Üretici')}</span>
             </div>
-            <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold mb-1 sm:mb-2">
-              {t('imageGen.title', 'Hayal Et, ')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 to-yellow-300">{t('imageGen.titleHighlight', 'Oluştur')}</span>
+            <h1 className="text-2xl lg:text-3xl font-bold mb-1">
+              {t('imageGen.title', 'Hayal Et, ')}<span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 to-yellow-300">{t('imageGen.titleHighlight', 'Oluştur')}</span>
             </h1>
-            <p className="text-xs sm:text-sm lg:text-base text-purple-100 max-w-2xl mx-auto px-2">
-              {t('imageGen.desc', 'Düşüncelerinizi saniyeler içinde etkileyici görsellere dönüştürün')}
-            </p>
+            <p className="text-sm text-purple-100">{t('imageGen.desc', 'Düşüncelerinizi saniyeler içinde etkileyici görsellere dönüştürün')}</p>
           </div>
         </div>
         <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-8 sm:h-12 w-full text-gray-50 dark:text-gray-900" preserveAspectRatio="none">
-            <path d="M0 100V0C240 66.6667 480 100 720 100C960 100 1200 66.6667 1440 0V100H0Z" fill="currentColor" />
-          </svg>
+          <svg viewBox="0 0 1440 60" fill="none" className="h-6 sm:h-8 w-full text-gray-50 dark:text-gray-900" preserveAspectRatio="none"><path d="M0 60V0C240 40 480 60 720 60C960 60 1200 40 1440 0V60H0Z" fill="currentColor" /></svg>
         </div>
       </div>
 

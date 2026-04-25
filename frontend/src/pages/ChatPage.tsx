@@ -506,23 +506,28 @@ const ChatPage = () => {
               </div>
               
               <div className="relative h-16 px-4 flex items-center justify-between z-10 pb-2">
-                <div className="flex items-center gap-3">
+                {/* Left */}
+                <div className="flex-1 flex items-center justify-start">
                   <button onClick={() => setShowSidebar(!showSidebar)} className="p-1.5 text-emerald-100 hover:text-white hover:bg-white/10 rounded-lg transition-all">
                     {showSidebar ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeft className="w-5 h-5" />}
                   </button>
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-xl bg-white/20 backdrop-blur-sm shadow-inner flex items-center justify-center text-sm border border-white/30`}>
-                      {currentModel.icon}
-                    </div>
-                    <div>
-                      <h3 className="text-sm sm:text-base font-bold text-white leading-tight drop-shadow-sm">{currentConversation?.title || t('chat.newChat', "Yeni Sohbet")}</h3>
-                      <p className="text-[11px] text-emerald-100 font-medium flex items-center gap-1">
-                        <Cpu className="w-3 h-3" /> {currentModel.name}
-                      </p>
-                    </div>
+                </div>
+
+                {/* Center */}
+                <div className="flex-1 flex items-center justify-center gap-3">
+                  <div className={`w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm shadow-inner flex items-center justify-center text-lg border border-white/30`}>
+                    {currentModel.icon}
+                  </div>
+                  <div className="text-center">
+                    <h3 className="text-lg sm:text-xl font-bold text-white leading-tight drop-shadow-sm">{currentConversation?.title || t('chat.newChat', "Yeni Sohbet")}</h3>
+                    <p className="text-xs text-emerald-100 font-medium flex items-center justify-center gap-1">
+                      <Cpu className="w-3.5 h-3.5" /> {currentModel.name}
+                    </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+
+                {/* Right */}
+                <div className="flex-1 flex items-center justify-end gap-2">
                   {isTyping && (
                     <span className="hidden sm:flex items-center gap-1.5 text-xs text-emerald-100 mr-2 bg-black/20 px-2 py-1 rounded-full backdrop-blur-sm">
                       <span className="flex gap-0.5">
