@@ -15,7 +15,7 @@ async def get_current_user(
     """
     # For local development, we skip token verification and return a mock admin
     return SimpleNamespace(
-        id="mock-admin-id",
+        id="00000000-0000-0000-0000-000000000000",
         email="luxor00@gmail.com",
         role="super_admin",
         full_name="Luxor Admin (Local)",
