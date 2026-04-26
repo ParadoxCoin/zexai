@@ -137,9 +137,14 @@ export const ShareModal = ({
         // Record share
         shareMutation.mutate(platform.id);
 
+        let finalTitle = contentTitle;
+        if (contentType === 'referral') {
+            finalTitle = `🚀 ZexAi ile tanışın! Benim referans kodumu kullanarak siz de harika AI içerikler oluşturun. Kayıt olun: ${contentUrl}`;
+        }
+
         // Open share URL or copy
         if (platform.getUrl) {
-            window.open(platform.getUrl(contentTitle, contentUrl), '_blank', 'width=600,height=400');
+            window.open(platform.getUrl(finalTitle, contentUrl), '_blank', 'width=600,height=400');
         } else {
             // For platforms without direct share, copy URL
             handleCopy();
@@ -147,8 +152,13 @@ export const ShareModal = ({
     };
 
     const handleCopy = async () => {
+        let finalTitle = contentTitle;
+        if (contentType === 'referral') {
+            finalTitle = `🚀 ZexAi ile tanışın! Benim referans kodumu kullanarak siz de harika AI içerikler oluşturun.`;
+        }
+        
         try {
-            await navigator.clipboard.writeText(`${contentTitle}\n${contentUrl}`);
+            await navigator.clipboard.writeText(`${finalTitle}\n${contentUrl}`);
             setCopied(true);
             shareMutation.mutate('copy');
             setTimeout(() => setCopied(false), 2000);

@@ -10,6 +10,7 @@ import { PricingManagementPanel } from '@/components/admin/PricingManagementPane
 import AdminGamificationPanel from '@/components/admin/AdminGamificationPanel';
 import { VestingPanel } from '@/components/admin/VestingPanel';
 import { AirdropManagementPanel } from '@/components/admin/AirdropManagementPanel';
+import { ReferralManagementPanel } from '@/components/admin/ReferralManagementPanel';
 import {
   Users, DollarSign, Activity, TrendingUp, Search, Edit, Ban, CheckCircle,
   Plus, Minus, Bell, Settings, BarChart3, PieChart, LineChart, AlertCircle,
@@ -51,7 +52,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-type TabType = 'overview' | 'users' | 'analytics' | 'monitoring' | 'models' | 'settings' | 'audit' | 'gamification' | 'vesting' | 'airdrop';
+type TabType = 'overview' | 'users' | 'analytics' | 'monitoring' | 'models' | 'settings' | 'audit' | 'gamification' | 'vesting' | 'airdrop' | 'referrals';
 
 export const AdminDashboardEnhanced: React.FC = () => {
   const toast = useToast();
@@ -308,7 +309,8 @@ export const AdminDashboardEnhanced: React.FC = () => {
             { id: 'monitoring', label: 'Monitoring', icon: Server },
             { id: 'gamification', label: 'Gamification', icon: Trophy },
             { id: 'vesting', label: 'Vesting (Token Kilit)', icon: Shield },
-            { id: 'airdrop', label: 'Airdrop', icon: Sparkles },
+            { id: 'airdrop', label: 'Presale Airdrop', icon: Sparkles },
+            { id: 'referrals', label: 'Platform Referans', icon: UserPlus },
             { id: 'audit', label: 'Audit Log', icon: Shield },
             { id: 'settings', label: 'Ayarlar', icon: Settings }
           ].map((tab) => {
@@ -734,10 +736,17 @@ export const AdminDashboardEnhanced: React.FC = () => {
         <VestingPanel />
       )}
 
-      {/* Airdrop Tab */}
+      {/* Airdrop Tab (Landing Page) */}
       {activeTab === 'airdrop' && (
         <div className="space-y-6">
           <AirdropManagementPanel />
+        </div>
+      )}
+
+      {/* Platform Referral Tab (app.zexai.io) */}
+      {activeTab === 'referrals' && (
+        <div className="space-y-6">
+          <ReferralManagementPanel />
         </div>
       )}
     </div>

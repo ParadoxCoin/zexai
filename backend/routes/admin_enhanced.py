@@ -585,7 +585,7 @@ def group_airdrops(records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 @router.get("/airdrops/pending")
 @limiter.limit(RateLimits.ADMIN_READ)
 async def get_pending_airdrops(
-    current_user: SimpleNamespace = Depends(get_current_admin_user),
+    request: Request,
     db = Depends(get_database)
 ):
     """Fetch all non-distributed referral rewards from Supabase"""
@@ -612,6 +612,7 @@ async def get_pending_airdrops(
 @router.post("/airdrops/mark-distributed")
 @limiter.limit(RateLimits.ADMIN_WRITE)
 async def mark_airdrops_distributed(
+    request: Request,
     request_data: AirdropMarkDistributedRequest,
     current_user: SimpleNamespace = Depends(get_current_admin_user),
     db = Depends(get_database)

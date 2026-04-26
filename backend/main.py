@@ -17,6 +17,8 @@ import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 import os
 
+from routes.webhooks import router as webhooks_router
+from routes.referral import router as referral_router
 from core.config import settings
 from core.database import connect_to_db, close_db_connection
 from core.logger import app_logger as logger
@@ -78,6 +80,7 @@ from routes.social import router as social_router
 from routes.voice_clone import router as voice_clone_router
 from routes.comparison import router as comparison_router
 from routes.staking import router as staking_router
+from routes.admin_referral import router as admin_referral_router
 from routes.nft import router as nft_router
 from routes.collections import router as collections_router
 from core.websocket import websocket_endpoint
@@ -173,6 +176,21 @@ app = FastAPI(
 # Rate Limiter State
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# CORS Middleware setup
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "https://zexai.vercel.app",
+        "https://app.zexai.io",
+        "https://zexai-production.up.railway.app"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Production security middleware
 if settings.ENVIRONMENT == "production":
@@ -278,13 +296,14 @@ app.include_router(metrics_router, prefix=API_V1_PREFIX)  # Metrics for monitori
 app.include_router(admin_pricing_enhanced_router, prefix=API_V1_PREFIX)  # Enhanced admin pricing
 app.include_router(dashboard_enhanced_router, prefix=API_V1_PREFIX)  # Enhanced dashboard
 app.include_router(webhooks_router, prefix=API_V1_PREFIX)  # Webhook handlers
-app.include_router(referral_router, prefix=API_V1_PREFIX)  # Referral System
+app.include_router(referral_router, prefix=API_V1_PREFIX)  # Referral system router
 app.include_router(admin_analytics_router, prefix=API_V1_PREFIX)  # Analytics Dashboard
 app.include_router(admin_email_router, prefix=API_V1_PREFIX)  # Email Templates
 app.include_router(marketplace_router, prefix=API_V1_PREFIX)  # Model Marketplace
 app.include_router(admin_reports_router, prefix=API_V1_PREFIX)  # Advanced Reports
 app.include_router(notifications_router, prefix=API_V1_PREFIX)  # Notifications
 app.include_router(admin_airdrop_router, prefix=API_V1_PREFIX)  # Admin Airdrop
+app.include_router(admin_referral_router, prefix=API_V1_PREFIX)  # Admin Referrals
 app.include_router(gamification_router, prefix=API_V1_PREFIX)  # Gamification System
 app.include_router(avatar_router, prefix=API_V1_PREFIX)  # AI Avatar / Lip Sync
 app.include_router(prompt_router, prefix=API_V1_PREFIX)  # AI Prompt Enhancer
