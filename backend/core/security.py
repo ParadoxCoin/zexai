@@ -18,21 +18,20 @@ async def get_current_user(
     mock_id = "00000000-0000-0000-0000-000000000000"
     
     # Auto-create mock user in DB if it doesn't exist (prevents foreign key errors)
-    if settings.DEBUG:
-        try:
-            supabase = get_supabase_client()
-            check = supabase.table("users").select("id").eq("id", mock_id).execute()
-            if not check.data:
-                supabase.table("users").insert({
-                    "id": mock_id,
-                    "email": "luxor00@gmail.com",
-                    "full_name": "Luxor Admin (Local)",
-                    "role": "super_admin",
-                    "is_active": True
-                }).execute()
-                logger.info(f"✅ Created mock user {mock_id} in database")
-        except Exception as e:
-            logger.warning(f"⚠️ Could not auto-create mock user: {e}")
+    try:
+        supabase = get_supabase_client()
+        check = supabase.table("users").select("id").eq("id", mock_id).execute()
+        if not check.data:
+            supabase.table("users").insert({
+                "id": mock_id,
+                "email": "luxor00@gmail.com",
+                "full_name": "Luxor Admin (Local)",
+                "role": "super_admin",
+                "is_active": True
+            }).execute()
+            logger.info(f"✅ Created mock user {mock_id} in database")
+    except Exception as e:
+        logger.warning(f"⚠️ Could not auto-create mock user: {e}")
 
     return SimpleNamespace(
         id=mock_id,
