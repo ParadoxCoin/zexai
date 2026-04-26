@@ -230,7 +230,7 @@ const Layout: React.FC = () => {
                       >
                         <Gift className="h-4 w-4" />
                         {t('layout.invite', 'Davet Et')}
-                        <span className="ml-auto text-[10px] bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full">%1</span>
+                        <span className="ml-auto text-[10px] bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full">%5</span>
                       </Link>
 
                       <div className="my-2 border-t border-gray-100 dark:border-gray-700" />

@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuthStore } from '@/store/authStore';
-import { User, Lock, Save, CreditCard, Package, Check } from 'lucide-react';
+import { User, Lock, Save, CreditCard, Package, Check, Users, Copy, Link as LinkIcon } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
@@ -203,6 +203,44 @@ export const ProfilePage: React.FC = () => {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Referral System */}
+      <div className="mt-8">
+        <div className="bg-gradient-to-br from-primary-600/10 to-purple-600/10 border border-primary-500/20 shadow-lg rounded-xl overflow-hidden relative">
+          <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary-500/20 blur-[50px] rounded-full" />
+          <div className="px-4 py-5 sm:p-6 relative z-10">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-primary-500/20 rounded-xl">
+                <Users className="h-6 w-6 text-primary-600 dark:text-primary-400" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Refer & Earn %5</h3>
+            </div>
+            
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
+              Invite your friends and earn <strong className="text-primary-600 dark:text-primary-400">5% commission</strong> in ZEX tokens for every purchase they make!
+            </p>
+
+            <div className="space-y-3 max-w-xl">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Your Unique Referral Link</label>
+              <div className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-2 rounded-xl shadow-sm">
+                <div className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-900 rounded-lg text-sm text-gray-700 dark:text-gray-300 font-mono truncate select-all">
+                  https://app.zexai.io/register?ref={user?.id?.substring(0, 8) || 'user'}
+                </div>
+                <button 
+                  onClick={() => {
+                      navigator.clipboard.writeText(`https://app.zexai.io/register?ref=${user?.id}`);
+                      toast.success(t('common.success', 'Success'), 'Referral link copied to clipboard!');
+                  }}
+                  className="p-3 bg-primary-50 dark:bg-primary-500/20 hover:bg-primary-100 dark:hover:bg-primary-500/30 text-primary-600 dark:text-primary-400 rounded-lg transition-colors border border-primary-200 dark:border-primary-500/30"
+                  title="Copy Link"
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

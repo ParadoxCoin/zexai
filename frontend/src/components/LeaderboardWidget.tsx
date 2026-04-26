@@ -29,6 +29,19 @@ export const LeaderboardWidget: React.FC = () => {
         }
     };
 
+    const getZexReward = (rank: number) => {
+        if (period !== 'weekly') return null;
+        switch (rank) {
+            case 1: return 5000;
+            case 2: return 3000;
+            case 3: return 1500;
+            case 4: return 1000;
+            case 5: return 500;
+            case 6: case 7: case 8: case 9: case 10: return 250;
+            default: return null;
+        }
+    };
+
     return (
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex flex-col h-full overflow-hidden border border-gray-100 dark:border-gray-700">
             {/* Header */}
@@ -109,16 +122,25 @@ export const LeaderboardWidget: React.FC = () => {
                                         )}
                                     </div>
 
-                                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800/50">
-                                            <Star className="w-3 h-3 text-indigo-500 fill-indigo-500" />
-                                            <span className="text-xs font-black text-indigo-600 dark:text-indigo-400">{user.total_xp.toLocaleString()} XP</span>
-                                        </div>
-                                        {user.streak_days > 0 && (
-                                            <span className="text-[10px] font-bold text-orange-500 flex items-center gap-0.5">
-                                                <span className="text-lg leading-none mt-[-2px]">🔥</span> {user.streak_days} {t('leaderboard.days')}
-                                            </span>
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                        {getZexReward(user.rank) && (
+                                            <div className="flex flex-col items-end">
+                                                <div className="flex items-center gap-1 px-2 py-1 rounded bg-teal-50 dark:bg-teal-900/30 border border-teal-100 dark:border-teal-800/50">
+                                                    <span className="text-[11px] font-black text-teal-600 dark:text-teal-400">+{getZexReward(user.rank)} ZEX</span>
+                                                </div>
+                                            </div>
                                         )}
+                                        <div className="flex flex-col items-end gap-1">
+                                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800/50">
+                                                <Star className="w-3 h-3 text-indigo-500 fill-indigo-500" />
+                                                <span className="text-xs font-black text-indigo-600 dark:text-indigo-400">{user.total_xp.toLocaleString()} XP</span>
+                                            </div>
+                                            {user.streak_days > 0 && (
+                                                <span className="text-[10px] font-bold text-orange-500 flex items-center gap-0.5">
+                                                    <span className="text-lg leading-none mt-[-2px]">🔥</span> {user.streak_days} {t('leaderboard.days')}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </motion.div>
                             ))}

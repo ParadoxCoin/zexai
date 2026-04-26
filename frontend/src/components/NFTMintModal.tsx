@@ -189,16 +189,7 @@ const NFTMintModal: React.FC<NFTMintModalProps> = ({ isOpen, onClose, image }) =
                                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M4.5 0h15A4.5 4.5 0 0 1 24 4.5v15a4.5 4.5 0 0 1-4.5 4.5h-15A4.5 4.5 0 0 1 0 19.5v-15A4.5 4.5 0 0 1 4.5 0Zm1.47 7.636v8.728h2.588v-3.223h1.588c2.726 0 4.42-1.42 4.42-3.8 0-2.455-1.58-3.705-4.35-3.705H5.97Zm2.588 2.09h1.27c1.28 0 1.95.54 1.95 1.6 0 1.02-.67 1.58-1.95 1.58h-1.27V9.726Zm8.09 6.638h2.588v-3.74h.26l2.5 3.74h3.093l-2.93-4.14c1.44-.57 2.28-1.77 2.28-3.3 0-2.3-1.58-3.56-4.35-3.56h-3.44v10.999Zm2.588-5.747V9.21h1.12c1.18 0 1.82.49 1.82 1.42 0 .93-.64 1.39-1.82 1.39h-1.12v.597Z"/></svg>
                                     {t('nft.viewOnRarible')}
                                 </a>
-                                {/* Magic Eden - Polygon */}
-                                <a
-                                    href={`https://magiceden.io/u/${account}`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="w-full py-3 bg-[#E42575] hover:bg-[#C91F65] text-white rounded-xl font-medium transition flex items-center justify-center gap-2"
-                                >
-                                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0Zm5.568 8.16a.72.72 0 0 1-.18.48L14.4 12l2.988 3.36a.72.72 0 0 1-.54 1.2h-3.6a.72.72 0 0 1-.54-.24L10.8 14.16l-1.908 2.16a.72.72 0 0 1-.54.24h-3.6a.72.72 0 0 1-.54-1.2L7.2 12 4.212 8.64a.72.72 0 0 1 .54-1.2h3.6c.204 0 .396.084.54.24L10.8 9.84l1.908-2.16a.72.72 0 0 1 .54-.24h3.6a.72.72 0 0 1 .72.72Z"/></svg>
-                                    {t('nft.viewOnMagicEden')}
-                                </a>
+
                                 <button
                                     onClick={onClose}
                                     className="w-full py-3 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition mt-2"

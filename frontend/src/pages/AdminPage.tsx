@@ -59,6 +59,11 @@ export const AdminPage: React.FC = () => {
   const [creditLoading, setCreditLoading] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
+  // Airdrop state
+  const [airdropData, setAirdropData] = useState<any>(null);
+  const [airdropLoading, setAirdropLoading] = useState(false);
+  const [airdropActionLoading, setAirdropActionLoading] = useState(false);
+
   const showToast = (type: 'success' | 'error', message: string) => {
     setToast({ type, message });
     setTimeout(() => setToast(null), 3000);
@@ -82,6 +87,9 @@ export const AdminPage: React.FC = () => {
       // Users endpoint returns { data: [...] } or { conversations: [...] }
       const u = (usersRes as any)?.data || (usersRes as any)?.users || usersRes;
       setUsers(Array.isArray(u) ? u : []);
+
+      // Fetch airdrop data
+      fetchAirdrops();
     } catch (error) {
       console.error('Failed to fetch admin data:', error);
       showToast('error', 'Admin verileri yüklenemedi');
@@ -89,6 +97,64 @@ export const AdminPage: React.FC = () => {
       setLoading(false);
     }
   }, []);
+
+  const fetchAirdrops = async () => {
+    setAirdropLoading(true);
+    try {
+      const res = await apiService.get('/admin/airdrops/pending');
+      setAirdropData(res);
+    } catch (error) {
+      console.error("Failed to fetch airdrops", error);
+    } finally {
+      setAirdropLoading(false);
+    }
+  };
+
+  const handleDownloadAirdrops = (format: 'json' | 'csv') => {
+    if (!airdropData || !airdropData.data || airdropData.data.length === 0) {
+      showToast('error', 'İndirilecek veri yok');
+      return;
+    }
+
+    const dateStr = new Date().toISOString().split('T')[0];
+    let content = '';
+    let mimeType = '';
+
+    if (format === 'csv') {
+      content = 'Address,Amount\n' + airdropData.data.map((r: any) => `${r.address},${r.amount}`).join('\n');
+      mimeType = 'text/csv';
+    } else {
+      content = JSON.stringify(airdropData.data, null, 2);
+      mimeType = 'application/json';
+    }
+
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `airdrops_${dateStr}.${format}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleMarkDistributed = async () => {
+    if (!airdropData || !airdropData.record_ids || airdropData.record_ids.length === 0) return;
+    if (!confirm('Bu cüzdanlara airdrop gönderdiğinizi onaylıyor musunuz? (Bu işlem geri alınamaz)')) return;
+
+    setAirdropActionLoading(true);
+    try {
+      await apiService.post('/admin/airdrops/mark-distributed', {
+        record_ids: airdropData.record_ids
+      });
+      showToast('success', 'Airdroplar başarıyla dağıtıldı olarak işaretlendi');
+      fetchAirdrops();
+    } catch (error) {
+      showToast('error', 'Airdroplar güncellenemedi');
+    } finally {
+      setAirdropActionLoading(false);
+    }
+  };
 
   useEffect(() => { fetchAdminData(); }, [fetchAdminData]);
 
@@ -406,6 +472,50 @@ export const AdminPage: React.FC = () => {
               <p className="text-xs text-gray-500 mt-1">{s.label}</p>
             </div>
           ))}
+        </div>
+
+        {/* Airdrop Management Panel */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm mb-8">
+          <div className="p-4 sm:p-5 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/10 dark:to-teal-900/10">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-emerald-500" /> Presale Airdrop Yönetimi
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">Haftalık referans kazançlarını indir ve dağıtıldı olarak işaretle</p>
+          </div>
+          <div className="p-5 flex flex-col md:flex-row items-center gap-6">
+            <div className="flex-1 w-full grid grid-cols-2 gap-4">
+              <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-100 dark:border-gray-600">
+                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Bekleyen Cüzdan</div>
+                <div className="text-2xl font-black text-gray-900 dark:text-white">
+                  {airdropLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (airdropData?.total_wallets || 0)}
+                </div>
+              </div>
+              <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800">
+                <div className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Toplam Ödenecek ZEX</div>
+                <div className="text-2xl font-black text-emerald-700 dark:text-emerald-300">
+                  {airdropLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (airdropData?.total_zex?.toLocaleString() || 0)}
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex flex-col gap-2 w-full md:w-auto">
+              <div className="flex gap-2">
+                <button onClick={() => handleDownloadAirdrops('csv')} disabled={!airdropData?.data?.length}
+                  className="flex-1 md:flex-none px-4 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors disabled:opacity-50">
+                  CSV İndir
+                </button>
+                <button onClick={() => handleDownloadAirdrops('json')} disabled={!airdropData?.data?.length}
+                  className="flex-1 md:flex-none px-4 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors disabled:opacity-50">
+                  JSON İndir
+                </button>
+              </div>
+              <button onClick={handleMarkDistributed} disabled={!airdropData?.data?.length || airdropActionLoading}
+                className="w-full px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2">
+                {airdropActionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                Dağıtıldı Olarak İşaretle
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Users Table */}

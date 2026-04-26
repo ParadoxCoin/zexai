@@ -3,11 +3,13 @@ import { ModelManagementPanel } from '@/components/admin/ModelManagementPanel';
 import { ProviderManagementPanel } from '@/components/admin/ProviderManagementPanel';
 import { SettingsPanel } from '@/components/admin/SettingsPanel';
 import { AuditLogPanel } from '@/components/admin/AuditLogPanel';
+// Force rebuild for airdrop integration - 2026-04-26
 import { FailoverPanel } from '@/components/admin/FailoverPanel';
 import { RoleManagementPanel } from '@/components/admin/RoleManagementPanel';
 import { PricingManagementPanel } from '@/components/admin/PricingManagementPanel';
 import AdminGamificationPanel from '@/components/admin/AdminGamificationPanel';
 import { VestingPanel } from '@/components/admin/VestingPanel';
+import { AirdropManagementPanel } from '@/components/admin/AirdropManagementPanel';
 import {
   Users, DollarSign, Activity, TrendingUp, Search, Edit, Ban, CheckCircle,
   Plus, Minus, Bell, Settings, BarChart3, PieChart, LineChart, AlertCircle,
@@ -49,11 +51,11 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-type TabType = 'overview' | 'users' | 'analytics' | 'monitoring' | 'models' | 'settings' | 'audit' | 'gamification' | 'vesting';
+type TabType = 'overview' | 'users' | 'analytics' | 'monitoring' | 'models' | 'settings' | 'audit' | 'gamification' | 'vesting' | 'airdrop';
 
 export const AdminDashboardEnhanced: React.FC = () => {
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [activeTab, setActiveTab] = useState<TabType>('airdrop');
   const [stats, setStats] = useState<any>(null);
   const [realtimeStats, setRealtimeStats] = useState<any>(null);
   const [users, setUsers] = useState<any[]>([]);
@@ -306,6 +308,7 @@ export const AdminDashboardEnhanced: React.FC = () => {
             { id: 'monitoring', label: 'Monitoring', icon: Server },
             { id: 'gamification', label: 'Gamification', icon: Trophy },
             { id: 'vesting', label: 'Vesting (Token Kilit)', icon: Shield },
+            { id: 'airdrop', label: 'Airdrop', icon: Sparkles },
             { id: 'audit', label: 'Audit Log', icon: Shield },
             { id: 'settings', label: 'Ayarlar', icon: Settings }
           ].map((tab) => {
@@ -729,6 +732,13 @@ export const AdminDashboardEnhanced: React.FC = () => {
       {/* Vesting Tab */}
       {activeTab === 'vesting' && (
         <VestingPanel />
+      )}
+
+      {/* Airdrop Tab */}
+      {activeTab === 'airdrop' && (
+        <div className="space-y-6">
+          <AirdropManagementPanel />
+        </div>
       )}
     </div>
   );

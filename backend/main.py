@@ -70,6 +70,7 @@ from routes.admin_email import router as admin_email_router
 from routes.marketplace import router as marketplace_router
 from routes.admin_reports import router as admin_reports_router
 from routes.notifications import router as notifications_router
+from routes.admin_airdrop import router as admin_airdrop_router
 from routes.gamification import router as gamification_router
 from routes.avatar import router as avatar_router
 from routes.prompt import router as prompt_router
@@ -283,6 +284,7 @@ app.include_router(admin_email_router, prefix=API_V1_PREFIX)  # Email Templates
 app.include_router(marketplace_router, prefix=API_V1_PREFIX)  # Model Marketplace
 app.include_router(admin_reports_router, prefix=API_V1_PREFIX)  # Advanced Reports
 app.include_router(notifications_router, prefix=API_V1_PREFIX)  # Notifications
+app.include_router(admin_airdrop_router, prefix=API_V1_PREFIX)  # Admin Airdrop
 app.include_router(gamification_router, prefix=API_V1_PREFIX)  # Gamification System
 app.include_router(avatar_router, prefix=API_V1_PREFIX)  # AI Avatar / Lip Sync
 app.include_router(prompt_router, prefix=API_V1_PREFIX)  # AI Prompt Enhancer

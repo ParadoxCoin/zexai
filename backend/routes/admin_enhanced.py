@@ -50,6 +50,9 @@ class AdminNotification(BaseModel):
     priority: str = "normal"  # low, normal, high, critical
     target_users: Optional[List[str]] = None  # None = all users
 
+class AirdropMarkDistributedRequest(BaseModel):
+    record_ids: List[str]
+
 # ============================================
 # Real-time System Statistics
 # ============================================
@@ -564,3 +567,68 @@ async def get_realtime_monitoring(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get monitoring data"
         )
+# ============================================
+# Airdrop Management
+# ============================================
+
+def group_airdrops(records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    airdrop_map = {}
+    for row in records:
+        wallet = row.get("referrer_wallet")
+        amount = float(row.get("zex_amount", 0))
+        if wallet in airdrop_map:
+            airdrop_map[wallet] += amount
+        else:
+            airdrop_map[wallet] = amount
+    return [{"address": wallet, "amount": amount} for wallet, amount in airdrop_map.items()]
+
+@router.get("/airdrops/pending")
+@limiter.limit(RateLimits.ADMIN_READ)
+async def get_pending_airdrops(
+    current_user: SimpleNamespace = Depends(get_current_admin_user),
+    db = Depends(get_database)
+):
+    """Fetch all non-distributed referral rewards from Supabase"""
+    if not db:
+        raise HTTPException(status_code=503, detail="Database connection failed")
+    
+    try:
+        response = db.table("presale_referrals").select("*").eq("distributed", False).execute()
+        records = response.data or []
+        grouped_data = group_airdrops(records)
+        record_ids = [row.get("id") for row in records]
+        
+        return {
+            "success": True,
+            "total_wallets": len(grouped_data),
+            "total_zex": sum(item["amount"] for item in grouped_data),
+            "data": grouped_data,
+            "record_ids": record_ids
+        }
+    except Exception as e:
+        logger.error(f"Error fetching airdrop data: {e}")
+        raise HTTPException(status_code=500, detail=f"Airdrop verisi alınamadı: {str(e)}")
+
+@router.post("/airdrops/mark-distributed")
+@limiter.limit(RateLimits.ADMIN_WRITE)
+async def mark_airdrops_distributed(
+    request_data: AirdropMarkDistributedRequest,
+    current_user: SimpleNamespace = Depends(get_current_admin_user),
+    db = Depends(get_database)
+):
+    """Mark a list of referral records as distributed in Supabase"""
+    if not db:
+        raise HTTPException(status_code=503, detail="Database connection failed")
+        
+    if not request_data.record_ids:
+        return {"success": True, "updated_count": 0}
+        
+    try:
+        response = db.table("presale_referrals").update({"distributed": True}).in_("id", request_data.record_ids).execute()
+        return {
+            "success": True,
+            "updated_count": len(response.data) if response.data else 0
+        }
+    except Exception as e:
+        logger.error(f"Error marking airdrops distributed: {e}")
+        raise HTTPException(status_code=500, detail=f"Kayıtlar güncellenemedi: {str(e)}")

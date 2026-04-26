@@ -87,7 +87,7 @@ const ReferralPage: React.FC = () => {
                         </div>
                         <div>
                             <h1 className="text-3xl font-bold">Referral Program</h1>
-                            <p className="text-purple-200 text-sm">Invite friends, earn credits together</p>
+                            <p className="text-purple-200 text-sm">Invite friends, earn free credits</p>
                         </div>
                     </div>
 
@@ -95,7 +95,7 @@ const ReferralPage: React.FC = () => {
                         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 text-center">
                             <Sparkles className="w-6 h-6 mx-auto mb-2 text-yellow-300" />
                             <p className="text-2xl font-black">5%</p>
-                            <p className="text-xs text-purple-200">Lifetime Commission</p>
+                            <p className="text-xs text-purple-200">Value in Credits</p>
                         </div>
                         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 text-center">
                             <Users className="w-6 h-6 mx-auto mb-2 text-blue-300" />
@@ -196,7 +196,7 @@ const ReferralPage: React.FC = () => {
                                     <span className="text-green-400 font-bold">3</span>
                                 </div>
                                 <p className="text-sm text-gray-300 font-medium">You earn 5% credits</p>
-                                <p className="text-xs text-gray-500 mt-1">Credits added to your account instantly</p>
+                                <p className="text-xs text-gray-500 mt-1">Free credits added to your account</p>
                             </div>
                         </div>
                     </div>
