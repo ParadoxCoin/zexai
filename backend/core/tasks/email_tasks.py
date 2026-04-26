@@ -200,7 +200,7 @@ def send_generation_complete_email(self, user_email: str, user_name: str,
 
 
 @celery_app.task(bind=True, base=EmailTask, name="send_daily_reports")
-def send_daily_reports(self, **kwargs):
+async def send_daily_reports(self, **kwargs):
     """
     Send daily reports to admins
     """
