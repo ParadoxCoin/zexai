@@ -17,11 +17,34 @@ async def get_current_user(
     # For local development, we skip token verification and return a mock admin
     mock_id = "00000000-0000-0000-0000-000000000000"
     
-    # Auto-create mock user in DB if it doesn't exist (prevents foreign key errors)
+    # Auto-create mock user in auth.users AND public.users if it doesn't exist
     try:
         supabase = get_supabase_client()
+        # Check in public.users first
         check = supabase.table("users").select("id").eq("id", mock_id).execute()
+        
         if not check.data:
+            logger.info(f"Mock user {mock_id} not found in public.users, attempting to create...")
+            
+            # 1. Try to create in auth.users using Admin API
+            # This is necessary because of the foreign key constraint: REFERENCES auth.users(id)
+            try:
+                # We use a dummy email and password. 'upsert' isn't available for auth, 
+                # so we just try to get or create.
+                admin_auth = supabase.auth.admin.get_user_by_id(mock_id)
+                if not admin_auth:
+                    supabase.auth.admin.create_user({
+                        "id": mock_id,
+                        "email": "luxor00@gmail.com",
+                        "password": "password123",
+                        "email_confirm": True
+                    })
+                    logger.info(f"✅ Created mock user {mock_id} in auth.users")
+            except Exception as auth_e:
+                # If it already exists or fails, we continue to public.users
+                logger.debug(f"Auth user check/create note: {auth_e}")
+
+            # 2. Create in public.users
             supabase.table("users").insert({
                 "id": mock_id,
                 "email": "luxor00@gmail.com",
@@ -29,7 +52,7 @@ async def get_current_user(
                 "role": "super_admin",
                 "is_active": True
             }).execute()
-            logger.info(f"✅ Created mock user {mock_id} in database")
+            logger.info(f"✅ Created mock user {mock_id} in public.users")
     except Exception as e:
         logger.warning(f"⚠️ Could not auto-create mock user: {e}")
 
