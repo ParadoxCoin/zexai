@@ -3,6 +3,7 @@ import string
 from typing import Optional, List
 from datetime import datetime
 from core.supabase_client import get_supabase_client
+from core.config import settings
 
 class ReferralService:
     def __init__(self):
