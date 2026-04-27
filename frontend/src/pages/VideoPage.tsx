@@ -721,6 +721,7 @@ const VideoPage = () => {
             </div>
             <h1 className="text-2xl lg:text-3xl font-bold mb-1">
               {t('videoGen.title', 'Video ')}<span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 to-yellow-300">{t('videoGen.titleHighlight', 'Sihirbazı')}</span>
+              <span className="ml-2 text-[10px] bg-white/20 px-1.5 py-0.5 rounded-full font-bold">v2.5</span>
             </h1>
             <p className="text-sm text-purple-100">{t('videoGen.desc', 'Sora 2, Veo 3.1, Kling 2.6, Runway ve daha fazlası')}</p>
           </div>
