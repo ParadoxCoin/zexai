@@ -374,15 +374,15 @@ KIE_IMAGE_MODELS = {
 
 KIE_VIDEO_MODELS = {
     # ============================================
-    # Google Veo 3.1 - Best cinematic
+    # Google Veo 3.1 - Official Pricing Sync
     # ============================================
     "kie_veo31_quality": {
         "provider": "kie.ai",
-        "name": "Veo 3.1 Quality",
+        "name": "Veo 3.1 (Quality)",
         "type": "text_to_video",
         "model_id": "veo-3.1-quality",
-        "kie_credits": 400,
-        "cost_usd": 2.00,
+        "kie_credits": 255,
+        "cost_usd": 1.275,
         "duration": 8,
         "resolution": "1080p",
         "quality": 5,
@@ -397,11 +397,11 @@ KIE_VIDEO_MODELS = {
     },
     "kie_veo31_fast": {
         "provider": "kie.ai",
-        "name": "Veo 3.1 Fast",
+        "name": "Veo 3.1 (Fast)",
         "type": "text_to_video",
         "model_id": "veo-3.1-fast",
-        "kie_credits": 80,
-        "cost_usd": 0.40,
+        "kie_credits": 65,
+        "cost_usd": 0.325,
         "duration": 8,
         "resolution": "1080p",
         "quality": 4,
@@ -412,17 +412,34 @@ KIE_VIDEO_MODELS = {
             "1080p": True
         }
     },
+    "kie_veo31_lite": {
+        "provider": "kie.ai",
+        "name": "Veo 3.1 (Lite)",
+        "type": "text_to_video",
+        "model_id": "veo-3.1-lite",
+        "kie_credits": 35,
+        "cost_usd": 0.175,
+        "duration": 8,
+        "resolution": "1080p",
+        "quality": 3,
+        "speed": "very_fast",
+        "badge": "💰 Ekonomik",
+        "description": "En uygun fiyatlı Veo modu",
+        "capabilities": {
+            "1080p": True
+        }
+    },
     
     # ============================================
-    # OpenAI Sora 2 - Advanced video
+    # OpenAI Sora 2 - Official Pricing Sync
     # ============================================
-    "kie_sora2_pro_10s": {
+    "kie_sora2_stable_10s": {
         "provider": "kie.ai",
-        "name": "Sora 2 Pro (10s)",
+        "name": "Open AI Sora 2 (10s)",
         "type": "text_to_video",
-        "model_id": "sora-2-pro-standard-10s",
-        "kie_credits": 150,
-        "cost_usd": 0.75,
+        "model_id": "sora-2-text-to-video-stable",
+        "kie_credits": 35,
+        "cost_usd": 0.175,
         "duration": 10,
         "resolution": "1080p",
         "quality": 5,
@@ -435,82 +452,28 @@ KIE_VIDEO_MODELS = {
             "consistent_physics": True
         }
     },
-    "kie_sora2_pro_15s": {
+    "kie_sora2_stable_15s": {
         "provider": "kie.ai",
-        "name": "Sora 2 Pro (15s)",
+        "name": "Open AI Sora 2 (15s)",
         "type": "text_to_video",
-        "model_id": "sora-2-pro-standard-15s",
-        "kie_credits": 270,
-        "cost_usd": 1.35,
+        "model_id": "sora-2-text-to-video-stable-15s",
+        "kie_credits": 40,
+        "cost_usd": 0.20,
         "duration": 15,
         "resolution": "1080p",
         "quality": 5,
         "speed": "medium",
-        "badge": None,
+        "badge": "✨ Uzun Süre",
         "description": "15 saniyelik uzun video",
         "capabilities": {
             "text_to_video": True,
             "image_to_video": True
         }
     },
-    "kie_sora2_high_10s": {
-        "provider": "kie.ai",
-        "name": "Sora 2 High (10s)",
-        "type": "text_to_video",
-        "model_id": "sora-2-pro-high-10s",
-        "kie_credits": 330,
-        "cost_usd": 1.65,
-        "duration": 10,
-        "resolution": "1080p",
-        "quality": 5,
-        "speed": "slow",
-        "badge": "✨ Maksimum Kalite",
-        "description": "En yüksek kalite Sora",
-        "capabilities": {
-            "text_to_video": True,
-            "image_to_video": True,
-            "high_quality": True
-        }
-    },
-    "kie_sora2_high_15s": {
-        "provider": "kie.ai",
-        "name": "Sora 2 High (15s)",
-        "type": "text_to_video",
-        "model_id": "sora-2-pro-high-15s",
-        "kie_credits": 630,
-        "cost_usd": 3.15,
-        "duration": 15,
-        "resolution": "1080p",
-        "quality": 5,
-        "speed": "slow",
-        "badge": None,
-        "description": "15s yüksek kalite",
-        "capabilities": {}
-    },
     
     # ============================================
-    # Kling AI - Advanced video generation
+    # Kling 2.6 - Official Pricing Sync
     # ============================================
-    "kie_kling26_audio_5s": {
-        "provider": "kie.ai",
-        "name": "Kling 2.6 + Audio (5s)",
-        "type": "text_to_video",
-        "model_id": "kling-2.6-audio-5s",
-        "kie_credits": 110,
-        "cost_usd": 0.55,
-        "duration": 5,
-        "resolution": "1080p",
-        "quality": 5,
-        "speed": "medium",
-        "badge": "🔊 Sesli Video",
-        "description": "Senkronize konuşma ve ses efektleri",
-        "capabilities": {
-            "synchronized_audio": True,
-            "speech": True,
-            "sound_effects": True,
-            "ambient_audio": True
-        }
-    },
     "kie_kling26_audio_10s": {
         "provider": "kie.ai",
         "name": "Kling 2.6 + Audio (10s)",
@@ -522,32 +485,17 @@ KIE_VIDEO_MODELS = {
         "resolution": "1080p",
         "quality": 5,
         "speed": "medium",
-        "badge": None,
+        "badge": "🔊 Sesli Video",
         "description": "10s sesli video",
         "capabilities": {
             "synchronized_audio": True
         }
     },
-    "kie_kling26_hd_5s": {
+    "kie_kling26_no_audio_10s": {
         "provider": "kie.ai",
-        "name": "Kling 2.6 HD (5s)",
+        "name": "Kling 2.6 (10s)",
         "type": "text_to_video",
-        "model_id": "kling-2.6-hd-5s",
-        "kie_credits": 55,
-        "cost_usd": 0.28,
-        "duration": 5,
-        "resolution": "1080p",
-        "quality": 5,
-        "speed": "fast",
-        "badge": "💰 Ekonomik",
-        "description": "HD video sessiz",
-        "capabilities": {}
-    },
-    "kie_kling26_hd_10s": {
-        "provider": "kie.ai",
-        "name": "Kling 2.6 HD (10s)",
-        "type": "text_to_video",
-        "model_id": "kling-2.6-hd-10s",
+        "model_id": "kling-2.6-10s",
         "kie_credits": 110,
         "cost_usd": 0.55,
         "duration": 10,
@@ -555,136 +503,92 @@ KIE_VIDEO_MODELS = {
         "quality": 5,
         "speed": "medium",
         "badge": None,
-        "description": "10s HD video",
+        "description": "10s sessiz HD video",
         "capabilities": {}
     },
-    "kie_kling25_turbo_5s": {
+    "kie_kling26_audio_5s": {
         "provider": "kie.ai",
-        "name": "Kling 2.5 Turbo (5s)",
+        "name": "Kling 2.6 + Audio (5s)",
         "type": "text_to_video",
-        "model_id": "kling-2.5-turbo-5s",
-        "kie_credits": 42,
-        "cost_usd": 0.21,
-        "duration": 5,
-        "resolution": "1080p",
-        "quality": 4,
-        "speed": "very_fast",
-        "badge": "⚡ Süper Hızlı",
-        "description": "Hızlı text-to-video ve image-to-video",
-        "capabilities": {
-            "text_to_video": True,
-            "image_to_video": True,
-            "fluid_motion": True
-        }
-    },
-    "kie_kling25_turbo_10s": {
-        "provider": "kie.ai",
-        "name": "Kling 2.5 Turbo (10s)",
-        "type": "text_to_video",
-        "model_id": "kling-2.5-turbo-10s",
-        "kie_credits": 84,
-        "cost_usd": 0.42,
-        "duration": 10,
-        "resolution": "1080p",
-        "quality": 4,
-        "speed": "fast",
-        "badge": None,
-        "description": "10s hızlı video",
-        "capabilities": {}
-    },
-    "kie_kling21_5s": {
-        "provider": "kie.ai",
-        "name": "Kling 2.1 (5s)",
-        "type": "text_to_video",
-        "model_id": "kling-2.1-5s",
-        "kie_credits": 160,
-        "cost_usd": 0.80,
+        "model_id": "kling-2.6-audio-5s",
+        "kie_credits": 110,
+        "cost_usd": 0.55,
         "duration": 5,
         "resolution": "1080p",
         "quality": 5,
-        "speed": "medium",
-        "badge": None,
-        "description": "Gelişmiş fizik ve gerçekçi hareket",
+        "speed": "fast",
+        "badge": "🔊 Sesli",
+        "description": "5s sesli video",
         "capabilities": {
-            "advanced_physics": True,
-            "realistic_motion": True
+            "synchronized_audio": True
         }
     },
-    "kie_kling21_10s": {
+    "kie_kling26_no_audio_5s": {
         "provider": "kie.ai",
-        "name": "Kling 2.1 (10s)",
+        "name": "Kling 2.6 (5s)",
         "type": "text_to_video",
-        "model_id": "kling-2.1-10s",
-        "kie_credits": 320,
-        "cost_usd": 1.60,
-        "duration": 10,
+        "model_id": "kling-2.6-5s",
+        "kie_credits": 55,
+        "cost_usd": 0.275,
+        "duration": 5,
         "resolution": "1080p",
         "quality": 5,
-        "speed": "medium",
-        "badge": None,
-        "description": "10s yüksek kalite",
-        "capabilities": {}
-    },
-    "kie_kling21_std_5s": {
-        "provider": "kie.ai",
-        "name": "Kling 2.1 Standard (5s)",
-        "type": "text_to_video",
-        "model_id": "kling-2.1-standard-5s",
-        "kie_credits": 25,
-        "cost_usd": 0.125,
-        "duration": 5,
-        "resolution": "720p",
-        "quality": 4,
         "speed": "fast",
-        "badge": "💰 En Ucuz Kling",
-        "description": "720p ekonomik versiyon",
+        "badge": "💰 Ekonomik",
+        "description": "5s sessiz HD video",
         "capabilities": {}
     },
     
     # ============================================
-    # Runway Aleph - Professional video
+    # Wan 2.6 (Alibaba) - Official Pricing Sync
     # ============================================
-    "kie_runway_aleph": {
+    "kie_wan26_1080p_15s": {
         "provider": "kie.ai",
-        "name": "Runway Aleph",
+        "name": "Wan 2.6 (1080p, 15s)",
         "type": "text_to_video",
-        "model_id": "runway-aleph",
-        "kie_credits": 200,
-        "cost_usd": 1.00,
-        "duration": 10,
+        "model_id": "wan-2.6-1080p-15s",
+        "kie_credits": 315,
+        "cost_usd": 1.575,
+        "duration": 15,
         "resolution": "1080p",
         "quality": 5,
-        "speed": "medium",
-        "badge": "🎥 Profesyonel",
-        "description": "Gelişmiş sahne muhakemesi, hassas kamera kontrolü",
-        "capabilities": {
-            "scene_reasoning": True,
-            "camera_control": True,
-            "professional": True
-        }
-    },
-    
-    # ============================================
-    # Wan 2.6 (Alibaba) - Affordable quality
-    # ============================================
-    "kie_wan26_720p_5s": {
-        "provider": "kie.ai",
-        "name": "Wan 2.6 (720p, 5s)",
-        "type": "text_to_video",
-        "model_id": "wan-2.6-720p-5s",
-        "kie_credits": 70,
-        "cost_usd": 0.35,
-        "duration": 5,
-        "resolution": "720p",
-        "quality": 4,
-        "speed": "fast",
-        "badge": None,
-        "description": "Uygun fiyatlı multi-shot",
+        "speed": "slow",
+        "badge": "🎥 Ultra HD",
+        "description": "15s 1080p yüksek kalite",
         "capabilities": {
             "multi_shot": True,
-            "stable_characters": True,
-            "native_audio": True
+            "stable_characters": True
         }
+    },
+    "kie_wan26_1080p_10s": {
+        "provider": "kie.ai",
+        "name": "Wan 2.6 (1080p, 10s)",
+        "type": "text_to_video",
+        "model_id": "wan-2.6-1080p-10s",
+        "kie_credits": 209.5,
+        "cost_usd": 1.0475,
+        "duration": 10,
+        "resolution": "1080p",
+        "quality": 5,
+        "speed": "medium",
+        "badge": "💎 Değer/Kalite",
+        "description": "10s 1080p video",
+        "capabilities": {}
+    },
+    "kie_wan26_1080p_5s": {
+        "provider": "kie.ai",
+        "name": "Wan 2.6 (1080p, 5s)",
+        "type": "text_to_video",
+        "model_id": "wan-2.6-1080p-5s",
+        "kie_credits": 104.5,
+        "cost_usd": 0.5225,
+        "duration": 5,
+        "resolution": "1080p",
+        "quality": 5,
+        "speed": "fast",
+        "badge": None,
+        "description": "5s 1080p video",
+        "capabilities": {}
     },
     "kie_wan26_720p_10s": {
         "provider": "kie.ai",
@@ -701,34 +605,19 @@ KIE_VIDEO_MODELS = {
         "description": "10s 720p video",
         "capabilities": {}
     },
-    "kie_wan26_1080p_5s": {
+    "kie_wan26_720p_5s": {
         "provider": "kie.ai",
-        "name": "Wan 2.6 (1080p, 5s)",
+        "name": "Wan 2.6 (720p, 5s)",
         "type": "text_to_video",
-        "model_id": "wan-2.6-1080p-5s",
-        "kie_credits": 104.5,
-        "cost_usd": 0.53,
+        "model_id": "wan-2.6-720p-5s",
+        "kie_credits": 70,
+        "cost_usd": 0.35,
         "duration": 5,
-        "resolution": "1080p",
-        "quality": 5,
-        "speed": "medium",
-        "badge": None,
-        "description": "1080p yüksek çözünürlük",
-        "capabilities": {}
-    },
-    "kie_wan26_1080p_10s": {
-        "provider": "kie.ai",
-        "name": "Wan 2.6 (1080p, 10s)",
-        "type": "text_to_video",
-        "model_id": "wan-2.6-1080p-10s",
-        "kie_credits": 209.5,
-        "cost_usd": 1.05,
-        "duration": 10,
-        "resolution": "1080p",
-        "quality": 5,
-        "speed": "medium",
-        "badge": "💎 Değer/Kalite",
-        "description": "En iyi değer/kalite oranı",
+        "resolution": "720p",
+        "quality": 4,
+        "speed": "fast",
+        "badge": "💰 Ekonomik",
+        "description": "5s 720p video",
         "capabilities": {}
     },
     
@@ -756,7 +645,7 @@ KIE_VIDEO_MODELS = {
     },
     
     # ============================================
-    # Hailuo 2.3 (MiniMax)
+    # Hailuo 2.3 (MiniMax) - Official Pricing Sync
     # ============================================
     "kie_hailuo23": {
         "provider": "kie.ai",
@@ -769,7 +658,7 @@ KIE_VIDEO_MODELS = {
         "resolution": "1080p",
         "quality": 5,
         "speed": "medium",
-        "badge": None,
+        "badge": "🎬 MiniMax",
         "description": "MiniMax video üretimi",
         "capabilities": {}
     },
