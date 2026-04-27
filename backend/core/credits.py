@@ -17,17 +17,42 @@ from core.exceptions import (
 from core.cache import cache_service, CacheKeys, CacheInvalidation
 from core.websocket import notify_credit_update
 from core.logger import app_logger as logger
+from core.unified_model_registry import model_registry
+
 
 
 class CreditManager:
     """Manages credit operations for users using Supabase"""
     
     @staticmethod
-    async def get_service_cost(db, service_type: str, unit_amount: float = 1.0) -> float:
+    async def get_service_cost(db, service_type: str, unit_amount: float = 1.0, model_id: Optional[str] = None) -> float:
         """
-        Get the credit cost for a service
+        Get the credit cost for a service.
+        If model_id is provided, it attempts to fetch model-specific pricing from the registry.
         """
         try:
+            # 1. Attempt model-specific pricing if model_id is provided
+            if model_id:
+                try:
+                    models = await model_registry.get_models(db, active_only=False)
+                    model = next((m for m in models if m["id"] == model_id), None)
+                    
+                    if model:
+                        cost_usd = float(model.get("cost_usd", 0))
+                        multiplier = float(model.get("cost_multiplier", 2.0))
+                        # Credits = cost * multiplier * 100
+                        model_credits = int(cost_usd * multiplier * 100)
+                        
+                        # Special handling for chat: cost is per 1000 units (tokens)
+                        if model.get("category") == "chat":
+                            return (float(model_credits) * unit_amount) # unit_amount should be tokens/1000
+                        
+                        if model_credits > 0:
+                            return float(model_credits) * unit_amount
+                except Exception as e:
+                    logger.warning(f"Failed to fetch model-specific cost for {model_id}: {e}")
+
+            # 2. Fallback to service-level costs
             # Default costs
             default_costs = {
                 "chat": 1,      # 1 credit per 1000 tokens
@@ -36,7 +61,7 @@ class CreditManager:
                 "synapse": 2    # 2 credits per Manus credit
             }
             
-            # Try to fetch from DB if table exists, else use defaults
+            # Try to fetch from DB service_costs table
             try:
                 response = db.table("service_costs").select("cost_per_unit").eq("service_type", service_type).execute()
                 if response.data:
@@ -44,14 +69,22 @@ class CreditManager:
                 else:
                     cost_per_unit = default_costs.get(service_type, 1)
             except Exception:
-                # Fallback if table doesn't exist or error
                 cost_per_unit = default_costs.get(service_type, 1)
             
-            return cost_per_unit * unit_amount
+            return float(cost_per_unit) * unit_amount
             
         except Exception as e:
             logger.error(f"Error getting service cost: {e}")
             return 1.0 * unit_amount
+
+    @staticmethod
+    async def calculate_chat_cost(db, model_id: str, tokens: int) -> float:
+        """
+        Calculate credit cost for chat based on tokens.
+        Default is 1 credit per 1000 tokens unless specified in ai_models.
+        """
+        return await CreditManager.get_service_cost(db, "chat", unit_amount=tokens/1000.0, model_id=model_id)
+
     
     @staticmethod
     async def check_sufficient_credits(db, user_id: str, required_credits: float):

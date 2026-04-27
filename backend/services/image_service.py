@@ -196,11 +196,12 @@ class ImageService:
         if not model:
             raise HTTPException(404, "Model not found")
         
-        multiplier = await self.get_pricing_multiplier(db)
-        credits_per_image = self.calc_credits(model["cost_usd"], multiplier)
-        total_credits = credits_per_image * req.num_images
+        # 1. Get cost from unified CreditManager (respects DB overrides)
+        total_credits = await CreditManager.get_service_cost(
+            db, "image", float(req.num_images or 1), model_id=req.model_id
+        )
         
-        # 1. Credit Check
+        # 2. Credit Check
         await CreditManager.check_sufficient_credits(db, user.id, total_credits)
         
         task_id = str(uuid.uuid4())

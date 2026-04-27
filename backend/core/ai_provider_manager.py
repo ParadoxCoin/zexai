@@ -585,7 +585,12 @@ class AIProviderManager:
         for provider_name, health in self.health_status.items():
             breaker = self.circuit_breakers.get(provider_name, {})
             
-            status[provider_name] = {
+            display_name = provider_name
+            # Branding Cleanup
+            if provider_name.lower() in ("kie", "kie.ai"):
+                display_name = "Premium"
+                
+            status[display_name] = {
                 "status": health.status.value,
                 "response_time": health.response_time,
                 "consecutive_failures": health.consecutive_failures,
@@ -593,6 +598,7 @@ class AIProviderManager:
                 "circuit_breaker_state": breaker.get("state", "closed"),
                 "available": self._is_provider_available(provider_name)
             }
+
         
         return status
 

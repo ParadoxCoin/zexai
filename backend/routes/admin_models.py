@@ -136,13 +136,18 @@ def model_to_response(model: Dict) -> ModelResponse:
     """Convert model dict to response"""
     cost_usd = float(model.get("cost_usd", 0))
     multiplier = float(model.get("cost_multiplier", 2.0))
+    provider = model.get("provider")
+    
+    # Branding Cleanup: Mask 'kie.ai' as 'Premium'
+    if provider and provider.lower() in ("kie.ai", "kie"):
+        provider = "Premium"
     
     return ModelResponse(
         id=model["id"],
         name=model.get("name", model["id"]),
         category=model.get("category", "other"),
         type=model.get("type", "unknown"),
-        provider=model.get("provider"),
+        provider=provider,
         cost_usd=cost_usd,
         cost_multiplier=multiplier,
         credits=calculate_credits(cost_usd, multiplier),
@@ -154,6 +159,7 @@ def model_to_response(model: Dict) -> ModelResponse:
         source=model.get("source", "hardcoded"),
         capabilities=model.get("capabilities")
     )
+
 
 
 # ============================================

@@ -14,6 +14,7 @@ from core.credits import CreditManager
 from core.config import settings
 from services.model_service import model_service
 from core.notification_service import notify_generation_complete
+from core.unified_model_registry import model_registry
 
 router = APIRouter(prefix="/audio", tags=["Audio Generation"])
 
@@ -46,76 +47,71 @@ class AudioModelInfo(BaseModel):
 
 @router.get("/models")
 async def get_audio_models(type: Optional[str] = None, db = Depends(get_db)):
-    """Get all available audio models (TTS, Music, SFX)"""
-    from core.audio_models_extended import TTS_MODELS, VOICE_CLONE_MODELS, MUSIC_MODELS, SFX_MODELS, AUDIO_TOOLS
-    from core.kie_models import KIE_MUSIC_MODELS, KIE_TTS_MODELS  # Premium kie.ai audio models
-    
-    result = []
-    
-    # Helper to transform models to response format
-    def add_models(models_dict, model_type):
-        for model_id, m in models_dict.items():
-            if type and model_type != type:
-                continue
+    """Get all active audio models from the unified registry"""
+    try:
+        registry_models = await model_registry.get_models(db, category="audio", type=type, active_only=True)
+        
+        result = []
+        for m in registry_models:
+            # Calculate credits from cost and multiplier
+            cost_usd = float(m.get("cost_usd", 0))
+            multiplier = float(m.get("cost_multiplier", 2.0))
+            credits = int(cost_usd * multiplier * 100)
             
-            # Calculate credits based on cost type
-            cost = m.get("cost_per_char", m.get("cost_per_generation", m.get("cost_usd", 0.05)))
-            credits = int(cost * 100 * 2)  # x2 multiplier
+            # Hide 'kie' provider label
+            provider_display = m.get("provider", "unknown")
+            if provider_display.lower() in ["kie", "kie.ai"]:
+                provider_display = "Premium"
             
             result.append(AudioModelInfo(
-                id=model_id,
-                provider=m.get("provider", "unknown"),
-                name=m.get("name", model_id),
-                type=model_type,
-                credits=max(credits, 5),  # Minimum 5 credits
+                id=m["id"],
+                provider=provider_display,
+                name=m.get("name", m["id"]),
+                type=m.get("type", "audio"),
+                credits=max(credits, 5),
                 quality=m.get("quality", 4),
                 speed=m.get("speed", "medium"),
                 badge=m.get("badge"),
                 description=m.get("description")
             ))
-    
-    # Add all model types
-    # Legacy models hidden to strictly use Kie.ai as requested by the user
-    # add_models(TTS_MODELS, "text_to_speech")
-    add_models(KIE_TTS_MODELS, "text_to_speech") # Premium kie.ai TTS
-    add_models(VOICE_CLONE_MODELS, "voice_clone")
-    # add_models(MUSIC_MODELS, "music_generation")
-    add_models(KIE_MUSIC_MODELS, "music_generation")  # Premium kie.ai music
-    add_models(SFX_MODELS, "sound_effects")
-    
-    return result
+        return result
+    except Exception as e:
+        print(f"[AudioRoutes] Failed to fetch models: {e}")
+        return []
 
 @router.get("/models/tts")
 async def get_tts_models(db = Depends(get_db)):
-    """Get TTS models only"""
-    from core.audio_models_extended import TTS_MODELS
-    from core.kie_models import KIE_TTS_MODELS
-    
-    # Exclusively use new premium models for TTS picker to use Kie.ai API
-    all_tts_models = KIE_TTS_MODELS
-    
-    result = []
-    for model_id, m in all_tts_models.items():
-        # Calculate credits - TTS uses cost_per_char or kie_credits
-        if "kie_credits" in m:
-            credits = max(int(m["kie_credits"]), 5) # Per 1000 chars roughly
-        else:
-            cost = m.get("cost_per_char", 0.0001)
-            credits = max(int(cost * 1000 * 100 * 2), 5)  # Per 1000 chars, x2 multiplier
+    """Get TTS models only from the unified registry"""
+    try:
+        registry_models = await model_registry.get_models(db, category="audio", type="text_to_speech", active_only=True)
         
-        result.append(AudioModelInfo(
-            id=model_id,
-            provider=m.get("provider", "unknown"),
-            name=m.get("name", model_id),
-            type="text_to_speech",
-            credits=credits,
-            quality=m.get("quality", 4),
-            speed=m.get("speed", "medium"),
-            badge=m.get("badge"),
-            description=m.get("description")
-        ))
-    
-    return result
+        result = []
+        for m in registry_models:
+            # Calculate credits from cost and multiplier
+            cost_usd = float(m.get("cost_usd", 0))
+            multiplier = float(m.get("cost_multiplier", 2.0))
+            credits = int(cost_usd * multiplier * 100)
+            
+            # Hide 'kie' provider label
+            provider_display = m.get("provider", "unknown")
+            if provider_display.lower() in ["kie", "kie.ai"]:
+                provider_display = "Premium"
+            
+            result.append(AudioModelInfo(
+                id=m["id"],
+                provider=provider_display,
+                name=m.get("name", m["id"]),
+                type="text_to_speech",
+                credits=max(credits, 5),
+                quality=m.get("quality", 4),
+                speed=m.get("speed", "medium"),
+                badge=m.get("badge"),
+                description=m.get("description")
+            ))
+        return result
+    except Exception as e:
+        print(f"[AudioRoutes] Failed to fetch TTS models: {e}")
+        return []
 
 @router.post("/tts")
 async def text_to_speech(req: TTSRequest, user = Depends(get_current_user), db = Depends(get_db)):
@@ -127,22 +123,11 @@ async def text_to_speech(req: TTSRequest, user = Depends(get_current_user), db =
     if model["type"] != "text_to_speech":
         raise HTTPException(400, "Invalid model type for TTS")
 
-    # 2. Calculate Credits
-    # TTS usually priced per character or per 1k characters
-    # Assuming cost_per_unit is per 1k characters for now, or per character?
-    # Let's assume per 1k characters based on typical pricing (ElevenLabs is ~$0.30 per 1k chars for enterprise)
-    # If cost_per_unit is 0.005 (USD per 1k chars)
-    
+    # 2. Calculate Credits from unified CreditManager (respects DB overrides)
     char_count = len(req.text)
-    # The database uses cost_usd (or cost_per_char/unit on old models)
-    cost_per_unit = float(model.get("cost_usd", model.get("cost_per_unit", 0.0001)))
-    multiplier = float(model.get("cost_multiplier", 2.0))
-    
-    # Normalize: (char_count / 1000) * cost_per_unit * multiplier
-    # Assuming the DB value is per 1000 characters for consistency with tokens
-    
-    cost_usd = (char_count / 1000.0) * cost_per_unit
-    credits = int(cost_usd * settings.DEFAULT_USD_TO_CREDIT_RATE * multiplier)
+    credits = await CreditManager.get_service_cost(
+        db, "audio", (char_count / 1000.0), model_id=req.model_id
+    )
     
     if credits < 1: credits = 1
     
@@ -320,9 +305,10 @@ async def generate_music(req: MusicRequest, user = Depends(get_current_user), db
         if not model:
              raise HTTPException(404, "Music model not found")
     
-    cost_usd = float(model.get("cost_per_unit", 0))
-    multiplier = float(model.get("cost_multiplier", 2.0))
-    credits = int(cost_usd * settings.DEFAULT_USD_TO_CREDIT_RATE * multiplier)
+    # Calculate Credits from unified CreditManager (respects DB overrides)
+    credits = await CreditManager.get_service_cost(
+        db, "audio", 1.0, model_id=req.model_id
+    )
     
     await CreditManager.check_sufficient_credits(db, user.id, credits)
     

@@ -144,10 +144,15 @@ async def list_providers(
             status = health.get("status", "unknown")
             summary[status] = summary.get(status, 0) + 1
             
+            display_name = p.get("display_name", p["name"])
+            # Branding Cleanup
+            if p["name"].lower() in ("kie", "kie.ai"):
+                display_name = "Premium"
+            
             providers.append(ProviderResponse(
                 id=p["id"],
                 name=p["name"],
-                display_name=p.get("display_name", p["name"]),
+                display_name=display_name,
                 provider_type=p.get("provider_type", "video"),
                 api_endpoint=p.get("api_endpoint"),
                 rate_limit=p.get("rate_limit", 100),
@@ -158,6 +163,7 @@ async def list_providers(
                 consecutive_failures=health.get("consecutive_failures", 0),
                 last_check=health.get("last_check"),
                 model_count=model_count,
+
                 config=p.get("config", {}),
                 created_at=p.get("created_at", ""),
                 updated_at=p.get("updated_at", "")

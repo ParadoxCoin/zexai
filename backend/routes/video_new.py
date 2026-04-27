@@ -67,13 +67,23 @@ async def get_video_models(
                 duration_opts = m.get("duration_options", [5])
                 default_duration = duration_opts[0] if duration_opts else 5
                 
+                # Calculate credits from cost and multiplier (Dynamic Pricing)
+                cost_usd = float(m.get("cost_usd", 0))
+                multiplier = float(m.get("cost_multiplier", 2.0))
+                credits = max(1, int(cost_usd * multiplier * 100))
+                
+                # Branding Cleanup: Mask 'kie' provider label
+                provider_display = m.get("provider", "unknown")
+                if provider_display.lower() in ["kie", "kie.ai"]:
+                    provider_display = "Premium"
+                
                 models.append(VideoModelInfo(
                     id=m["id"],
-                    provider=m.get("provider_id", "unknown"),
+                    provider=provider_display,
                     name=m.get("display_name") or m.get("name"),
                     type=m.get("model_type", "text_to_video"),
                     duration=default_duration,
-                    credits=m.get("credits", 100),
+                    credits=credits,
                     quality=m.get("quality_rating", 4),
                     speed=["slow", "slow", "medium", "fast", "very_fast"][min(m.get("speed_rating", 3), 4)],
                     badge=m.get("badge"),
@@ -88,39 +98,36 @@ async def get_video_models(
     
     # Fallback: Combine Pollo.ai and kie.ai hardcoded models
     combined_models = {**POLLO_VIDEO_MODELS, **KIE_VIDEO_MODELS}
-    
     for model_id, model_data in combined_models.items():
         model_type = model_data.get("type", "text_to_video")
-        if model_type not in ["text_to_video", "image_to_video", "video_to_video"]:
-            continue
-        
-        # Filter by type if specified
         if type and model_type != type.value:
             continue
         
-        # Calculate credits
-        multiplier = float(model_data.get("cost_multiplier", 2.0))
+        # Calculate credits (Dynamic Pricing)
         cost_usd = float(model_data.get("cost_usd", model_data.get("pollo_cost_usd", 0.30)))
-        credits = int(cost_usd * multiplier * 100)
+        multiplier = float(model_data.get("cost_multiplier", 2.0))
+        credits = max(1, int(cost_usd * multiplier * 100))
         
-        # Get quality and speed values
-        quality_val = model_data.get("quality", 4)
-        speed_val = model_data.get("speed", "medium")
+        # Branding Cleanup
+        provider_display = model_data.get("provider", "unknown")
+        if provider_display.lower() in ["kie", "kie.ai"]:
+            provider_display = "Premium"
         
         models.append(VideoModelInfo(
             id=model_id,
-            provider=model_data.get("provider", "unknown"),
+            provider=provider_display,
             name=model_data.get("name", model_id),
             type=model_type,
             duration=model_data.get("duration", 5),
-            credits=credits if credits > 0 else 10,
-            quality=VideoQuality(quality_val if 1 <= quality_val <= 5 else 4),
-            speed=VideoSpeed(speed_val if speed_val in ["fast", "medium", "slow", "very_fast"] else "medium"),
+            credits=credits,
+            quality=VideoQuality(model_data.get("quality", 4)),
+            speed=VideoSpeed(model_data.get("speed", "medium")),
             badge=model_data.get("badge"),
             example_video_url=f"https://cdn.example.com/videos/{model_id}.mp4",
             description=model_data.get("description"),
             capabilities=model_data.get("capabilities")
         ))
+
     
     # Sort by quality (descending) then credits (ascending)
     models.sort(key=lambda x: (-x.quality.value, x.credits))

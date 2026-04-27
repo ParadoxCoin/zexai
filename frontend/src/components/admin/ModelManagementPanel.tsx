@@ -424,8 +424,8 @@ export const ModelManagementPanel: React.FC = () => {
                                 <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-300">Model</th>
                                 <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-300">Kategori</th>
                                 <th className="text-left py-3 px-4 font-medium text-gray-600 dark:text-gray-300">Provider</th>
-                                <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-300">Maliyet</th>
-                                <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-300">Kredi</th>
+                                <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-300">Maliyet (USD)</th>
+                                <th className="text-right py-3 px-4 font-medium text-gray-600 dark:text-gray-300">Otomatik Kredi</th>
                                 <th className="text-center py-3 px-4 font-medium text-gray-600 dark:text-gray-300">Durum</th>
                                 <th className="text-center py-3 px-4 font-medium text-gray-600 dark:text-gray-300">İşlemler</th>
                             </tr>
@@ -484,7 +484,10 @@ export const ModelManagementPanel: React.FC = () => {
 
                                         {/* Credits */}
                                         <td className="py-3 px-4 text-right">
-                                            <span className="font-medium text-purple-600">{model.credits}</span>
+                                            <span className="font-bold text-purple-600 dark:text-purple-400">
+                                                {Math.max(1, Math.round(model.cost_usd * model.cost_multiplier * 100))}c
+                                            </span>
+                                            <div className="text-[10px] text-gray-400">Sabit değil</div>
                                         </td>
 
                                         {/* Status */}
@@ -618,6 +621,19 @@ export const ModelManagementPanel: React.FC = () => {
                                     />
                                 </div>
                             </div>
+
+                            <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-100 dark:border-purple-800">
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-purple-700 dark:text-purple-300 font-medium">Kullanıcı Kredisi:</span>
+                                    <span className="text-xl font-bold text-purple-600 dark:text-purple-400">
+                                        {Math.max(1, Math.round(editForm.cost_usd * editForm.cost_multiplier * 100))}c
+                                    </span>
+                                </div>
+                                <p className="text-[10px] text-purple-500 dark:text-purple-400 mt-1">
+                                    Formül: Maliyet (USD) x Çarpan x 100
+                                </p>
+                            </div>
+
 
                             <div>
                                 <label className="block text-sm font-medium mb-1 dark:text-gray-300">Badge</label>

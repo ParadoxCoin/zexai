@@ -18,6 +18,7 @@ from core.image_models import (
     ALL_IMAGE_MODELS, IMAGE_TOOLS, SPECIALIZED_GENERATORS
 )
 from core.kie_models import KIE_IMAGE_MODELS  # Premium kie.ai models
+from core.unified_model_registry import model_registry
 from core.validation import ImageGenerationRequest as ValidatedImageRequest
 from core.exceptions import ValidationError
 from core.advanced_rate_limiter import rate_limit_generation
@@ -34,28 +35,68 @@ async def get_pricing_multiplier(db) -> float:
 
 @router.get("/models", response_model=List[ImageModelInfo])
 async def get_models(type: Optional[ImageType] = None, db = Depends(get_db)):
-    mult = await get_pricing_multiplier(db)
-    
-    # Only show verified kie.ai models
-    combined_models = KIE_IMAGE_MODELS
-    
-    models = []
-    for mid, m in combined_models.items():
-        try:
-            if type and m["type"] != type.value:
-                continue
+    """
+    Get all active image models from the unified registry.
+    This respects database overrides and admin pricing.
+    """
+    try:
+        # Get models from unified registry
+        type_filter = type.value if type else None
+        registry_models = await model_registry.get_models(db, category="image", type=type_filter, active_only=True)
+        
+        models = []
+        for m in registry_models:
+            # Calculate credits from cost and multiplier
+            cost_usd = float(m.get("cost_usd", 0))
+            multiplier = float(m.get("cost_multiplier", 2.0))
+            credits = max(1, int(cost_usd * multiplier * 100))
+            
+            # Hide 'kie' provider label
+            provider_display = m.get("provider", "unknown")
+            if provider_display.lower() in ["kie", "kie.ai"]:
+                provider_display = "Premium"
+            
             models.append(ImageModelInfo(
-                id=mid, provider=m["provider"], name=m["name"], type=m["type"],
-                credits=image_service.calc_credits(m["cost_usd"], mult), quality=ImageQuality(m["quality"]),
-                speed=ImageSpeed(m["speed"]), badge=m.get("badge"),
-                example_url=f"https://cdn.example.com/{mid}.jpg", description=m.get("description"),
+                id=m["id"],
+                provider=provider_display,
+                name=m.get("name", m["id"]),
+                type=m.get("type", "text_to_image"),
+                credits=credits,
+                quality=ImageQuality(m.get("quality", 4)),
+                speed=ImageSpeed(m.get("speed", "medium")),
+                badge=m.get("badge"),
+                example_url=f"https://cdn.example.com/{m['id']}.jpg",
+                description=m.get("description", ""),
                 capabilities=m.get("capabilities", {})
             ))
-        except Exception as e:
-            # Skip invalid models, log error
-            print(f"Skipping model {mid}: {e}")
-            continue
-    return sorted(models, key=lambda x: (-x.quality.value, x.credits))
+            
+        return sorted(models, key=lambda x: (-x.quality.value, x.credits))
+        
+    except Exception as e:
+        print(f"[ImageRoutes] Failed to fetch models: {e}")
+        # Fallback to hardcoded KIE models if registry fails
+        models = []
+        for mid, m in KIE_IMAGE_MODELS.items():
+            # Branding Cleanup
+            provider_display = m.get("provider", "unknown")
+            if provider_display.lower() in ["kie", "kie.ai"]:
+                provider_display = "Premium"
+                
+            models.append(ImageModelInfo(
+                id=mid, 
+                provider=provider_display, 
+                name=m.get("name", mid), 
+                type=m.get("type", "text_to_image"),
+                credits=10, 
+                quality=ImageQuality(m.get("quality", 4)),
+                speed=ImageSpeed(m.get("speed", "medium")), 
+                badge=m.get("badge"),
+                example_url=f"https://cdn.example.com/{mid}.jpg", 
+                description=m.get("description", ""),
+                capabilities=m.get("capabilities", {})
+            ))
+        return models
+
 
 @router.get("/tools", response_model=List[ImageToolInfo])
 async def get_tools(db = Depends(get_db)):

@@ -21,8 +21,9 @@ interface Provider {
 }
 
 const PROVIDER_LIST: Provider[] = [
-    { id: 'kie', name: 'kie', display_name: 'Kie.ai', icon: '🔮' },
+    { id: 'kie', name: 'kie', display_name: 'Premium', icon: '🔮' },
     { id: 'fal', name: 'fal', display_name: 'Fal.ai', icon: '⚡' },
+
     { id: 'replicate', name: 'replicate', display_name: 'Replicate', icon: '🔄' },
     { id: 'pollo', name: 'pollo', display_name: 'Pollo.ai', icon: '🎬' },
     { id: 'openai', name: 'openai', display_name: 'OpenAI', icon: '🤖' },

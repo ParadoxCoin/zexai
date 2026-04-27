@@ -14,6 +14,7 @@ from schemas.video import (
 )
 from core.config import settings
 from core.credits import CreditManager
+from core.unified_model_registry import model_registry
 
 
 class UnifiedVideoService:
@@ -34,7 +35,7 @@ class UnifiedVideoService:
         self._models_cache = {}
     
     async def _refresh_cache(self, db) -> None:
-        """Refresh provider and model cache from database"""
+        """Refresh provider and model cache from registry (hybrid base + DB overrides)"""
         now = datetime.utcnow()
         
         if (self._cache_time and 
@@ -42,19 +43,19 @@ class UnifiedVideoService:
             return
         
         try:
-            # Load providers
+            # 1. Load providers
             providers_result = db.table("providers").select("*").eq("is_active", True).execute()
             self._providers_cache = {p["id"]: p for p in (providers_result.data or [])}
             
-            # Load models
-            models_result = db.table("video_models").select("*").eq("is_active", True).execute()
-            self._models_cache = {m["id"]: m for m in (models_result.data or [])}
+            # 2. Load models from UNIFIED REGISTRY (ai_models table + base models)
+            models = await model_registry.get_models(db, category="video", active_only=True)
+            self._models_cache = {m["id"]: m for m in models}
             
             self._cache_time = now
-            print(f"[VideoService] Cache refreshed: {len(self._providers_cache)} providers, {len(self._models_cache)} models")
+            print(f"[VideoService] Unified cache refreshed: {len(self._providers_cache)} providers, {len(self._models_cache)} models")
             
         except Exception as e:
-            print(f"[VideoService] Cache refresh failed: {e}")
+            print(f"[VideoService] Unified cache refresh failed: {e}")
     
     async def get_model(self, db, model_id: str) -> Optional[Dict]:
         """Get model info from cache/database"""
@@ -145,8 +146,10 @@ class UnifiedVideoService:
         if not provider:
             raise HTTPException(status_code=500, detail=f"Provider {provider_id} not configured")
         
-        # 3. Get credits cost
-        credits_required = model.get("credits", 100)
+        # 3. Get credits cost from unified CreditManager (respects DB overrides)
+        credits_required = await CreditManager.get_service_cost(
+            db, "video", 1.0, model_id=request.model_id
+        )
         
         # 4. Check credits
         await CreditManager.check_sufficient_credits(db, current_user.id, credits_required)

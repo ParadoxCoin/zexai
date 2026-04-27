@@ -753,18 +753,23 @@ async def list_chat_models(
         
         models = []
         for m in models_data:
-            cost = float(m.get("cost_per_unit", 0)) * float(m.get("cost_multiplier", 2.0))
+            cost_usd = float(m.get("cost_usd", 0))
+            multiplier = float(m.get("cost_multiplier", 2.0))
+            # Display cost per 1k tokens: (cost_usd * multiplier * 100)
+            cost_per_1k = cost_usd * multiplier * 100.0
+            
             params = m.get("parameters", {})
             
             models.append(ChatModel(
                 id=m["id"],
                 name=m["name"],
                 description=m.get("description", ""),
-                cost_per_1k_tokens=cost,
+                cost_per_1k_tokens=cost_per_1k,
                 max_tokens=params.get("max_tokens", 4096)
             ))
             
         return models
+
     
     except Exception as e:
         logger.error(f"Error listing chat models: {str(e)}")
@@ -907,8 +912,11 @@ async def chat_stream(
                         db=fresh, conversation_id=c["conv_id"], user_id=c["uid"],
                         existing_conv=c["ex_conv"], existing_messages=c["ex_msgs"],
                         user_message=c["user_msg"], ai_response=full,
-                        model=c["model_name"], tokens_used=max(len(full.split())*2, 1), credits_charged=0 if c.get("is_free") else 1
+                        model=c["model_name"], 
+                        tokens_used=max(len(full.split())*2, 1), 
+                        credits_charged=0 if c.get("is_free") else await CreditManager.calculate_chat_cost(db, c["model_name"], max(len(full.split())*2, 1))
                     )
+
                     save_state["saved"] = True
                     logger.info(f"✅ Saved conv {c['conv_id']} inline ({len(c['ex_msgs'])+2} msgs)")
                 else:

@@ -14,28 +14,8 @@ import CodeBlock from "@/components/CodeBlock";
 import { useTranslation } from 'react-i18next';
 
 // Available AI Models - Free (Groq + OpenRouter Free) + Premium (OpenRouter Paid)
-const availableModels = [
-  // 🆓 Free Models (Groq)
-  { id: "llama-3.3-70b", name: "Llama 3.3 70B", icon: "🦙", tier: "free", desc: "Powerful & free", cost: 0 },
-  { id: "llama-3.1-8b", name: "Llama 3.1 8B", icon: "🦙", tier: "free", desc: "Ultra fast", cost: 0 },
-  // 🆓 Free Models (OpenRouter Free)
-  { id: "openrouter-auto-free", name: "Auto Free", icon: "🤖", tier: "free", desc: "Best free model", cost: 0 },
-  { id: "step-3.5-flash", name: "Step 3.5 Flash", icon: "⚡", tier: "free", desc: "Very fast", cost: 0 },
-  { id: "trinity-large", name: "Trinity Large", icon: "🧠", tier: "free", desc: "Strong preview", cost: 0 },
-  { id: "solar-pro-3", name: "Solar Pro 3", icon: "☀️", tier: "free", desc: "Upstage model", cost: 0 },
-  { id: "lfm-thinking", name: "LFM Thinking", icon: "💭", tier: "free", desc: "Thinking model", cost: 0 },
-  // 💎 Premium Models (OpenRouter Paid)
-  { id: "gpt-5.2", name: "GPT-5.2", icon: "🧠", tier: "premium", desc: "Smartest model", cost: 10 },
-  { id: "claude-opus-4.6", name: "Claude Opus 4.6", icon: "👑", tier: "premium", desc: "Most creative AI", cost: 15 },
-  { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro", icon: "✨", tier: "premium", desc: "1M context", cost: 3 },
-  { id: "deepseek-r1", name: "DeepSeek R1", icon: "🐋", tier: "premium", desc: "Logic Master", cost: 2 },
-  { id: "grok-4", name: "Grok 4", icon: "⚡", tier: "premium", desc: "xAI latest", cost: 5 },
-  { id: "qwen3-max", name: "Qwen3 Max", icon: "💬", tier: "premium", desc: "MoE 262K ctx", cost: 2 },
-  { id: "mistral-large", name: "Mistral Large", icon: "🌪️", tier: "premium", desc: "Europe's best", cost: 3 },
-  { id: "minimax-m1", name: "MiniMax M1", icon: "🔥", tier: "premium", desc: "1M ctx, creative", cost: 1 },
-  { id: "kimi-k2.5", name: "Kimi K2.5", icon: "🌙", tier: "premium", desc: "Multimodal agent", cost: 1 },
-  { id: "llama-405b", name: "Llama 3.1 405B", icon: "🦙", tier: "premium", desc: "Giant open source", cost: 4 },
-];
+// Models will be fetched from API
+
 
 // Suggested Prompts
 const suggestedPrompts = [
@@ -137,10 +117,35 @@ const ChatPage = () => {
     queryKey: ["conversations"],
     queryFn: async () => {
       const res = await apiService.get("/chat/conversations");
-      console.log("[DEBUG] /chat/conversations raw response:", JSON.stringify(res).substring(0, 500));
       return res;
     }
   });
+
+  const { data: modelsData, isLoading: isLoadingModels } = useQuery({
+    queryKey: ["chatModels"],
+    queryFn: async () => {
+      const res = await apiService.get("/chat/models");
+      // Map API models to UI format
+      const models = (res as any)?.data || res || [];
+      return models.map((m: any) => {
+        const rawCost = m.cost_per_1k_tokens;
+        const displayCost = rawCost >= 1 ? Math.round(rawCost).toString() : rawCost.toFixed(2);
+        
+        return {
+          id: m.id,
+          name: m.name,
+          icon: m.id.includes('llama') ? '🦙' : m.id.includes('gpt') ? '🧠' : m.id.includes('claude') ? '👑' : m.id.includes('gemini') ? '✨' : '🤖',
+          tier: m.cost_per_1k_tokens > 0 ? 'premium' : 'free',
+          desc: m.description || 'AI Model',
+          cost: displayCost
+        };
+      });
+
+    }
+  });
+
+  const availableModels = modelsData || [];
+
 
   useEffect(() => {
     console.log("[DEBUG] conversations state:", conversations);
@@ -346,7 +351,10 @@ const ChatPage = () => {
     (Array.isArray(rawConv) ? rawConv : []);                // Direct array: [...]
 
   console.log("[DEBUG] conversationsList length:", conversationsList.length);
-  const currentModel = availableModels.find(m => m.id === selectedModel) || availableModels[0];
+  const currentModel = (availableModels && availableModels.length > 0)
+    ? (availableModels.find((m: any) => m.id === selectedModel) || availableModels[0])
+    : { id: "loading", name: "Yükleniyor...", icon: "⏳", tier: "free", desc: "", cost: 0 };
+
   const filteredModels = availableModels.filter(m => m.name.toLowerCase().includes(modelSearch.toLowerCase()));
   const freeModels = filteredModels.filter(m => m.tier === 'free');
   const premiumModels = filteredModels.filter(m => m.tier === 'premium');
