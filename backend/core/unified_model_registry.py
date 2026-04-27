@@ -102,6 +102,16 @@ class UnifiedModelRegistry:
                     
                     if mid in result:
                         result[mid].update({k: v for k, v in db_m.items() if v is not None})
+                        
+                        # Extract video params from capabilities if present
+                        caps = db_m.get("capabilities") or {}
+                        if isinstance(caps, dict) and "video_params" in caps:
+                            vp = caps["video_params"]
+                            for field in ["duration_options", "resolutions", "quality_multipliers", "per_second_pricing", "base_duration"]:
+                                if vp.get(field) is not None:
+                                    result[mid][field] = vp[field]
+                                    if field == "duration_options":
+                                        result[mid]["durations"] = vp[field]
                     else:
                         # New model from DB - ensure required fields are present
                         standardized = {
@@ -117,6 +127,17 @@ class UnifiedModelRegistry:
                         }
                         # Merge the rest
                         standardized.update({k: v for k, v in db_m.items() if v is not None})
+                        
+                        # Extract video params from capabilities for new models too
+                        caps = db_m.get("capabilities") or {}
+                        if isinstance(caps, dict) and "video_params" in caps:
+                            vp = caps["video_params"]
+                            for field in ["duration_options", "resolutions", "quality_multipliers", "per_second_pricing", "base_duration"]:
+                                if vp.get(field) is not None:
+                                    standardized[field] = vp[field]
+                                    if field == "duration_options":
+                                        standardized["durations"] = vp[field]
+                                        
                         result[mid] = standardized
         except Exception as e:
             logger.warning(f"Failed to load ai_models: {e}")
@@ -180,12 +201,30 @@ class UnifiedModelRegistry:
 
     async def update_model(self, db, model_id: str, updates: Dict) -> Dict:
         """Update model (create/update DB override)"""
-        # Prepare DB record for ai_models (core fields)
+        # 1. Update core fields in ai_models table
         core_fields = ["id", "name", "category", "type", "provider", "cost_usd", "cost_multiplier", "quality", "speed", "badge", "description", "is_active", "capabilities"]
         data = {k: v for k, v in updates.items() if k in core_fields}
         data["id"] = model_id
         
-        # 1. Upsert to ai_models (Supabase uses sync client)
+        # Merge advanced video params into capabilities for extra persistence
+        models = await self.get_models(db, active_only=False)
+        m = next((m for m in models if m["id"] == model_id), None)
+        
+        if updates.get("category") == "video" or (m and m.get("category") == "video"):
+            caps = updates.get("capabilities") or (m.get("capabilities") if m else {})
+            if not isinstance(caps, dict): caps = {}
+            
+            video_params = caps.get("video_params") or {}
+            if not isinstance(video_params, dict): video_params = {}
+            
+            for field in ["duration_options", "resolutions", "quality_multipliers", "per_second_pricing", "base_duration"]:
+                if updates.get(field) is not None:
+                    video_params[field] = updates[field]
+            
+            caps["video_params"] = video_params
+            data["capabilities"] = caps
+
+        # Upsert to ai_models (Supabase uses sync client)
         db.table("ai_models").upsert(data).execute()
         
         # 2. If it's a video model, also upsert to video_models (advanced fields)
