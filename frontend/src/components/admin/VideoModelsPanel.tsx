@@ -214,7 +214,7 @@ export const VideoModelsPanel: React.FC = () => {
                                 onChange={(e) => setFormData({ ...formData, id: e.target.value })}
                                 disabled={!!editingModel}
                                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white disabled:opacity-50"
-                                placeholder="kie_kling26_hd_5s"
+                                placeholder="premium_kling26_hd_5s"
                             />
                         </div>
                         <div>
