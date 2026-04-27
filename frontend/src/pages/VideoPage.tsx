@@ -416,9 +416,9 @@ const VideoPage = () => {
   const packages = packagesData?.data || packagesData || [];
   const myVideos = myVideosData?.outputs || myVideosData?.data || myVideosData || [];
 
-  // Brand extraction and grouping with active tab filtering
-  const { brands, filteredModels } = useMemo(() => {
-    if (!Array.isArray(rawModels)) return { brands: [], filteredModels: [] };
+  // Advanced model grouping with brand, base, and variants
+  const { brands, filteredModels, variantsMap } = useMemo(() => {
+    if (!Array.isArray(rawModels)) return { brands: [], filteredModels: [], variantsMap: {} };
 
     // Map tab to model type
     const typeMap: Record<string, string> = {
@@ -429,7 +429,7 @@ const VideoPage = () => {
     const modelType = typeMap[activeTab];
 
     // Initial filter by active tab type
-    const baseModels = rawModels.filter((m: any) => {
+    const baseModelsList = rawModels.filter((m: any) => {
       if (!modelType) return true;
       return m.type === modelType || m.model_type === modelType || 
              m.capabilities?.[modelType.replace(/_/g, '')] || m.capabilities?.[modelType];
@@ -450,22 +450,51 @@ const VideoPage = () => {
       return { name: name.split(' ')[0], icon: "📦" };
     };
 
-    // Group by brand
-    const grouped: Record<string, any[]> = {};
-    const brandMap: Record<string, any> = {};
+    const getBaseName = (name: string) => {
+      // Everything before the first '('
+      const match = name.match(/^(.*?)\s*\(/);
+      return match ? match[1].trim() : name.trim();
+    };
 
-    baseModels.forEach(m => {
+    // Grouping structure: Brand -> Base Model -> Variants
+    const grouped: Record<string, any> = {};
+    const localVariantsMap: Record<string, any[]> = {};
+
+    baseModelsList.forEach(m => {
       const brandInfo = getBrand(m.name);
       const bName = brandInfo.name;
+      const baseName = getBaseName(m.name);
+
       if (!grouped[bName]) {
-        grouped[bName] = [];
-        brandMap[bName] = { id: bName, name: bName, icon: brandInfo.icon, count: 0 };
+        grouped[bName] = { 
+          id: bName, 
+          name: bName, 
+          icon: brandInfo.icon, 
+          baseModels: {},
+          count: 0 
+        };
       }
-      grouped[bName].push(m);
+
+      if (!grouped[bName].baseModels[baseName]) {
+        grouped[bName].baseModels[baseName] = {
+          id: m.id, // Representative ID
+          baseName: baseName,
+          brand: bName,
+          variants: [],
+          representative: m
+        };
+      }
+      
+      grouped[bName].baseModels[baseName].variants.push(m);
+      localVariantsMap[baseName] = grouped[bName].baseModels[baseName].variants;
     });
 
-    const brandList = Object.values(brandMap);
-    brandList.forEach(b => { b.count = grouped[b.id].length; });
+    const brandList = Object.values(grouped).map((b: any) => ({
+      ...b,
+      baseModels: Object.values(b.baseModels),
+      count: Object.values(b.baseModels).length
+    }));
+
     brandList.sort((a, b) => {
       if (a.name.includes("Google")) return -1;
       if (b.name.includes("Google")) return 1;
@@ -474,22 +503,27 @@ const VideoPage = () => {
       return b.count - a.count;
     });
 
-    // Reset selected brand if it's not in current tab
-    if (selectedProvider && !brandMap[selectedProvider] && !searchQuery) {
+    // Reset selected brand if needed
+    if (selectedProvider && !grouped[selectedProvider] && !searchQuery) {
       setSelectedProvider(brandList[0]?.id || null);
     } else if (!selectedProvider && brandList.length > 0) {
       setSelectedProvider(brandList[0].id);
     }
 
-    // Final filter
-    let filtered = baseModels;
+    // Filter base models for display
+    let displayBaseModels: any[] = [];
     if (searchQuery) {
-      filtered = filtered.filter((m: any) => m.name.toLowerCase().includes(searchQuery.toLowerCase()));
+      const q = searchQuery.toLowerCase();
+      brandList.forEach(b => {
+        b.baseModels.forEach((bm: any) => {
+          if (bm.baseName.toLowerCase().includes(q)) displayBaseModels.push(bm);
+        });
+      });
     } else if (selectedProvider) {
-      filtered = filtered.filter((m: any) => getBrand(m.name).name === selectedProvider);
+      displayBaseModels = grouped[selectedProvider]?.baseModels ? Object.values(grouped[selectedProvider].baseModels) : [];
     }
 
-    return { brands: brandList, filteredModels: filtered };
+    return { brands: brandList, filteredModels: displayBaseModels, variantsMap: localVariantsMap };
   }, [rawModels, activeTab, searchQuery, selectedProvider]);
 
   const models = filteredModels;
@@ -502,10 +536,32 @@ const VideoPage = () => {
     }, 0);
   }, [selectedCompareModels, models]);
 
-  // Get selected model details
+  // Get selected model details (could be a variant)
   const selectedModel = useMemo(() => {
-    return models.find((m: any) => m.id === modelId);
-  }, [models, modelId]);
+    // If we have rawModels, try to find the exact variant
+    if (Array.isArray(rawModels)) {
+      const found = rawModels.find((m: any) => m.id === modelId);
+      if (found) return found;
+    }
+    
+    // Fallback to searching in variants map
+    for (const base in variantsMap) {
+      const variant = variantsMap[base].find((v: any) => v.id === modelId);
+      if (variant) return variant;
+    }
+    return null;
+  }, [rawModels, modelId, variantsMap]);
+
+  // Current base model variants
+  const currentVariants = useMemo(() => {
+    if (!selectedModel) return [];
+    const getBaseName = (name: string) => {
+      const match = name.match(/^(.*?)\s*\(/);
+      return match ? match[1].trim() : name.trim();
+    };
+    const base = getBaseName(selectedModel.name);
+    return variantsMap[base] || [selectedModel];
+  }, [selectedModel, variantsMap]);
 
   // Get model capabilities
   const modelCapabilities = useMemo(() => {
@@ -761,8 +817,7 @@ const VideoPage = () => {
                     </div>
                   ) : (
                     filteredModels.map((model: any) => {
-                      const style = getProviderStyle(model.provider);
-                      const isSelected = modelId === model.id;
+                      const isSelected = modelId === model.id || model.variants.some((v: any) => v.id === modelId);
                       return (
                         <div
                           key={model.id}
@@ -773,27 +828,25 @@ const VideoPage = () => {
                             }`}
                         >
                           <div className="flex items-start justify-between mb-1">
-                            <h4 className="font-medium text-gray-900 dark:text-white text-sm line-clamp-1">
-                              {model.name}
+                            <h4 className="font-bold text-gray-900 dark:text-white text-sm line-clamp-1">
+                              {model.baseName}
                             </h4>
                             <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 text-xs font-bold rounded-full">
-                              {model.credits}c
+                              {model.representative.credits}c
                             </span>
                           </div>
 
                           <div className="flex items-center gap-2 text-[10px] text-gray-500">
-                            <span className="flex items-center gap-1">
-                              <Timer className="w-3 h-3" />
-                              {model.duration}s
-                            </span>
-                            <span className="text-yellow-500">
-                              {'★'.repeat(model.quality || 4)}
-                            </span>
+                             <span className="px-2 py-0.5 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-md font-medium uppercase tracking-tight">
+                                {model.variants.length} {t('videoGen.versions', 'sürüm')}
+                             </span>
+                             <span className="text-gray-400">•</span>
+                             <span className="uppercase font-bold text-purple-500/70">{model.representative.resolution}</span>
                           </div>
 
-                          {model.badge && (
-                            <span className="mt-2 inline-block px-2 py-0.5 bg-gradient-to-r from-yellow-400 to-orange-400 text-yellow-900 text-[10px] font-bold rounded-full">
-                              {model.badge}
+                          {model.representative.badge && (
+                            <span className="mt-2 inline-block px-2 py-0.5 bg-gradient-to-r from-yellow-400/20 to-orange-400/20 text-yellow-600 dark:text-yellow-400 text-[10px] font-bold rounded border border-yellow-400/20">
+                              {model.representative.badge}
                             </span>
                           )}
 
@@ -960,36 +1013,38 @@ const VideoPage = () => {
                       {/* Duration Selector */}
                       <div className="space-y-2">
                         <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                          <Timer className="w-3 h-3" /> {t('videoGen.duration', 'Süre')}
+                          <Timer className="w-3 h-3" /> {t('videoGen.duration', 'Süre Seçimi')}
                         </label>
                         <div className="flex flex-wrap gap-2">
-                          {(selectedModel.durations || [selectedModel.duration]).map((d: number) => (
+                          {currentVariants.map((v: any) => (
                             <button
-                              key={d}
-                              disabled={true} // Currently fixed per model variant, but shown as selected
-                              className="px-4 py-2 bg-purple-600 text-white rounded-xl text-sm font-bold shadow-md shadow-purple-500/20 border-2 border-purple-400"
+                              key={v.id}
+                              onClick={() => setModelId(v.id)}
+                              className={`px-4 py-2 rounded-xl text-sm font-bold transition-all border-2 ${
+                                modelId === v.id
+                                  ? 'bg-purple-600 text-white border-purple-400 shadow-md shadow-purple-500/20'
+                                  : 'bg-white dark:bg-gray-800 text-gray-500 border-gray-200 dark:border-gray-700 hover:border-purple-300'
+                              }`}
                             >
-                              {d} {t('common.seconds', 'Saniye')}
+                              {v.duration} {t('common.seconds', 'Saniye')}
+                              <span className={`ml-2 text-[10px] opacity-70`}>({v.credits}c)</span>
                             </button>
                           ))}
                         </div>
                       </div>
 
-                      {/* Resolution Selector */}
+                      {/* Resolution Information */}
                       <div className="space-y-2">
                         <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1">
                           <Maximize className="w-3 h-3" /> {t('videoGen.resolution', 'Çözünürlük')}
                         </label>
                         <div className="flex flex-wrap gap-2">
-                          {(selectedModel.resolutions || [selectedModel.resolution]).map((r: string) => (
-                            <button
-                              key={r}
-                              disabled={true}
-                              className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-md shadow-indigo-500/20 border-2 border-indigo-400"
-                            >
-                              {r}
-                            </button>
-                          ))}
+                          <button
+                            disabled={true}
+                            className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-md shadow-indigo-500/20 border-2 border-indigo-400"
+                          >
+                            {selectedModel.resolution}
+                          </button>
                         </div>
                       </div>
                     </div>
