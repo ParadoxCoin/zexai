@@ -25,7 +25,7 @@ class CleanupTask(Task):
 
 
 @celery_app.task(bind=True, base=CleanupTask, name="cleanup_old_files")
-def cleanup_old_files(self, days_old: int = 30, **kwargs):
+async def cleanup_old_files(self, days_old: int = 30, **kwargs):
     """
     Clean up old temporary files and unused media
     
@@ -98,7 +98,7 @@ def cleanup_old_files(self, days_old: int = 30, **kwargs):
 
 
 @celery_app.task(bind=True, base=CleanupTask, name="cleanup_old_logs")
-def cleanup_old_logs(self, days_old: int = 90, **kwargs):
+async def cleanup_old_logs(self, days_old: int = 90, **kwargs):
     """
     Clean up old log entries to prevent database bloat
     
@@ -146,7 +146,7 @@ def cleanup_old_logs(self, days_old: int = 90, **kwargs):
 
 
 @celery_app.task(bind=True, base=CleanupTask, name="cleanup_inactive_users")
-def cleanup_inactive_users(self, days_inactive: int = 365, **kwargs):
+async def cleanup_inactive_users(self, days_inactive: int = 365, **kwargs):
     """
     Clean up inactive user accounts and their data
     
@@ -214,7 +214,7 @@ def cleanup_inactive_users(self, days_inactive: int = 365, **kwargs):
 
 
 @celery_app.task(bind=True, base=CleanupTask, name="cleanup_failed_tasks")
-def cleanup_failed_tasks(self, hours_old: int = 24, **kwargs):
+async def cleanup_failed_tasks(self, hours_old: int = 24, **kwargs):
     """
     Clean up failed tasks that are old and won't be retried
     
