@@ -99,11 +99,12 @@ async def get_video_models(
                     description=m.get("description", "") or h.get("description", ""),
                     capabilities=params,
                     # Dynamic fields from DB or hardcoded fallback
+                    # Dynamic fields: Prioritize KIE hardcoded metadata for durations/resolutions to ensure latest features
                     base_name=m.get("base_name") or h.get("base_name"),
                     version_name=m.get("version_name") or h.get("version_name"),
-                    durations=m.get("durations") or duration_opts,
-                    resolutions=m.get("resolutions") or h.get("resolutions") or ["720p", "1080p"],
-                    slider_duration=m.get("slider_duration") or h.get("slider_duration", False)
+                    durations=h.get("durations") or m.get("durations") or duration_opts,
+                    resolutions=h.get("resolutions") or m.get("resolutions") or ["720p", "1080p"],
+                    slider_duration=h.get("slider_duration") or m.get("slider_duration") or False
                 ))
             
             if models:
