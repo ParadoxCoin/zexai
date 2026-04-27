@@ -77,39 +77,29 @@ async def get_video_models(
             if type_filter and type_filter not in m_type:
                 continue
                 
-            # Safe Enum & Type Mapping
-            try:
-                # Handle Quality Enum (int 1-5)
-                q_val = m.get("quality", 4)
-                if isinstance(q_val, str) and q_val.isdigit(): q_val = int(q_val)
-                elif not isinstance(q_val, int): q_val = 4
-                
-                # Handle Speed Enum (str: slow, medium, fast)
-                s_val = m.get("speed", "medium")
-                if not isinstance(s_val, str): s_val = "medium"
-                
-                models.append(VideoModelInfo(
-                    id=m_id,
-                    provider=m.get("provider", "Premium"),
-                    name=m.get("display_name") or m.get("name") or m_id,
-                    type=m_type,
-                    duration=int(m.get("duration", 5)),
-                    credits=int(m.get("credits", 100)),
-                    quality=VideoQuality(q_val) if q_val in [1,2,3,4,5] else VideoQuality.HIGH,
-                    speed=VideoSpeed(s_val) if s_val in ["slow", "medium", "fast", "very_fast"] else VideoSpeed.MEDIUM,
-                    badge=m.get("badge"),
-                    description=m.get("description", ""),
-                    capabilities=caps,
-                    video_params=video_caps,
-                    base_name=m.get("base_name") or (m_id.split('/')[1] if '/' in m_id else m_id),
-                    version_name=m.get("version_name") or "Standard",
-                    durations=video_caps.get("durations") or m.get("durations") or [5],
-                    resolutions=video_caps.get("resolutions") or m.get("resolutions") or ["720p", "1080p", "4K"],
-                    slider_duration=bool(m.get("slider_duration", False))
-                ))
-            except Exception as map_err:
-                print(f"[/video/models] Mapping error for model {m_id}: {map_err}")
-                continue
+            # Unified naming: Use 'video_caps' everywhere
+            v_caps = m.get("video_caps") or m.get("video_params") or {}
+            
+            # Map to schema
+            models.append(VideoModelInfo(
+                id=m_id,
+                provider=m.get("provider", "Premium"),
+                name=m.get("display_name") or m.get("name") or m_id,
+                type=m_type,
+                duration=int(m.get("duration", 5)),
+                credits=int(m.get("credits", 100)),
+                quality=VideoQuality(int(m.get("quality", 4)) if str(m.get("quality", "")).isdigit() else 4),
+                speed=VideoSpeed(m.get("speed", "medium") if isinstance(m.get("speed"), str) else "medium"),
+                badge=m.get("badge"),
+                description=m.get("description", ""),
+                capabilities=caps,
+                video_caps=v_caps, # Unified naming
+                base_name=m.get("base_name") or (m_id.split('/')[1] if '/' in m_id else m_id),
+                version_name=m.get("version_name") or "Standard",
+                durations=v_caps.get("durations") or m.get("durations") or [5],
+                resolutions=v_caps.get("resolutions") or m.get("resolutions") or ["720p", "1080p", "4K"],
+                slider_duration=bool(m.get("slider_duration", False))
+            ))
             
         if models:
             models.sort(key=lambda x: (-x.quality.value if hasattr(x.quality, 'value') else -4, x.credits))
