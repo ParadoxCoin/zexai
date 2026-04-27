@@ -568,35 +568,42 @@ const VideoPage = () => {
     }
   }, [selectedModel?.id]); // Only sync when the actual model identity changes
 
+  // 2. Deterministic Pricing Logic
   const currentPrice = useMemo(() => {
     if (!selectedModel) return 0;
-    const isVeo31 = selectedModel.id === 'veo31_text' || selectedModel.id === 'veo3.1_text';
+    const caps = selectedModel.video_caps;
     
-    const baseCredits = selectedModel.credits || 0;
-    const baseDuration = selectedModel.duration || 5;
-    const duration = selectedDuration || baseDuration;
-    
-    // 1. Scale by Duration (only if per-second pricing is enabled or it's Veo 3.1)
-    let price = baseCredits;
-    if (selectedModel.per_second_pricing || isVeo31) {
-      price = baseCredits * (duration / baseDuration);
+    if (caps && caps.pricing) {
+        const d = String(selectedDuration || (caps.durations?.[0] || 5));
+        const r = selectedResolution || (caps.resolutions?.[0] || "720p");
+        
+        const price = caps.pricing[d]?.[r] || caps.pricing[d]?.["720p"];
+        if (price) return price;
     }
     
-    // 2. Scale by Quality (Resolution Multiplier)
-    const resolution = (selectedResolution || selectedModel.resolution || "720p").toLowerCase();
-    const multipliers = isVeo31 ? { "720p": 1.0, "1080p": 1.5, "4k": 2.5 } : (selectedModel.quality_multipliers || { "720p": 1.0, "1080p": 1.5, "4k": 2.5 });
-    
-    const multiplier = multipliers[resolution] || multipliers[resolution.toLowerCase()] || 1.0;
-    price *= multiplier;
-    
-    return Math.round(price);
+    // Fallback to legacy calculation
+    const baseCredits = selectedModel.credits || 100;
+    const duration = selectedDuration || 5;
+    const resolution = (selectedResolution || "720p").toLowerCase();
+    const multipliers = { "720p": 1.0, "1080p": 1.5, "4k": 2.5 };
+    return Math.round(baseCredits * (duration/5) * (multipliers[resolution] || 1.0));
   }, [selectedModel, selectedDuration, selectedResolution]);
 
-  // Reset parameters when model changes to ensure accurate pricing and UI state
+  // 3. Deterministic Selection Reset
   useEffect(() => {
     if (selectedModel) {
-      setSelectedDuration(selectedModel.duration || 5);
-      setSelectedResolution(selectedModel.resolution || selectedModel.resolutions?.[0] || "720p");
+      const caps = selectedModel.video_caps;
+      if (caps) {
+        if (caps.durations && !caps.durations.includes(selectedDuration)) {
+          setSelectedDuration(caps.durations[0]);
+        }
+        if (caps.resolutions && !caps.resolutions.includes(selectedResolution)) {
+          setSelectedResolution(caps.resolutions[0]);
+        }
+      } else {
+        setSelectedDuration(selectedModel.duration || 5);
+        setSelectedResolution(selectedModel.resolution || "720p");
+      }
     }
   }, [selectedModel?.id]);
 

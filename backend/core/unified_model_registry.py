@@ -103,19 +103,38 @@ class UnifiedModelRegistry:
                     if mid in result:
                         result[mid].update({k: v for k, v in db_m.items() if v is not None})
                         
-                        # Extract video params from capabilities if present
+                        # Production-level Capability Engine Extraction
                         caps = db_m.get("capabilities") or {}
-                        video_params = {}
-                        if isinstance(caps, dict) and "video_params" in caps:
-                            video_params = caps["video_params"]
-                            for field in ["duration_options", "resolutions", "quality_multipliers", "per_second_pricing", "base_duration"]:
-                                if video_params.get(field) is not None:
-                                    result[mid][field] = video_params[field]
-                                    if field == "duration_options":
-                                        result[mid]["durations"] = video_params[field]
-                        result[mid]["video_params"] = video_params
+                        if not isinstance(caps, dict): caps = {}
+                        
+                        # Normalize 'video' capabilities
+                        # Support both new 'video' and legacy 'video_params' keys
+                        video_caps = caps.get("video") or caps.get("video_params") or {}
+                        if not isinstance(video_caps, dict): video_caps = {}
+                        
+                        # Ensure essential lists are present
+                        durations = video_caps.get("durations") or video_caps.get("duration_options") or db_m.get("duration_options") or [5]
+                        resolutions = video_caps.get("resolutions") or db_m.get("resolutions") or ["720p", "1080p", "4K"]
+                        
+                        # Map to top-level for backward compatibility and internal logic
+                        result[mid]["durations"] = durations
+                        result[mid]["resolutions"] = resolutions
+                        
+                        # Build Deterministic Pricing Map if missing
+                        if "pricing" not in video_caps:
+                            base_credits = float(db_m.get("credits", 100))
+                            video_caps["pricing"] = {
+                                str(d): {
+                                    r: round(base_credits * (d/5) * (1.5 if r == "1080p" else 2.5 if r == "4K" else 1.0))
+                                    for r in resolutions
+                                } for d in durations
+                            }
+                        
+                        video_caps["durations"] = durations
+                        video_caps["resolutions"] = resolutions
+                        result[mid]["video_caps"] = video_caps
                     else:
-                        # New model from DB - ensure required fields are present
+                        # New model from DB
                         standardized = {
                             "id": mid,
                             "name": db_m.get("name") or mid.split('/')[-1].replace('-', ' ').title(),
@@ -124,24 +143,15 @@ class UnifiedModelRegistry:
                             "provider": db_m.get("provider") or "unknown",
                             "cost_usd": float(db_m.get("cost_usd", 0)),
                             "cost_multiplier": float(db_m.get("cost_multiplier", 1.0)),
+                            "credits": int(db_m.get("credits", 100)),
                             "is_active": db_m.get("is_active", True),
                             "source": "database"
                         }
-                        # Merge the rest
                         standardized.update({k: v for k, v in db_m.items() if v is not None})
                         
-                        # Extract video params from capabilities for new models too
                         caps = db_m.get("capabilities") or {}
-                        video_params = {}
-                        if isinstance(caps, dict) and "video_params" in caps:
-                            video_params = caps["video_params"]
-                            for field in ["duration_options", "resolutions", "quality_multipliers", "per_second_pricing", "base_duration"]:
-                                if video_params.get(field) is not None:
-                                    standardized[field] = video_params[field]
-                                    if field == "duration_options":
-                                        standardized["durations"] = video_params[field]
-                        
-                        standardized["video_params"] = video_params
+                        video_caps = caps.get("video") or caps.get("video_params") or {}
+                        standardized["video_caps"] = video_caps
                         result[mid] = standardized
         except Exception as e:
             logger.warning(f"Failed to load ai_models: {e}")
