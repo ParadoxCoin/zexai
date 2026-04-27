@@ -401,6 +401,24 @@ const VideoPage = () => {
     queryClient.invalidateQueries({ queryKey: ["userCredits"] });
   };
 
+  // Reset parameters when model changes to ensure accurate pricing and UI state
+  useEffect(() => {
+    if (selectedModel) {
+      setSelectedDuration(selectedModel.duration || 5);
+      setSelectedResolution(selectedModel.resolution || selectedModel.resolutions?.[0] || "720p");
+    }
+  }, [selectedModel?.id]);
+
+  const currentPrice = useMemo(() => {
+    if (!selectedModel) return 0;
+    const baseCredits = selectedModel.credits || 0;
+    const baseDuration = selectedModel.duration || 5;
+    const duration = selectedDuration || baseDuration;
+    
+    // Scale price based on duration ratio (linear scaling as requested)
+    return Math.round(baseCredits * (duration / baseDuration));
+  }, [selectedModel, selectedDuration]);
+
   // Poll for compare task status updates
   useEffect(() => {
     if (compareTasks.length === 0) return;
@@ -562,19 +580,8 @@ const VideoPage = () => {
     }
   }, [selectedModel?.id]); // Only sync when the actual model identity changes
 
-  // Calculate dynamic price based on duration
-  const currentPrice = useMemo(() => {
-    if (!selectedModel) return 0;
-    // Base credits from model
-    const baseCredits = selectedModel.credits;
-    const baseDuration = selectedModel.duration || 5;
-    
-    // If user changed duration, scale the price linearly
-    if (selectedDuration && selectedDuration !== baseDuration) {
-      return Math.round(baseCredits * (selectedDuration / baseDuration));
-    }
-    return baseCredits;
-  }, [selectedModel, selectedDuration]);
+
+  // Calculate total credits for selected compare models
 
   // Calculate total credits for selected compare models
   const totalCompareCredits = useMemo(() => {
@@ -1104,7 +1111,7 @@ const VideoPage = () => {
                               <button
                                 key={d}
                                 onClick={() => setSelectedDuration(d)}
-                                className={`flex-1 min-w-[60px] py-2.5 rounded-xl text-sm font-black transition-all border-2 ${
+                                className={`px-6 py-2.5 rounded-xl text-sm font-black transition-all border-2 flex-none ${
                                   (selectedDuration || selectedModel.duration) === d
                                     ? 'bg-indigo-600 text-white border-indigo-400 shadow-lg shadow-indigo-500/30 scale-105'
                                     : 'bg-white dark:bg-gray-800 text-gray-500 border-gray-100 dark:border-gray-700 hover:border-indigo-300'
@@ -1128,7 +1135,7 @@ const VideoPage = () => {
                             <button
                               key={r}
                               onClick={() => setSelectedResolution(r)}
-                              className={`flex-1 min-w-[70px] py-2.5 rounded-xl text-sm font-black transition-all border-2 ${
+                              className={`px-6 py-2.5 rounded-xl text-sm font-black transition-all border-2 flex-none ${
                                 (selectedResolution || selectedModel.resolution) === r
                                   ? 'bg-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/30 scale-105'
                                   : 'bg-white dark:bg-gray-800 text-gray-500 border-gray-100 dark:border-gray-700 hover:border-blue-300'
