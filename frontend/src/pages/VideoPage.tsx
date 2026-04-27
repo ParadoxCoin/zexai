@@ -421,6 +421,20 @@ const VideoPage = () => {
   const packages = packagesData?.data || packagesData || [];
   const myVideos = myVideosData?.outputs || myVideosData?.data || myVideosData || [];
 
+  const getBaseName = (name: string) => {
+    // 1. Strip parentheses content
+    let base = name.split(' (')[0].trim();
+    
+    // 2. Aggressively strip common version suffixes
+    const suffixes = ['Fast', 'Lite', 'Quality', 'Standard', 'Audio', 'Stable', 'Pro', 'Turbo'];
+    suffixes.forEach(s => {
+      const regex = new RegExp(`\\s+${s}$`, 'i');
+      base = base.replace(regex, '');
+    });
+    
+    return base.trim();
+  };
+
   // Advanced model grouping with brand, base, and variants
   const { brands, filteredModels, variantsMap } = useMemo(() => {
     if (!Array.isArray(rawModels)) return { brands: [], filteredModels: [], variantsMap: {} };
@@ -455,20 +469,6 @@ const VideoPage = () => {
       return { name: name.split(' ')[0], icon: "📦" };
     };
 
-    const getBaseName = (name: string) => {
-      // 1. Strip parentheses content
-      let base = name.split(' (')[0].trim();
-      
-      // 2. Aggressively strip common version suffixes
-      const suffixes = ['Fast', 'Lite', 'Quality', 'Standard', 'Audio', 'Stable', 'Pro', 'Turbo'];
-      suffixes.forEach(s => {
-        const regex = new RegExp(`\\s+${s}$`, 'i');
-        base = base.replace(regex, '');
-      });
-      
-      return base.trim();
-    };
-
     // Grouping structure: Brand -> Base Model -> Variants
     const grouped: Record<string, any> = {};
     const localVariantsMap: Record<string, any[]> = {};
@@ -476,7 +476,7 @@ const VideoPage = () => {
     baseModelsList.forEach(m => {
       const brandInfo = getBrand(m.name);
       const bName = brandInfo.name;
-      const baseName = getBaseName(m.name);
+      const baseName = m.base_name || getBaseName(m.name);
 
       if (!grouped[bName]) {
         grouped[bName] = { 
@@ -572,10 +572,18 @@ const VideoPage = () => {
 
   // Get available variants for the current base model
   const availableVersions = useMemo(() => {
-    if (!selectedModel || !Array.isArray(rawModels)) return [];
-    const baseName = selectedModel.base_name || selectedModel.name.split(' ')[0]; // More aggressive base name
-    return rawModels.filter(m => (m.base_name === selectedModel.base_name || m.name.startsWith(baseName)));
-  }, [selectedModel, rawModels]);
+    if (!selectedModel || !variantsMap) return [];
+    const baseName = selectedModel.base_name || getBaseName(selectedModel.name);
+    const versions = variantsMap[baseName] || [];
+    
+    // De-duplicate by version_name
+    const unique: Record<string, any> = {};
+    versions.forEach(v => {
+      const vName = v.version_name || "Standard";
+      if (!unique[vName]) unique[vName] = v;
+    });
+    return Object.values(unique);
+  }, [selectedModel, variantsMap]);
 
   // Get model capabilities
   const modelCapabilities = useMemo(() => {
