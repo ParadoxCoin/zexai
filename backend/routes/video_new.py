@@ -52,18 +52,24 @@ async def get_video_models(
     """
     models = []
     
-    # Use UnifiedModelRegistry as the single source of truth
-    from core.unified_model_registry import registry
+    # Direct database query to avoid circular imports and 500 errors
     try:
-        # Get all models from the unified registry
-        all_models = await registry.get_models(db, active_only=False)
+        from core.database import get_db
+        # Use existing database logic to fetch from ai_models
+        # ai_models is the source of truth
+        res = db.table("ai_models").select("*").execute()
+        db_models = res.data if res.data else []
         
         type_filter = type.value if type else None
-        for m in all_models:
-            # BROAD FILTER: Include if type/category contains 'video' OR has video_caps
+        for m in db_models:
+            # BROAD FILTER: Include if type/category contains 'video' OR has video caps in JSON
+            m_id = m.get("id")
+            if not m_id: continue
+            
             m_type = str(m.get("type") or "").lower()
             m_category = str(m.get("category") or "").lower()
-            video_caps = m.get("video_caps") or {}
+            caps = m.get("capabilities") or {}
+            video_caps = caps.get("video") or caps.get("video_params") or {}
             
             is_video = "video" in m_type or "video" in m_category or len(video_caps) > 0
             if not is_video:
@@ -72,21 +78,21 @@ async def get_video_models(
             if type_filter and type_filter not in m_type:
                 continue
                 
-            # Safe mapping for VideoModelInfo
+            # Safe mapping to VideoModelInfo schema
             models.append(VideoModelInfo(
-                id=m["id"],
+                id=m_id,
                 provider=m.get("provider", "Premium"),
-                name=m.get("name", m["id"]),
-                type=m.get("type", "text_to_video"),
+                name=m.get("display_name") or m.get("name") or m_id,
+                type=m.get("model_type") or m.get("type") or "text_to_video",
                 duration=int(m.get("duration", 5)),
                 credits=int(m.get("credits", 100)),
                 quality=VideoQuality(int(m.get("quality", 4)) if str(m.get("quality", "")).isdigit() else 4),
                 speed=VideoSpeed(m.get("speed", "medium") if isinstance(m.get("speed"), str) else "medium"),
                 badge=m.get("badge"),
                 description=m.get("description", ""),
-                capabilities=m.get("capabilities", {}),
+                capabilities=caps,
                 video_params=video_caps,
-                base_name=m.get("base_name") or (m["id"].split('/')[1] if '/' in m["id"] else m["id"]),
+                base_name=m.get("base_name") or (m_id.split('/')[1] if '/' in m_id else m_id),
                 version_name=m.get("version_name") or "Standard",
                 durations=video_caps.get("durations") or m.get("durations") or [5],
                 resolutions=video_caps.get("resolutions") or m.get("resolutions") or ["720p", "1080p", "4K"],
@@ -94,11 +100,10 @@ async def get_video_models(
             ))
             
         if models:
-            # Sort by quality (descending) then credits (ascending)
             models.sort(key=lambda x: (-x.quality.value if hasattr(x.quality, 'value') else -4, x.credits))
             return models
     except Exception as e:
-        print(f"[/video/models] Database query failed, using fallback: {e}")
+        print(f"[/video/models] Database query failed: {e}")
     
     # Fallback: Combine Pollo.ai and kie.ai hardcoded models
     combined_models = {**POLLO_VIDEO_MODELS, **KIE_VIDEO_MODELS}
