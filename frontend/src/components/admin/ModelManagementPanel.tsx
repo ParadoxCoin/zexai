@@ -245,15 +245,35 @@ export const ModelManagementPanel: React.FC = () => {
                 return;
             }
 
+            // Construct Production-level Capability Engine structure
+            const video_caps = {
+                durations: duration_options,
+                resolutions: resolutions,
+                pricing: {} as any
+            };
+
+            // Auto-generate nested pricing map if not explicitly in capabilities
+            duration_options.forEach(d => {
+                video_caps.pricing[d] = {
+                    "720p": Math.round((editingModel as any).credits * (d/5) * (quality_multipliers["720p"] || 1.0)),
+                    "1080p": Math.round((editingModel as any).credits * (d/5) * (quality_multipliers["1080p"] || 1.5)),
+                    "4K": Math.round((editingModel as any).credits * (d/5) * (quality_multipliers["4K"] || 2.5))
+                };
+            });
+
             const payload = {
                 ...editForm,
-                capabilities,
+                capabilities: {
+                    ...(capabilities || {}),
+                    video: video_caps
+                },
+                video_caps, // Top-level for easy backend extraction
                 duration_options,
                 resolutions,
                 quality_multipliers
             };
             
-            console.log('Updating model:', editingModel.id, payload);
+            console.log('Updating model (Engine Mode):', editingModel.id, payload);
             
             const response = await api.put(`/admin/models/${editingModel.id}`, payload);
             console.log('Update response:', response.data);

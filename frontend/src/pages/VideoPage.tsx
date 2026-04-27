@@ -1135,8 +1135,9 @@ const VideoPage = () => {
                         ) : (
                           <div className="flex flex-wrap gap-2">
                             {(() => {
-                              const isVeo31 = selectedModel.id === 'veo31_text' || selectedModel.id === 'veo3.1_text';
-                              const durations = isVeo31 ? [4, 6, 8] : (selectedModel.video_params?.duration_options || selectedModel.durations || [selectedModel.duration || 5]);
+                              const caps = selectedModel.video_caps || {};
+                              const durations = caps.durations || selectedModel.durations || [selectedModel.duration || 5];
+                              
                               return durations.map((d: number) => (
                                 <button
                                   key={d}
@@ -1163,10 +1164,31 @@ const VideoPage = () => {
                         </h3>
                         <div className="flex flex-wrap gap-2">
                           {(() => {
-                            const isVeo31 = selectedModel.id === 'veo31_text' || selectedModel.id === 'veo3.1_text';
-                            const resolutions = isVeo31 ? ['720p', '1080p', '4K'] : (selectedModel.video_params?.resolutions || selectedModel.resolutions || ["720p", "1080p", "4K"]);
+                            const caps = selectedModel.video_caps || {};
+                            const resolutions = caps.resolutions || selectedModel.resolutions || ["720p", "1080p", "4K"];
+                            
                             return resolutions.map((r: string) => {
                               const isAvailable = resolutions.includes(r);
+                              return (
+                                <button
+                                  key={r}
+                                  disabled={!isAvailable}
+                                  onClick={() => setSelectedResolution(r)}
+                                  className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all border-2 ${
+                                    selectedResolution === r
+                                      ? 'bg-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/30 scale-105'
+                                      : isAvailable
+                                      ? 'bg-white dark:bg-gray-800 text-gray-500 border-gray-100 dark:border-gray-700 hover:border-blue-300'
+                                      : 'bg-gray-50 dark:bg-gray-900 text-gray-300 border-gray-100 dark:border-gray-800 cursor-not-allowed'
+                                  }`}
+                                >
+                                  {r}
+                                </button>
+                              );
+                            });
+                          })()}
+                        </div>
+                      </div>
                             return (
                               <button
                                 key={r}
