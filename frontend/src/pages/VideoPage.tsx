@@ -148,6 +148,11 @@ const VideoPage = () => {
     refetchInterval: 10000
   });
 
+  // Force refresh user credits on mount
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ["userCredits"] });
+  }, []);
+
   const { mutate: generateVideo, isPending: isGenerating } = useMutation({
     mutationFn: (data: any) => apiService.post("/video/generate", data),
     onSuccess: (response: any) => {
@@ -565,19 +570,21 @@ const VideoPage = () => {
 
   const currentPrice = useMemo(() => {
     if (!selectedModel) return 0;
+    const isVeo31 = selectedModel.id === 'veo31_text' || selectedModel.id === 'veo3.1_text';
+    
     const baseCredits = selectedModel.credits || 0;
     const baseDuration = selectedModel.duration || 5;
     const duration = selectedDuration || baseDuration;
     
-    // 1. Scale by Duration (only if per-second pricing is enabled for this model)
+    // 1. Scale by Duration (only if per-second pricing is enabled or it's Veo 3.1)
     let price = baseCredits;
-    if (selectedModel.per_second_pricing) {
+    if (selectedModel.per_second_pricing || isVeo31) {
       price = baseCredits * (duration / baseDuration);
     }
     
     // 2. Scale by Quality (Resolution Multiplier)
     const resolution = (selectedResolution || selectedModel.resolution || "720p").toLowerCase();
-    const multipliers = selectedModel.quality_multipliers || { "720p": 1.0, "1080p": 1.5, "4k": 2.5 };
+    const multipliers = isVeo31 ? { "720p": 1.0, "1080p": 1.5, "4k": 2.5 } : (selectedModel.quality_multipliers || { "720p": 1.0, "1080p": 1.5, "4k": 2.5 });
     
     const multiplier = multipliers[resolution] || multipliers[resolution.toLowerCase()] || 1.0;
     price *= multiplier;
@@ -1120,19 +1127,23 @@ const VideoPage = () => {
                           </div>
                         ) : (
                           <div className="flex flex-wrap gap-2">
-                            {(selectedModel.video_params?.duration_options || selectedModel.durations || [selectedModel.duration || 5]).map((d: number) => (
-                              <button
-                                key={d}
-                                onClick={() => setSelectedDuration(d)}
-                                className={`px-6 py-2.5 rounded-xl text-sm font-black transition-all border-2 flex-none ${
-                                  (selectedDuration || selectedModel.duration) === d
-                                    ? 'bg-indigo-600 text-white border-indigo-400 shadow-lg shadow-indigo-500/30 scale-105'
-                                    : 'bg-white dark:bg-gray-800 text-gray-500 border-gray-100 dark:border-gray-700 hover:border-indigo-300'
-                                }`}
-                              >
-                                {d}s
-                              </button>
-                            ))}
+                            {(() => {
+                              const isVeo31 = selectedModel.id === 'veo31_text' || selectedModel.id === 'veo3.1_text';
+                              const durations = isVeo31 ? [4, 6, 8] : (selectedModel.video_params?.duration_options || selectedModel.durations || [selectedModel.duration || 5]);
+                              return durations.map((d: number) => (
+                                <button
+                                  key={d}
+                                  onClick={() => setSelectedDuration(d)}
+                                  className={`px-6 py-2.5 rounded-xl text-sm font-black transition-all border-2 flex-none ${
+                                    (selectedDuration || selectedModel.duration) === d
+                                      ? 'bg-indigo-600 text-white border-indigo-400 shadow-lg shadow-indigo-500/30 scale-105'
+                                      : 'bg-white dark:bg-gray-800 text-gray-500 border-gray-100 dark:border-gray-700 hover:border-indigo-300'
+                                  }`}
+                                >
+                                  {d}s
+                                </button>
+                              ));
+                            })()}
                           </div>
                         )}
                       </div>
@@ -1144,8 +1155,11 @@ const VideoPage = () => {
                           03. {t('videoGen.stepQuality', 'Kalite')}
                         </h3>
                         <div className="flex flex-wrap gap-2">
-                          {(selectedModel.video_params?.resolutions || selectedModel.resolutions || ["720p", "1080p", "4K"]).map((r: string) => {
-                            const isAvailable = (selectedModel.video_params?.resolutions || selectedModel.resolutions || ["720p", "1080p", "4K"]).includes(r);
+                          {(() => {
+                            const isVeo31 = selectedModel.id === 'veo31_text' || selectedModel.id === 'veo3.1_text';
+                            const resolutions = isVeo31 ? ['720p', '1080p', '4K'] : (selectedModel.video_params?.resolutions || selectedModel.resolutions || ["720p", "1080p", "4K"]);
+                            return resolutions.map((r: string) => {
+                              const isAvailable = resolutions.includes(r);
                             return (
                               <button
                                 key={r}
