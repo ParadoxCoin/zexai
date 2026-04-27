@@ -86,86 +86,74 @@ class UnifiedModelRegistry:
         """
         result = {}
         
-        # 1. Load base models matching criteria
+        # 1. Base models
         for model_id, model in self._base_models.items():
             if category and model.get("category") != category: continue
             if type and model.get("type") != type: continue
             result[model_id] = model.copy()
-            
-        # 2. Load overrides from DB (Supabase uses sync client)
+
+        # 2. Apply DB Overrides from ai_models
         try:
-            db_models = db.table("ai_models").select("*").execute()
-            for db_m in db_models.data:
-                mid = db_m.get("id")
-                if not mid:
-                    continue
-                
-                # If it's an override of existing
-                if mid in result:
-                    result[mid].update({k: v for k, v in db_m.items() if v is not None})
-                    result[mid]["source"] = "database_override"
-                else:
-                    # Pure DB model (custom) - ensure required fields have defaults
+            db_res = db.table("ai_models").select("*").execute()
+            if db_res and db_res.data:
+                for db_m in db_res.data:
+                    mid = db_m["id"]
                     if category and db_m.get("category") != category: continue
-                    if type and db_m.get("type") != type: continue
                     
-                    # Add required field defaults for pure DB models
-                    standardized = {
-                        "id": mid,
-                        "name": db_m.get("name") or mid,
-                        "category": db_m.get("category") or "other",
-                        "type": db_m.get("type") or "unknown",
-                        "provider": db_m.get("provider"),
-                        "cost_usd": float(db_m.get("cost_usd", 0)),
-                        "cost_multiplier": float(db_m.get("cost_multiplier", 2.0)),
-                        "quality": db_m.get("quality"),
-                        "speed": db_m.get("speed"),
-                        "badge": db_m.get("badge"),
-                        "description": db_m.get("description") or "",
-                        "is_active": db_m.get("is_active", True),
-                        "source": "database"
-                    }
-                    result[mid] = standardized
+                    if mid in result:
+                        result[mid].update({k: v for k, v in db_m.items() if v is not None})
+                    else:
+                        # New model from DB
+                        result[mid] = db_m
         except Exception as e:
-            logger.warning(f"Failed to load models from DB: {e}")
+            logger.warning(f"Failed to load ai_models: {e}")
             
-        # 3. Load from video_models table (New Unified Architecture)
+        # 3. Apply Video-Specific Advanced Parameters
         try:
-            db_video_models = db.table("video_models").select("*").execute()
-            for vm in db_video_models.data:
-                mid = vm.get("id")
-                if not mid: continue
-                
-                # Standardize to registry format
-                standardized = {
-                    "id": mid,
-                    "name": vm.get("display_name") or vm.get("name") or mid,
-                    "category": "video",
-                    "type": vm.get("model_type") or "text_to_video",
-                    "provider": vm.get("provider_id"),
-                    "cost_usd": float(vm.get("cost_usd", 0)),
-                    "cost_multiplier": float(vm.get("cost_multiplier", 2.0)),
-                    "credits": vm.get("credits"), # Direct credits support
-                    "quality": vm.get("quality_rating"),
-                    "speed": ["slow", "slow", "medium", "fast", "very_fast"][min(vm.get("speed_rating") or 3, 4)],
-                    "badge": vm.get("badge"),
-                    "description": vm.get("description") or "",
-                    "is_active": vm.get("is_active", True),
-                    "source": "video_models_table",
-                    # Pricing details
-                    "per_second_pricing": vm.get("per_second_pricing", False),
-                    "base_duration": vm.get("base_duration", 5),
-                    "quality_multipliers": vm.get("quality_multipliers", {}),
-                    "resolutions": vm.get("resolutions", ["720p", "1080p", "4K"]),
-                    "durations": vm.get("duration_options", [5])
-                }
-                
-                if category and standardized["category"] != category: continue
-                
-                # Overwrite or add
-                result[mid] = standardized
+            video_res = db.table("video_models").select("*").execute()
+            if video_res and video_res.data:
+                for vm in video_res.data:
+                    mid = vm["id"]
+                    if mid in result:
+                        # Update existing model with advanced video fields
+                        updates = {}
+                        
+                        # Standardize durations/resolutions
+                        if vm.get("duration_options"):
+                            updates["durations"] = vm["duration_options"]
+                            updates["duration_options"] = vm["duration_options"]
+                        
+                        if vm.get("resolutions"):
+                            updates["resolutions"] = vm["resolutions"]
+                            
+                        # Other advanced fields
+                        for field in ["per_second_pricing", "base_duration", "quality_multipliers", "base_name", "version_name", "slider_duration"]:
+                            if vm.get(field) is not None:
+                                updates[field] = vm[field]
+                        
+                        result[mid].update(updates)
+                    else:
+                        # New video model from DB
+                        result[mid] = {
+                            "id": mid,
+                            "name": vm.get("display_name") or vm.get("name"),
+                            "category": "video",
+                            "provider": vm.get("provider_id", "unknown"),
+                            "cost_usd": float(vm.get("cost_usd", 0)),
+                            "cost_multiplier": float(vm.get("cost_multiplier", 2.0)),
+                            "credits": vm.get("credits"),
+                            "quality": vm.get("quality_rating", 4),
+                            "speed": ["slow", "slow", "medium", "fast", "very_fast"][min(vm.get("speed_rating") or 3, 4)],
+                            "durations": vm.get("duration_options", [5]),
+                            "resolutions": vm.get("resolutions", ["720p", "1080p"]),
+                            "per_second_pricing": vm.get("per_second_pricing", False),
+                            "base_duration": vm.get("base_duration", 5),
+                            "quality_multipliers": vm.get("quality_multipliers", {}),
+                            "is_active": vm.get("is_active", True),
+                            "source": "video_db"
+                        }
         except Exception as e:
-            logger.warning(f"Failed to load video_models from DB: {e}")
+            logger.warning(f"Error loading video_models: {e}")
 
         # 4. Filter active status and convert to list
         final_list = []
