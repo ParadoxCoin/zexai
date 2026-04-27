@@ -52,63 +52,52 @@ async def get_video_models(
     """
     models = []
     
-    # Try database first (unified approach)
+    # Use UnifiedModelRegistry as the single source of truth
+    from core.unified_model_registry import registry
     try:
-        type_filter = type.value if type else None
-        db_models = await unified_video_service.list_models(db, type_filter)
+        # Get all models from the unified registry (reads from ai_models table)
+        all_models = await registry.get_models(db, active_only=False)
         
-        if db_models:
-            # Create a lookup for hardcoded metadata by model_id
-            kie_lookup = {v["model_id"]: v for v in KIE_VIDEO_MODELS.values()}
+        # Filter for video models
+        type_filter = type.value if type else None
+        for m in all_models:
+            # We look for models with 'video' in capabilities or category/type
+            m_type = m.get("type", "").lower()
+            m_category = m.get("category", "").lower()
             
-            for m in db_models:
-                # Skip effects in model list
-                if m.get("model_type") == "effect":
-                    continue
+            is_video = "video" in m_type or "video" in m_category or "video_caps" in m
+            if not is_video:
+                continue
                 
-                mid = m["id"]
-                h = kie_lookup.get(mid, {})
+            if type_filter and type_filter not in m_type:
+                continue
                 
-                # Get duration options
-                duration_opts = m.get("duration_options") or h.get("durations") or [5]
-                default_duration = duration_opts[0] if duration_opts else 5
-                
-                # Calculate credits from cost and multiplier (Dynamic Pricing)
-                cost_usd = float(m.get("cost_usd", 0))
-                multiplier = float(m.get("cost_multiplier", 2.0))
-                credits = max(1, int(cost_usd * multiplier * 100))
-                
-                # Branding Cleanup: Mask 'kie' provider label
-                provider_display = m.get("provider", "unknown")
-                if provider_display.lower() in ["kie", "kie.ai"]:
-                    provider_display = "Premium"
-                
-                # Parameters/Capabilities
-                params = m.get("parameters", {})
-                
-                # Dynamic fields from DB or hardcoded fallback
-                # PRIORITY: Database (m) > Hardcoded (h)
-                models.append(VideoModelInfo(
-                    id=mid,
-                    provider=provider_display,
-                    name=m.get("display_name") or m.get("name") or h.get("name"),
-                    type=m.get("model_type") or m.get("type", "text_to_video"),
-                    duration=m.get("duration") or default_duration,
-                    credits=credits,
-                    quality=m.get("quality_rating") or m.get("quality", 4),
-                    speed=["slow", "slow", "medium", "fast", "very_fast"][min(m.get("speed_rating") or 3, 4)],
-                    badge=m.get("badge") or h.get("badge"),
-                    description=m.get("description", "") or h.get("description", ""),
-                    capabilities=params,
-                    base_name=m.get("base_name") or h.get("base_name") or (mid.split('/')[1] if '/' in mid else mid),
-                    version_name=m.get("version_name") or h.get("version_name"),
-                    durations=m.get("durations") or m.get("duration_options") or h.get("durations") or duration_opts,
-                    resolutions=m.get("resolutions") or h.get("resolutions") or ["720p", "1080p", "4K"],
-                    slider_duration=m.get("slider_duration") or h.get("slider_duration", False)
-                ))
+            # Map dynamic parameters from the new Capability Engine
+            video_caps = m.get("video_caps") or {}
             
-            if models:
-                return models
+            # Map to schema
+            models.append(VideoModelInfo(
+                id=m["id"],
+                provider=m.get("provider", "Premium"),
+                name=m.get("name", m["id"]),
+                type=m.get("type", "text_to_video"),
+                duration=m.get("duration", 5),
+                credits=m.get("credits", 100),
+                quality=VideoQuality(m.get("quality", 4) if isinstance(m.get("quality"), int) else 4),
+                speed=VideoSpeed(m.get("speed", "medium") if isinstance(m.get("speed"), str) else "medium"),
+                badge=m.get("badge"),
+                description=m.get("description", ""),
+                capabilities=m.get("capabilities", {}),
+                video_params=video_caps, # For newer frontend versions
+                base_name=m.get("base_name") or (m["id"].split('/')[1] if '/' in m["id"] else m["id"]),
+                version_name=m.get("version_name") or "Standard",
+                durations=video_caps.get("durations") or m.get("durations") or [5],
+                resolutions=video_caps.get("resolutions") or m.get("resolutions") or ["720p", "1080p", "4K"],
+                slider_duration=m.get("slider_duration", False)
+            ))
+            
+        if models:
+            return models
     except Exception as e:
         print(f"[/video/models] Database query failed, using fallback: {e}")
     
