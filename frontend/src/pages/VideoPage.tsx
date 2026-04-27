@@ -34,6 +34,20 @@ const videoStyles = [
   { id: 'vintage', name: 'videoGen.styles.vintage', icon: '📼' },
 ];
 
+const getBaseName = (name: string) => {
+  // 1. Strip parentheses content
+  let base = name.split(' (')[0].trim();
+  
+  // 2. Aggressively strip common version suffixes
+  const suffixes = ['Fast', 'Lite', 'Quality', 'Standard', 'Audio', 'Stable', 'Pro', 'Turbo'];
+  suffixes.forEach(s => {
+    const regex = new RegExp(`\\s+${s}$`, 'i');
+    base = base.replace(regex, '');
+  });
+  
+  return base.trim();
+};
+
 const VideoPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -420,20 +434,6 @@ const VideoPage = () => {
   const effects = effectsData?.data || effectsData || [];
   const packages = packagesData?.data || packagesData || [];
   const myVideos = myVideosData?.outputs || myVideosData?.data || myVideosData || [];
-
-  const getBaseName = (name: string) => {
-    // 1. Strip parentheses content
-    let base = name.split(' (')[0].trim();
-    
-    // 2. Aggressively strip common version suffixes
-    const suffixes = ['Fast', 'Lite', 'Quality', 'Standard', 'Audio', 'Stable', 'Pro', 'Turbo'];
-    suffixes.forEach(s => {
-      const regex = new RegExp(`\\s+${s}$`, 'i');
-      base = base.replace(regex, '');
-    });
-    
-    return base.trim();
-  };
 
   // Advanced model grouping with brand, base, and variants
   const { brands, filteredModels, variantsMap } = useMemo(() => {
