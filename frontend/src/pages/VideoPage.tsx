@@ -68,6 +68,11 @@ const VideoPage = () => {
   const [modelId, setModelId] = useState("");
   const [selectedStyle, setSelectedStyle] = useState("");
   const [aspectRatio, setAspectRatio] = useState("16:9");
+  
+  // New dynamic parameter states
+  const [selectedVersionName, setSelectedVersionName] = useState<string | null>(null);
+  const [selectedDuration, setSelectedDuration] = useState<number | null>(null);
+  const [selectedResolution, setSelectedResolution] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [effectId, setEffectId] = useState("");
   const [effectCategory, setEffectCategory] = useState("all");
@@ -536,32 +541,54 @@ const VideoPage = () => {
     }, 0);
   }, [selectedCompareModels, models]);
 
-  // Get selected model details (could be a variant)
+  // Get selected model details
   const selectedModel = useMemo(() => {
-    // If we have rawModels, try to find the exact variant
-    if (Array.isArray(rawModels)) {
-      const found = rawModels.find((m: any) => m.id === modelId);
-      if (found) return found;
-    }
+    if (!Array.isArray(rawModels)) return null;
     
-    // Fallback to searching in variants map
-    for (const base in variantsMap) {
-      const variant = variantsMap[base].find((v: any) => v.id === modelId);
-      if (variant) return variant;
+    // Find model that matches current selection
+    // 1. Try to find exact variant by modelId first
+    const exact = rawModels.find(m => m.id === modelId);
+    if (exact && (!selectedVersionName || exact.version_name === selectedVersionName)) {
+      return exact;
     }
-    return null;
-  }, [rawModels, modelId, variantsMap]);
 
-  // Current base model variants
-  const currentVariants = useMemo(() => {
-    if (!selectedModel) return [];
-    const getBaseName = (name: string) => {
-      const match = name.match(/^(.*?)\s*\(/);
-      return match ? match[1].trim() : name.trim();
-    };
-    const base = getBaseName(selectedModel.name);
-    return variantsMap[base] || [selectedModel];
-  }, [selectedModel, variantsMap]);
+    // 2. Fallback to searching by base name and version
+    const base = rawModels.find(m => m.id === modelId);
+    if (base) {
+      const baseName = base.base_name || base.name.split(' (')[0];
+      const match = rawModels.find(m => 
+        (m.base_name === baseName || m.name.startsWith(baseName)) && 
+        (selectedVersionName ? m.version_name === selectedVersionName : true)
+      );
+      return match || base;
+    }
+
+    return null;
+  }, [rawModels, modelId, selectedVersionName]);
+
+  // Sync states when modelId changes
+  useEffect(() => {
+    if (selectedModel) {
+      if (!selectedVersionName) setSelectedVersionName(selectedModel.version_name || "Standard");
+      if (selectedDuration === null) setSelectedDuration(selectedModel.duration);
+      if (!selectedResolution) setSelectedResolution(selectedModel.resolution);
+    }
+  }, [selectedModel]);
+
+  // Get available variants for the current base model
+  const availableVersions = useMemo(() => {
+    if (!selectedModel || !Array.isArray(rawModels)) return [];
+    const baseName = selectedModel.base_name || selectedModel.name.split(' (')[0];
+    const versions = rawModels.filter(m => (m.base_name === baseName || m.name.startsWith(baseName)));
+    
+    // De-duplicate by version_name
+    const unique: Record<string, any> = {};
+    versions.forEach(v => {
+      const vName = v.version_name || "Standard";
+      if (!unique[vName]) unique[vName] = v;
+    });
+    return Object.values(unique);
+  }, [selectedModel, rawModels]);
 
   // Get model capabilities
   const modelCapabilities = useMemo(() => {
@@ -996,64 +1023,117 @@ const VideoPage = () => {
                   </div>
                 </div>
 
-                {/* Dynamic Parameters Section */}
+                {/* Dynamic Parameters Section - 3 Steps Flow */}
                 {selectedModel && (
-                  <div className="px-5 pb-5 space-y-4 border-t border-gray-100 dark:border-gray-700 pt-5 bg-gray-50/30 dark:bg-gray-900/10">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
-                        <Zap className="w-4 h-4 text-yellow-500" />
-                        {t('videoGen.dynamicParams', 'Dinamik Parametreler')}
-                      </h3>
-                      <span className="text-[10px] px-2 py-0.5 bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 rounded-full font-bold uppercase">
-                        {selectedModel.name.split(' ')[0]} {t('common.optimized', 'Optimize')}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Duration Selector */}
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                          <Timer className="w-3 h-3" /> {t('videoGen.duration', 'Süre Seçimi')}
-                        </label>
+                  <div className="px-5 pb-5 space-y-6 border-t border-gray-100 dark:border-gray-700 pt-5 bg-gray-50/30 dark:bg-gray-900/10">
+                    
+                    {/* Step 1: Version Selection */}
+                    {availableVersions.length > 1 && (
+                      <div className="space-y-3">
+                        <h3 className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                          <Layers className="w-3.5 h-3.5" />
+                          01. {t('videoGen.stepVersion', 'Versiyon Seçimi')}
+                        </h3>
                         <div className="flex flex-wrap gap-2">
-                          {currentVariants.map((v: any) => (
+                          {availableVersions.map((v) => (
                             <button
                               key={v.id}
-                              onClick={() => setModelId(v.id)}
+                              onClick={() => {
+                                setSelectedVersionName(v.version_name);
+                                setModelId(v.id);
+                              }}
                               className={`px-4 py-2 rounded-xl text-sm font-bold transition-all border-2 ${
-                                modelId === v.id
-                                  ? 'bg-purple-600 text-white border-purple-400 shadow-md shadow-purple-500/20'
+                                (selectedVersionName || selectedModel.version_name) === v.version_name
+                                  ? 'bg-purple-600 text-white border-purple-400 shadow-lg shadow-purple-500/20'
                                   : 'bg-white dark:bg-gray-800 text-gray-500 border-gray-200 dark:border-gray-700 hover:border-purple-300'
                               }`}
                             >
-                              {v.duration} {t('common.seconds', 'Saniye')}
-                              <span className={`ml-2 text-[10px] opacity-70`}>({v.credits}c)</span>
+                              {v.version_name || "Standard"}
+                              {v.badge && <span className="ml-2 text-[8px] opacity-70 px-1.5 py-0.5 bg-white/20 rounded uppercase">{v.badge.split(' ')[0]}</span>}
                             </button>
                           ))}
                         </div>
                       </div>
+                    )}
 
-                      {/* Resolution Information */}
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                          <Maximize className="w-3 h-3" /> {t('videoGen.resolution', 'Çözünürlük')}
-                        </label>
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            disabled={true}
-                            className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-md shadow-indigo-500/20 border-2 border-indigo-400"
-                          >
-                            {selectedModel.resolution}
-                          </button>
+                    {/* Step 2: Duration Selection */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                          <Timer className="w-3.5 h-3.5" />
+                          02. {t('videoGen.stepDuration', 'Süre')}
+                        </h3>
+                        <span className="text-xs font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-lg">
+                          {selectedDuration || selectedModel.duration}s
+                        </span>
+                      </div>
+
+                      {selectedModel.slider_duration ? (
+                        <div className="px-2 pt-4 pb-2">
+                          <input
+                            type="range"
+                            min="1"
+                            max="15"
+                            step="1"
+                            value={selectedDuration || selectedModel.duration}
+                            onChange={(e) => setSelectedDuration(parseInt(e.target.value))}
+                            className="w-full h-2 bg-indigo-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                          />
+                          <div className="flex justify-between mt-2 text-[10px] text-gray-400 font-bold">
+                            <span>1s</span>
+                            <span>5s</span>
+                            <span>10s</span>
+                            <span>15s</span>
+                          </div>
                         </div>
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          {(selectedModel.durations || [selectedModel.duration]).map((d: number) => (
+                            <button
+                              key={d}
+                              onClick={() => setSelectedDuration(d)}
+                              className={`px-4 py-2 rounded-xl text-sm font-bold transition-all border-2 ${
+                                (selectedDuration || selectedModel.duration) === d
+                                  ? 'bg-indigo-600 text-white border-indigo-400 shadow-lg shadow-indigo-500/20'
+                                  : 'bg-white dark:bg-gray-800 text-gray-500 border-gray-200 dark:border-gray-700 hover:border-indigo-300'
+                              }`}
+                            >
+                              {d} {t('common.seconds', 'Saniye')}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Step 3: Quality (Resolution) Selection */}
+                    <div className="space-y-3">
+                      <h3 className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                        <Maximize className="w-3.5 h-3.5" />
+                        03. {t('videoGen.stepQuality', 'Kalite')}
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {(selectedModel.resolutions || [selectedModel.resolution]).map((r: string) => (
+                          <button
+                            key={r}
+                            onClick={() => setSelectedResolution(r)}
+                            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all border-2 ${
+                              (selectedResolution || selectedModel.resolution) === r
+                                ? 'bg-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/20'
+                                : 'bg-white dark:bg-gray-800 text-gray-500 border-gray-200 dark:border-gray-700 hover:border-blue-300'
+                            }`}
+                          >
+                            {r}
+                          </button>
+                        ))}
                       </div>
                     </div>
 
-                    {/* Aspect Ratio Selector */}
-                    <div className="space-y-2">
-                      <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                        <Move className="w-3 h-3" /> {t('videoGen.aspectRatio', 'En-Boy Oranı')}
-                      </label>
+                    {/* Aspect Ratio (Global) */}
+                    <div className="space-y-3 pt-2">
+                      <h3 className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                        <Move className="w-3.5 h-3.5" />
+                        {t('videoGen.stepAspect', 'En-Boy Oranı')}
+                      </h3>
                       <div className="flex gap-2">
                         {[
                           { id: '16:9', label: t('common.horizontal'), icon: '🖥️' },
@@ -1075,20 +1155,6 @@ const VideoPage = () => {
                         ))}
                       </div>
                     </div>
-
-                    {/* Special Capabilities Badges */}
-                    {modelCapabilities.length > 0 && (
-                      <div className="pt-2">
-                        <div className="flex flex-wrap gap-2">
-                          {modelCapabilities.map((cap, idx) => (
-                            <div key={idx} className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg text-[10px] font-bold uppercase tracking-tight border border-green-100 dark:border-green-900/30">
-                              <cap.icon className="w-3 h-3" />
-                              {cap.label}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 )}
 

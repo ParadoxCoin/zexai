@@ -379,61 +379,62 @@ KIE_VIDEO_MODELS = {
     "kie_veo31_quality": {
         "provider": "kie.ai",
         "name": "Veo 3.1 (Quality)",
+        "base_name": "Veo 3.1",
+        "version_name": "Quality",
         "type": "text_to_video",
         "model_id": "veo-3.1-quality",
         "kie_credits": 255,
         "cost_usd": 1.275,
         "duration": 8,
-        "durations": [8],
+        "durations": [4, 6, 8],
         "resolution": "1080p",
-        "resolutions": ["1080p", "4K"],
+        "resolutions": ["720p", "1080p", "4K"],
         "quality": 5,
         "speed": "slow",
-        "badge": "🏆 Sinematik Şaheser",
-        "description": "Sinematik hareket, senkronize ses, 1080p",
+        "badge": "🏆 Sinematik",
+        "description": "Premium kalite, senkronize ses",
         "capabilities": {
             "synchronized_audio": True,
-            "cinematic_motion": True,
-            "1080p": True
+            "cinematic_motion": True
         }
     },
     "kie_veo31_fast": {
         "provider": "kie.ai",
         "name": "Veo 3.1 (Fast)",
+        "base_name": "Veo 3.1",
+        "version_name": "Fast",
         "type": "text_to_video",
         "model_id": "veo-3.1-fast",
         "kie_credits": 65,
         "cost_usd": 0.325,
         "duration": 8,
-        "durations": [8],
+        "durations": [4, 6, 8],
         "resolution": "1080p",
-        "resolutions": ["1080p"],
+        "resolutions": ["720p", "1080p"],
         "quality": 4,
         "speed": "fast",
-        "badge": "⚡ Hızlı Veo",
-        "description": "Hızlı render, düşük maliyet",
-        "capabilities": {
-            "1080p": True
-        }
+        "badge": "⚡ Hızlı",
+        "description": "Dengeli hız ve kalite",
+        "capabilities": {}
     },
     "kie_veo31_lite": {
         "provider": "kie.ai",
         "name": "Veo 3.1 (Lite)",
+        "base_name": "Veo 3.1",
+        "version_name": "Lite",
         "type": "text_to_video",
         "model_id": "veo-3.1-lite",
         "kie_credits": 35,
         "cost_usd": 0.175,
         "duration": 8,
-        "durations": [8],
+        "durations": [4, 6, 8],
         "resolution": "1080p",
-        "resolutions": ["1080p"],
+        "resolutions": ["720p"],
         "quality": 3,
         "speed": "very_fast",
         "badge": "💰 Ekonomik",
-        "description": "En uygun fiyatlı Veo modu",
-        "capabilities": {
-            "1080p": True
-        }
+        "description": "En uygun fiyatlı mod",
+        "capabilities": {}
     },
     
     # ============================================
@@ -486,38 +487,44 @@ KIE_VIDEO_MODELS = {
     # ============================================
     "kie_kling26_audio_10s": {
         "provider": "kie.ai",
-        "name": "Kling 2.6 + Audio (10s)",
+        "name": "Kling 2.6 + Audio",
+        "base_name": "Kling AI",
+        "version_name": "Audio",
         "type": "text_to_video",
         "model_id": "kling-2.6-audio-10s",
         "kie_credits": 220,
         "cost_usd": 1.10,
         "duration": 10,
-        "durations": [10],
+        "durations": [5, 10, 15],
+        "slider_duration": True,
         "resolution": "1080p",
-        "resolutions": ["1080p"],
+        "resolutions": ["720p", "1080p", "4K"],
         "quality": 5,
         "speed": "medium",
-        "badge": "🔊 Sesli Video",
-        "description": "10s sesli video",
+        "badge": "🔊 Sesli",
+        "description": "Kling 2.6 yüksek kalite + Ses",
         "capabilities": {
             "synchronized_audio": True
         }
     },
     "kie_kling26_no_audio_10s": {
         "provider": "kie.ai",
-        "name": "Kling 2.6 (10s)",
+        "name": "Kling 2.6 (Standard)",
+        "base_name": "Kling AI",
+        "version_name": "Standard",
         "type": "text_to_video",
         "model_id": "kling-2.6-10s",
         "kie_credits": 110,
         "cost_usd": 0.55,
         "duration": 10,
-        "durations": [10],
+        "durations": [5, 10, 15],
+        "slider_duration": True,
         "resolution": "1080p",
-        "resolutions": ["1080p"],
+        "resolutions": ["720p", "1080p", "4K"],
         "quality": 5,
         "speed": "medium",
         "badge": None,
-        "description": "10s sessiz HD video",
+        "description": "Kling 2.6 yüksek kalite HD",
         "capabilities": {}
     },
     "kie_kling26_audio_5s": {
