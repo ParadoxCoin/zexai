@@ -101,6 +101,7 @@ class UnifiedModelRegistry:
                     if category and db_m.get("category") != category: continue
                     
                     if mid in result:
+                        # CRITICAL: If DB has data, it MUST override hardcoded base
                         result[mid].update({k: v for k, v in db_m.items() if v is not None})
                         
                         # Production-level Capability Engine Extraction
@@ -108,30 +109,28 @@ class UnifiedModelRegistry:
                         if not isinstance(caps, dict): caps = {}
                         
                         # Normalize 'video' capabilities
-                        # Support both new 'video' and legacy 'video_params' keys
                         video_caps = caps.get("video") or caps.get("video_params") or {}
                         if not isinstance(video_caps, dict): video_caps = {}
+                        
+                        # FORCED PURGE: Kill legacy hardcoded keys if we have engine data
+                        # This prevents the "5s fallback" from hardcoded parameters
+                        if video_caps:
+                            current_caps = result[mid].get("capabilities", {})
+                            if isinstance(current_caps, dict):
+                                if "parameters" in current_caps: del current_caps["parameters"]
+                                if "video_params" in current_caps: del current_caps["video_params"]
+                                current_caps["video"] = video_caps
+                                result[mid]["capabilities"] = current_caps
+                            
+                            result[mid]["source"] = "database"
                         
                         # Ensure essential lists are present
                         durations = video_caps.get("durations") or video_caps.get("duration_options") or db_m.get("duration_options") or [5]
                         resolutions = video_caps.get("resolutions") or db_m.get("resolutions") or ["720p", "1080p", "4K"]
                         
-                        # Map to top-level for backward compatibility and internal logic
+                        # Map to top-level for backward compatibility
                         result[mid]["durations"] = durations
                         result[mid]["resolutions"] = resolutions
-                        
-                        # Build Deterministic Pricing Map if missing
-                        if "pricing" not in video_caps:
-                            base_credits = float(db_m.get("credits", 100))
-                            video_caps["pricing"] = {
-                                str(d): {
-                                    r: round(base_credits * (d/5) * (1.5 if r == "1080p" else 2.5 if r == "4K" else 1.0))
-                                    for r in resolutions
-                                } for d in durations
-                            }
-                        
-                        video_caps["durations"] = durations
-                        video_caps["resolutions"] = resolutions
                         result[mid]["video_caps"] = video_caps
                     else:
                         # New model from DB
