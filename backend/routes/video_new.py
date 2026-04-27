@@ -58,13 +58,19 @@ async def get_video_models(
         db_models = await unified_video_service.list_models(db, type_filter)
         
         if db_models:
+            # Create a lookup for hardcoded metadata by model_id
+            kie_lookup = {v["model_id"]: v for v in KIE_VIDEO_MODELS.values()}
+            
             for m in db_models:
                 # Skip effects in model list
                 if m.get("model_type") == "effect":
                     continue
                 
+                mid = m["id"]
+                h = kie_lookup.get(mid, {})
+                
                 # Get duration options
-                duration_opts = m.get("duration_options", [5])
+                duration_opts = m.get("duration_options") or h.get("durations") or [5]
                 default_duration = duration_opts[0] if duration_opts else 5
                 
                 # Calculate credits from cost and multiplier (Dynamic Pricing)
@@ -77,8 +83,11 @@ async def get_video_models(
                 if provider_display.lower() in ["kie", "kie.ai"]:
                     provider_display = "Premium"
                 
+                # Parameters/Capabilities
+                params = m.get("parameters", {})
+                
                 models.append(VideoModelInfo(
-                    id=m["id"],
+                    id=mid,
                     provider=provider_display,
                     name=m.get("display_name") or m.get("name"),
                     type=m.get("model_type", "text_to_video"),
@@ -86,9 +95,15 @@ async def get_video_models(
                     credits=credits,
                     quality=m.get("quality_rating", 4),
                     speed=["slow", "slow", "medium", "fast", "very_fast"][min(m.get("speed_rating", 3), 4)],
-                    badge=m.get("badge"),
-                    description=m.get("description", ""),
-                    capabilities=m.get("parameters", {})
+                    badge=m.get("badge") or h.get("badge"),
+                    description=m.get("description", "") or h.get("description", ""),
+                    capabilities=params,
+                    # Dynamic fields from DB or hardcoded fallback
+                    base_name=m.get("base_name") or h.get("base_name"),
+                    version_name=m.get("version_name") or h.get("version_name"),
+                    durations=m.get("durations") or duration_opts,
+                    resolutions=m.get("resolutions") or h.get("resolutions") or ["720p", "1080p"],
+                    slider_duration=m.get("slider_duration") or h.get("slider_duration", False)
                 ))
             
             if models:
