@@ -730,7 +730,7 @@ const VideoPage = () => {
             </div>
             <h1 className="text-2xl lg:text-3xl font-bold mb-1">
               {t('videoGen.title', 'Video ')}<span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 to-yellow-300">{t('videoGen.titleHighlight', 'Sihirbazı')}</span>
-              <span className="ml-2 text-[10px] bg-white/20 px-1.5 py-0.5 rounded-full font-bold">v2.5</span>
+              <span className="ml-2 text-[10px] bg-white/20 px-1.5 py-0.5 rounded-full font-bold">v2.6</span>
             </h1>
             <p className="text-sm text-purple-100">{t('videoGen.desc', 'Sora 2, Veo 3.1, Kling 2.6, Runway ve daha fazlası')}</p>
           </div>
@@ -1061,15 +1061,15 @@ const VideoPage = () => {
                               {v.version_name || "Standard"}
                               {v.badge && <span className="ml-2 text-[8px] opacity-70 px-1.5 py-0.5 bg-white/20 rounded uppercase">{v.badge.split(' ')[0]}</span>}
                                      {/* Step 2 & 3: Duration & Quality */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="flex flex-col md:flex-row gap-8">
                       {/* Duration */}
-                      <div className="space-y-3">
+                      <div className="flex-1 space-y-4">
                         <div className="flex items-center justify-between">
                           <h3 className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                            <Timer className="w-3.5 h-3.5" />
+                            <Timer className="w-4 h-4" />
                             02. {t('videoGen.stepDuration', 'Süre')}
                           </h3>
-                          <span className="text-xs font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-lg">
+                          <span className="text-xs font-black text-indigo-500 bg-indigo-50 dark:bg-indigo-900/40 px-2.5 py-1 rounded-lg border border-indigo-100 dark:border-indigo-800">
                             {selectedDuration || selectedModel.duration}s
                           </span>
                         </div>
@@ -1085,7 +1085,7 @@ const VideoPage = () => {
                               onChange={(e) => setSelectedDuration(parseInt(e.target.value))}
                               className="w-full h-2 bg-indigo-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                             />
-                            <div className="flex justify-between mt-2 text-[10px] text-gray-400 font-bold">
+                            <div className="flex justify-between mt-3 text-[10px] text-gray-400 font-bold">
                               <span>1s</span>
                               <span>5s</span>
                               <span>10s</span>
@@ -1098,10 +1098,10 @@ const VideoPage = () => {
                               <button
                                 key={d}
                                 onClick={() => setSelectedDuration(d)}
-                                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all border-2 ${
+                                className={`flex-1 min-w-[60px] py-2.5 rounded-xl text-sm font-black transition-all border-2 ${
                                   (selectedDuration || selectedModel.duration) === d
-                                    ? 'bg-indigo-600 text-white border-indigo-400 shadow-lg shadow-indigo-500/20'
-                                    : 'bg-white dark:bg-gray-800 text-gray-500 border-gray-200 dark:border-gray-700 hover:border-indigo-300'
+                                    ? 'bg-indigo-600 text-white border-indigo-400 shadow-lg shadow-indigo-500/30 scale-105'
+                                    : 'bg-white dark:bg-gray-800 text-gray-500 border-gray-100 dark:border-gray-700 hover:border-indigo-300'
                                 }`}
                               >
                                 {d}s
@@ -1112,9 +1112,9 @@ const VideoPage = () => {
                       </div>
 
                       {/* Quality */}
-                      <div className="space-y-3">
+                      <div className="flex-1 space-y-4">
                         <h3 className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                          <Maximize className="w-3.5 h-3.5" />
+                          <Maximize className="w-4 h-4" />
                           03. {t('videoGen.stepQuality', 'Kalite')}
                         </h3>
                         <div className="flex flex-wrap gap-2">
@@ -1122,10 +1122,10 @@ const VideoPage = () => {
                             <button
                               key={r}
                               onClick={() => setSelectedResolution(r)}
-                              className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all border-2 ${
+                              className={`flex-1 min-w-[70px] py-2.5 rounded-xl text-sm font-black transition-all border-2 ${
                                 (selectedResolution || selectedModel.resolution) === r
-                                  ? 'bg-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/20'
-                                  : 'bg-white dark:bg-gray-800 text-gray-500 border-gray-200 dark:border-gray-700 hover:border-blue-300'
+                                  ? 'bg-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/30 scale-105'
+                                  : 'bg-white dark:bg-gray-800 text-gray-500 border-gray-100 dark:border-gray-700 hover:border-blue-300'
                               }`}
                             >
                               {r}
