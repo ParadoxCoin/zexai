@@ -147,7 +147,7 @@ class UnifiedModelRegistry:
                     "cost_multiplier": float(vm.get("cost_multiplier", 2.0)),
                     "credits": vm.get("credits"), # Direct credits support
                     "quality": vm.get("quality_rating"),
-                    "speed": vm.get("speed_rating"),
+                    "speed": ["slow", "slow", "medium", "fast", "very_fast"][min(vm.get("speed_rating") or 3, 4)],
                     "badge": vm.get("badge"),
                     "description": vm.get("description") or "",
                     "is_active": vm.get("is_active", True),
