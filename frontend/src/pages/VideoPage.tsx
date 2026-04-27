@@ -540,28 +540,6 @@ const VideoPage = () => {
   }, [rawModels, activeTab, searchQuery, selectedProvider]);
 
   const models = filteredModels;
-  
-  // Calculate dynamic price based on duration
-  const currentPrice = useMemo(() => {
-    if (!selectedModel) return 0;
-    // Base credits from model
-    const baseCredits = selectedModel.credits;
-    const baseDuration = selectedModel.duration || 5;
-    
-    // If user changed duration, scale the price linearly
-    if (selectedDuration && selectedDuration !== baseDuration) {
-      return Math.round(baseCredits * (selectedDuration / baseDuration));
-    }
-    return baseCredits;
-  }, [selectedModel, selectedDuration]);
-
-  // Calculate total credits for selected compare models
-  const totalCompareCredits = useMemo(() => {
-    return selectedCompareModels.reduce((total, modelId) => {
-      const model = models.find((m: any) => m.id === modelId);
-      return total + (model?.credits || 0);
-    }, 0);
-  }, [selectedCompareModels, models]);
 
   // Get selected model details
   const selectedModel = useMemo(() => {
@@ -583,6 +561,28 @@ const VideoPage = () => {
       setSelectedResolution(selectedModel.resolution);
     }
   }, [selectedModel?.id]); // Only sync when the actual model identity changes
+
+  // Calculate dynamic price based on duration
+  const currentPrice = useMemo(() => {
+    if (!selectedModel) return 0;
+    // Base credits from model
+    const baseCredits = selectedModel.credits;
+    const baseDuration = selectedModel.duration || 5;
+    
+    // If user changed duration, scale the price linearly
+    if (selectedDuration && selectedDuration !== baseDuration) {
+      return Math.round(baseCredits * (selectedDuration / baseDuration));
+    }
+    return baseCredits;
+  }, [selectedModel, selectedDuration]);
+
+  // Calculate total credits for selected compare models
+  const totalCompareCredits = useMemo(() => {
+    return selectedCompareModels.reduce((total, modelId) => {
+      const model = models.find((m: any) => m.id === modelId);
+      return total + (model?.credits || 0);
+    }, 0);
+  }, [selectedCompareModels, models]);
 
   // Get available variants for the current base model
   const availableVersions = useMemo(() => {
