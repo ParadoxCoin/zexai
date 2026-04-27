@@ -103,8 +103,21 @@ class UnifiedModelRegistry:
                     if mid in result:
                         result[mid].update({k: v for k, v in db_m.items() if v is not None})
                     else:
-                        # New model from DB
-                        result[mid] = db_m
+                        # New model from DB - ensure required fields are present
+                        standardized = {
+                            "id": mid,
+                            "name": db_m.get("name") or mid.split('/')[-1].replace('-', ' ').title(),
+                            "category": db_m.get("category") or "other",
+                            "type": db_m.get("type") or "text_to_image",
+                            "provider": db_m.get("provider") or "unknown",
+                            "cost_usd": float(db_m.get("cost_usd", 0)),
+                            "cost_multiplier": float(db_m.get("cost_multiplier", 1.0)),
+                            "is_active": db_m.get("is_active", True),
+                            "source": "database"
+                        }
+                        # Merge the rest
+                        standardized.update({k: v for k, v in db_m.items() if v is not None})
+                        result[mid] = standardized
         except Exception as e:
             logger.warning(f"Failed to load ai_models: {e}")
             
@@ -136,8 +149,9 @@ class UnifiedModelRegistry:
                         # New video model from DB
                         result[mid] = {
                             "id": mid,
-                            "name": vm.get("display_name") or vm.get("name"),
+                            "name": vm.get("display_name") or vm.get("name") or mid.split('/')[-1].replace('-', ' ').title(),
                             "category": "video",
+                            "type": vm.get("model_type") or "text_to_video",
                             "provider": vm.get("provider_id", "unknown"),
                             "cost_usd": float(vm.get("cost_usd", 0)),
                             "cost_multiplier": float(vm.get("cost_multiplier", 2.0)),
