@@ -55,48 +55,47 @@ async def get_video_models(
     # Use UnifiedModelRegistry as the single source of truth
     from core.unified_model_registry import registry
     try:
-        # Get all models from the unified registry (reads from ai_models table)
+        # Get all models from the unified registry
         all_models = await registry.get_models(db, active_only=False)
         
-        # Filter for video models
         type_filter = type.value if type else None
         for m in all_models:
-            # We look for models with 'video' in capabilities or category/type
-            m_type = m.get("type", "").lower()
-            m_category = m.get("category", "").lower()
+            # BROAD FILTER: Include if type/category contains 'video' OR has video_caps
+            m_type = str(m.get("type") or "").lower()
+            m_category = str(m.get("category") or "").lower()
+            video_caps = m.get("video_caps") or {}
             
-            is_video = "video" in m_type or "video" in m_category or "video_caps" in m
+            is_video = "video" in m_type or "video" in m_category or len(video_caps) > 0
             if not is_video:
                 continue
                 
             if type_filter and type_filter not in m_type:
                 continue
                 
-            # Map dynamic parameters from the new Capability Engine
-            video_caps = m.get("video_caps") or {}
-            
-            # Map to schema
+            # Safe mapping for VideoModelInfo
             models.append(VideoModelInfo(
                 id=m["id"],
                 provider=m.get("provider", "Premium"),
                 name=m.get("name", m["id"]),
                 type=m.get("type", "text_to_video"),
-                duration=m.get("duration", 5),
-                credits=m.get("credits", 100),
-                quality=VideoQuality(m.get("quality", 4) if isinstance(m.get("quality"), int) else 4),
+                duration=int(m.get("duration", 5)),
+                credits=int(m.get("credits", 100)),
+                quality=VideoQuality(int(m.get("quality", 4)) if str(m.get("quality", "")).isdigit() else 4),
                 speed=VideoSpeed(m.get("speed", "medium") if isinstance(m.get("speed"), str) else "medium"),
                 badge=m.get("badge"),
                 description=m.get("description", ""),
                 capabilities=m.get("capabilities", {}),
-                video_params=video_caps, # For newer frontend versions
+                video_params=video_caps,
                 base_name=m.get("base_name") or (m["id"].split('/')[1] if '/' in m["id"] else m["id"]),
                 version_name=m.get("version_name") or "Standard",
                 durations=video_caps.get("durations") or m.get("durations") or [5],
                 resolutions=video_caps.get("resolutions") or m.get("resolutions") or ["720p", "1080p", "4K"],
-                slider_duration=m.get("slider_duration", False)
+                slider_duration=bool(m.get("slider_duration", False))
             ))
             
         if models:
+            # Sort by quality (descending) then credits (ascending)
+            models.sort(key=lambda x: (-x.quality.value if hasattr(x.quality, 'value') else -4, x.credits))
             return models
     except Exception as e:
         print(f"[/video/models] Database query failed, using fallback: {e}")
