@@ -124,6 +124,12 @@ export const ModelManagementPanel: React.FC = () => {
         badge: '',
         provider: '',
         capabilities: '',
+        // Video specific pricing
+        per_second_pricing: false,
+        base_duration: 5,
+        duration_options: '5',
+        resolutions: '720p, 1080p, 4K',
+        quality_multipliers: '{"720p": 1.0, "1080p": 1.5, "4K": 2.5}'
     });
 
     // Show capabilities editor
@@ -200,6 +206,11 @@ export const ModelManagementPanel: React.FC = () => {
             badge: model.badge || '',
             provider: model.provider || '',
             capabilities: model.capabilities ? JSON.stringify(model.capabilities, null, 2) : '',
+            per_second_pricing: (model as any).per_second_pricing || false,
+            base_duration: (model as any).base_duration || 5,
+            duration_options: (model as any).durations ? (model as any).durations.join(', ') : (model as any).duration_options ? (model as any).duration_options.join(', ') : '5',
+            resolutions: (model as any).resolutions ? (model as any).resolutions.join(', ') : '720p, 1080p, 4K',
+            quality_multipliers: (model as any).quality_multipliers ? JSON.stringify((model as any).quality_multipliers) : '{"720p": 1.0, "1080p": 1.5, "4K": 2.5}'
         });
         setShowCapabilitiesEditor(!!model.capabilities);
     };
@@ -219,9 +230,23 @@ export const ModelManagementPanel: React.FC = () => {
                 }
             }
 
+            // Handle advanced video parameters
+            const duration_options = editForm.duration_options.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+            const resolutions = editForm.resolutions.split(',').map(s => s.trim()).filter(s => s);
+            let quality_multipliers = {};
+            try {
+                quality_multipliers = JSON.parse(editForm.quality_multipliers);
+            } catch (e) {
+                toast.error('Hata', 'Kalite çarpanları JSON formatı geçersiz');
+                return;
+            }
+
             await api.put(`/admin/models/${editingModel.id}`, {
                 ...editForm,
-                capabilities
+                capabilities,
+                duration_options,
+                resolutions,
+                quality_multipliers
             });
             toast.success('Başarılı', 'Model güncellendi');
             setEditingModel(null);
@@ -671,6 +696,73 @@ export const ModelManagementPanel: React.FC = () => {
                                     className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
                                 />
                             </div>
+
+                            {/* Video Specific Parameters */}
+                            {editingModel.category === 'video' && (
+                                <div className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800 space-y-4">
+                                    <h5 className="text-sm font-bold text-blue-700 dark:text-blue-300 flex items-center gap-2">
+                                        <Zap className="h-4 w-4" />
+                                        Gelişmiş Video Parametreleri
+                                    </h5>
+                                    
+                                    <div className="flex items-center gap-4">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={editForm.per_second_pricing}
+                                                onChange={(e) => setEditForm({ ...editForm, per_second_pricing: e.target.checked })}
+                                                className="rounded"
+                                            />
+                                            <span className="text-sm font-medium dark:text-gray-300">Saniye Bazlı Fiyatlandırma</span>
+                                        </label>
+                                        
+                                        {editForm.per_second_pricing && (
+                                            <div className="flex-1">
+                                                <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Baz Süre (sn)</label>
+                                                <input
+                                                    type="number"
+                                                    value={editForm.base_duration}
+                                                    onChange={(e) => setEditForm({ ...editForm, base_duration: parseInt(e.target.value) })}
+                                                    className="w-full px-2 py-1 text-sm border rounded dark:bg-gray-800 dark:border-gray-700"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Süre Seçenekleri (virgülle ayır)</label>
+                                            <input
+                                                type="text"
+                                                value={editForm.duration_options}
+                                                onChange={(e) => setEditForm({ ...editForm, duration_options: e.target.value })}
+                                                placeholder="5, 10, 15"
+                                                className="w-full px-2 py-1 text-sm border rounded dark:bg-gray-800 dark:border-gray-700"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Çözünürlükler</label>
+                                            <input
+                                                type="text"
+                                                value={editForm.resolutions}
+                                                onChange={(e) => setEditForm({ ...editForm, resolutions: e.target.value })}
+                                                placeholder="720p, 1080p, 4K"
+                                                className="w-full px-2 py-1 text-sm border rounded dark:bg-gray-800 dark:border-gray-700"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Kalite Çarpanları (JSON)</label>
+                                        <input
+                                            type="text"
+                                            value={editForm.quality_multipliers}
+                                            onChange={(e) => setEditForm({ ...editForm, quality_multipliers: e.target.value })}
+                                            className="w-full px-2 py-1 text-sm font-mono border rounded dark:bg-gray-800 dark:border-gray-700"
+                                        />
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Capabilities Editor */}
                             <div>

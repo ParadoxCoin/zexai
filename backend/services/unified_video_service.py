@@ -148,7 +148,10 @@ class UnifiedVideoService:
         
         # 3. Get credits cost from unified CreditManager (respects DB overrides)
         credits_required = await CreditManager.get_service_cost(
-            db, "video", 1.0, model_id=request.model_id
+            db, "video", 1.0, 
+            model_id=request.model_id,
+            duration=request.duration,
+            resolution=request.resolution
         )
         
         # 4. Check credits

@@ -25,7 +25,14 @@ class CreditManager:
     """Manages credit operations for users using Supabase"""
     
     @staticmethod
-    async def get_service_cost(db, service_type: str, unit_amount: float = 1.0, model_id: Optional[str] = None) -> float:
+    async def get_service_cost(
+        db, 
+        service_type: str, 
+        unit_amount: float = 1.0, 
+        model_id: Optional[str] = None,
+        duration: Optional[int] = None,
+        resolution: Optional[str] = None
+    ) -> float:
         """
         Get the credit cost for a service.
         If model_id is provided, it attempts to fetch model-specific pricing from the registry.
@@ -41,14 +48,34 @@ class CreditManager:
                         cost_usd = float(model.get("cost_usd", 0))
                         multiplier = float(model.get("cost_multiplier", 2.0))
                         # Credits = cost * multiplier * 100
-                        model_credits = int(cost_usd * multiplier * 100)
+                        base_credits = float(model.get("credits") or (cost_usd * multiplier * 100))
                         
+                        # 1. Duration Scaling (Per-Second Pricing)
+                        final_credits = base_credits
+                        if service_type == "video" and duration:
+                            is_per_second = model.get("per_second_pricing", False)
+                            base_duration = float(model.get("base_duration", 5))
+                            
+                            if is_per_second:
+                                # Scale linearly: (duration / base_duration) * base_credits
+                                final_credits = (duration / base_duration) * base_credits
+                        
+                        # 2. Quality/Resolution Multiplier
+                        if service_type == "video" and resolution:
+                            multipliers = model.get("quality_multipliers", {})
+                            if not multipliers:
+                                # Fallback to hardcoded defaults
+                                multipliers = {"720p": 1.0, "1080p": 1.5, "4K": 2.5}
+                            
+                            res_mult = float(multipliers.get(resolution, multipliers.get(resolution.lower(), 1.0)))
+                            final_credits = final_credits * res_mult
+
                         # Special handling for chat: cost is per 1000 units (tokens)
                         if model.get("category") == "chat":
-                            return (float(model_credits) * unit_amount) # unit_amount should be tokens/1000
+                            return (float(final_credits) * unit_amount) # unit_amount should be tokens/1000
                         
-                        if model_credits > 0:
-                            return float(model_credits) * unit_amount
+                        if final_credits > 0:
+                            return float(final_credits) * unit_amount
                 except Exception as e:
                     logger.warning(f"Failed to fetch model-specific cost for {model_id}: {e}")
 

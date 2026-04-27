@@ -374,8 +374,46 @@ KIE_IMAGE_MODELS = {
 
 KIE_VIDEO_MODELS = {
     # ============================================
-    # Google Veo 3.1 - Official Pricing Sync
+    # Google Veo 3 / 3.1 - Official Pricing Sync
     # ============================================
+    "kie_veo3_quality": {
+        "provider": "kie.ai",
+        "name": "Veo 3 (Quality)",
+        "base_name": "Veo 3",
+        "version_name": "Quality",
+        "type": "text_to_video",
+        "model_id": "veo-3-quality",
+        "kie_credits": 180,
+        "cost_usd": 0.90,
+        "duration": 5,
+        "durations": [4, 6, 8],
+        "resolution": "1080p",
+        "resolutions": ["720p", "1080p", "4K"],
+        "quality": 5,
+        "speed": "slow",
+        "badge": "🎬 Premium",
+        "description": "Yüksek kaliteli Google Veo 3",
+        "capabilities": {"synchronized_audio": True}
+    },
+    "kie_veo3_fast": {
+        "provider": "kie.ai",
+        "name": "Veo 3 (Fast)",
+        "base_name": "Veo 3",
+        "version_name": "Fast",
+        "type": "text_to_video",
+        "model_id": "veo-3-fast",
+        "kie_credits": 80,
+        "cost_usd": 0.40,
+        "duration": 5,
+        "durations": [4, 6, 8],
+        "resolution": "1080p",
+        "resolutions": ["720p", "1080p"],
+        "quality": 4,
+        "speed": "fast",
+        "badge": "⚡ Hızlı",
+        "description": "Hızlı Veo 3 modeli",
+        "capabilities": {}
+    },
     "kie_veo31_quality": {
         "provider": "kie.ai",
         "name": "Veo 3.1 (Quality)",

@@ -3,7 +3,7 @@ import {
   Users, DollarSign, Activity, TrendingUp, Search, Ban, CheckCircle,
   Trophy, Loader2, X, Plus, Minus, CreditCard, BarChart3, MessageCircle,
   Image, Zap, RefreshCw, ChevronRight, Shield, AlertTriangle, Eye,
-  UserPlus, ShieldCheck, Clock, Sparkles
+  UserPlus, ShieldCheck, Clock, Sparkles, Film, Settings
 } from 'lucide-react';
 import { apiService } from '@/services/api';
 
@@ -60,9 +60,15 @@ export const AdminPage: React.FC = () => {
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Airdrop state
-  const [airdropData, setAirdropData] = useState<any>(null);
-  const [airdropLoading, setAirdropLoading] = useState(false);
   const [airdropActionLoading, setAirdropActionLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'users' | 'models'>('users');
+
+  // Video Models State
+  const [videoModels, setVideoModels] = useState<any[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<any>(null);
+  const [showModelModal, setShowModelModal] = useState(false);
+  const [isUpdatingModel, setIsUpdatingModel] = useState(false);
 
   const showToast = (type: 'success' | 'error', message: string) => {
     setToast({ type, message });
@@ -107,6 +113,33 @@ export const AdminPage: React.FC = () => {
       console.error("Failed to fetch airdrops", error);
     } finally {
       setAirdropLoading(false);
+    }
+  };
+
+  const fetchVideoModels = async () => {
+    setModelsLoading(true);
+    try {
+      const res = await apiService.get('/admin/video-models');
+      setVideoModels((res as any)?.models || []);
+    } catch (error) {
+      console.error("Failed to fetch video models", error);
+      showToast('error', 'Video modelleri yüklenemedi');
+    } finally {
+      setModelsLoading(false);
+    }
+  };
+
+  const handleUpdateModel = async (modelId: string, data: any) => {
+    setIsUpdatingModel(true);
+    try {
+      await apiService.put(`/admin/video-models/${modelId}`, data);
+      showToast('success', 'Model başarıyla güncellendi');
+      setShowModelModal(false);
+      fetchVideoModels();
+    } catch (error) {
+      showToast('error', 'Model güncellenemedi');
+    } finally {
+      setIsUpdatingModel(false);
     }
   };
 
@@ -448,40 +481,68 @@ export const AdminPage: React.FC = () => {
             </h1>
             <p className="text-sm text-gray-500 mt-1">Platform yönetimi ve istatistikler</p>
           </div>
-          <button onClick={fetchAdminData}
             className="mt-3 sm:mt-0 flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
             <RefreshCw className="w-4 h-4" /> Yenile
           </button>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {[
-            { label: 'Toplam Kullanıcı', value: stats?.total_users || 0, icon: Users, gradient: 'from-blue-500 to-indigo-500', bgLight: 'bg-blue-50 dark:bg-blue-900/20' },
-            { label: 'Aktif (24s)', value: stats?.active_users_24h || 0, icon: Activity, gradient: 'from-emerald-500 to-teal-500', bgLight: 'bg-emerald-50 dark:bg-emerald-900/20' },
-            { label: 'Toplam İşlem', value: stats?.total_generations || 0, icon: BarChart3, gradient: 'from-purple-500 to-pink-500', bgLight: 'bg-purple-50 dark:bg-purple-900/20' },
-            { label: 'Toplam Kredi', value: Math.round(stats?.total_credits_in_circulation || 0), icon: DollarSign, gradient: 'from-amber-500 to-orange-500', bgLight: 'bg-amber-50 dark:bg-amber-900/20' },
-          ].map((s, i) => (
-            <div key={i} className={`${s.bgLight} rounded-2xl border border-gray-200/50 dark:border-gray-700 p-4 sm:p-5`}>
-              <div className="flex items-center justify-between mb-2">
-                <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${s.gradient} flex items-center justify-center shadow-md`}>
-                  <s.icon className="w-4.5 h-4.5 text-white" />
-                </div>
-              </div>
-              <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{s.value.toLocaleString()}</p>
-              <p className="text-xs text-gray-500 mt-1">{s.label}</p>
-            </div>
-          ))}
+        {/* Tab Switcher */}
+        <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl mb-6 w-fit">
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
+              activeTab === 'users'
+                ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Kullanıcılar
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('models');
+              fetchVideoModels();
+            }}
+            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
+              activeTab === 'models'
+                ? 'bg-white dark:bg-gray-700 text-indigo-600 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Video Modelleri
+          </button>
         </div>
 
-        {/* Airdrop Management Panel */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm mb-8">
-          <div className="p-4 sm:p-5 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/10 dark:to-teal-900/10">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-emerald-500" /> Presale Airdrop Yönetimi
-            </h2>
-            <p className="text-sm text-gray-500 mt-1">Haftalık referans kazançlarını indir ve dağıtıldı olarak işaretle</p>
-          </div>
+        {activeTab === 'users' && (
+          <>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              {[
+                { label: 'Toplam Kullanıcı', value: stats?.total_users || 0, icon: Users, gradient: 'from-blue-500 to-indigo-500', bgLight: 'bg-blue-50 dark:bg-blue-900/20' },
+                { label: 'Aktif (24s)', value: stats?.active_users_24h || 0, icon: Activity, gradient: 'from-emerald-500 to-teal-500', bgLight: 'bg-emerald-50 dark:bg-emerald-900/20' },
+                { label: 'Toplam İşlem', value: stats?.total_generations || 0, icon: BarChart3, gradient: 'from-purple-500 to-pink-500', bgLight: 'bg-purple-50 dark:bg-purple-900/20' },
+                { label: 'Toplam Kredi', value: Math.round(stats?.total_credits_in_circulation || 0), icon: DollarSign, gradient: 'from-amber-500 to-orange-500', bgLight: 'bg-amber-50 dark:bg-amber-900/20' },
+              ].map((s, i) => (
+                <div key={i} className={`${s.bgLight} rounded-2xl border border-gray-200/50 dark:border-gray-700 p-4 sm:p-5`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${s.gradient} flex items-center justify-center shadow-md`}>
+                      <s.icon className="w-4.5 h-4.5 text-white" />
+                    </div>
+                  </div>
+                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{s.value.toLocaleString()}</p>
+                  <p className="text-xs text-gray-500 mt-1">{s.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Airdrop Management Panel */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm mb-8">
+              <div className="p-4 sm:p-5 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/10 dark:to-teal-900/10">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-emerald-500" /> Presale Airdrop Yönetimi
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">Haftalık referans kazançlarını indir ve dağıtıldı olarak işaretle</p>
+              </div>
           <div className="p-5 flex flex-col md:flex-row items-center gap-6">
             <div className="flex-1 w-full grid grid-cols-2 gap-4">
               <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-100 dark:border-gray-600">
@@ -518,130 +579,222 @@ export const AdminPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Users Table */}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Video Models Content */}
+      {activeTab === 'models' && (
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
           <div className="p-4 sm:p-5 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center justify-between">
               <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <Users className="w-4 h-4 text-gray-400" /> Kullanıcı Yönetimi
-                <span className="text-xs font-normal text-gray-400">({filteredUsers.length})</span>
+                <Film className="w-4 h-4 text-gray-400" /> Video Modelleri Yönetimi
+                <span className="text-xs font-normal text-gray-400">({videoModels.length})</span>
               </h2>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Email veya isim ara..."
-                  className="w-full sm:w-64 pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
-                />
-              </div>
             </div>
           </div>
 
-          <div className="overflow-x-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' as any }}>
+          <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50/50 dark:bg-gray-800/50">
                 <tr>
-                  <th className="px-4 sm:px-6 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Kullanıcı</th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Rol</th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Kredi</th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">Son Giriş</th>
-                  <th className="px-4 sm:px-6 py-3 text-center text-[11px] font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">30g Üretim</th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Durum</th>
-                  <th className="px-4 sm:px-6 py-3 text-right text-[11px] font-semibold text-gray-500 uppercase tracking-wider">İşlemler</th>
+                  <th className="px-6 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase">Model</th>
+                  <th className="px-6 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase">Provider</th>
+                  <th className="px-6 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase">Kredi</th>
+                  <th className="px-6 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase">Süreler</th>
+                  <th className="px-6 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase">Durum</th>
+                  <th className="px-6 py-3 text-right text-[11px] font-semibold text-gray-500 uppercase">İşlemler</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
-                {filteredUsers.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-10 text-center text-sm text-gray-400">
-                      {searchTerm ? 'Kullanıcı bulunamadı' : 'Henüz kullanıcı yok'}
-                    </td>
-                  </tr>
-                ) : filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors">
-                    <td className="px-4 sm:px-6 py-3.5">
+                {modelsLoading ? (
+                  <tr><td colSpan={6} className="px-6 py-10 text-center"><Loader2 className="w-5 h-5 animate-spin mx-auto text-indigo-500" /></td></tr>
+                ) : videoModels.map((model) => (
+                  <tr key={model.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors">
+                    <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                          {getUserName(user)?.[0]?.toUpperCase()}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{getUserName(user)}</p>
-                          <p className="text-[11px] text-gray-400 truncate">{user.email}</p>
+                        <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-lg">{model.icon || '🎬'}</div>
+                        <div>
+                          <p className="text-sm font-bold text-gray-900 dark:text-white">{model.display_name || model.name}</p>
+                          <p className="text-[10px] text-gray-400 font-mono">{model.id}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 sm:px-6 py-3.5 hidden sm:table-cell">
-                      <span className={`inline-flex px-2 py-0.5 text-[10px] font-semibold rounded-full ${user.role === 'admin' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'
-                          : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                        }`}>
-                        {user.role}
-                      </span>
+                    <td className="px-6 py-4">
+                      <span className="text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">{model.provider_id}</span>
                     </td>
-                    <td className="px-4 sm:px-6 py-3.5">
-                      <span className="text-sm font-semibold text-gray-900 dark:text-white">{Math.round(user.credits_balance || user.credits || 0)}</span>
+                    <td className="px-6 py-4">
+                      <span className="text-sm font-black text-indigo-600 dark:text-indigo-400">{model.credits}c</span>
                     </td>
-                    <td className="px-4 sm:px-6 py-3.5 hidden lg:table-cell">
-                      <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                        <Clock className="w-3 h-3" />
-                        <span>{formatLastLogin(user.last_login)}</span>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-wrap gap-1">
+                        {(model.duration_options || [5]).map((d: number) => (
+                          <span key={d} className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-[10px] font-bold text-gray-500">{d}s</span>
+                        ))}
                       </div>
                     </td>
-                    <td className="px-4 sm:px-6 py-3.5 hidden lg:table-cell text-center">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-bold rounded-full ${
-                        (user.generation_count_30d || 0) > 50 ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                        : (user.generation_count_30d || 0) > 10 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
-                      }`}>
-                        <Sparkles className="w-3 h-3" />
-                        {user.generation_count_30d || 0}
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${model.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                        {model.is_active ? 'AKTİF' : 'PASİF'}
                       </span>
                     </td>
-                    <td className="px-4 sm:px-6 py-3.5 hidden md:table-cell">
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full ${user.is_active !== false ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                          : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-                        }`}>
-                        {user.is_active !== false ? <><CheckCircle className="w-3 h-3" /> Aktif</> : <><Ban className="w-3 h-3" /> Askıda</>}
-                      </span>
-                    </td>
-                    <td className="px-4 sm:px-6 py-3.5 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => fetchUserDetail(user)}
-                          className="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all"
-                          title="Detay">
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => { setSelectedUser(user); setShowCreditModal(true); }}
-                          className="p-1.5 text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all"
-                          title="Kredi Ayarla">
-                          <DollarSign className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => handleChangeRole(user.id, user.role)}
-                          className="p-1.5 text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all"
-                          title={user.role === 'admin' ? 'User Yap' : 'Admin Yap'}>
-                          <ShieldCheck className="w-4 h-4" />
-                        </button>
-                        {user.is_active !== false ? (
-                          <button onClick={() => handleSuspendUser(user.id)}
-                            className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
-                            title="Askıya Al">
-                            <Ban className="w-4 h-4" />
-                          </button>
-                        ) : (
-                          <button onClick={() => handleActivateUser(user.id)}
-                            className="p-1.5 text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all"
-                            title="Aktif Et">
-                            <UserPlus className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
+                    <td className="px-6 py-4 text-right">
+                      <button 
+                        onClick={() => { setSelectedModel({...model}); setShowModelModal(true); }}
+                        className="p-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-gray-400 hover:text-indigo-600 rounded-lg transition-all"
+                      >
+                        <Settings className="w-4 h-4" />
+                      </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* Model Edit Modal */}
+      {showModelModal && selectedModel && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 w-full max-w-2xl shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-xl font-black text-gray-900 dark:text-white">Model Yapılandırması</h3>
+                <p className="text-xs text-gray-500 font-mono mt-1">{selectedModel.id}</p>
+              </div>
+              <button onClick={() => setShowModelModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Basic Info */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Görünen İsim</label>
+                  <input 
+                    type="text" 
+                    value={selectedModel.display_name || ''} 
+                    onChange={e => setSelectedModel({...selectedModel, display_name: e.target.value})}
+                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Temel Kredi</label>
+                    <input 
+                      type="number" 
+                      value={selectedModel.credits} 
+                      onChange={e => setSelectedModel({...selectedModel, credits: parseInt(e.target.value)})}
+                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Sıralama</label>
+                    <input 
+                      type="number" 
+                      value={selectedModel.sort_order} 
+                      onChange={e => setSelectedModel({...selectedModel, sort_order: parseInt(e.target.value)})}
+                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Rozet (Badge)</label>
+                  <input 
+                    type="text" 
+                    value={selectedModel.badge || ''} 
+                    onChange={e => setSelectedModel({...selectedModel, badge: e.target.value})}
+                    placeholder="🔥 En Yeni! gibi..."
+                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Pricing & Duration */}
+              <div className="space-y-4">
+                <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl border border-indigo-100 dark:border-indigo-800">
+                  <h4 className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase mb-3 flex items-center gap-2">
+                    <DollarSign className="w-3 h-3" /> Gelişmiş Fiyatlandırma
+                  </h4>
+                  <div className="space-y-3">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedModel.per_second_pricing} 
+                        onChange={e => setSelectedModel({...selectedModel, per_second_pricing: e.target.checked})}
+                        className="w-4 h-4 rounded text-indigo-600"
+                      />
+                      <span className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase">Saniye Bazlı Fiyatlandır</span>
+                    </label>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Baz Süre (sn)</label>
+                      <input 
+                        type="number" 
+                        value={selectedModel.base_duration || 5} 
+                        onChange={e => setSelectedModel({...selectedModel, base_duration: parseInt(e.target.value)})}
+                        className="w-full px-3 py-1.5 bg-white dark:bg-gray-800 border border-indigo-100 dark:border-indigo-700 rounded-lg text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Süre Seçenekleri (virgülle ayır)</label>
+                  <input 
+                    type="text" 
+                    value={Array.isArray(selectedModel.duration_options) ? selectedModel.duration_options.join(', ') : ''} 
+                    onChange={e => setSelectedModel({...selectedModel, duration_options: e.target.value.split(',').map(s => parseInt(s.trim()))})}
+                    placeholder="4, 6, 8"
+                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm"
+                  />
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedModel.is_active} 
+                      onChange={e => setSelectedModel({...selectedModel, is_active: e.target.checked})}
+                      className="w-4 h-4 rounded text-emerald-600"
+                    />
+                    <span className="text-xs font-bold text-gray-700 dark:text-gray-300">AKTİF</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedModel.is_featured} 
+                      onChange={e => setSelectedModel({...selectedModel, is_featured: e.target.checked})}
+                      className="w-4 h-4 rounded text-amber-600"
+                    />
+                    <span className="text-xs font-bold text-gray-700 dark:text-gray-300">ÖNE ÇIKAR</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 flex gap-3">
+              <button 
+                onClick={() => handleUpdateModel(selectedModel.id, selectedModel)}
+                disabled={isUpdatingModel}
+                className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold shadow-lg shadow-indigo-500/30 transition-all flex items-center justify-center gap-2"
+              >
+                {isUpdatingModel ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle className="w-5 h-5" />}
+                Yapılandırmayı Kaydet
+              </button>
+              <button 
+                onClick={() => setShowModelModal(false)}
+                className="px-8 py-3 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-2xl font-bold hover:bg-gray-200 transition-all"
+              >
+                İptal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
         </div>
       </div>
     </div>

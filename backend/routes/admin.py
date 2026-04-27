@@ -809,3 +809,54 @@ async def get_top_models(
             detail="Failed to fetch top models"
         )
 
+@router.get("/video-models")
+async def list_video_models(
+    admin_user = Depends(get_current_admin_user),
+    db = Depends(get_db)
+):
+    """List all video models for management"""
+    try:
+        response = db.table("video_models").select("*").order("provider_id").execute()
+        return {"models": response.data}
+    except Exception as e:
+        logger.error(f"Error listing video models: {str(e)}")
+        raise HTTPException(500, "Failed to list models")
+
+@router.put("/video-models/{model_id}")
+async def update_video_model(
+    model_id: str,
+    update_data: Dict[str, Any],
+    admin_user = Depends(get_current_admin_user),
+    db = Depends(get_db)
+):
+    """Update video model parameters"""
+    try:
+        # Filter out keys not in table
+        allowed_keys = [
+            "display_name", "description", "credits", "cost_usd", 
+            "duration_options", "max_resolution", "is_active", 
+            "is_featured", "sort_order", "badge", "quality_rating",
+            "base_duration", "per_second_pricing", "quality_multipliers",
+            "base_name", "version_name", "slider_duration", "resolutions"
+        ]
+        
+        filtered_data = {k: v for k, v in update_data.items() if k in allowed_keys}
+        filtered_data["updated_at"] = datetime.utcnow().isoformat()
+        
+        response = db.table("video_models").update(filtered_data).eq("id", model_id).execute()
+        
+        if not response.data:
+            raise HTTPException(404, "Model not found")
+            
+        return {"message": "Model updated successfully", "model": response.data[0]}
+    except Exception as e:
+        logger.error(f"Error updating video model: {str(e)}")
+        raise HTTPException(500, "Failed to update model")
+    
+    except Exception as e:
+        logger.error(f"Error fetching top models: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch top models"
+        )
+

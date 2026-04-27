@@ -332,6 +332,13 @@ async def update_model(
             )
         
         result = await model_registry.update_model(db, model_id, update_data)
+        
+        # Clear video service cache if it's a video model
+        if result.get("category") == "video":
+            from services.unified_video_service import unified_video_service
+            # We just set the cache_time to None to force a refresh on next request
+            unified_video_service._cache_time = None
+            
         return model_to_response(result)
         
     except HTTPException:
@@ -360,6 +367,12 @@ async def update_price(
             price.cost_usd,
             price.cost_multiplier
         )
+        
+        # Clear video service cache if it's a video model
+        if result.get("category") == "video":
+            from services.unified_video_service import unified_video_service
+            unified_video_service._cache_time = None
+            
         return model_to_response(result)
         
     except Exception as e:
@@ -393,6 +406,11 @@ async def toggle_model(
         new_state = not model.get("is_active", True)
         result = await model_registry.toggle_model_active(db, model_id, new_state)
         
+        # Clear video service cache if it's a video model
+        if result.get("category") == "video":
+            from services.unified_video_service import unified_video_service
+            unified_video_service._cache_time = None
+            
         return model_to_response(result)
         
     except HTTPException:

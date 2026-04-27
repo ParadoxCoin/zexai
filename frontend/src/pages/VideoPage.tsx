@@ -569,9 +569,21 @@ const VideoPage = () => {
     const baseDuration = selectedModel.duration || 5;
     const duration = selectedDuration || baseDuration;
     
-    // Scale price based on duration ratio (linear scaling as requested)
-    return Math.round(baseCredits * (duration / baseDuration));
-  }, [selectedModel, selectedDuration]);
+    // 1. Scale by Duration (only if per-second pricing is enabled for this model)
+    let price = baseCredits;
+    if (selectedModel.per_second_pricing) {
+      price = baseCredits * (duration / baseDuration);
+    }
+    
+    // 2. Scale by Quality (Resolution Multiplier)
+    const resolution = (selectedResolution || selectedModel.resolution || "720p").toLowerCase();
+    const multipliers = selectedModel.quality_multipliers || { "720p": 1.0, "1080p": 1.5, "4k": 2.5 };
+    
+    const multiplier = multipliers[resolution] || multipliers[resolution.toLowerCase()] || 1.0;
+    price *= multiplier;
+    
+    return Math.round(price);
+  }, [selectedModel, selectedDuration, selectedResolution]);
 
   // Reset parameters when model changes to ensure accurate pricing and UI state
   useEffect(() => {

@@ -40,6 +40,9 @@ class UnifiedModelRegistry:
             "quality": m.get("quality", 4),
             "speed": m.get("speed", "medium"),
             "duration": m.get("duration"),
+            "durations": m.get("durations"),
+            "resolutions": m.get("resolutions"),
+            "slider_duration": m.get("slider_duration", False),
             "badge": m.get("badge"),
             "description": m.get("description", ""),
             "capabilities": m.get("capabilities", {}),
@@ -126,7 +129,45 @@ class UnifiedModelRegistry:
         except Exception as e:
             logger.warning(f"Failed to load models from DB: {e}")
             
-        # 3. Filter active status and convert to list
+        # 3. Load from video_models table (New Unified Architecture)
+        try:
+            db_video_models = db.table("video_models").select("*").execute()
+            for vm in db_video_models.data:
+                mid = vm.get("id")
+                if not mid: continue
+                
+                # Standardize to registry format
+                standardized = {
+                    "id": mid,
+                    "name": vm.get("display_name") or vm.get("name") or mid,
+                    "category": "video",
+                    "type": vm.get("model_type") or "text_to_video",
+                    "provider": vm.get("provider_id"),
+                    "cost_usd": float(vm.get("cost_usd", 0)),
+                    "cost_multiplier": float(vm.get("cost_multiplier", 2.0)),
+                    "credits": vm.get("credits"), # Direct credits support
+                    "quality": vm.get("quality_rating"),
+                    "speed": vm.get("speed_rating"),
+                    "badge": vm.get("badge"),
+                    "description": vm.get("description") or "",
+                    "is_active": vm.get("is_active", True),
+                    "source": "video_models_table",
+                    # Pricing details
+                    "per_second_pricing": vm.get("per_second_pricing", False),
+                    "base_duration": vm.get("base_duration", 5),
+                    "quality_multipliers": vm.get("quality_multipliers", {}),
+                    "resolutions": vm.get("resolutions", ["720p", "1080p", "4K"]),
+                    "durations": vm.get("duration_options", [5])
+                }
+                
+                if category and standardized["category"] != category: continue
+                
+                # Overwrite or add
+                result[mid] = standardized
+        except Exception as e:
+            logger.warning(f"Failed to load video_models from DB: {e}")
+
+        # 4. Filter active status and convert to list
         final_list = []
         for m in result.values():
             if active_only and not m.get("is_active", True):
@@ -137,16 +178,48 @@ class UnifiedModelRegistry:
 
     async def update_model(self, db, model_id: str, updates: Dict) -> Dict:
         """Update model (create/update DB override)"""
-        # Prepare DB record
-        data = updates.copy()
+        # Prepare DB record for ai_models (core fields)
+        core_fields = ["id", "name", "category", "type", "provider", "cost_usd", "cost_multiplier", "quality", "speed", "badge", "description", "is_active", "capabilities"]
+        data = {k: v for k, v in updates.items() if k in core_fields}
         data["id"] = model_id
         
-        # Upsert to DB (Supabase uses sync client)
-        res = db.table("ai_models").upsert(data).execute()
+        # 1. Upsert to ai_models (Supabase uses sync client)
+        db.table("ai_models").upsert(data).execute()
+        
+        # 2. If it's a video model, also upsert to video_models (advanced fields)
+        category = updates.get("category")
+        if not category:
+            # Try to find category from existing
+            models = await self.get_models(db, active_only=False)
+            m = next((m for m in models if m["id"] == model_id), None)
+            if m:
+                category = m.get("category")
+        
+        if category == "video":
+            video_data = {
+                "id": model_id,
+                "name": updates.get("name"),
+                "display_name": updates.get("name"),
+                "cost_usd": updates.get("cost_usd"),
+                "cost_multiplier": updates.get("cost_multiplier"),
+                "is_active": updates.get("is_active"),
+                "duration_options": updates.get("duration_options"),
+                "resolutions": updates.get("resolutions"),
+                "quality_multipliers": updates.get("quality_multipliers"),
+                "per_second_pricing": updates.get("per_second_pricing"),
+                "base_duration": updates.get("base_duration")
+            }
+            # Remove None values
+            video_data = {k: v for k, v in video_data.items() if v is not None}
+            
+            try:
+                db.table("video_models").upsert(video_data).execute()
+            except Exception as e:
+                logger.warning(f"Failed to update video_models table: {e}")
         
         # Refresh return
-        updated_model = await self.get_models(db) # specific get would be better
-        return next((m for m in updated_model if m["id"] == model_id), None)
+        updated_models = await self.get_models(db, active_only=False) 
+        return next((m for m in updated_models if m["id"] == model_id), None)
 
     async def update_price(self, db, model_id: str, cost_usd: float, cost_multiplier: float = None):
         updates = {"cost_usd": cost_usd}

@@ -86,25 +86,25 @@ async def get_video_models(
                 # Parameters/Capabilities
                 params = m.get("parameters", {})
                 
+                # Dynamic fields from DB or hardcoded fallback
+                # PRIORITY: Database (m) > Hardcoded (h)
                 models.append(VideoModelInfo(
                     id=mid,
                     provider=provider_display,
-                    name=m.get("display_name") or m.get("name"),
-                    type=m.get("model_type", "text_to_video"),
-                    duration=default_duration,
+                    name=m.get("display_name") or m.get("name") or h.get("name"),
+                    type=m.get("model_type") or m.get("type", "text_to_video"),
+                    duration=m.get("duration") or default_duration,
                     credits=credits,
-                    quality=m.get("quality_rating", 4),
-                    speed=["slow", "slow", "medium", "fast", "very_fast"][min(m.get("speed_rating", 3), 4)],
+                    quality=m.get("quality_rating") or m.get("quality", 4),
+                    speed=["slow", "slow", "medium", "fast", "very_fast"][min(m.get("speed_rating") or 3, 4)],
                     badge=m.get("badge") or h.get("badge"),
                     description=m.get("description", "") or h.get("description", ""),
                     capabilities=params,
-                    # Dynamic fields from DB or hardcoded fallback
-                    # Dynamic fields: Prioritize KIE hardcoded metadata for durations/resolutions to ensure latest features
-                    base_name=m.get("base_name") or h.get("base_name"),
+                    base_name=m.get("base_name") or h.get("base_name") or (mid.split('/')[1] if '/' in mid else mid),
                     version_name=m.get("version_name") or h.get("version_name"),
-                    durations=h.get("durations") or m.get("durations") or duration_opts,
-                    resolutions=h.get("resolutions") or m.get("resolutions") or ["720p", "1080p"],
-                    slider_duration=h.get("slider_duration") or m.get("slider_duration") or False
+                    durations=m.get("durations") or m.get("duration_options") or h.get("durations") or duration_opts,
+                    resolutions=m.get("resolutions") or h.get("resolutions") or ["720p", "1080p", "4K"],
+                    slider_duration=m.get("slider_duration") or h.get("slider_duration", False)
                 ))
             
             if models:
