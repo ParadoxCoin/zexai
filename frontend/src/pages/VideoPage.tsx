@@ -8,7 +8,7 @@ import {
   Zap, Film, Wand2, Palette, ChevronRight, Eye, Filter,
   Scissors, Camera, Move, RotateCcw, Volume2, Maximize,
   Timer, Crown, Search, Image, RefreshCcw, X, Share2, Twitter, Facebook, Link2,
-  GitCompare, Check, User
+  GitCompare, Check, User, Layers
 } from "lucide-react";
 import PromptEnhancer from "@/components/PromptEnhancer";
 import MotionBrushEditor from "@/components/video/MotionBrushEditor";
