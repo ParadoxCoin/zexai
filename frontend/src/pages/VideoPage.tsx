@@ -943,47 +943,99 @@ const VideoPage = () => {
                   </div>
                 </div>
 
-                {/* Style Selection - Only for text-to-video */}
-                {activeTab === "text-to-video" && (
-                  <div className="px-5 pb-4">
-                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('videoGen.styleTitle', 'Stil (Opsiyonel)')}</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {videoStyles.map((style) => (
-                        <button
-                          key={style.id}
-                          onClick={() => setSelectedStyle(selectedStyle === style.id ? '' : style.id)}
-                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${selectedStyle === style.id
-                            ? 'bg-purple-500 text-white'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'
-                            }`}
-                        >
-                          {style.icon} {t(style.name)}
-                        </button>
-                      ))}
+                {/* Dynamic Parameters Section */}
+                {selectedModel && (
+                  <div className="px-5 pb-5 space-y-4 border-t border-gray-100 dark:border-gray-700 pt-5 bg-gray-50/30 dark:bg-gray-900/10">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-yellow-500" />
+                        {t('videoGen.dynamicParams', 'Dinamik Parametreler')}
+                      </h3>
+                      <span className="text-[10px] px-2 py-0.5 bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 rounded-full font-bold uppercase">
+                        {selectedModel.name.split(' ')[0]} {t('common.optimized', 'Optimize')}
+                      </span>
                     </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Duration Selector */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                          <Timer className="w-3 h-3" /> {t('videoGen.duration', 'Süre')}
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {(selectedModel.durations || [selectedModel.duration]).map((d: number) => (
+                            <button
+                              key={d}
+                              disabled={true} // Currently fixed per model variant, but shown as selected
+                              className="px-4 py-2 bg-purple-600 text-white rounded-xl text-sm font-bold shadow-md shadow-purple-500/20 border-2 border-purple-400"
+                            >
+                              {d} {t('common.seconds', 'Saniye')}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Resolution Selector */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                          <Maximize className="w-3 h-3" /> {t('videoGen.resolution', 'Çözünürlük')}
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {(selectedModel.resolutions || [selectedModel.resolution]).map((r: string) => (
+                            <button
+                              key={r}
+                              disabled={true}
+                              className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-md shadow-indigo-500/20 border-2 border-indigo-400"
+                            >
+                              {r}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Aspect Ratio Selector */}
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                        <Move className="w-3 h-3" /> {t('videoGen.aspectRatio', 'En-Boy Oranı')}
+                      </label>
+                      <div className="flex gap-2">
+                        {[
+                          { id: '16:9', label: t('common.horizontal'), icon: '🖥️' },
+                          { id: '9:16', label: t('common.vertical'), icon: '📱' },
+                          { id: '1:1', label: t('common.square'), icon: '⬜' }
+                        ].map((ratio) => (
+                          <button
+                            key={ratio.id}
+                            onClick={() => setAspectRatio(ratio.id)}
+                            className={`flex-1 px-4 py-3 rounded-xl text-sm font-bold transition-all flex flex-col items-center gap-1 ${
+                              aspectRatio === ratio.id
+                                ? 'bg-white dark:bg-gray-800 border-2 border-purple-500 text-purple-600 dark:text-purple-400 shadow-lg'
+                                : 'bg-white/50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 text-gray-500 hover:border-purple-300'
+                            }`}
+                          >
+                            <span className="text-lg">{ratio.icon}</span>
+                            <span className="text-[10px] uppercase">{ratio.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Special Capabilities Badges */}
+                    {modelCapabilities.length > 0 && (
+                      <div className="pt-2">
+                        <div className="flex flex-wrap gap-2">
+                          {modelCapabilities.map((cap, idx) => (
+                            <div key={idx} className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg text-[10px] font-bold uppercase tracking-tight border border-green-100 dark:border-green-900/30">
+                              <cap.icon className="w-3 h-3" />
+                              {cap.label}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
-
-                {/* Aspect Ratio */}
-                <div className="px-5 pb-4 border-t border-gray-100 dark:border-gray-700 pt-4">
-                  <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('videoGen.aspectRatio', 'En-Boy Oranı')}</h3>
-                  <div className="flex gap-2">
-                    {['16:9', '9:16', '1:1'].map((ratio) => (
-                      <button
-                        key={ratio}
-                        onClick={() => setAspectRatio(ratio)}
-                        className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${aspectRatio === ratio
-                          ? 'bg-purple-500 text-white'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'
-                          }`}
-                      >
-                        {ratio === '16:9' && `🖥️ ${t('common.horizontal')}`}
-                        {ratio === '9:16' && `📱 ${t('common.vertical')}`}
-                        {ratio === '1:1' && `⬜ ${t('common.square')}`}
-                      </button>
-                    ))}
-                  </div>
-                </div>
 
                 {/* Generate Button */}
                 <div className="p-5 bg-gray-50 dark:bg-gray-900/50">
