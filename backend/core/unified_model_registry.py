@@ -105,13 +105,15 @@ class UnifiedModelRegistry:
                         
                         # Extract video params from capabilities if present
                         caps = db_m.get("capabilities") or {}
+                        video_params = {}
                         if isinstance(caps, dict) and "video_params" in caps:
-                            vp = caps["video_params"]
+                            video_params = caps["video_params"]
                             for field in ["duration_options", "resolutions", "quality_multipliers", "per_second_pricing", "base_duration"]:
-                                if vp.get(field) is not None:
-                                    result[mid][field] = vp[field]
+                                if video_params.get(field) is not None:
+                                    result[mid][field] = video_params[field]
                                     if field == "duration_options":
-                                        result[mid]["durations"] = vp[field]
+                                        result[mid]["durations"] = video_params[field]
+                        result[mid]["video_params"] = video_params
                     else:
                         # New model from DB - ensure required fields are present
                         standardized = {
@@ -130,14 +132,16 @@ class UnifiedModelRegistry:
                         
                         # Extract video params from capabilities for new models too
                         caps = db_m.get("capabilities") or {}
+                        video_params = {}
                         if isinstance(caps, dict) and "video_params" in caps:
-                            vp = caps["video_params"]
+                            video_params = caps["video_params"]
                             for field in ["duration_options", "resolutions", "quality_multipliers", "per_second_pricing", "base_duration"]:
-                                if vp.get(field) is not None:
-                                    standardized[field] = vp[field]
+                                if video_params.get(field) is not None:
+                                    standardized[field] = video_params[field]
                                     if field == "duration_options":
-                                        standardized["durations"] = vp[field]
-                                        
+                                        standardized["durations"] = video_params[field]
+                        
+                        standardized["video_params"] = video_params
                         result[mid] = standardized
         except Exception as e:
             logger.warning(f"Failed to load ai_models: {e}")

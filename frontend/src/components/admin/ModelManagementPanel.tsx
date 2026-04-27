@@ -198,19 +198,23 @@ export const ModelManagementPanel: React.FC = () => {
 
     const startEditing = (model: Model) => {
         setEditingModel(model);
+        
+        // Extract video params with robust fallbacks
+        const videoParams = (model as any).video_params || (model as any).capabilities?.video_params || {};
+        
         setEditForm({
-            name: model.name,
-            cost_usd: model.cost_usd,
-            cost_multiplier: model.cost_multiplier,
+            name: model.name || '',
+            cost_usd: model.cost_usd || 0,
+            cost_multiplier: model.cost_multiplier || 1,
             description: model.description || '',
             badge: model.badge || '',
             provider: model.provider || '',
             capabilities: model.capabilities ? JSON.stringify(model.capabilities, null, 2) : '',
-            per_second_pricing: (model as any).per_second_pricing || false,
-            base_duration: (model as any).base_duration || 5,
-            duration_options: (model as any).durations ? (model as any).durations.join(', ') : (model as any).duration_options ? (model as any).duration_options.join(', ') : '5',
-            resolutions: (model as any).resolutions ? (model as any).resolutions.join(', ') : '720p, 1080p, 4K',
-            quality_multipliers: (model as any).quality_multipliers ? JSON.stringify((model as any).quality_multipliers) : '{"720p": 1.0, "1080p": 1.5, "4K": 2.5}'
+            per_second_pricing: videoParams.per_second_pricing ?? (model as any).per_second_pricing ?? false,
+            base_duration: videoParams.base_duration ?? (model as any).base_duration ?? 5,
+            duration_options: videoParams.duration_options ? videoParams.duration_options.join(', ') : (model as any).durations ? (model as any).durations.join(', ') : '5',
+            resolutions: videoParams.resolutions ? videoParams.resolutions.join(', ') : (model as any).resolutions ? (model as any).resolutions.join(', ') : '720p, 1080p, 4K',
+            quality_multipliers: videoParams.quality_multipliers ? JSON.stringify(videoParams.quality_multipliers) : (model as any).quality_multipliers ? JSON.stringify((model as any).quality_multipliers) : '{"720p": 1.0, "1080p": 1.5, "4K": 2.5}'
         });
         setShowCapabilitiesEditor(!!model.capabilities);
     };
