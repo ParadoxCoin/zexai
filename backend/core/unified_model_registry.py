@@ -215,9 +215,17 @@ class UnifiedModelRegistry:
                 try: return int(v) if v is not None else default
                 except: return default
 
+            # Get existing model for fallbacks
+            models = await self.get_models(db, active_only=False)
+            m = next((m for m in models if m["id"] == model_id), None)
+            
             video_data = {
                 "id": model_id,
                 "provider_id": provider,
+                "name": updates.get("name") or (m.get("name") if m else model_id),
+                "display_name": updates.get("name") or (m.get("name") if m else model_id),
+                "model_type": updates.get("type") or (m.get("type") if m else "text_to_video"),
+                "is_active": updates.get("is_active") if updates.get("is_active") is not None else (m.get("is_active") if m else True),
                 "duration_options": updates.get("duration_options"),
                 "resolutions": updates.get("resolutions"),
                 "quality_multipliers": updates.get("quality_multipliers"),
