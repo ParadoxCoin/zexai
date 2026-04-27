@@ -416,9 +416,9 @@ const VideoPage = () => {
   const packages = packagesData?.data || packagesData || [];
   const myVideos = myVideosData?.outputs || myVideosData?.data || myVideosData || [];
 
-  // Filter models by current content type
-  const models = useMemo(() => {
-    if (!Array.isArray(rawModels)) return [];
+  // Brand extraction and grouping with active tab filtering
+  const { brands, filteredModels } = useMemo(() => {
+    if (!Array.isArray(rawModels)) return { brands: [], filteredModels: [] };
 
     // Map tab to model type
     const typeMap: Record<string, string> = {
@@ -428,27 +428,71 @@ const VideoPage = () => {
     };
     const modelType = typeMap[activeTab];
 
-    return rawModels.filter((m: any) => {
-      // Type filter - if it's a video type tab
-      if (modelType) {
-        // Check both type and model_type fields (different APIs may use different names)
-        const typeMatch = m.type === modelType || m.model_type === modelType;
-        const capabilityMatch = m.capabilities?.[modelType.replace(/_/g, '')] ||
-          m.capabilities?.[modelType];
-        if (!typeMatch && !capabilityMatch) return false;
-      }
-
-      // Search filter
-      if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        return m.name?.toLowerCase().includes(q) ||
-          m.provider?.toLowerCase().includes(q) ||
-          m.description?.toLowerCase().includes(q);
-      }
-
-      return true;
+    // Initial filter by active tab type
+    const baseModels = rawModels.filter((m: any) => {
+      if (!modelType) return true;
+      return m.type === modelType || m.model_type === modelType || 
+             m.capabilities?.[modelType.replace(/_/g, '')] || m.capabilities?.[modelType];
     });
-  }, [rawModels, activeTab, searchQuery]);
+
+    const getBrand = (name: string): { name: string; icon: string } => {
+      const n = name.toLowerCase();
+      if (n.includes("veo")) return { name: "Google Veo", icon: "🌐" };
+      if (n.includes("sora")) return { name: "OpenAI Sora", icon: "🤖" };
+      if (n.includes("kling")) return { name: "Kling AI", icon: "⚔️" };
+      if (n.includes("wan")) return { name: "Wan AI", icon: "🌀" };
+      if (n.includes("hailuo")) return { name: "Hailuo AI", icon: "🌊" };
+      if (n.includes("seedance")) return { name: "Seedance", icon: "💃" };
+      if (n.includes("grok")) return { name: "Grok AI", icon: "𝕏" };
+      if (n.includes("runway") || n.includes("aleph")) return { name: "Runway", icon: "🎥" };
+      if (n.includes("luma")) return { name: "Luma AI", icon: "💎" };
+      if (n.includes("kandinsky")) return { name: "Kandinsky", icon: "🎨" };
+      return { name: name.split(' ')[0], icon: "📦" };
+    };
+
+    // Group by brand
+    const grouped: Record<string, any[]> = {};
+    const brandMap: Record<string, any> = {};
+
+    baseModels.forEach(m => {
+      const brandInfo = getBrand(m.name);
+      const bName = brandInfo.name;
+      if (!grouped[bName]) {
+        grouped[bName] = [];
+        brandMap[bName] = { id: bName, name: bName, icon: brandInfo.icon, count: 0 };
+      }
+      grouped[bName].push(m);
+    });
+
+    const brandList = Object.values(brandMap);
+    brandList.forEach(b => { b.count = grouped[b.id].length; });
+    brandList.sort((a, b) => {
+      if (a.name.includes("Google")) return -1;
+      if (b.name.includes("Google")) return 1;
+      if (a.name.includes("OpenAI")) return -1;
+      if (b.name.includes("OpenAI")) return 1;
+      return b.count - a.count;
+    });
+
+    // Reset selected brand if it's not in current tab
+    if (selectedProvider && !brandMap[selectedProvider] && !searchQuery) {
+      setSelectedProvider(brandList[0]?.id || null);
+    } else if (!selectedProvider && brandList.length > 0) {
+      setSelectedProvider(brandList[0].id);
+    }
+
+    // Final filter
+    let filtered = baseModels;
+    if (searchQuery) {
+      filtered = filtered.filter((m: any) => m.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    } else if (selectedProvider) {
+      filtered = filtered.filter((m: any) => getBrand(m.name).name === selectedProvider);
+    }
+
+    return { brands: brandList, filteredModels: filtered };
+  }, [rawModels, activeTab, searchQuery, selectedProvider]);
+
+  const models = filteredModels;
 
   // Calculate total credits for selected compare models
   const totalCompareCredits = useMemo(() => {
@@ -580,83 +624,6 @@ const VideoPage = () => {
     return providerStyles[provider?.toLowerCase()] || { bg: 'bg-gray-100', text: 'text-gray-700', icon: '🎥' };
   };
 
-  // Brand extraction and grouping
-  const { brands, filteredModels } = useMemo(() => {
-    const data = modelsData as any;
-    const modelsList = data?.outputs || data?.data || data || [];
-    if (!Array.isArray(modelsList)) return { brands: [], filteredModels: [] };
-
-    const getBrand = (name: string): { name: string; icon: string } => {
-      const n = name.toLowerCase();
-      if (n.includes("veo")) return { name: "Google Veo", icon: "🌐" };
-      if (n.includes("sora")) return { name: "OpenAI Sora", icon: "🤖" };
-      if (n.includes("kling")) return { name: "Kling AI", icon: "⚔️" };
-      if (n.includes("wan")) return { name: "Wan AI", icon: "🌀" };
-      if (n.includes("hailuo")) return { name: "Hailuo AI", icon: "🌊" };
-      if (n.includes("seedance")) return { name: "Seedance", icon: "💃" };
-      if (n.includes("grok")) return { name: "Grok AI", icon: "𝕏" };
-      if (n.includes("runway") || n.includes("aleph")) return { name: "Runway", icon: "🎥" };
-      if (n.includes("luma")) return { name: "Luma AI", icon: "💎" };
-      if (n.includes("kandinsky")) return { name: "Kandinsky", icon: "🎨" };
-      
-      // Default: First word
-      const firstWord = name.split(' ')[0];
-      return { name: firstWord, icon: "📦" };
-    };
-
-    // Group by brand
-    const grouped: Record<string, any[]> = {};
-    const brandMap: Record<string, any> = {};
-
-    modelsList.forEach(m => {
-      const brandInfo = getBrand(m.name);
-      const bName = brandInfo.name;
-      
-      if (!grouped[bName]) {
-        grouped[bName] = [];
-        brandMap[bName] = {
-          id: bName,
-          name: bName,
-          icon: brandInfo.icon,
-          count: 0
-        };
-      }
-      grouped[bName].push(m);
-    });
-
-    const brandList = Object.values(brandMap);
-    brandList.forEach(b => {
-      b.count = grouped[b.id].length;
-    });
-
-    // Sort: Google, OpenAI first, then by count
-    brandList.sort((a, b) => {
-      if (a.name.includes("Google")) return -1;
-      if (b.name.includes("Google")) return 1;
-      if (a.name.includes("OpenAI")) return -1;
-      if (b.name.includes("OpenAI")) return 1;
-      return b.count - a.count;
-    });
-
-    // Set initial selected brand
-    if (!selectedProvider && brandList.length > 0) {
-      setSelectedProvider(brandList[0].id);
-    }
-
-    // Filter models
-    let filtered = modelsList;
-    if (searchQuery) {
-      filtered = filtered.filter((m: any) => 
-        m.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    } else if (selectedProvider) {
-      filtered = filtered.filter((m: any) => getBrand(m.name).name === selectedProvider);
-    }
-
-    return { brands: brandList, filteredModels: filtered };
-  }, [modelsData, selectedProvider, searchQuery]);
-
-  const models = filteredModels;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
