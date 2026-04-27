@@ -1060,7 +1060,13 @@ const VideoPage = () => {
                             >
                               {v.version_name || "Standard"}
                               {v.badge && <span className="ml-2 text-[8px] opacity-70 px-1.5 py-0.5 bg-white/20 rounded uppercase">{v.badge.split(' ')[0]}</span>}
-                                     {/* Step 2 & 3: Duration & Quality */}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Step 2 & 3: Duration & Quality */}
                     <div className="flex flex-col md:flex-row gap-8">
                       {/* Duration */}
                       <div className="flex-1 space-y-4">
