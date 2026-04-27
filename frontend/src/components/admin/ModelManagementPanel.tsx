@@ -241,13 +241,19 @@ export const ModelManagementPanel: React.FC = () => {
                 return;
             }
 
-            await api.put(`/admin/models/${editingModel.id}`, {
+            const payload = {
                 ...editForm,
                 capabilities,
                 duration_options,
                 resolutions,
                 quality_multipliers
-            });
+            };
+            
+            console.log('Updating model:', editingModel.id, payload);
+            
+            const response = await api.put(`/admin/models/${editingModel.id}`, payload);
+            console.log('Update response:', response.data);
+            
             toast.success('Başarılı', 'Model güncellendi');
             setEditingModel(null);
             setShowCapabilitiesEditor(false);

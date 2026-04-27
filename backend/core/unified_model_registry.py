@@ -235,8 +235,10 @@ class UnifiedModelRegistry:
             try:
                 db.table("video_models").upsert(video_data).execute()
             except Exception as e:
-                logger.error(f"FAILED to update video_models table for {model_id}: {str(e)}")
+                error_msg = f"FAILED to update video_models table for {model_id}: {str(e)}"
+                logger.error(error_msg)
                 logger.error(f"Payload was: {video_data}")
+                raise Exception(error_msg)
         
         # Refresh return
         updated_models = await self.get_models(db, active_only=False) 
