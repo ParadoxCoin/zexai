@@ -129,7 +129,7 @@ const VideoPage = () => {
 
   const { data: modelsData, isLoading: isLoadingModels } = useQuery({
     queryKey: ["videoModels"],
-    queryFn: () => apiService.get("/video/models")
+    queryFn: () => apiService.get(`/video/models?t=${Date.now()}`)
   });
 
   const { data: effectsData, isLoading: isLoadingEffects } = useQuery({
@@ -1120,7 +1120,7 @@ const VideoPage = () => {
                           </div>
                         ) : (
                           <div className="flex flex-wrap gap-2">
-                            {(selectedModel.durations || [selectedModel.duration]).map((d: number) => (
+                            {(selectedModel.video_params?.duration_options || selectedModel.durations || [selectedModel.duration || 5]).map((d: number) => (
                               <button
                                 key={d}
                                 onClick={() => setSelectedDuration(d)}
@@ -1144,19 +1144,24 @@ const VideoPage = () => {
                           03. {t('videoGen.stepQuality', 'Kalite')}
                         </h3>
                         <div className="flex flex-wrap gap-2">
-                          {(selectedModel.resolutions || ["720p", "1080p", "4K"]).map((r: string) => (
-                            <button
-                              key={r}
-                              onClick={() => setSelectedResolution(r)}
-                              className={`px-6 py-2.5 rounded-xl text-sm font-black transition-all border-2 flex-none ${
-                                (selectedResolution || selectedModel.resolution) === r
-                                  ? 'bg-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/30 scale-105'
-                                  : 'bg-white dark:bg-gray-800 text-gray-500 border-gray-100 dark:border-gray-700 hover:border-blue-300'
-                              }`}
-                            >
-                              {r}
-                            </button>
-                          ))}
+                          {(selectedModel.video_params?.resolutions || selectedModel.resolutions || ["720p", "1080p", "4K"]).map((r: string) => {
+                            const isAvailable = (selectedModel.video_params?.resolutions || selectedModel.resolutions || ["720p", "1080p", "4K"]).includes(r);
+                            return (
+                              <button
+                                key={r}
+                                disabled={!isAvailable}
+                                onClick={() => setSelectedResolution(r)}
+                                className={`px-6 py-2.5 rounded-xl text-sm font-black transition-all border-2 flex-none ${
+                                  !isAvailable ? 'opacity-30 cursor-not-allowed border-gray-100 dark:border-gray-700' :
+                                  (selectedResolution || selectedModel.resolution) === r
+                                    ? 'bg-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/30 scale-105'
+                                    : 'bg-white dark:bg-gray-800 text-gray-500 border-gray-100 dark:border-gray-700 hover:border-blue-300'
+                                }`}
+                              >
+                                {r}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
