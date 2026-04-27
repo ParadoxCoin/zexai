@@ -72,7 +72,9 @@ const VideoPage = () => {
   const [effectId, setEffectId] = useState("");
   const [effectCategory, setEffectCategory] = useState("all");
   const [packageId, setPackageId] = useState("");
+  const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
   const [showMotionBrush, setShowMotionBrush] = useState(false);
+
   const [motionBrushLoading, setMotionBrushLoading] = useState(false);
 
   // Current generation task - shows video inline
@@ -578,8 +580,62 @@ const VideoPage = () => {
     return providerStyles[provider?.toLowerCase()] || { bg: 'bg-gray-100', text: 'text-gray-700', icon: '🎥' };
   };
 
-  // Get current content type info
-  const currentContentType = contentTypes.find(t => t.id === activeTab);
+  // Group models by provider
+  const { providers, filteredModels } = useMemo(() => {
+    const data = modelsData as any;
+    const modelsList = data?.outputs || data?.data || data || [];
+    if (!Array.isArray(modelsList)) return { providers: [], filteredModels: [] };
+
+    // Group by provider
+    const grouped: Record<string, any[]> = {};
+    const providerList: any[] = [];
+
+    modelsList.forEach(m => {
+      const p = m.provider || "Diğer";
+      if (!grouped[p]) {
+        grouped[p] = [];
+        providerList.push({
+          id: p,
+          name: p,
+          icon: getProviderStyle(p).icon,
+          count: 0
+        });
+      }
+      grouped[p].push(m);
+    });
+
+    // Update counts
+    providerList.forEach(p => {
+      p.count = grouped[p.id].length;
+    });
+
+    // Sort providers
+    providerList.sort((a, b) => {
+      if (a.id === "Premium") return -1;
+      if (b.id === "Premium") return 1;
+      return b.count - a.count;
+    });
+
+    // Set initial provider if none selected
+    if (!selectedProvider && providerList.length > 0) {
+      setSelectedProvider(providerList[0].id);
+    }
+
+    // Filter models based on search and selected provider
+    let filtered = modelsList;
+    if (searchQuery) {
+      filtered = filtered.filter((m: any) => 
+        m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        m.provider.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    } else if (selectedProvider) {
+      filtered = filtered.filter((m: any) => m.provider === selectedProvider);
+    }
+
+    return { providers: providerList, filteredModels: filtered };
+  }, [modelsData, selectedProvider, searchQuery]);
+
+  const models = filteredModels; // Shortcut for existing code
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
@@ -661,20 +717,17 @@ const VideoPage = () => {
           >
 
             {/* Left Panel - Model Selection */}
-            <div className="lg:col-span-1 space-y-4">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-4">
+            <div className="lg:col-span-1 h-[600px] flex flex-col bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+              {/* Search Header */}
+              <div className="p-4 border-b border-gray-100 dark:border-gray-700">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                     <Crown className="w-5 h-5 text-yellow-500" />
-                    {activeTab === "text-to-video" && t('videoGen.modelsListT2V', "Text → Video Modeller")}
-                    {activeTab === "image-to-video" && t('videoGen.modelsListI2V', "Image → Video Modeller")}
-                    {activeTab === "video-to-video" && t('videoGen.modelsListV2V', "Video → Video Modeller")}
+                    {t('videoGen.modelsList', "Modeller")}
                   </h2>
-                  <span className="text-xs text-gray-500">{models.length} {t('videoGen.modelCount', 'model')}</span>
+                  <span className="text-xs text-gray-500">{modelsData?.length || 0} {t('videoGen.modelCount', 'model')}</span>
                 </div>
-
-                {/* Search */}
-                <div className="relative mb-4">
+                <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="text"
@@ -684,19 +737,42 @@ const VideoPage = () => {
                     className="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
                   />
                 </div>
+              </div>
 
-                {/* Model List */}
-                <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+              <div className="flex-1 flex overflow-hidden">
+                {/* Providers Sidebar */}
+                {!searchQuery && (
+                  <div className="w-24 sm:w-32 border-r border-gray-100 dark:border-gray-700 overflow-y-auto bg-gray-50/50 dark:bg-gray-900/20">
+                    {providers.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => setSelectedProvider(p.id)}
+                        className={`w-full p-3 flex flex-col items-center gap-1 transition-all border-l-4 ${
+                          selectedProvider === p.id
+                            ? 'bg-white dark:bg-gray-800 border-purple-500 text-purple-600 dark:text-purple-400 shadow-sm'
+                            : 'border-transparent text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
+                        }`}
+                      >
+                        <span className="text-2xl">{p.icon}</span>
+                        <span className="text-[10px] font-bold text-center uppercase tracking-tight line-clamp-1">{p.name}</span>
+                        <span className="text-[9px] opacity-60">{p.count}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Models Grid */}
+                <div className="flex-1 overflow-y-auto p-3 space-y-2">
                   {isLoadingModels ? (
-                    [1, 2, 3, 4, 5].map(i => (
+                    [1, 2, 3, 4].map(i => (
                       <div key={i} className="h-20 bg-gray-100 dark:bg-gray-700 rounded-xl animate-pulse" />
                     ))
-                  ) : models.length === 0 ? (
+                  ) : filteredModels.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
-                      <p>{t('videoGen.noModelInCategory', 'Bu kategoride model bulunamadı')}</p>
+                      <p className="text-sm">{t('videoGen.noModelInCategory', 'Model bulunamadı')}</p>
                     </div>
                   ) : (
-                    models.map((model: any) => {
+                    filteredModels.map((model: any) => {
                       const style = getProviderStyle(model.provider);
                       const isSelected = modelId === model.id;
                       return (
@@ -712,15 +788,12 @@ const VideoPage = () => {
                             <h4 className="font-medium text-gray-900 dark:text-white text-sm line-clamp-1">
                               {model.name}
                             </h4>
-                            <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 text-xs font-medium rounded-full">
+                            <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 text-xs font-bold rounded-full">
                               {model.credits}c
                             </span>
                           </div>
 
-                          <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
-                            <span className={`px-1.5 py-0.5 rounded ${style.bg} ${style.text}`}>
-                              {style.icon} {model.provider}
-                            </span>
+                          <div className="flex items-center gap-2 text-[10px] text-gray-500">
                             <span className="flex items-center gap-1">
                               <Timer className="w-3 h-3" />
                               {model.duration}s
@@ -731,7 +804,7 @@ const VideoPage = () => {
                           </div>
 
                           {model.badge && (
-                            <span className="inline-block px-2 py-0.5 bg-gradient-to-r from-yellow-400 to-orange-400 text-yellow-900 text-xs font-bold rounded-full">
+                            <span className="mt-2 inline-block px-2 py-0.5 bg-gradient-to-r from-yellow-400 to-orange-400 text-yellow-900 text-[10px] font-bold rounded-full">
                               {model.badge}
                             </span>
                           )}
@@ -748,6 +821,7 @@ const VideoPage = () => {
                 </div>
               </div>
             </div>
+
 
             {/* Right Panel - Creation */}
             <div className="lg:col-span-2 space-y-4">
