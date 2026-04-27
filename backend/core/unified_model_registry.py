@@ -218,11 +218,6 @@ class UnifiedModelRegistry:
             video_data = {
                 "id": model_id,
                 "provider_id": provider,
-                "name": updates.get("name"),
-                "display_name": updates.get("name"),
-                "cost_usd": to_float(updates.get("cost_usd")),
-                "cost_multiplier": to_float(updates.get("cost_multiplier"), 2.0),
-                "is_active": updates.get("is_active"),
                 "duration_options": updates.get("duration_options"),
                 "resolutions": updates.get("resolutions"),
                 "quality_multipliers": updates.get("quality_multipliers"),
