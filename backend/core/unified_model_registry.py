@@ -198,18 +198,36 @@ class UnifiedModelRegistry:
                 category = m.get("category")
         
         if category == "video":
+            # Find provider from updates or existing model
+            provider = updates.get("provider")
+            if not provider:
+                models = await self.get_models(db, active_only=False)
+                m = next((m for m in models if m["id"] == model_id), None)
+                if m:
+                    provider = m.get("provider")
+
+            # Explicit type conversion for numeric fields to prevent DB errors
+            def to_float(v, default=0.0):
+                try: return float(v) if v is not None else default
+                except: return default
+
+            def to_int(v, default=0):
+                try: return int(v) if v is not None else default
+                except: return default
+
             video_data = {
                 "id": model_id,
+                "provider_id": provider,
                 "name": updates.get("name"),
                 "display_name": updates.get("name"),
-                "cost_usd": updates.get("cost_usd"),
-                "cost_multiplier": updates.get("cost_multiplier"),
+                "cost_usd": to_float(updates.get("cost_usd")),
+                "cost_multiplier": to_float(updates.get("cost_multiplier"), 2.0),
                 "is_active": updates.get("is_active"),
                 "duration_options": updates.get("duration_options"),
                 "resolutions": updates.get("resolutions"),
                 "quality_multipliers": updates.get("quality_multipliers"),
                 "per_second_pricing": updates.get("per_second_pricing"),
-                "base_duration": updates.get("base_duration")
+                "base_duration": to_int(updates.get("base_duration"), 5)
             }
             # Remove None values
             video_data = {k: v for k, v in video_data.items() if v is not None}
@@ -217,7 +235,8 @@ class UnifiedModelRegistry:
             try:
                 db.table("video_models").upsert(video_data).execute()
             except Exception as e:
-                logger.warning(f"Failed to update video_models table: {e}")
+                logger.error(f"FAILED to update video_models table for {model_id}: {str(e)}")
+                logger.error(f"Payload was: {video_data}")
         
         # Refresh return
         updated_models = await self.get_models(db, active_only=False) 
