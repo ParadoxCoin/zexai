@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Search, Edit2, Trash2, ToggleLeft, ToggleRight, Save, X, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { Package, Search, Edit2, Trash2, ToggleLeft, ToggleRight, Save, X, RefreshCw, ChevronDown, ChevronUp, Zap } from 'lucide-react';
 import axios from 'axios';
 import { useToast } from '../ui/toast';
 
