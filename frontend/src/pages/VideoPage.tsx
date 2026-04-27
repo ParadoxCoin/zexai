@@ -401,23 +401,6 @@ const VideoPage = () => {
     queryClient.invalidateQueries({ queryKey: ["userCredits"] });
   };
 
-  // Reset parameters when model changes to ensure accurate pricing and UI state
-  useEffect(() => {
-    if (selectedModel) {
-      setSelectedDuration(selectedModel.duration || 5);
-      setSelectedResolution(selectedModel.resolution || selectedModel.resolutions?.[0] || "720p");
-    }
-  }, [selectedModel?.id]);
-
-  const currentPrice = useMemo(() => {
-    if (!selectedModel) return 0;
-    const baseCredits = selectedModel.credits || 0;
-    const baseDuration = selectedModel.duration || 5;
-    const duration = selectedDuration || baseDuration;
-    
-    // Scale price based on duration ratio (linear scaling as requested)
-    return Math.round(baseCredits * (duration / baseDuration));
-  }, [selectedModel, selectedDuration]);
 
   // Poll for compare task status updates
   useEffect(() => {
@@ -579,6 +562,24 @@ const VideoPage = () => {
       setSelectedResolution(selectedModel.resolution);
     }
   }, [selectedModel?.id]); // Only sync when the actual model identity changes
+
+  const currentPrice = useMemo(() => {
+    if (!selectedModel) return 0;
+    const baseCredits = selectedModel.credits || 0;
+    const baseDuration = selectedModel.duration || 5;
+    const duration = selectedDuration || baseDuration;
+    
+    // Scale price based on duration ratio (linear scaling as requested)
+    return Math.round(baseCredits * (duration / baseDuration));
+  }, [selectedModel, selectedDuration]);
+
+  // Reset parameters when model changes to ensure accurate pricing and UI state
+  useEffect(() => {
+    if (selectedModel) {
+      setSelectedDuration(selectedModel.duration || 5);
+      setSelectedResolution(selectedModel.resolution || selectedModel.resolutions?.[0] || "720p");
+    }
+  }, [selectedModel?.id]);
 
 
   // Calculate total credits for selected compare models
