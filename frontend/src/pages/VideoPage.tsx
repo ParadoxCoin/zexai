@@ -456,9 +456,17 @@ const VideoPage = () => {
     };
 
     const getBaseName = (name: string) => {
-      // Everything before the first '('
-      const match = name.match(/^(.*?)\s*\(/);
-      return match ? match[1].trim() : name.trim();
+      // 1. Strip parentheses content
+      let base = name.split(' (')[0].trim();
+      
+      // 2. Aggressively strip common version suffixes
+      const suffixes = ['Fast', 'Lite', 'Quality', 'Standard', 'Audio', 'Stable', 'Pro', 'Turbo'];
+      suffixes.forEach(s => {
+        const regex = new RegExp(`\\s+${s}$`, 'i');
+        base = base.replace(regex, '');
+      });
+      
+      return base.trim();
     };
 
     // Grouping structure: Brand -> Base Model -> Variants
@@ -543,51 +551,30 @@ const VideoPage = () => {
 
   // Get selected model details
   const selectedModel = useMemo(() => {
-    if (!Array.isArray(rawModels)) return null;
+    if (!Array.isArray(rawModels) || !modelId) return null;
     
-    // Find model that matches current selection
-    // 1. Try to find exact variant by modelId first
-    const exact = rawModels.find(m => m.id === modelId);
-    if (exact && (!selectedVersionName || exact.version_name === selectedVersionName)) {
-      return exact;
-    }
+    // 1. Try to find the exact model by ID
+    const found = rawModels.find(m => m.id === modelId);
+    if (found) return found;
 
-    // 2. Fallback to searching by base name and version
-    const base = rawModels.find(m => m.id === modelId);
-    if (base) {
-      const baseName = base.base_name || base.name.split(' (')[0];
-      const match = rawModels.find(m => 
-        (m.base_name === baseName || m.name.startsWith(baseName)) && 
-        (selectedVersionName ? m.version_name === selectedVersionName : true)
-      );
-      return match || base;
-    }
-
-    return null;
-  }, [rawModels, modelId, selectedVersionName]);
+    // 2. If not found (maybe ID changed), find any model from the same brand
+    return rawModels[0] || null;
+  }, [rawModels, modelId]);
 
   // Sync states when modelId changes
   useEffect(() => {
     if (selectedModel) {
-      if (!selectedVersionName) setSelectedVersionName(selectedModel.version_name || "Standard");
-      if (selectedDuration === null) setSelectedDuration(selectedModel.duration);
-      if (!selectedResolution) setSelectedResolution(selectedModel.resolution);
+      setSelectedVersionName(selectedModel.version_name || "Standard");
+      setSelectedDuration(selectedModel.duration);
+      setSelectedResolution(selectedModel.resolution);
     }
-  }, [selectedModel]);
+  }, [selectedModel?.id]); // Only sync when the actual model identity changes
 
   // Get available variants for the current base model
   const availableVersions = useMemo(() => {
     if (!selectedModel || !Array.isArray(rawModels)) return [];
-    const baseName = selectedModel.base_name || selectedModel.name.split(' (')[0];
-    const versions = rawModels.filter(m => (m.base_name === baseName || m.name.startsWith(baseName)));
-    
-    // De-duplicate by version_name
-    const unique: Record<string, any> = {};
-    versions.forEach(v => {
-      const vName = v.version_name || "Standard";
-      if (!unique[vName]) unique[vName] = v;
-    });
-    return Object.values(unique);
+    const baseName = selectedModel.base_name || selectedModel.name.split(' ')[0]; // More aggressive base name
+    return rawModels.filter(m => (m.base_name === selectedModel.base_name || m.name.startsWith(baseName)));
   }, [selectedModel, rawModels]);
 
   // Get model capabilities
