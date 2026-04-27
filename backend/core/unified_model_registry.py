@@ -215,26 +215,35 @@ class UnifiedModelRegistry:
                 try: return int(v) if v is not None else default
                 except: return default
 
-            # Get existing model for fallbacks
+            # Get existing model for fallbacks to avoid NULL constraint violations
             models = await self.get_models(db, active_only=False)
             m = next((m for m in models if m["id"] == model_id), None)
             
+            # Base fields that might have NOT NULL constraints in DB
             video_data = {
                 "id": model_id,
-                "provider_id": provider,
+                "provider_id": provider or (m.get("provider") if m else "unknown"),
                 "name": updates.get("name") or (m.get("name") if m else model_id),
                 "display_name": updates.get("name") or (m.get("name") if m else model_id),
                 "model_type": updates.get("type") or (m.get("type") if m else "text_to_video"),
+                "endpoint": (m.get("endpoint") if m else f"/video/{model_id}/generate"),
+                "credits": updates.get("credits") or (m.get("credits") if m else 100),
                 "is_active": updates.get("is_active") if updates.get("is_active") is not None else (m.get("is_active") if m else True),
+                
+                # Advanced video parameters
                 "duration_options": updates.get("duration_options"),
                 "resolutions": updates.get("resolutions"),
                 "quality_multipliers": updates.get("quality_multipliers"),
                 "per_second_pricing": updates.get("per_second_pricing"),
                 "base_duration": to_int(updates.get("base_duration"), 5)
             }
-            # Remove None values
-            video_data = {k: v for k, v in video_data.items() if v is not None}
             
+            # Remove None values only for non-essential fields (not the ones above)
+            optional_fields = ["duration_options", "resolutions", "quality_multipliers", "per_second_pricing"]
+            for f in optional_fields:
+                if video_data.get(f) is None:
+                    del video_data[f]
+
             try:
                 db.table("video_models").upsert(video_data).execute()
             except Exception as e:
