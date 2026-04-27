@@ -234,25 +234,18 @@ export const ModelManagementPanel: React.FC = () => {
                 }
             }
 
-            // Handle advanced video parameters
-            const duration_options = editForm.duration_options.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
-            const resolutions = editForm.resolutions.split(',').map(s => s.trim()).filter(s => s);
-            let quality_multipliers = {};
-            try {
-                quality_multipliers = JSON.parse(editForm.quality_multipliers);
-            } catch (e) {
-                toast.error('Hata', 'Kalite çarpanları JSON formatı geçersiz');
-                return;
-            }
-
-            // Construct Production-level Capability Engine structure
+            // CLEANUP: Remove legacy fields that cause conflicts
+            const cleanedCapabilities = { ...(capabilities || {}) };
+            delete (cleanedCapabilities as any).video_params;
+            delete (cleanedCapabilities as any).parameters;
+            
             const video_caps = {
                 durations: duration_options,
                 resolutions: resolutions,
                 pricing: {} as any
             };
 
-            // Auto-generate nested pricing map if not explicitly in capabilities
+            // Auto-generate pricing
             duration_options.forEach(d => {
                 video_caps.pricing[d] = {
                     "720p": Math.round((editingModel as any).credits * (d/5) * (quality_multipliers["720p"] || 1.0)),
@@ -264,13 +257,13 @@ export const ModelManagementPanel: React.FC = () => {
             const payload = {
                 ...editForm,
                 capabilities: {
-                    ...(capabilities || {}),
+                    ...cleanedCapabilities,
                     video: video_caps
                 },
-                video_caps, // Top-level for easy backend extraction
-                duration_options,
-                resolutions,
-                quality_multipliers
+                video_caps,
+                duration_options: null, // Clear top-level legacy columns
+                resolutions: null,      // Clear top-level legacy columns
+                quality_multipliers: null // Clear top-level legacy columns
             };
             
             console.log('Updating model (Engine Mode):', editingModel.id, payload);

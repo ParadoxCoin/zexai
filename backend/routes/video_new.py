@@ -77,14 +77,15 @@ async def get_video_models(
             if type_filter and type_filter not in m_type:
                 continue
                 
-            # Unified naming and PRIORITY: Use JSON caps over static columns
-            v_caps = m.get("video_caps") or m.get("video_params") or {}
-            if not v_caps and isinstance(caps, dict):
-                v_caps = caps.get("video") or caps.get("video_params") or {}
+            # DEEP CLEAN: Only use the new video_caps engine
+            v_caps = m.get("video_caps") or {}
+            if not v_caps:
+                caps = m.get("capabilities") or {}
+                v_caps = caps.get("video") or {}
             
-            # Determine primary duration from caps if available
-            d_list = v_caps.get("durations") or v_caps.get("duration_options") or m.get("durations") or [m.get("duration", 5)]
-            primary_duration = int(d_list[0]) if d_list and len(d_list) > 0 else int(m.get("duration", 5))
+            # Use dynamic list from caps, fallback only to core duration column
+            d_list = v_caps.get("durations") or [m.get("duration", 5)]
+            primary_duration = int(d_list[0]) if d_list else 5
             
             # Map to schema
             models.append(VideoModelInfo(
@@ -92,19 +93,19 @@ async def get_video_models(
                 provider=m.get("provider", "Premium"),
                 name=m.get("display_name") or m.get("name") or m_id,
                 type=m_type,
-                duration=primary_duration, # Now dynamic
+                duration=primary_duration,
                 credits=int(m.get("credits", 100)),
                 quality=VideoQuality(int(m.get("quality", 4)) if str(m.get("quality", "")).isdigit() else 4),
                 speed=VideoSpeed(m.get("speed", "medium") if isinstance(m.get("speed"), str) else "medium"),
                 badge=m.get("badge"),
                 description=m.get("description", ""),
-                capabilities=caps,
+                capabilities=m.get("capabilities", {}),
                 video_caps=v_caps,
                 base_name=m.get("base_name") or (m_id.split('/')[1] if '/' in m_id else m_id),
                 version_name=m.get("version_name") or "Standard",
-                durations=d_list, # Dynamic list
-                resolutions=v_caps.get("resolutions") or m.get("resolutions") or ["720p", "1080p", "4K"],
-                slider_duration=bool(v_caps.get("slider_duration") or m.get("slider_duration", False))
+                durations=d_list,
+                resolutions=v_caps.get("resolutions") or ["720p", "1080p", "4K"],
+                slider_duration=bool(v_caps.get("slider_duration", False))
             ))
             
         if models:
