@@ -443,6 +443,8 @@ KIE_VIDEO_MODELS = {
     "kie_sora2_stable_10s": {
         "provider": "kie.ai",
         "name": "Open AI Sora 2 (10s)",
+        "base_name": "OpenAI Sora",
+        "version_name": "10s",
         "type": "text_to_video",
         "model_id": "sora-2-text-to-video-stable",
         "kie_credits": 35,
@@ -464,6 +466,8 @@ KIE_VIDEO_MODELS = {
     "kie_sora2_stable_15s": {
         "provider": "kie.ai",
         "name": "Open AI Sora 2 (15s)",
+        "base_name": "OpenAI Sora",
+        "version_name": "15s",
         "type": "text_to_video",
         "model_id": "sora-2-text-to-video-stable-15s",
         "kie_credits": 40,
@@ -530,6 +534,8 @@ KIE_VIDEO_MODELS = {
     "kie_kling26_audio_5s": {
         "provider": "kie.ai",
         "name": "Kling 2.6 + Audio (5s)",
+        "base_name": "Kling AI",
+        "version_name": "Audio Lite",
         "type": "text_to_video",
         "model_id": "kling-2.6-audio-5s",
         "kie_credits": 110,
@@ -549,6 +555,8 @@ KIE_VIDEO_MODELS = {
     "kie_kling26_no_audio_5s": {
         "provider": "kie.ai",
         "name": "Kling 2.6 (5s)",
+        "base_name": "Kling AI",
+        "version_name": "Standard Lite",
         "type": "text_to_video",
         "model_id": "kling-2.6-5s",
         "kie_credits": 55,
@@ -570,6 +578,8 @@ KIE_VIDEO_MODELS = {
     "kie_wan26_1080p_15s": {
         "provider": "kie.ai",
         "name": "Wan 2.6 (1080p, 15s)",
+        "base_name": "Wan AI",
+        "version_name": "15s High",
         "type": "text_to_video",
         "model_id": "wan-2.6-1080p-15s",
         "kie_credits": 315,
@@ -590,6 +600,8 @@ KIE_VIDEO_MODELS = {
     "kie_wan26_1080p_10s": {
         "provider": "kie.ai",
         "name": "Wan 2.6 (1080p, 10s)",
+        "base_name": "Wan AI",
+        "version_name": "10s Standard",
         "type": "text_to_video",
         "model_id": "wan-2.6-1080p-10s",
         "kie_credits": 209.5,
@@ -607,6 +619,8 @@ KIE_VIDEO_MODELS = {
     "kie_wan26_1080p_5s": {
         "provider": "kie.ai",
         "name": "Wan 2.6 (1080p, 5s)",
+        "base_name": "Wan AI",
+        "version_name": "5s Fast",
         "type": "text_to_video",
         "model_id": "wan-2.6-1080p-5s",
         "kie_credits": 104.5,
@@ -624,6 +638,8 @@ KIE_VIDEO_MODELS = {
     "kie_wan26_720p_10s": {
         "provider": "kie.ai",
         "name": "Wan 2.6 (720p, 10s)",
+        "base_name": "Wan AI",
+        "version_name": "10s Lite",
         "type": "text_to_video",
         "model_id": "wan-2.6-720p-10s",
         "kie_credits": 140,

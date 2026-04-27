@@ -540,6 +540,20 @@ const VideoPage = () => {
   }, [rawModels, activeTab, searchQuery, selectedProvider]);
 
   const models = filteredModels;
+  
+  // Calculate dynamic price based on duration
+  const currentPrice = useMemo(() => {
+    if (!selectedModel) return 0;
+    // Base credits from model
+    const baseCredits = selectedModel.credits;
+    const baseDuration = selectedModel.duration || 5;
+    
+    // If user changed duration, scale the price linearly
+    if (selectedDuration && selectedDuration !== baseDuration) {
+      return Math.round(baseCredits * (selectedDuration / baseDuration));
+    }
+    return baseCredits;
+  }, [selectedModel, selectedDuration]);
 
   // Calculate total credits for selected compare models
   const totalCompareCredits = useMemo(() => {
@@ -1108,7 +1122,7 @@ const VideoPage = () => {
                         03. {t('videoGen.stepQuality', 'Kalite')}
                       </h3>
                       <div className="flex flex-wrap gap-2">
-                        {(selectedModel.resolutions || [selectedModel.resolution]).map((r: string) => (
+                        {(selectedModel.resolutions || [selectedModel.resolution || "720p"]).map((r: string) => (
                           <button
                             key={r}
                             onClick={() => setSelectedResolution(r)}
@@ -1155,14 +1169,23 @@ const VideoPage = () => {
                 )}
 
                 {/* Generate Button */}
-                <div className="p-5 bg-gray-50 dark:bg-gray-900/50">
+                <div className="p-5 bg-gray-50 dark:bg-gray-900/50 flex gap-3">
+                  {selectedModel && (
+                    <button
+                      onClick={() => setModelId("")}
+                      className="px-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 rounded-xl hover:bg-gray-50 transition-colors"
+                      title={t('common.reset', 'Sıfırla')}
+                    >
+                      <RotateCcw className="w-5 h-5" />
+                    </button>
+                  )}
                   <button
                     onClick={handleGenerate}
                     disabled={isGenerating || !prompt || !modelId ||
                       (activeTab === "image-to-video" && !imageFile) ||
                       (activeTab === "video-to-video" && !videoFile)
                     }
-                    className="w-full py-4 bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/25 disabled:shadow-none transition-all flex items-center justify-center gap-2"
+                    className="flex-1 py-4 bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/25 disabled:shadow-none transition-all flex items-center justify-center gap-2"
                   >
                     {isGenerating ? (
                       <><Loader2 className="w-5 h-5 animate-spin" />{t('videoGen.generating', 'Video Oluşturuluyor...')}</>
@@ -1172,7 +1195,7 @@ const VideoPage = () => {
                         {activeTab === "text-to-video" && t('videoGen.generateBtnT2V', "Video Oluştur")}
                         {activeTab === "image-to-video" && t('videoGen.generateBtnI2V', "Görseli Hareketlendir")}
                         {activeTab === "video-to-video" && t('videoGen.generateBtnV2V', "Videoyu Dönüştür")}
-                        {selectedModel && ` (${selectedModel.credits}c)`}
+                        {selectedModel && ` (${currentPrice}c)`}
                       </>
                     )}
                   </button>
