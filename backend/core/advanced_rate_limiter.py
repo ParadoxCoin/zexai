@@ -22,6 +22,50 @@ class AdvancedRateLimiter:
         self._connect_redis()
         self._tier_limits_cache = {}
         self._cache_expires_at = 0
+        self.db = None
+        
+    def _get_db(self):
+        """Lazy load database connection"""
+        if self.db is None:
+            from core.database import get_database
+            self.db = get_database()
+        return self.db
+
+    async def _get_tier_limits(self, tier: str) -> Dict[str, Any]:
+        """Get rate limit configurations for a tier, with caching"""
+        current_time = time.time()
+        
+        # Check cache (1-minute TTL for tier configs)
+        if tier in self._tier_limits_cache and current_time < self._cache_expires_at:
+            return self._tier_limits_cache[tier]
+            
+        try:
+            db = self._get_db()
+            # Try to fetch from rate_limit_tiers table
+            response = await db.rate_limit_tiers.find({"tier_name": tier}).to_list(length=100)
+            
+            if response:
+                # Convert list of service limits to nested dict
+                tier_data = {}
+                for item in response:
+                    svc = item.get("service_type", "api")
+                    tier_data[svc] = {
+                        "per_minute": item.get("per_minute", 10),
+                        "per_hour": item.get("per_hour", 100),
+                        "per_day": item.get("per_day", 1000),
+                        "burst": item.get("burst_limit", 5)
+                    }
+                
+                # Update cache
+                self._tier_limits_cache[tier] = tier_data
+                self._cache_expires_at = current_time + 60  # Cache for 60 seconds
+                return tier_data
+                
+        except Exception as e:
+            logger.error(f"Failed to fetch tier limits from DB: {e}")
+            
+        # Fallback to defaults
+        return self.default_limits.get(tier, self.default_limits["free"])
         
         # Default rate limit configurations (fallback if DB unavailable)
         self.default_limits = {
@@ -371,7 +415,7 @@ async def check_service_rate_limit(
     current_time = int(time.time())
     
     # Get limits for this tier and service
-    tier_limits = advanced_limiter.default_limits.get(user_tier, advanced_limiter.default_limits["free"])
+    tier_limits = await advanced_limiter._get_tier_limits(user_tier)
     service_limits = tier_limits.get(service_type, tier_limits.get("api", {"per_minute": 10}))
     
     per_minute = service_limits.get("per_minute", 10)
