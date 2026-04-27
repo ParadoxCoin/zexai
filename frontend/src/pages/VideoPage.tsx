@@ -1134,7 +1134,6 @@ const VideoPage = () => {
                         </div>
                       </div>
                     </div>
-                    </div>
 
                     {/* Aspect Ratio (Global) */}
                     <div className="space-y-3 pt-2">
