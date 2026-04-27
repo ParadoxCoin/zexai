@@ -52,25 +52,24 @@ async def get_video_models(
     """
     models = []
     
-    # Direct database query to avoid circular imports and 500 errors
+    # Direct database query with robust type mapping
     try:
         from core.database import get_db
-        # Use existing database logic to fetch from ai_models
-        # ai_models is the source of truth
+        # Fetch from ai_models (the source of truth)
         res = db.table("ai_models").select("*").execute()
         db_models = res.data if res.data else []
         
         type_filter = type.value if type else None
         for m in db_models:
-            # BROAD FILTER: Include if type/category contains 'video' OR has video caps in JSON
             m_id = m.get("id")
             if not m_id: continue
             
-            m_type = str(m.get("type") or "").lower()
+            m_type = str(m.get("type") or m.get("model_type") or "text_to_video").lower()
             m_category = str(m.get("category") or "").lower()
             caps = m.get("capabilities") or {}
             video_caps = caps.get("video") or caps.get("video_params") or {}
             
+            # BROAD FILTER: Include if type/category contains 'video' OR has video_caps
             is_video = "video" in m_type or "video" in m_category or len(video_caps) > 0
             if not is_video:
                 continue
@@ -78,26 +77,39 @@ async def get_video_models(
             if type_filter and type_filter not in m_type:
                 continue
                 
-            # Safe mapping to VideoModelInfo schema
-            models.append(VideoModelInfo(
-                id=m_id,
-                provider=m.get("provider", "Premium"),
-                name=m.get("display_name") or m.get("name") or m_id,
-                type=m.get("model_type") or m.get("type") or "text_to_video",
-                duration=int(m.get("duration", 5)),
-                credits=int(m.get("credits", 100)),
-                quality=VideoQuality(int(m.get("quality", 4)) if str(m.get("quality", "")).isdigit() else 4),
-                speed=VideoSpeed(m.get("speed", "medium") if isinstance(m.get("speed"), str) else "medium"),
-                badge=m.get("badge"),
-                description=m.get("description", ""),
-                capabilities=caps,
-                video_params=video_caps,
-                base_name=m.get("base_name") or (m_id.split('/')[1] if '/' in m_id else m_id),
-                version_name=m.get("version_name") or "Standard",
-                durations=video_caps.get("durations") or m.get("durations") or [5],
-                resolutions=video_caps.get("resolutions") or m.get("resolutions") or ["720p", "1080p", "4K"],
-                slider_duration=bool(m.get("slider_duration", False))
-            ))
+            # Safe Enum & Type Mapping
+            try:
+                # Handle Quality Enum (int 1-5)
+                q_val = m.get("quality", 4)
+                if isinstance(q_val, str) and q_val.isdigit(): q_val = int(q_val)
+                elif not isinstance(q_val, int): q_val = 4
+                
+                # Handle Speed Enum (str: slow, medium, fast)
+                s_val = m.get("speed", "medium")
+                if not isinstance(s_val, str): s_val = "medium"
+                
+                models.append(VideoModelInfo(
+                    id=m_id,
+                    provider=m.get("provider", "Premium"),
+                    name=m.get("display_name") or m.get("name") or m_id,
+                    type=m_type,
+                    duration=int(m.get("duration", 5)),
+                    credits=int(m.get("credits", 100)),
+                    quality=VideoQuality(q_val) if q_val in [1,2,3,4,5] else VideoQuality.HIGH,
+                    speed=VideoSpeed(s_val) if s_val in ["slow", "medium", "fast", "very_fast"] else VideoSpeed.MEDIUM,
+                    badge=m.get("badge"),
+                    description=m.get("description", ""),
+                    capabilities=caps,
+                    video_params=video_caps,
+                    base_name=m.get("base_name") or (m_id.split('/')[1] if '/' in m_id else m_id),
+                    version_name=m.get("version_name") or "Standard",
+                    durations=video_caps.get("durations") or m.get("durations") or [5],
+                    resolutions=video_caps.get("resolutions") or m.get("resolutions") or ["720p", "1080p", "4K"],
+                    slider_duration=bool(m.get("slider_duration", False))
+                ))
+            except Exception as map_err:
+                print(f"[/video/models] Mapping error for model {m_id}: {map_err}")
+                continue
             
         if models:
             models.sort(key=lambda x: (-x.quality.value if hasattr(x.quality, 'value') else -4, x.credits))
