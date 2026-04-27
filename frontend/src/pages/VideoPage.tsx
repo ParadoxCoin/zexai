@@ -580,62 +580,83 @@ const VideoPage = () => {
     return providerStyles[provider?.toLowerCase()] || { bg: 'bg-gray-100', text: 'text-gray-700', icon: '🎥' };
   };
 
-  // Group models by provider
-  const { providers, filteredModels } = useMemo(() => {
+  // Brand extraction and grouping
+  const { brands, filteredModels } = useMemo(() => {
     const data = modelsData as any;
     const modelsList = data?.outputs || data?.data || data || [];
-    if (!Array.isArray(modelsList)) return { providers: [], filteredModels: [] };
+    if (!Array.isArray(modelsList)) return { brands: [], filteredModels: [] };
 
-    // Group by provider
+    const getBrand = (name: string): { name: string; icon: string } => {
+      const n = name.toLowerCase();
+      if (n.includes("veo")) return { name: "Google Veo", icon: "🌐" };
+      if (n.includes("sora")) return { name: "OpenAI Sora", icon: "🤖" };
+      if (n.includes("kling")) return { name: "Kling AI", icon: "⚔️" };
+      if (n.includes("wan")) return { name: "Wan AI", icon: "🌀" };
+      if (n.includes("hailuo")) return { name: "Hailuo AI", icon: "🌊" };
+      if (n.includes("seedance")) return { name: "Seedance", icon: "💃" };
+      if (n.includes("grok")) return { name: "Grok AI", icon: "𝕏" };
+      if (n.includes("runway") || n.includes("aleph")) return { name: "Runway", icon: "🎥" };
+      if (n.includes("luma")) return { name: "Luma AI", icon: "💎" };
+      if (n.includes("kandinsky")) return { name: "Kandinsky", icon: "🎨" };
+      
+      // Default: First word
+      const firstWord = name.split(' ')[0];
+      return { name: firstWord, icon: "📦" };
+    };
+
+    // Group by brand
     const grouped: Record<string, any[]> = {};
-    const providerList: any[] = [];
+    const brandMap: Record<string, any> = {};
 
     modelsList.forEach(m => {
-      const p = m.provider || "Diğer";
-      if (!grouped[p]) {
-        grouped[p] = [];
-        providerList.push({
-          id: p,
-          name: p,
-          icon: getProviderStyle(p).icon,
+      const brandInfo = getBrand(m.name);
+      const bName = brandInfo.name;
+      
+      if (!grouped[bName]) {
+        grouped[bName] = [];
+        brandMap[bName] = {
+          id: bName,
+          name: bName,
+          icon: brandInfo.icon,
           count: 0
-        });
+        };
       }
-      grouped[p].push(m);
+      grouped[bName].push(m);
     });
 
-    // Update counts
-    providerList.forEach(p => {
-      p.count = grouped[p.id].length;
+    const brandList = Object.values(brandMap);
+    brandList.forEach(b => {
+      b.count = grouped[b.id].length;
     });
 
-    // Sort providers
-    providerList.sort((a, b) => {
-      if (a.id === "Premium") return -1;
-      if (b.id === "Premium") return 1;
+    // Sort: Google, OpenAI first, then by count
+    brandList.sort((a, b) => {
+      if (a.name.includes("Google")) return -1;
+      if (b.name.includes("Google")) return 1;
+      if (a.name.includes("OpenAI")) return -1;
+      if (b.name.includes("OpenAI")) return 1;
       return b.count - a.count;
     });
 
-    // Set initial provider if none selected
-    if (!selectedProvider && providerList.length > 0) {
-      setSelectedProvider(providerList[0].id);
+    // Set initial selected brand
+    if (!selectedProvider && brandList.length > 0) {
+      setSelectedProvider(brandList[0].id);
     }
 
-    // Filter models based on search and selected provider
+    // Filter models
     let filtered = modelsList;
     if (searchQuery) {
       filtered = filtered.filter((m: any) => 
-        m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        m.provider.toLowerCase().includes(searchQuery.toLowerCase())
+        m.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
     } else if (selectedProvider) {
-      filtered = filtered.filter((m: any) => m.provider === selectedProvider);
+      filtered = filtered.filter((m: any) => getBrand(m.name).name === selectedProvider);
     }
 
-    return { providers: providerList, filteredModels: filtered };
+    return { brands: brandList, filteredModels: filtered };
   }, [modelsData, selectedProvider, searchQuery]);
 
-  const models = filteredModels; // Shortcut for existing code
+  const models = filteredModels;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
@@ -740,22 +761,22 @@ const VideoPage = () => {
               </div>
 
               <div className="flex-1 flex overflow-hidden">
-                {/* Providers Sidebar */}
+                {/* Brand Sidebar */}
                 {!searchQuery && (
-                  <div className="w-24 sm:w-32 border-r border-gray-100 dark:border-gray-700 overflow-y-auto bg-gray-50/50 dark:bg-gray-900/20">
-                    {providers.map((p) => (
+                  <div className="w-28 sm:w-36 border-r border-gray-100 dark:border-gray-700 overflow-y-auto bg-gray-50/50 dark:bg-gray-900/20">
+                    {brands.map((b) => (
                       <button
-                        key={p.id}
-                        onClick={() => setSelectedProvider(p.id)}
+                        key={b.id}
+                        onClick={() => setSelectedProvider(b.id)}
                         className={`w-full p-3 flex flex-col items-center gap-1 transition-all border-l-4 ${
-                          selectedProvider === p.id
+                          selectedProvider === b.id
                             ? 'bg-white dark:bg-gray-800 border-purple-500 text-purple-600 dark:text-purple-400 shadow-sm'
                             : 'border-transparent text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
                         }`}
                       >
-                        <span className="text-2xl">{p.icon}</span>
-                        <span className="text-[10px] font-bold text-center uppercase tracking-tight line-clamp-1">{p.name}</span>
-                        <span className="text-[9px] opacity-60">{p.count}</span>
+                        <span className="text-xl">{b.icon}</span>
+                        <span className="text-[10px] font-bold text-center uppercase tracking-tight line-clamp-1">{b.name}</span>
+                        <span className="text-[9px] opacity-60 px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded-full">{b.count} {t('videoGen.versions', 'sürüm')}</span>
                       </button>
                     ))}
                   </div>
