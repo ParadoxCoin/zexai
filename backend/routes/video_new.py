@@ -40,6 +40,25 @@ from core.notification_service import notify_generation_complete
 router = APIRouter(prefix="/video", tags=["Video Generation"])
 
 
+def _extract_base_name(display_name: str) -> str:
+    """Extract base model name from display name. 'Veo 3.1 (Quality)' -> 'Veo 3.1'"""
+    import re
+    base = re.split(r'\s*\(', display_name)[0].strip()
+    # Remove common suffixes
+    for suffix in ['Fast', 'Lite', 'Quality', 'Standard', 'Audio', 'Stable', 'Pro', 'Turbo']:
+        base = re.sub(rf'\s+{suffix}$', '', base, flags=re.IGNORECASE)
+    return base.strip() or display_name
+
+
+def _extract_version_name(display_name: str) -> str:
+    """Extract version from display name. 'Veo 3.1 (Quality)' -> 'Quality'"""
+    import re
+    match = re.search(r'\(([^)]+)\)', display_name)
+    if match:
+        return match.group(1).strip()
+    return "Standard"
+
+
 @router.get("/models", response_model=List[VideoModelInfo])
 async def get_video_models(
     type: Optional[VideoType] = None,
@@ -180,8 +199,8 @@ async def get_video_models(
                     description=m.get("description", ""),
                     capabilities=capabilities,
                     video_caps=v_caps,
-                    base_name=m.get("base_name") or (m_id.split('/')[1] if '/' in m_id else m_id),
-                    version_name=m.get("version_name") or "Standard",
+                    base_name=m.get("base_name") or _extract_base_name(m.get("display_name") or m.get("name") or m_id),
+                    version_name=m.get("version_name") or _extract_version_name(m.get("display_name") or m.get("name") or "Standard"),
                     resolution=resolutions[-1] if resolutions else "720p",
                     durations=duration_options,
                     resolutions=resolutions,
