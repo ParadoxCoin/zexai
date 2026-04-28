@@ -67,7 +67,8 @@ async def get_video_models(
     """
     Get all available video models with pricing.
     Priority: video_models table (admin-managed) → ai_models table → hardcoded fallback
-    print("DEBUG: /video/models called - VERSION: ULTRA_ROBUST_V3")
+    """
+    print("DEBUG: /video/models called - VERSION: ULTRA_ROBUST_V4")
     models = []
     
     # ── Priority 1: Read from video_models table (Admin Panel manages this) ──
