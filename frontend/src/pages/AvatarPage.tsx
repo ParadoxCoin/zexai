@@ -4,7 +4,7 @@ import { apiService } from '@/services/api';
 import {
     Camera, Upload, Mic, Play, Download, RefreshCw, Sparkles,
     Volume2, Image as ImageIcon, Video, ChevronDown, User, Loader2, Check, X,
-    Globe, Star, Music, Pause, FileAudio, UploadCloud
+    Globe, Star, Music, Pause, FileAudio, UploadCloud, Zap
 } from 'lucide-react';
 import { Celebration, CreditToast } from '@/components/Celebration';
 import PromptEnhancer from '@/components/PromptEnhancer';

@@ -1658,57 +1658,58 @@ const VideoPage = () => {
                 {/* Motion Brush Button */}
                 <button
                   onClick={() => setShowMotionBrush(true)}
-                  className="w-full mb-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-medium rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/25 transition-all"
-                >
-                  <Wand2 className="w-4 h-4" />
-                  Motion Brush
-                  <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">50c</span>
-                </button>
-
-                {/* Effect List */}
-                <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+                  className="w-full mb-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-medium rounded-xl flex items-center j                {/* Effect List */}
+                <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1 custom-scrollbar">
                   {isLoadingEffects ? (
                     [1, 2, 3, 4, 5].map(i => (
                       <div key={i} className="h-16 bg-gray-100 dark:bg-gray-700 rounded-xl animate-pulse" />
                     ))
                   ) : filteredEffects.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500 text-sm">
+                    <div className="text-center py-12 text-gray-500 text-sm">
+                      <Sparkles className="w-10 h-10 mx-auto mb-3 opacity-20" />
                       {t('videoGen.effectsNoCat', 'Bu kategoride efekt yok')}
                     </div>
                   ) : (
-                    filteredEffects.map((effect: any) => {
-                      const isSelected = effectId === effect.id;
-                      return (
-                        <div
-                          key={effect.id}
-                          onClick={() => setEffectId(effect.id)}
-                          className={`relative p-3 rounded-xl cursor-pointer transition-all border-2 ${isSelected
-                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 shadow-md'
-                            : 'border-transparent bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800'
-                            }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="text-2xl">{effect.icon || '✨'}</span>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-gray-900 dark:text-white text-sm line-clamp-1">
+                    <div className="grid grid-cols-2 gap-2">
+                      {filteredEffects.map((effect: any) => {
+                        const isSelected = effectId === effect.id;
+                        return (
+                          <div
+                            key={effect.id}
+                            onClick={() => setEffectId(effect.id)}
+                            className={`relative group p-3 rounded-2xl cursor-pointer transition-all border-2 flex flex-col items-center text-center gap-2 ${isSelected
+                              ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 shadow-md ring-2 ring-purple-500/20'
+                              : 'border-transparent bg-gray-50 dark:bg-gray-900 hover:border-purple-300 dark:hover:border-purple-700'
+                              }`}
+                          >
+                            <div className="w-12 h-12 rounded-xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                              {effect.icon || '✨'}
+                            </div>
+                            <div className="min-w-0">
+                              <h4 className="font-bold text-gray-900 dark:text-white text-[11px] leading-tight line-clamp-1">
                                 {effect.name}
                               </h4>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 text-xs font-medium rounded-full">
+                              <div className="mt-1 flex items-center justify-center gap-1">
+                                <span className="px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 text-[9px] font-bold rounded-md">
                                   {effect.credits}c
                                 </span>
-                                {effect.requires_two_images && (
-                                  <span className="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400 text-xs font-medium rounded-full">
-                                    2 Görsel
-                                  </span>
-                                )}
                               </div>
                             </div>
-                          </div>
 
-                          {isSelected && (
-                            <div className="absolute top-2 right-2 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center">
-                              <CheckCircle className="w-3 h-3 text-white" />
+                            {isSelected && (
+                              <div className="absolute -top-1 -right-1 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-gray-800">
+                                <CheckCircle className="w-3 h-3 text-white" />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+           <CheckCircle className="w-3 h-3 text-white" />
                             </div>
                           )}
                         </div>
@@ -1721,19 +1722,43 @@ const VideoPage = () => {
 
             {/* Right Panel - Apply Effect */}
             <div className="lg:col-span-2 space-y-4">
-              {/* Selected Effect Info */}
+              {/* Selected Effect Info & Example */}
               {effectId ? (
                 <>
-                  <div className="bg-gradient-to-r from-purple-600 to-violet-600 rounded-2xl p-4 text-white">
-                    <div className="flex items-center gap-4">
-                      <span className="text-4xl">{effects.find((e: any) => e.id === effectId)?.icon || '✨'}</span>
-                      <div className="flex-1">
-                        <h3 className="font-bold text-lg">{effects.find((e: any) => e.id === effectId)?.name}</h3>
-                        <p className="text-purple-100 text-sm">{effects.find((e: any) => e.id === effectId)?.description}</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold">{effects.find((e: any) => e.id === effectId)?.credits}c</div>
-                      </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-900 rounded-3xl p-6 text-white shadow-xl shadow-purple-500/10 border border-white/10 relative overflow-hidden">
+                       <div className="absolute top-0 right-0 p-8 bg-purple-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                       <div className="relative">
+                          <span className="text-5xl mb-4 block">{effects.find((e: any) => e.id === effectId)?.icon || '✨'}</span>
+                          <h3 className="font-black text-2xl tracking-tight mb-2">{effects.find((e: any) => e.id === effectId)?.name}</h3>
+                          <p className="text-purple-200/80 text-sm font-medium leading-relaxed mb-6">{effects.find((e: any) => e.id === effectId)?.description}</p>
+                          <div className="flex items-center gap-2">
+                             <div className="px-4 py-2 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 inline-flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+                                <span className="font-bold text-lg">{effects.find((e: any) => e.id === effectId)?.credits}c</span>
+                             </div>
+                             {effects.find((e: any) => e.id === effectId)?.requires_two_images && (
+                                <div className="px-4 py-2 bg-orange-500/20 backdrop-blur-md rounded-2xl border border-orange-500/30 text-orange-400 font-bold text-xs uppercase tracking-wider">
+                                   2 Image Required
+                                </div>
+                             )}
+                          </div>
+                       </div>
+                    </div>
+
+                    <div className="bg-black rounded-3xl overflow-hidden shadow-2xl relative group">
+                       <div className="absolute top-4 left-4 z-10">
+                          <span className="px-3 py-1 bg-black/50 backdrop-blur-md text-white text-[10px] font-bold rounded-full border border-white/20 uppercase tracking-widest">
+                             Example Preview
+                          </span>
+                       </div>
+                       <video 
+                          src={effects.find((e: any) => e.id === effectId)?.example_url || "https://cdn.example.com/default-effect.mp4"}
+                          autoPlay 
+                          loop 
+                          muted 
+                          className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                       />
                     </div>
                   </div>
 
