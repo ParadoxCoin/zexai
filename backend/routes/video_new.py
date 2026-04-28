@@ -94,17 +94,22 @@ async def get_video_models(
                 duration_options = m.get("duration_options") or []
                 if not isinstance(duration_options, list):
                     try:
-                        # Handle Postgres array string format "{4,6,8}" -> "[4,6,8]"
-                        d_str = str(duration_options).replace('{', '[').replace('}', ']')
-                        duration_options = json.loads(d_str) if d_str else []
+                        import re
+                        # Robust Postgres array parser: {1,2,3} or ["1","2"] or 1,2,3
+                        raw_str = str(duration_options).strip()
+                        if raw_str.startswith('{') and raw_str.endswith('}'):
+                            raw_str = raw_str[1:-1]
+                        # Split by comma but respect quotes
+                        duration_options = re.findall(r'[^,"]+|"([^"]*)"', raw_str)
+                        duration_options = [d.strip() for d in duration_options if d and d.strip()]
                     except:
                         duration_options = []
                 
                 # Ensure durations are integers
-                duration_options = [int(d) for d in duration_options if d is not None]
+                duration_options = [int(d) for d in duration_options if str(d).isdigit()]
                 
                 if not duration_options:
-                    duration_options = [m.get("duration", 5)]
+                    duration_options = [int(m.get("duration", 5))]
                 
                 primary_duration = duration_options[0] if duration_options else 5
                 
@@ -112,9 +117,12 @@ async def get_video_models(
                 resolutions = m.get("resolutions") or []
                 if not isinstance(resolutions, list):
                     try:
-                        # Handle Postgres array string format '{"720p","1080p"}'
-                        r_str = str(resolutions).replace('{', '[').replace('}', ']')
-                        resolutions = json.loads(r_str) if r_str else []
+                        import re
+                        raw_str = str(resolutions).strip()
+                        if raw_str.startswith('{') and raw_str.endswith('}'):
+                            raw_str = raw_str[1:-1]
+                        resolutions = re.findall(r'[^,"]+|"([^"]*)"', raw_str)
+                        resolutions = [r.strip().replace('"', '') for r in resolutions if r and r.strip()]
                     except:
                         resolutions = []
                 if not resolutions:

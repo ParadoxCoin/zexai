@@ -142,7 +142,7 @@ class UnifiedModelRegistry:
                             "provider": db_m.get("provider") or "unknown",
                             "cost_usd": float(db_m.get("cost_usd", 0)),
                             "cost_multiplier": float(db_m.get("cost_multiplier", 1.0)),
-                            "credits": int(db_m.get("credits", 100)),
+                            "credits": int(db_m.get("credits")) if db_m.get("credits") is not None else int(float(db_m.get("cost_usd", 0)) * float(db_m.get("cost_multiplier", 1.2)) * 100) or 100,
                             "is_active": db_m.get("is_active", True),
                             "source": "database"
                         }
