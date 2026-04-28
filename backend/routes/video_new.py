@@ -90,23 +90,18 @@ async def get_video_models(
                 if type_filter and type_filter not in m_type:
                     continue
                 
-                # Duration handling: admin uses duration_options array
-                duration_options = m.get("duration_options") or []
-                if not isinstance(duration_options, list):
-                    try:
-                        import re
-                        # Robust Postgres array parser: {1,2,3} or ["1","2"] or 1,2,3
-                        raw_str = str(duration_options).strip()
-                        if raw_str.startswith('{') and raw_str.endswith('}'):
-                            raw_str = raw_str[1:-1]
-                        # Split by comma but respect quotes
-                        duration_options = re.findall(r'[^,"]+|"([^"]*)"', raw_str)
-                        duration_options = [d.strip() for d in duration_options if d and d.strip()]
-                    except:
-                        duration_options = []
+                # Duration handling: robust list parser
+                raw_durations = m.get("duration_options") or []
+                if isinstance(raw_durations, (list, tuple)):
+                    duration_options = list(raw_durations)
+                else:
+                    # Parse string format: {4,6,8} or [4,6,8] or "4,6,8"
+                    s = str(raw_durations).strip()
+                    for char in '{}[]"': s = s.replace(char, '')
+                    duration_options = [x.strip() for x in s.split(',') if x.strip()]
                 
                 # Ensure durations are integers
-                duration_options = [int(d) for d in duration_options if str(d).isdigit()]
+                duration_options = [int(d) for d in duration_options if str(d).strip().isdigit()]
                 
                 if not duration_options:
                     duration_options = [int(m.get("duration", 5))]
@@ -114,17 +109,14 @@ async def get_video_models(
                 primary_duration = duration_options[0] if duration_options else 5
                 
                 # Resolution handling
-                resolutions = m.get("resolutions") or []
-                if not isinstance(resolutions, list):
-                    try:
-                        import re
-                        raw_str = str(resolutions).strip()
-                        if raw_str.startswith('{') and raw_str.endswith('}'):
-                            raw_str = raw_str[1:-1]
-                        resolutions = re.findall(r'[^,"]+|"([^"]*)"', raw_str)
-                        resolutions = [r.strip().replace('"', '') for r in resolutions if r and r.strip()]
-                    except:
-                        resolutions = []
+                raw_resolutions = m.get("resolutions") or []
+                if isinstance(raw_resolutions, (list, tuple)):
+                    resolutions = list(raw_resolutions)
+                else:
+                    s = str(raw_resolutions).strip()
+                    for char in '{}[]"': s = s.replace(char, '')
+                    resolutions = [x.strip() for x in s.split(',') if x.strip()]
+                
                 if not resolutions:
                     max_res = m.get("max_resolution", "720p")
                     if max_res == "4K" or max_res == "2160p":
