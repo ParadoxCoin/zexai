@@ -1189,26 +1189,8 @@ const VideoPage = () => {
                           })()}
                         </div>
                       </div>
-                            return (
-                              <button
-                                key={r}
-                                disabled={!isAvailable}
-                                onClick={() => setSelectedResolution(r)}
-                                className={`px-6 py-2.5 rounded-xl text-sm font-black transition-all border-2 flex-none ${
-                                  !isAvailable ? 'opacity-30 cursor-not-allowed border-gray-100 dark:border-gray-700' :
-                                  (selectedResolution || selectedModel.resolution) === r
-                                    ? 'bg-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/30 scale-105'
-                                    : 'bg-white dark:bg-gray-800 text-gray-500 border-gray-100 dark:border-gray-700 hover:border-blue-300'
-                                }`}
-                              >
-                                {r}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
                     </div>
-
+                    
                     {/* Aspect Ratio (Global) */}
                     <div className="space-y-3 pt-2">
                       <h3 className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
