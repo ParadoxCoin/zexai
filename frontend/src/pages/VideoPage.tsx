@@ -442,7 +442,7 @@ const VideoPage = () => {
   const myVideos = myVideosData?.outputs || myVideosData?.data || myVideosData || [];
 
   // Advanced model grouping with brand, base, and variants
-  const { brands, filteredModels, allModels, variantsMap } = useMemo(() => {
+  const { brands, filteredModels, allAvailableModels, variantsMap } = useMemo(() => {
     if (!Array.isArray(rawModels)) return { brands: [], filteredModels: [], variantsMap: {} };
 
     // Map tab to model type
@@ -456,16 +456,17 @@ const VideoPage = () => {
     // Initial filter by active tab type
     const rawFiltered = rawModels.map((m: any) => {
       let isSupported = true;
+      const n = (m.name || "").toLowerCase();
+      const mid = (m.id || "").toLowerCase();
+
       if (activeTab === 'image-to-video') {
-         isSupported = m.type === 'image_to_video' || m.model_type === 'image_to_video' || 
-                m.capabilities?.imagetovideo || m.capabilities?.image_to_video || m.video_caps?.image_to_video;
-         const n = (m.name || "").toLowerCase();
-         if (n.includes('kling') || n.includes('wan') || n.includes('runway') || n.includes('luma')) {
-            isSupported = true;
-         }
+         // STRICT FILTER: Only allow known KIE I2V models or models explicitly marked as I2V in DB
+         const isKieI2V = mid.startsWith('kie_') && (mid.includes('i2v') || mid.includes('image-to-video'));
+         const isExplicitI2V = m.type === 'image_to_video' || m.model_type === 'image_to_video';
+         
+         isSupported = isKieI2V || isExplicitI2V;
       } else if (activeTab === 'video-to-video') {
-         const n = (m.name || "").toLowerCase();
-         isSupported = m.type === 'video_to_video' || m.model_type === 'video_to_video' || n.includes('runway') || n.includes('kling');
+         isSupported = mid.startsWith('kie_') && (mid.includes('v2v') || mid.includes('video-to-video') || n.includes('runway') || n.includes('kling'));
       }
       return { ...m, isSupported };
     });
@@ -567,13 +568,38 @@ const VideoPage = () => {
       displayBaseModels = grouped[selectedProvider]?.baseModels ? Object.values(grouped[selectedProvider].baseModels) : [];
     }
 
-    return { brands: brandList, filteredModels: displayBaseModels, allModels: baseModelsList, variantsMap: localVariantsMap };
+    const allAvailableModelsList: any[] = [];
+    const allGroups: Record<string, any> = {};
+
+    baseModelsList.filter(m => m.isSupported).forEach(m => {
+       const baseName = m.base_name || getBaseName(m.name);
+       if (!allGroups[baseName]) {
+          allGroups[baseName] = {
+             id: m.id,
+             baseName: baseName,
+             brand: getBrand(m.name).name,
+             representative: m,
+             variants: [m]
+          };
+          allAvailableModelsList.push(allGroups[baseName]);
+       } else {
+          allGroups[baseName].variants.push(m);
+       }
+    });
+
+    return { 
+      brands: brandList, 
+      filteredModels: displayBaseModels, 
+      allAvailableModels: allAvailableModelsList, 
+      variantsMap: localVariantsMap 
+    };
   }, [rawModels, activeTab, searchQuery, selectedProvider]);
 
   const models = filteredModels;
-  const allAvailableModels = useMemo(() => {
-    return (allModels as any[]).filter(m => m.isSupported);
-  }, [allModels]);
+  // allAvailableModels is now properly grouped from useMemo destruct
+  const allAvailableModelsSorted = useMemo(() => {
+    return [...allAvailableModels].sort((a, b) => (b.representative.quality || 0) - (a.representative.quality || 0));
+  }, [allAvailableModels]);
 
   // Get selected model details
   const selectedModel = useMemo(() => {
@@ -1401,7 +1427,7 @@ const VideoPage = () => {
                     [1, 2, 3, 4].map(i => (
                       <div key={i} className="h-16 bg-gray-100 dark:bg-gray-700 rounded-xl animate-pulse" />
                     ))
-                  ) : allAvailableModels.map((model: any) => (
+                  ) : allAvailableModelsSorted.map((model: any) => (
                     <button
                       key={model.id}
                       onClick={() => toggleCompareModel(model.id)}
