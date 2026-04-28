@@ -442,7 +442,7 @@ const VideoPage = () => {
   const myVideos = myVideosData?.outputs || myVideosData?.data || myVideosData || [];
 
   // Advanced model grouping with brand, base, and variants
-  const { brands, filteredModels, variantsMap } = useMemo(() => {
+  const { brands, filteredModels, allModels, variantsMap } = useMemo(() => {
     if (!Array.isArray(rawModels)) return { brands: [], filteredModels: [], variantsMap: {} };
 
     // Map tab to model type
