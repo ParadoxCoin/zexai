@@ -78,7 +78,9 @@ async def get_dashboard_stats(
     try:
         # Get credit balance from user_credits with fallback
         credit_response = db.table("user_credits").select("credits_balance").eq("user_id", current_user.id).execute()
-        credits_balance = float(credit_response.data[0]["credits_balance"]) if credit_response.data else 0.0
+        credits_balance = 0.0
+        if credit_response.data and len(credit_response.data) > 0:
+            credits_balance = float(credit_response.data[0].get("credits_balance", 0.0))
         
         # Calculate time ranges
         now = datetime.utcnow()
@@ -111,9 +113,8 @@ async def get_dashboard_stats(
         today_resp = db.table("usage_logs").select("cost").eq("user_id", current_user.id).gte("created_at", today_start).execute()
         credits_spent_today = sum([float(item.get("cost") or 0) for item in today_resp.data]) if today_resp.data else 0.0
         
-        # 3. Category Breakdown for the 4 Cards
         # We'll fetch all-time counts per service_type from usage_logs
-        usage_all = db.table("usage_logs").select("service_type").eq("user_id", current_user.id).execute()
+        usage_all = db.table("usage_logs").select("service_type, created_at").eq("user_id", current_user.id).execute()
         
         gen_counts = {"image": 0, "video": 0, "audio": 0, "chat": 0}
         if usage_all.data:
@@ -136,9 +137,10 @@ async def get_dashboard_stats(
             
         # 4. Favorite Model
         favorite_model = "Flux.1"
-        if usage_all.data:
-            types = [i["service_type"] for i in usage_all.data]
-            favorite_model = max(set(types), key=types.count).title()
+        if usage_all.data and len(usage_all.data) > 0:
+            types = [i.get("service_type") for i in usage_all.data if i.get("service_type")]
+            if types:
+                favorite_model = max(set(types), key=types.count).title()
 
         return DashboardStats(
             credits_balance=credits_balance,
