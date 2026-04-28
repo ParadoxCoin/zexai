@@ -454,12 +454,11 @@ const VideoPage = () => {
     const modelType = typeMap[activeTab];
 
     // Initial filter by active tab type
-    const baseModelsList = rawModels.map((m: any) => {
+    const rawFiltered = rawModels.map((m: any) => {
       let isSupported = true;
       if (activeTab === 'image-to-video') {
          isSupported = m.type === 'image_to_video' || m.model_type === 'image_to_video' || 
                 m.capabilities?.imagetovideo || m.capabilities?.image_to_video || m.video_caps?.image_to_video;
-         // Known I2V supporters in KIE
          const n = (m.name || "").toLowerCase();
          if (n.includes('kling') || n.includes('wan') || n.includes('runway') || n.includes('luma')) {
             isSupported = true;
@@ -470,6 +469,21 @@ const VideoPage = () => {
       }
       return { ...m, isSupported };
     });
+
+    // ── DEDUPLICATION LOGIC ──
+    // If multiple models have the same base_name + version_name, prefer 'kie_' prefixed ones (our high-quality production models)
+    const uniqueModelsMap = new Map();
+    rawFiltered.forEach(m => {
+       const bName = m.base_name || getBaseName(m.name);
+       const vName = m.version_name || (m.name.includes('(') ? m.name.split('(')[1].split(')')[0] : "Standard");
+       const key = `${bName.toLowerCase()}|${vName.toLowerCase()}`;
+       
+       const existing = uniqueModelsMap.get(key);
+       if (!existing || (m.id.startsWith('kie_') && !existing.id.startsWith('kie_'))) {
+          uniqueModelsMap.set(key, m);
+       }
+    });
+    const baseModelsList = Array.from(uniqueModelsMap.values());
 
     const getBrand = (name: string): { name: string; icon: string } => {
       const n = name.toLowerCase();
@@ -1156,8 +1170,16 @@ const VideoPage = () => {
                         ) : (
                           <div className="flex flex-wrap gap-2">
                             {(() => {
-                              const caps = selectedModel.video_caps || {};
-                              const durations = caps.durations || selectedModel.durations || [selectedModel.duration || 5];
+                              let durations = caps.durations || selectedModel.durations || [selectedModel.duration || 5];
+                              
+                              // FAIL-SAFE: If backend only sends [5] but we know the model supports more
+                              if (durations.length === 1 && durations[0] === 5) {
+                                const n = selectedModel.name.toLowerCase();
+                                if (n.includes('veo')) durations = [4, 6, 8];
+                                else if (n.includes('kling')) durations = [5, 10, 15];
+                                else if (n.includes('wan')) durations = [5, 10, 15];
+                                else if (n.includes('sora')) durations = [10, 15];
+                              }
                               
                               return durations.map((d: number) => (
                                 <button
