@@ -156,7 +156,7 @@ async def get_recent_activity(
     db = Depends(get_db)
 ):
     """
-    Get user's recent activity from usage_logs
+    Get user's recent activity from usage_logs (with fallback)
     """
     try:
         # Get recent logs
@@ -167,8 +167,32 @@ async def get_recent_activity(
             .limit(limit)\
             .execute()
             
+        data = response.data or []
+        
+        # Fallback to image_generations if no usage_logs
+        if not data:
+            img_resp = db.table("image_generations")\
+                .select("*")\
+                .eq("user_id", current_user.id)\
+                .order("created_at", desc=True)\
+                .limit(limit)\
+                .execute()
+            
+            # Map image_generations to usage_logs format
+            for img in (img_resp.data or []):
+                data.append({
+                    "id": img["id"],
+                    "service_type": "image",
+                    "cost": 5, # default
+                    "created_at": img["created_at"],
+                    "details": {
+                        "prompt": img.get("prompt", ""),
+                        "image_url": img.get("output_url", "")
+                    }
+                })
+            
         activities = []
-        for item in response.data:
+        for item in data:
             details = item.get("details", {})
             if isinstance(details, str):
                 try:

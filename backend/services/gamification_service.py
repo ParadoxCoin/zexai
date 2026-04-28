@@ -34,18 +34,22 @@ class GamificationService:
     
     async def get_user_stats(self, user_id: str) -> Dict[str, Any]:
         """Get user's gamification stats"""
-        # First check if user has gamification record
-        result = self.supabase.table('user_gamification').select('*').eq('user_id', user_id).execute()
-        
-        if not result.data or len(result.data) == 0:
-            # Initialize if not exists
-            await self._init_user_gamification(user_id)
+        try:
+            # First check if user has gamification record
             result = self.supabase.table('user_gamification').select('*').eq('user_id', user_id).execute()
-        
-        stats = result.data[0] if result.data else None
-        
+            
+            if not result.data or len(result.data) == 0:
+                # Initialize if not exists
+                await self._init_user_gamification(user_id)
+                result = self.supabase.table('user_gamification').select('*').eq('user_id', user_id).execute()
+            
+            stats = result.data[0] if result.data else None
+        except Exception as e:
+            print(f"Gamification table error: {e}")
+            stats = None
+            
         if not stats:
-            # Return default stats if still no data
+            # Return default stats if still no data or table missing
             return {
                 'level': 1,
                 'level_name': 'Starter',
@@ -62,11 +66,16 @@ class GamificationService:
             }
         
         # Get level info separately
-        level_result = self.supabase.table('gamification_levels').select('*').eq('level', stats['level']).execute()
-        level_info = level_result.data[0] if level_result.data else {'name': 'Starter', 'emoji': '🌱'}
-        
-        # Calculate XP needed for next level
-        next_level = self._get_next_level_info(stats['level'])
+        try:
+            level_result = self.supabase.table('gamification_levels').select('*').eq('level', stats['level']).execute()
+            level_info = level_result.data[0] if level_result.data else {'name': 'Starter', 'emoji': '🌱'}
+            
+            # Calculate XP needed for next level
+            next_level = self._get_next_level_info(stats['level'])
+        except Exception as e:
+            print(f"Gamification levels table error: {e}")
+            level_info = {'name': 'Starter', 'emoji': '🌱'}
+            next_level = None
         
         return {
             'level': stats['level'],
@@ -286,27 +295,35 @@ class GamificationService:
     
     async def get_achievements(self, user_id: str) -> Dict[str, Any]:
         """Get user's achievements"""
-        # Get all achievements
-        all_achievements = self.supabase.table('achievements').select('*').eq('is_active', True).execute()
-        
-        # Get user's unlocked achievements
-        user_achievements = self.supabase.table('user_achievements').select('achievement_id, unlocked_at').eq('user_id', user_id).execute()
-        
-        unlocked_ids = {ua['achievement_id']: ua['unlocked_at'] for ua in user_achievements.data}
-        
-        achievements = []
-        for ach in all_achievements.data:
-            achievements.append({
-                **ach,
-                'unlocked': ach['id'] in unlocked_ids,
-                'unlocked_at': unlocked_ids.get(ach['id'])
-            })
-        
-        return {
-            'total': len(all_achievements.data),
-            'unlocked': len(unlocked_ids),
-            'achievements': achievements
-        }
+        try:
+            # Get all achievements
+            all_achievements = self.supabase.table('achievements').select('*').eq('is_active', True).execute()
+            
+            # Get user's unlocked achievements
+            user_achievements = self.supabase.table('user_achievements').select('achievement_id, unlocked_at').eq('user_id', user_id).execute()
+            
+            unlocked_ids = {ua['achievement_id']: ua['unlocked_at'] for ua in user_achievements.data}
+            
+            achievements = []
+            for ach in all_achievements.data:
+                achievements.append({
+                    **ach,
+                    'unlocked': ach['id'] in unlocked_ids,
+                    'unlocked_at': unlocked_ids.get(ach['id'])
+                })
+            
+            return {
+                'total': len(all_achievements.data),
+                'unlocked': len(unlocked_ids),
+                'achievements': achievements
+            }
+        except Exception as e:
+            print(f"Achievements table error: {e}")
+            return {
+                'total': 0,
+                'unlocked': 0,
+                'achievements': []
+            }
     
     async def _check_action_achievements(self, user_id: str, action: str, count: int):
         """Check and unlock action-based achievements"""
@@ -409,26 +426,30 @@ class GamificationService:
     
     async def get_new_achievements(self, user_id: str) -> List[Dict]:
         """Get unnotified achievements"""
-        result = self.supabase.table('user_achievements').select(
-            '*, achievements(*)'
-        ).eq('user_id', user_id).eq('notified', False).execute()
-        
-        # Mark as notified
-        if result.data:
-            for ua in result.data:
-                self.supabase.table('user_achievements').update({
-                    'notified': True
-                }).eq('id', ua['id']).execute()
-        
-        return [
-            {
-                'id': ua['achievements']['id'],
-                'name': ua['achievements']['name'],
-                'description': ua['achievements']['description'],
-                'emoji': ua['achievements']['emoji'],
-                'xp_reward': ua['achievements']['xp_reward'],
-                'credit_reward': ua['achievements']['credit_reward'],
-                'unlocked_at': ua['unlocked_at']
-            }
-            for ua in result.data
-        ]
+        try:
+            result = self.supabase.table('user_achievements').select(
+                '*, achievements(*)'
+            ).eq('user_id', user_id).eq('notified', False).execute()
+            
+            # Mark as notified
+            if result.data:
+                for ua in result.data:
+                    self.supabase.table('user_achievements').update({
+                        'notified': True
+                    }).eq('id', ua['id']).execute()
+            
+            return [
+                {
+                    'id': ua['achievements']['id'],
+                    'name': ua['achievements']['name'],
+                    'description': ua['achievements']['description'],
+                    'emoji': ua['achievements']['emoji'],
+                    'xp_reward': ua['achievements']['xp_reward'],
+                    'credit_reward': ua['achievements']['credit_reward'],
+                    'unlocked_at': ua['unlocked_at']
+                }
+                for ua in result.data
+            ]
+        except Exception as e:
+            print(f"New achievements error: {e}")
+            return []

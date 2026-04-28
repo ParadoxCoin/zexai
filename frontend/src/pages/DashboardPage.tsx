@@ -286,7 +286,7 @@ export const DashboardPage: React.FC = () => {
           subtitle={
             <div className="flex flex-col gap-1">
               <span>{stats.creditsSpentToday > 0 ? t('dashboard.spentToday', { count: Math.round(stats.creditsSpentToday) }) : t('dashboard.noSpendToday')}</span>
-              <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded-md text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase tracking-tighter w-fit animate-pulse">
+              <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded-md text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase tracking-tighter w-fit hover:scale-105 transition-transform">
                 <Zap className="w-3 h-3 fill-emerald-500" />
                 {t('layout.noExpirationInfo', 'KREDİLERİNİZ ASLA SİLİNMEZ')}
               </div>
