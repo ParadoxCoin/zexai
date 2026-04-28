@@ -46,16 +46,142 @@ async def get_video_models(
     db = Depends(get_db)
 ):
     """
-    Get all available video models with pricing
-    Now reads from database (providers, video_models tables)
-    Falls back to hardcoded models if database is empty
+    Get all available video models with pricing.
+    Priority: video_models table (admin-managed) → ai_models table → hardcoded fallback
     """
     models = []
     
-    # Direct database query with robust type mapping
+    # ── Priority 1: Read from video_models table (Admin Panel manages this) ──
     try:
-        from core.database import get_db
-        # Fetch from ai_models (the source of truth)
+        query = db.table("video_models").select("*").eq("is_active", True)
+        result = query.order("sort_order").execute()
+        vm_list = result.data if result.data else []
+        
+        if vm_list:
+            type_filter = type.value if type else None
+            
+            for m in vm_list:
+                m_id = m.get("id")
+                if not m_id:
+                    continue
+                
+                m_type = str(m.get("model_type") or m.get("type") or "text_to_video").lower()
+                
+                # Type filter
+                if type_filter and type_filter not in m_type:
+                    continue
+                
+                # Duration handling: admin uses duration_options array
+                duration_options = m.get("duration_options") or []
+                if not isinstance(duration_options, list):
+                    try:
+                        duration_options = json.loads(str(duration_options)) if duration_options else []
+                    except:
+                        duration_options = []
+                
+                # Ensure durations are integers
+                duration_options = [int(d) for d in duration_options if d is not None]
+                
+                if not duration_options:
+                    duration_options = [m.get("duration", 5)]
+                
+                primary_duration = duration_options[0] if duration_options else 5
+                
+                # Resolution handling
+                resolutions = m.get("resolutions") or []
+                if not isinstance(resolutions, list):
+                    try:
+                        resolutions = json.loads(str(resolutions)) if resolutions else []
+                    except:
+                        resolutions = []
+                if not resolutions:
+                    max_res = m.get("max_resolution", "720p")
+                    if max_res == "4K" or max_res == "2160p":
+                        resolutions = ["720p", "1080p", "4K"]
+                    elif max_res == "1080p":
+                        resolutions = ["720p", "1080p"]
+                    else:
+                        resolutions = ["720p"]
+                
+                # Quality rating
+                quality_val = m.get("quality_rating", 4)
+                try:
+                    quality_val = int(quality_val)
+                    quality_val = max(1, min(5, quality_val))
+                except:
+                    quality_val = 4
+                
+                # Speed
+                speed_val = m.get("speed", "medium")
+                if not isinstance(speed_val, str) or speed_val not in ("very_fast", "fast", "medium", "slow"):
+                    speed_val = "medium"
+                
+                # Build video_caps for frontend consumption
+                v_caps = {
+                    "durations": duration_options,
+                    "resolutions": resolutions,
+                    "slider_duration": bool(m.get("slider_duration", False)),
+                }
+                
+                # Per-second pricing support
+                if m.get("per_second_pricing"):
+                    v_caps["per_second_pricing"] = True
+                    v_caps["base_duration"] = m.get("base_duration", duration_options[0] if duration_options else 5)
+                
+                # Quality multipliers
+                if m.get("quality_multipliers"):
+                    v_caps["quality_multipliers"] = m["quality_multipliers"]
+                
+                # Pricing matrix (duration x resolution)
+                pricing = {}
+                base_credits = int(m.get("credits", 100))
+                if m.get("per_second_pricing"):
+                    base_dur = m.get("base_duration", duration_options[0] if duration_options else 5)
+                    res_multipliers = {"720p": 1.0, "1080p": 1.5, "4K": 2.5, "4k": 2.5, "2160p": 2.5}
+                    for d in duration_options:
+                        pricing[str(d)] = {}
+                        for r in resolutions:
+                            pricing[str(d)][r] = int(base_credits * (d / base_dur) * res_multipliers.get(r.lower(), 1.0))
+                    v_caps["pricing"] = pricing
+                
+                # Provider display cleanup
+                provider = m.get("provider_id", "premium")
+                if provider.lower() in ("kie", "kie.ai"):
+                    provider = "Premium"
+                
+                # Capabilities from DB
+                capabilities = m.get("capabilities") or {}
+                
+                models.append(VideoModelInfo(
+                    id=m_id,
+                    provider=provider,
+                    name=m.get("display_name") or m.get("name") or m_id,
+                    type=m_type,
+                    duration=primary_duration,
+                    credits=base_credits,
+                    quality=VideoQuality(quality_val),
+                    speed=VideoSpeed(speed_val),
+                    badge=m.get("badge"),
+                    description=m.get("description", ""),
+                    capabilities=capabilities,
+                    video_caps=v_caps,
+                    base_name=m.get("base_name") or (m_id.split('/')[1] if '/' in m_id else m_id),
+                    version_name=m.get("version_name") or "Standard",
+                    resolution=resolutions[-1] if resolutions else "720p",
+                    durations=duration_options,
+                    resolutions=resolutions,
+                    slider_duration=bool(m.get("slider_duration", False))
+                ))
+            
+            if models:
+                models.sort(key=lambda x: (-x.quality.value if hasattr(x.quality, 'value') else -4, x.credits))
+                print(f"[/video/models] Loaded {len(models)} models from video_models table")
+                return models
+    except Exception as e:
+        print(f"[/video/models] video_models table query failed: {e}")
+    
+    # ── Priority 2: Fall back to ai_models table ──
+    try:
         res = db.table("ai_models").select("*").execute()
         db_models = res.data if res.data else []
         
@@ -110,11 +236,12 @@ async def get_video_models(
             
         if models:
             models.sort(key=lambda x: (-x.quality.value if hasattr(x.quality, 'value') else -4, x.credits))
+            print(f"[/video/models] Loaded {len(models)} models from ai_models table (fallback)")
             return models
     except Exception as e:
-        print(f"[/video/models] Database query failed: {e}")
+        print(f"[/video/models] ai_models table query failed: {e}")
     
-    # Fallback: Combine Pollo.ai and kie.ai hardcoded models
+    # ── Priority 3: Hardcoded fallback ──
     combined_models = {**POLLO_VIDEO_MODELS, **KIE_VIDEO_MODELS}
     for model_id, model_data in combined_models.items():
         model_type = model_data.get("type", "text_to_video")

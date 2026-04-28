@@ -837,7 +837,9 @@ async def update_video_model(
             "duration_options", "max_resolution", "is_active", 
             "is_featured", "sort_order", "badge", "quality_rating",
             "base_duration", "per_second_pricing", "quality_multipliers",
-            "base_name", "version_name", "slider_duration", "resolutions"
+            "base_name", "version_name", "slider_duration", "resolutions",
+            "model_type", "capabilities", "speed", "name", "icon",
+            "provider_id", "endpoint"
         ]
         
         filtered_data = {k: v for k, v in update_data.items() if k in allowed_keys}
@@ -847,16 +849,12 @@ async def update_video_model(
         
         if not response.data:
             raise HTTPException(404, "Model not found")
-            
+        
+        logger.info(f"Admin {admin_user.id} updated video model: {model_id} with fields: {list(filtered_data.keys())}")
         return {"message": "Model updated successfully", "model": response.data[0]}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error updating video model: {str(e)}")
         raise HTTPException(500, "Failed to update model")
-    
-    except Exception as e:
-        logger.error(f"Error fetching top models: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to fetch top models"
-        )
 

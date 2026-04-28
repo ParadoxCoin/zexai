@@ -53,6 +53,12 @@ class ModelUpdate(BaseModel):
     is_active: Optional[bool] = None
     provider: Optional[str] = None
     capabilities: Optional[Dict[str, Any]] = None  # JSON capabilities for dynamic parameters
+    # Video specific fields
+    duration_options: Optional[List[int]] = None
+    resolutions: Optional[List[str]] = None
+    quality_multipliers: Optional[Dict[str, float]] = None
+    per_second_pricing: Optional[bool] = None
+    base_duration: Optional[int] = None
 
 
 class PriceUpdate(BaseModel):

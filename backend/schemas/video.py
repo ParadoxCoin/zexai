@@ -79,10 +79,12 @@ class VideoModelInfo(BaseModel):
     example_video_url: Optional[str] = None
     description: Optional[str] = None
     capabilities: Optional[Dict] = None  # Dynamic capabilities for the model
+    video_caps: Optional[Dict] = None  # Video-specific capabilities (durations, resolutions, pricing)
     
     # New dynamic parameter fields
     base_name: Optional[str] = None
     version_name: Optional[str] = None
+    resolution: Optional[str] = None
     durations: Optional[List[int]] = None
     resolutions: Optional[List[str]] = None
     slider_duration: Optional[bool] = False
