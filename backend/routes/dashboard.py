@@ -86,44 +86,55 @@ async def get_dashboard_stats(
         week_start = (now - timedelta(days=7)).isoformat()
         month_start = (now - timedelta(days=30)).isoformat()
         
-        # Fetch stats from usage_logs (The actual source of truth)
-        # Today
-        today_resp = db.table("usage_logs").select("cost", count="exact").eq("user_id", current_user.id).gte("created_at", today_start).execute()
-        generations_today = today_resp.count or 0
-        credits_spent_today = sum([float(item.get("cost") or 0) for item in today_resp.data]) if today_resp.data else 0.0
-        
-        # Week
-        week_resp = db.table("usage_logs").select("cost", count="exact").eq("user_id", current_user.id).gte("created_at", week_start).execute()
-        generations_week = week_resp.count or 0
-        credits_spent_week = sum([float(item.get("cost") or 0) for item in week_resp.data]) if week_resp.data else 0.0
-        
-        # Month
-        month_resp = db.table("usage_logs").select("cost", count="exact").eq("user_id", current_user.id).gte("created_at", month_start).execute()
-        generations_month = month_resp.count or 0
-        credits_spent_month = sum([float(item.get("cost") or 0) for item in month_resp.data]) if month_resp.data else 0.0
-        
-        # Total generations (all time)
+        # 1. Total Generations (Fallback logic)
+        # Try usage_logs first
         total_resp = db.table("usage_logs").select("id", count="exact").eq("user_id", current_user.id).execute()
         total_generations = total_resp.count or 0
         
-        # Favorite model (most used service_type)
-        favorite_model = "Image Gen"
-        try:
-            fav_resp = db.table("usage_logs").select("service_type").eq("user_id", current_user.id).execute()
-            if fav_resp.data:
-                types = [i["service_type"] for i in fav_resp.data]
-                favorite_model = max(set(types), key=types.count).title()
-        except Exception:
-            pass
+        # If usage_logs is empty, try image_generations as fallback
+        if total_generations == 0:
+            img_total = db.table("image_generations").select("id", count="exact").eq("user_id", current_user.id).execute()
+            total_generations = img_total.count or 0
+            
+        # 2. Credits Spent (Month/Week/Today)
+        month_resp = db.table("usage_logs").select("cost").eq("user_id", current_user.id).gte("created_at", month_start).execute()
+        credits_spent_month = sum([float(item.get("cost") or 0) for item in month_resp.data]) if month_resp.data else 0.0
         
+        week_resp = db.table("usage_logs").select("cost").eq("user_id", current_user.id).gte("created_at", week_start).execute()
+        credits_spent_week = sum([float(item.get("cost") or 0) for item in week_resp.data]) if week_resp.data else 0.0
+        
+        today_resp = db.table("usage_logs").select("cost").eq("user_id", current_user.id).gte("created_at", today_start).execute()
+        credits_spent_today = sum([float(item.get("cost") or 0) for item in today_resp.data]) if today_resp.data else 0.0
+        
+        # 3. Category Breakdown for the 4 Cards
+        # We'll fetch all-time counts per service_type from usage_logs
+        usage_all = db.table("usage_logs").select("service_type").eq("user_id", current_user.id).execute()
+        
+        gen_counts = {"image": 0, "video": 0, "audio": 0, "chat": 0}
+        if usage_all.data:
+            for item in usage_all.data:
+                s_type = item["service_type"].lower()
+                if s_type in gen_counts:
+                    gen_counts[s_type] += 1
+        else:
+            # Fallback for counts if usage_logs is empty
+            img_c = db.table("image_generations").select("id", count="exact").eq("user_id", current_user.id).execute()
+            gen_counts["image"] = img_c.count or 0
+            
+        # 4. Favorite Model
+        favorite_model = "Flux.1"
+        if usage_all.data:
+            types = [i["service_type"] for i in usage_all.data]
+            favorite_model = max(set(types), key=types.count).title()
+
         return DashboardStats(
             credits_balance=credits_balance,
             credits_spent_today=credits_spent_today,
             credits_spent_week=credits_spent_week,
             credits_spent_month=credits_spent_month,
-            generations_today=generations_today,
-            generations_week=generations_week,
-            generations_month=generations_month,
+            generations_today=len([i for i in usage_all.data if i.get("created_at", "") >= today_start]) if usage_all.data else 0,
+            generations_week=len([i for i in usage_all.data if i.get("created_at", "") >= week_start]) if usage_all.data else 0,
+            generations_month=len([i for i in usage_all.data if i.get("created_at", "") >= month_start]) if usage_all.data else 0,
             total_generations=total_generations,
             favorite_model=favorite_model
         )
