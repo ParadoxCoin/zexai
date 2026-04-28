@@ -277,6 +277,7 @@ class UnifiedModelRegistry:
             new_credits = updates.get("credits") or max(1, int(float(new_cost_usd) * float(new_cost_mult) * 100))
 
             # Base fields that might have NOT NULL constraints in DB
+            # NOTE: video_models table does NOT have cost_usd or cost_multiplier columns
             video_data = {
                 "id": model_id,
                 "provider_id": provider or (m.get("provider") if m else "unknown"),
@@ -284,8 +285,6 @@ class UnifiedModelRegistry:
                 "display_name": updates.get("name") or (m.get("name") if m else model_id),
                 "model_type": updates.get("type") or (m.get("type") if m else "text_to_video"),
                 "endpoint": (m.get("endpoint") if m else f"/video/{model_id}/generate"),
-                "cost_usd": new_cost_usd,
-                "cost_multiplier": new_cost_mult,
                 "credits": new_credits,
                 "is_active": updates.get("is_active") if updates.get("is_active") is not None else (m.get("is_active") if m else True),
                 
