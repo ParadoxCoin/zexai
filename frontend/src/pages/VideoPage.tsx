@@ -1170,6 +1170,7 @@ const VideoPage = () => {
                         ) : (
                           <div className="flex flex-wrap gap-2">
                             {(() => {
+                              const caps = selectedModel.video_caps || {};
                               let durations = caps.durations || selectedModel.durations || [selectedModel.duration || 5];
                               
                               // FAIL-SAFE: If backend only sends [5] but we know the model supports more
