@@ -271,6 +271,11 @@ class UnifiedModelRegistry:
             models = await self.get_models(db, active_only=False)
             m = next((m for m in models if m["id"] == model_id), None)
             
+            # Calculate new credits if cost is provided
+            new_cost_usd = updates.get("cost_usd") if updates.get("cost_usd") is not None else (m.get("cost_usd") if m else 0.0)
+            new_cost_mult = updates.get("cost_multiplier") if updates.get("cost_multiplier") is not None else (m.get("cost_multiplier") if m else 2.0)
+            new_credits = updates.get("credits") or max(1, int(float(new_cost_usd) * float(new_cost_mult) * 100))
+
             # Base fields that might have NOT NULL constraints in DB
             video_data = {
                 "id": model_id,
@@ -279,7 +284,9 @@ class UnifiedModelRegistry:
                 "display_name": updates.get("name") or (m.get("name") if m else model_id),
                 "model_type": updates.get("type") or (m.get("type") if m else "text_to_video"),
                 "endpoint": (m.get("endpoint") if m else f"/video/{model_id}/generate"),
-                "credits": updates.get("credits") or (m.get("credits") if m else 100),
+                "cost_usd": new_cost_usd,
+                "cost_multiplier": new_cost_mult,
+                "credits": new_credits,
                 "is_active": updates.get("is_active") if updates.get("is_active") is not None else (m.get("is_active") if m else True),
                 
                 # Advanced video parameters

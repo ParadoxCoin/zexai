@@ -135,14 +135,29 @@ async def get_video_models(
                 # Pricing matrix (duration x resolution)
                 pricing = {}
                 base_credits = int(m.get("credits", 100))
-                if m.get("per_second_pricing"):
-                    base_dur = m.get("base_duration", duration_options[0] if duration_options else 5)
-                    res_multipliers = {"720p": 1.0, "1080p": 1.5, "4K": 2.5, "4k": 2.5, "2160p": 2.5}
-                    for d in duration_options:
-                        pricing[str(d)] = {}
-                        for r in resolutions:
-                            pricing[str(d)][r] = int(base_credits * (d / base_dur) * res_multipliers.get(r.lower(), 1.0))
-                    v_caps["pricing"] = pricing
+                base_dur = m.get("base_duration", duration_options[0] if duration_options else 5)
+                
+                custom_q_mult = m.get("quality_multipliers") or {}
+                if isinstance(custom_q_mult, str):
+                    try:
+                        custom_q_mult = json.loads(custom_q_mult)
+                    except:
+                        custom_q_mult = {}
+                        
+                def get_res_mult(r_str):
+                    r_lower = r_str.lower()
+                    if r_lower in custom_q_mult: return float(custom_q_mult[r_lower])
+                    if r_str in custom_q_mult: return float(custom_q_mult[r_str])
+                    defaults = {"720p": 1.0, "1080p": 1.5, "4k": 2.5, "2160p": 2.5}
+                    return defaults.get(r_lower, 1.0)
+
+                for d in duration_options:
+                    pricing[str(d)] = {}
+                    for r in resolutions:
+                        dur_mult = (d / base_dur) if m.get("per_second_pricing") else 1.0
+                        pricing[str(d)][r] = int(base_credits * dur_mult * get_res_mult(r))
+                
+                v_caps["pricing"] = pricing
                 
                 # Provider display cleanup
                 provider = m.get("provider_id", "premium")
