@@ -385,6 +385,8 @@
     "profile": "Profile",
     "apiKeys": "API Keys",
     "settings": "Settings",
+    "noExpiration": "NO EXPIRY",
+    "noExpirationInfo": "Your credits do not expire at the end of the month",
     "exploreSection": "Explore",
     "creditsSub": "Credits & Subscription",
     "proBadge": "Pro",

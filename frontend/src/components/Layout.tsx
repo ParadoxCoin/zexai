@@ -119,15 +119,23 @@ const Layout: React.FC = () => {
               </div>
 
               {/* Dynamic Credits Display */}
-              <Link
-                to="/credits"
-                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-r from-amber-500/10 to-orange-500/10 hover:from-amber-500/20 hover:to-orange-500/20 border border-amber-500/20 rounded-xl transition-all"
-              >
-                <Diamond className="w-4 h-4 text-amber-500 fill-amber-500" />
-                <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
-                  {Math.round(currentCredits)}
-                </span>
-              </Link>
+              <div className="flex items-center gap-1.5">
+                <Link
+                  to="/credits"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-r from-amber-500/10 to-orange-500/10 hover:from-amber-500/20 hover:to-orange-500/20 border border-amber-500/20 rounded-xl transition-all"
+                >
+                  <Diamond className="w-4 h-4 text-amber-500 fill-amber-500" />
+                  <span className="text-sm font-bold text-amber-600 dark:text-amber-400">
+                    {Math.round(currentCredits)}
+                  </span>
+                </Link>
+                <div className="hidden sm:flex items-center gap-1 px-1.5 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-lg" title={t('layout.noExpirationInfo', 'Kredileriniz ay sonunda silinmez')}>
+                  <Zap className="w-3 h-3 text-emerald-500" />
+                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-tighter">
+                    {t('layout.noExpiration', 'NO EXPIRY')}
+                  </span>
+                </div>
+              </div>
 
               {/* Theme Toggle */}
               <button

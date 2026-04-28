@@ -385,6 +385,8 @@
     "profile": "Profil",
     "apiKeys": "API Anahtarları",
     "settings": "Ayarlar",
+    "noExpiration": "SİLİNMEZ KREDİ",
+    "noExpirationInfo": "Kredileriniz ay sonunda silinmez",
     "exploreSection": "Keşfet",
     "creditsSub": "Kredi & Abonelik",
     "proBadge": "Pro",
