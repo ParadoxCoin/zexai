@@ -754,20 +754,21 @@ const VideoPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Hero Header */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTRzMiAyIDIgNC0yIDQtMiA0LTItMi0yLTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30" />
+      {/* Hero Header - Corporate Dark Theme */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-gray-900 via-slate-900 to-gray-900 border-b border-cyan-500/10">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(6,182,212,0.08),transparent_60%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,transparent,rgba(6,182,212,0.03),transparent)]" />
         <div className="relative px-4 sm:px-6 py-4 sm:py-6 lg:px-8">
           <div className="max-w-4xl mx-auto text-center text-white">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm mb-3">
-              <Video className="w-4 h-4" />
-              <span className="text-sm font-medium">{t('videoGen.badge', 'AI Video Stüdyosu')}</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 backdrop-blur-sm mb-3">
+              <Video className="w-4 h-4 text-cyan-400" />
+              <span className="text-sm font-medium text-cyan-300">{t('videoGen.badge', 'AI Video Stüdyosu')}</span>
             </div>
-            <h1 className="text-2xl lg:text-3xl font-bold mb-1">
-              {t('videoGen.title', 'Video ')}<span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 to-yellow-300">{t('videoGen.titleHighlight', 'Sihirbazı')}</span>
-              <span className="ml-2 text-[10px] bg-white/20 px-1.5 py-0.5 rounded-full font-bold">v2.6</span>
+            <h1 className="text-2xl lg:text-3xl font-bold mb-1 text-white">
+              {t('videoGen.title', 'Video ')}<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">{t('videoGen.titleHighlight', 'Stüdyosu')}</span>
+              <span className="ml-2 text-[10px] bg-cyan-500/20 text-cyan-300 px-1.5 py-0.5 rounded-full font-bold border border-cyan-500/30">v2.6</span>
             </h1>
-            <p className="text-sm text-purple-100">{t('videoGen.desc', 'Sora 2, Veo 3.1, Kling 2.6, Runway ve daha fazlası')}</p>
+            <p className="text-sm text-gray-400">{t('videoGen.desc', 'Sora 2, Veo 3.1, Kling 2.6, Runway ve daha fazlası')}</p>
           </div>
         </div>
         <div className="absolute bottom-0 left-0 right-0">
@@ -910,10 +911,10 @@ const VideoPage = () => {
 
                           <div className="flex items-center gap-2 text-[10px] text-gray-500">
                              <span className="px-2 py-0.5 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-md font-medium uppercase tracking-tight">
-                                {model.variants.length} {t('videoGen.versions', 'sürüm')}
+                                {model.variants.length > 1 ? `${model.variants.length} versiyon` : model.representative.version_name || 'Standard'}
                              </span>
                              <span className="text-gray-400">•</span>
-                             <span className="uppercase font-bold text-purple-500/70">{model.representative.resolution}</span>
+                             <span className="uppercase font-bold text-cyan-500/70">{model.representative.resolution}</span>
                           </div>
 
                           {model.representative.badge && (
@@ -941,15 +942,15 @@ const VideoPage = () => {
 
               {/* Selected Model Info */}
               {selectedModel && (
-                <div className="bg-gradient-to-r from-purple-600 to-violet-600 rounded-2xl p-4 text-white">
+                <div className="bg-gradient-to-r from-gray-800 via-slate-800 to-gray-800 rounded-2xl p-4 text-white border border-cyan-500/20">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-bold text-lg">{selectedModel.name}</h3>
-                      <p className="text-purple-100 text-sm">{selectedModel.description}</p>
+                      <h3 className="font-bold text-lg text-white">{selectedModel.name}</h3>
+                      <p className="text-gray-400 text-sm">{selectedModel.description}</p>
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl font-bold">{selectedModel.credits}c</div>
-                      <div className="text-purple-200 text-xs">{selectedModel.duration}s • {selectedModel.resolution}</div>
+                      <div className="text-2xl font-bold text-cyan-400">{currentPrice}c</div>
+                      <div className="text-gray-400 text-xs">{selectedDuration || selectedModel.duration}s • {selectedResolution || selectedModel.resolution}</div>
                     </div>
                   </div>
 
