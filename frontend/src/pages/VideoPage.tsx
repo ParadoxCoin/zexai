@@ -567,10 +567,13 @@ const VideoPage = () => {
       displayBaseModels = grouped[selectedProvider]?.baseModels ? Object.values(grouped[selectedProvider].baseModels) : [];
     }
 
-    return { brands: brandList, filteredModels: displayBaseModels, variantsMap: localVariantsMap };
+    return { brands: brandList, filteredModels: displayBaseModels, allModels: baseModelsList, variantsMap: localVariantsMap };
   }, [rawModels, activeTab, searchQuery, selectedProvider]);
 
   const models = filteredModels;
+  const allAvailableModels = useMemo(() => {
+    return (allModels as any[]).filter(m => m.isSupported);
+  }, [allModels]);
 
   // Get selected model details
   const selectedModel = useMemo(() => {
@@ -1398,7 +1401,7 @@ const VideoPage = () => {
                     [1, 2, 3, 4].map(i => (
                       <div key={i} className="h-16 bg-gray-100 dark:bg-gray-700 rounded-xl animate-pulse" />
                     ))
-                  ) : models.map((model: any) => (
+                  ) : allAvailableModels.map((model: any) => (
                     <button
                       key={model.id}
                       onClick={() => toggleCompareModel(model.id)}
@@ -1421,13 +1424,13 @@ const VideoPage = () => {
                           </div>
                           <div>
                             <div className="font-medium text-sm text-gray-900 dark:text-white">
-                              {model.display_name || model.name}
+                               {model.baseName}
                             </div>
-                            <div className="text-xs text-gray-500">{model.provider}</div>
+                            <div className="text-[10px] text-gray-500">{model.brand}</div>
                           </div>
                         </div>
                         <div className="text-sm font-bold text-purple-600">
-                          {model.credits}💎
+                          {model.representative.credits}c
                         </div>
                       </div>
                     </button>

@@ -216,7 +216,23 @@ KIE_VIDEO_MODELS = {
         "default_duration": "5",
         "supports_sound": False,
         "supports_image_input": True,
-        "params": ["prompt", "image_url", "duration", "aspect_ratio"]  # Runway uses image_url
+        "params": ["prompt", "image_url", "duration", "aspect_ratio"]
+    },
+    "kie_luma_ray_i2v": {
+        "name": "Luma Ray Image to Video",
+        "kie_model": "luma/ray-image-to-video",
+        "default_duration": "5",
+        "supports_sound": False,
+        "supports_image_input": True,
+        "params": ["prompt", "image_url", "duration", "aspect_ratio"]
+    },
+    "kie_hailuo_i2v": {
+        "name": "Hailuo Image to Video",
+        "kie_model": "hailuo/02-image-to-video",
+        "default_duration": "5",
+        "supports_sound": False,
+        "supports_image_input": True,
+        "params": ["prompt", "image_url", "duration", "aspect_ratio"]
     },
     
     # ============ VIDEO TO VIDEO MODELS ============
