@@ -94,7 +94,9 @@ async def get_video_models(
                 duration_options = m.get("duration_options") or []
                 if not isinstance(duration_options, list):
                     try:
-                        duration_options = json.loads(str(duration_options)) if duration_options else []
+                        # Handle Postgres array string format "{4,6,8}" -> "[4,6,8]"
+                        d_str = str(duration_options).replace('{', '[').replace('}', ']')
+                        duration_options = json.loads(d_str) if d_str else []
                     except:
                         duration_options = []
                 
@@ -110,7 +112,9 @@ async def get_video_models(
                 resolutions = m.get("resolutions") or []
                 if not isinstance(resolutions, list):
                     try:
-                        resolutions = json.loads(str(resolutions)) if resolutions else []
+                        # Handle Postgres array string format '{"720p","1080p"}'
+                        r_str = str(resolutions).replace('{', '[').replace('}', ']')
+                        resolutions = json.loads(r_str) if r_str else []
                     except:
                         resolutions = []
                 if not resolutions:

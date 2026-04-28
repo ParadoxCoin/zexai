@@ -454,10 +454,21 @@ const VideoPage = () => {
     const modelType = typeMap[activeTab];
 
     // Initial filter by active tab type
-    const baseModelsList = rawModels.filter((m: any) => {
-      if (!modelType) return true;
-      return m.type === modelType || m.model_type === modelType || 
-             m.capabilities?.[modelType.replace(/_/g, '')] || m.capabilities?.[modelType];
+    const baseModelsList = rawModels.map((m: any) => {
+      let isSupported = true;
+      if (activeTab === 'image-to-video') {
+         isSupported = m.type === 'image_to_video' || m.model_type === 'image_to_video' || 
+                m.capabilities?.imagetovideo || m.capabilities?.image_to_video || m.video_caps?.image_to_video;
+         // Known I2V supporters in KIE
+         const n = (m.name || "").toLowerCase();
+         if (n.includes('kling') || n.includes('wan') || n.includes('runway') || n.includes('luma')) {
+            isSupported = true;
+         }
+      } else if (activeTab === 'video-to-video') {
+         const n = (m.name || "").toLowerCase();
+         isSupported = m.type === 'video_to_video' || m.model_type === 'video_to_video' || n.includes('runway') || n.includes('kling');
+      }
+      return { ...m, isSupported };
     });
 
     const getBrand = (name: string): { name: string; icon: string } => {
@@ -890,14 +901,16 @@ const VideoPage = () => {
                     </div>
                   ) : (
                     filteredModels.map((model: any) => {
-                      const isSelected = modelId === model.id || model.variants.some((v: any) => v.id === modelId);
+                      const isSupported = model.representative.isSupported !== false;
+                      const isSelected = isSupported && (modelId === model.id || model.variants.some((v: any) => v.id === modelId));
                       return (
                         <div
                           key={model.id}
-                          onClick={() => setModelId(model.id)}
-                          className={`relative p-3 rounded-xl cursor-pointer transition-all border-2 ${isSelected
-                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 shadow-md'
-                            : 'border-transparent bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800'
+                          onClick={() => isSupported && setModelId(model.id)}
+                          className={`relative p-3 rounded-xl transition-all border-2 ${
+                            !isSupported ? 'opacity-60 grayscale cursor-not-allowed border-gray-200 dark:border-gray-800' :
+                            isSelected ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20 shadow-md cursor-pointer' :
+                            'border-transparent bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer'
                             }`}
                         >
                           <div className="flex items-start justify-between mb-1">
@@ -917,9 +930,15 @@ const VideoPage = () => {
                              <span className="uppercase font-bold text-cyan-500/70">{model.representative.resolution}</span>
                           </div>
 
-                          {model.representative.badge && (
+                          {model.representative.badge && isSupported && (
                             <span className="mt-2 inline-block px-2 py-0.5 bg-gradient-to-r from-yellow-400/20 to-orange-400/20 text-yellow-600 dark:text-yellow-400 text-[10px] font-bold rounded border border-yellow-400/20">
                               {model.representative.badge}
+                            </span>
+                          )}
+
+                          {!isSupported && (
+                            <span className="mt-2 inline-block px-2 py-0.5 bg-gray-200 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-[10px] font-bold rounded border border-gray-300 dark:border-gray-700">
+                              Yakında
                             </span>
                           )}
 
