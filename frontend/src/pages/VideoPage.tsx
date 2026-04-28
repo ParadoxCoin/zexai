@@ -739,7 +739,8 @@ const VideoPage = () => {
     generateVideo({
       prompt: enhancedPrompt,
       model_id: modelId,
-      duration: selectedModel?.duration || 5,
+      duration: selectedDuration || selectedModel?.duration || 5,
+      resolution: selectedResolution || selectedModel?.resolution || "720p",
       aspect_ratio: aspectRatio,
       image_url: imageUrl,  // Include for I2V
       video_url: videoUrl   // Include for V2V

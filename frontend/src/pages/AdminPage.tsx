@@ -743,14 +743,40 @@ export const AdminPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Süre Seçenekleri (virgülle ayır)</label>
-                  <input 
-                    type="text" 
-                    value={Array.isArray(selectedModel.duration_options) ? selectedModel.duration_options.join(', ') : ''} 
-                    onChange={e => setSelectedModel({...selectedModel, duration_options: e.target.value.split(',').map(s => parseInt(s.trim()))})}
-                    placeholder="4, 6, 8"
-                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm"
-                  />
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Süre Seçenekleri</label>
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {[2, 3, 4, 5, 6, 8, 10, 12, 15, 20].map(d => {
+                      const current = Array.isArray(selectedModel.duration_options) ? selectedModel.duration_options : [];
+                      const isSelected = current.includes(d);
+                      return (
+                        <button
+                          key={d}
+                          type="button"
+                          onClick={() => {
+                            let newOpts;
+                            if (isSelected) {
+                              newOpts = current.filter((v: number) => v !== d);
+                            } else {
+                              newOpts = [...current, d].sort((a: number, b: number) => a - b);
+                            }
+                            setSelectedModel({...selectedModel, duration_options: newOpts});
+                          }}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                            isSelected 
+                              ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm' 
+                              : 'bg-gray-50 dark:bg-gray-700 text-gray-400 border-gray-200 dark:border-gray-600 hover:border-indigo-300'
+                          }`}
+                        >
+                          {d}s
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[10px] text-gray-400 mt-1">
+                    Seçili: {Array.isArray(selectedModel.duration_options) && selectedModel.duration_options.length > 0
+                      ? selectedModel.duration_options.filter((d: number) => !isNaN(d)).join(', ') + ' saniye'
+                      : 'Henüz seçim yapılmadı'}
+                  </p>
                 </div>
 
                 <div className="flex items-center gap-4">

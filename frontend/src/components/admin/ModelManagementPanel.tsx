@@ -234,6 +234,24 @@ export const ModelManagementPanel: React.FC = () => {
                 }
             }
 
+            // Parse video parameters from editForm strings
+            const duration_options = editForm.duration_options
+                .split(',')
+                .map(s => parseInt(s.trim()))
+                .filter(n => !isNaN(n));
+            
+            const resolutions = editForm.resolutions
+                .split(',')
+                .map(s => s.trim())
+                .filter(s => s.length > 0);
+            
+            let quality_multipliers: Record<string, number> = { "720p": 1.0, "1080p": 1.5, "4K": 2.5 };
+            try {
+                quality_multipliers = JSON.parse(editForm.quality_multipliers);
+            } catch (e) {
+                // Use defaults
+            }
+
             // CLEANUP: Remove legacy fields that cause conflicts
             const cleanedCapabilities = { ...(capabilities || {}) };
             delete (cleanedCapabilities as any).video_params;
@@ -242,31 +260,43 @@ export const ModelManagementPanel: React.FC = () => {
             const video_caps = {
                 durations: duration_options,
                 resolutions: resolutions,
+                per_second_pricing: editForm.per_second_pricing,
+                base_duration: editForm.base_duration,
                 pricing: {} as any
             };
 
-            // Auto-generate pricing
+            // Auto-generate pricing matrix
+            const baseDur = editForm.base_duration || duration_options[0] || 5;
+            const baseCredits = (editingModel as any).credits || Math.max(1, Math.round(editForm.cost_usd * editForm.cost_multiplier * 100));
             duration_options.forEach(d => {
-                video_caps.pricing[d] = {
-                    "720p": Math.round((editingModel as any).credits * (d/5) * (quality_multipliers["720p"] || 1.0)),
-                    "1080p": Math.round((editingModel as any).credits * (d/5) * (quality_multipliers["1080p"] || 1.5)),
-                    "4K": Math.round((editingModel as any).credits * (d/5) * (quality_multipliers["4K"] || 2.5))
-                };
+                video_caps.pricing[d] = {} as any;
+                resolutions.forEach(r => {
+                    const resMult = quality_multipliers[r] || 1.0;
+                    video_caps.pricing[d][r] = Math.round(baseCredits * (d / baseDur) * resMult);
+                });
             });
 
             const payload = {
-                ...editForm,
+                name: editForm.name,
+                cost_usd: editForm.cost_usd,
+                cost_multiplier: editForm.cost_multiplier,
+                description: editForm.description,
+                badge: editForm.badge,
+                provider: editForm.provider,
+                per_second_pricing: editForm.per_second_pricing,
+                base_duration: editForm.base_duration,
                 capabilities: {
                     ...cleanedCapabilities,
                     video: video_caps
                 },
                 video_caps,
-                duration_options: null, // Clear top-level legacy columns
-                resolutions: null,      // Clear top-level legacy columns
-                quality_multipliers: null // Clear top-level legacy columns
+                // Send duration_options as proper array for video_models table
+                duration_options: duration_options,
+                resolutions: resolutions,
+                quality_multipliers: quality_multipliers
             };
             
-            console.log('Updating model (Engine Mode):', editingModel.id, payload);
+            console.log('Updating model:', editingModel.id, payload);
             
             const response = await api.put(`/admin/models/${editingModel.id}`, payload);
             console.log('Update response:', response.data);
@@ -754,13 +784,46 @@ export const ModelManagementPanel: React.FC = () => {
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Süre Seçenekleri (virgülle ayır)</label>
+                                            <label className="block text-[10px] uppercase font-bold text-gray-500 mb-2">Süre Seçenekleri</label>
+                                            <div className="flex flex-wrap gap-1.5 mb-2">
+                                                {[2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 20].map(sec => {
+                                                    const currentDurations = editForm.duration_options.split(',').map(s => s.trim());
+                                                    const isSelected = currentDurations.includes(sec.toString());
+                                                    return (
+                                                        <button
+                                                            key={sec}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                let newDurs;
+                                                                if (isSelected) {
+                                                                    newDurs = currentDurations.filter(s => s !== sec.toString());
+                                                                } else {
+                                                                    newDurs = [...currentDurations, sec.toString()];
+                                                                }
+                                                                // Sort and join
+                                                                const sorted = newDurs
+                                                                    .map(s => parseInt(s))
+                                                                    .filter(n => !isNaN(n))
+                                                                    .sort((a, b) => a - b);
+                                                                setEditForm({ ...editForm, duration_options: sorted.join(', ') });
+                                                            }}
+                                                            className={`px-2 py-1 text-[10px] font-bold rounded-md border transition-all ${
+                                                                isSelected 
+                                                                ? 'bg-blue-600 border-blue-600 text-white shadow-sm' 
+                                                                : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-blue-300'
+                                                            }`}
+                                                        >
+                                                            {sec}s
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
                                             <input
                                                 type="text"
                                                 value={editForm.duration_options}
                                                 onChange={(e) => setEditForm({ ...editForm, duration_options: e.target.value })}
-                                                placeholder="5, 10, 15"
-                                                className="w-full px-2 py-1 text-sm border rounded dark:bg-gray-800 dark:border-gray-700"
+                                                placeholder="Örn: 5, 10, 15"
+                                                className="w-full px-2 py-1 text-[11px] border rounded dark:bg-gray-800 dark:border-gray-700 font-mono"
                                             />
                                         </div>
                                         <div>
