@@ -73,17 +73,12 @@ async def get_dashboard_stats(
     db = Depends(get_db)
 ):
     """
-    Get user dashboard statistics using optimized RPC calls
+    Get user dashboard statistics using optimized usage_logs
     """
     try:
         # Get credit balance from user_credits with fallback
         credit_response = db.table("user_credits").select("credits_balance").eq("user_id", current_user.id).execute()
-        if credit_response.data:
-            credits_balance = float(credit_response.data[0]["credits_balance"])
-        else:
-            # Create user_credits record if missing
-            db.table("user_credits").insert({"user_id": current_user.id, "credits_balance": 100}).execute()
-            credits_balance = 100.0
+        credits_balance = float(credit_response.data[0]["credits_balance"]) if credit_response.data else 0.0
         
         # Calculate time ranges
         now = datetime.utcnow()
@@ -91,31 +86,33 @@ async def get_dashboard_stats(
         week_start = (now - timedelta(days=7)).isoformat()
         month_start = (now - timedelta(days=30)).isoformat()
         
-        # Fetch stats directly from generations table (RPC might be buggy/empty)
+        # Fetch stats from usage_logs (The actual source of truth)
         # Today
-        today_resp = db.table("generations").select("credits_cost", count="exact").eq("user_id", current_user.id).gte("created_at", today_start).execute()
+        today_resp = db.table("usage_logs").select("cost", count="exact").eq("user_id", current_user.id).gte("created_at", today_start).execute()
         generations_today = today_resp.count or 0
-        credits_spent_today = sum([float(item.get("credits_cost") or 0) for item in today_resp.data]) if today_resp.data else 0.0
+        credits_spent_today = sum([float(item.get("cost") or 0) for item in today_resp.data]) if today_resp.data else 0.0
         
         # Week
-        week_resp = db.table("generations").select("credits_cost", count="exact").eq("user_id", current_user.id).gte("created_at", week_start).execute()
+        week_resp = db.table("usage_logs").select("cost", count="exact").eq("user_id", current_user.id).gte("created_at", week_start).execute()
         generations_week = week_resp.count or 0
-        credits_spent_week = sum([float(item.get("credits_cost") or 0) for item in week_resp.data]) if week_resp.data else 0.0
+        credits_spent_week = sum([float(item.get("cost") or 0) for item in week_resp.data]) if week_resp.data else 0.0
         
         # Month
-        month_resp = db.table("generations").select("credits_cost", count="exact").eq("user_id", current_user.id).gte("created_at", month_start).execute()
+        month_resp = db.table("usage_logs").select("cost", count="exact").eq("user_id", current_user.id).gte("created_at", month_start).execute()
         generations_month = month_resp.count or 0
-        credits_spent_month = sum([float(item.get("credits_cost") or 0) for item in month_resp.data]) if month_resp.data else 0.0
+        credits_spent_month = sum([float(item.get("cost") or 0) for item in month_resp.data]) if month_resp.data else 0.0
         
         # Total generations (all time)
-        total_resp = db.table("generations").select("id", count="exact").eq("user_id", current_user.id).execute()
+        total_resp = db.table("usage_logs").select("id", count="exact").eq("user_id", current_user.id).execute()
         total_generations = total_resp.count or 0
         
-        # Favorite model using RPC
-        favorite_model = None
+        # Favorite model (most used service_type)
+        favorite_model = "Image Gen"
         try:
-            fav_resp = db.rpc("get_user_favorite_model", {"p_user_id": current_user.id}).execute()
-            favorite_model = fav_resp.data if isinstance(fav_resp.data, str) else None
+            fav_resp = db.table("usage_logs").select("service_type").eq("user_id", current_user.id).execute()
+            if fav_resp.data:
+                types = [i["service_type"] for i in fav_resp.data]
+                favorite_model = max(set(types), key=types.count).title()
         except Exception:
             pass
         
@@ -148,31 +145,40 @@ async def get_recent_activity(
     db = Depends(get_db)
 ):
     """
-    Get user's recent activity
+    Get user's recent activity from usage_logs
     """
     try:
-        # Get recent generations
-        response = db.table("generations")\
+        # Get recent logs
+        response = db.table("usage_logs")\
             .select("*")\
             .eq("user_id", current_user.id)\
-            .eq("status", "completed")\
             .order("created_at", desc=True)\
             .limit(limit)\
             .execute()
             
         activities = []
         for item in response.data:
-            # Generate title from prompt
-            prompt = item.get("prompt", "")
-            title = prompt[:50] + "..." if len(prompt) > 50 else prompt
+            details = item.get("details", {})
+            if isinstance(details, str):
+                try:
+                    details = json.loads(details)
+                except:
+                    details = {}
+                    
+            # Generate title
+            title = details.get("prompt", "")
+            if not title:
+                title = f"{item['service_type'].title()} Generation"
+                
+            title = title[:50] + "..." if len(title) > 50 else title
             
             activities.append(RecentActivity(
                 id=item["id"],
-                type=item["type"],
+                type=item["service_type"],
                 title=title,
-                thumbnail_url=item.get("output_url"),
-                credits_charged=item.get("credits_cost", 0),
-                created_at=datetime.fromisoformat(item["created_at"])
+                thumbnail_url=details.get("image_url") or details.get("output_url"),
+                credits_charged=item.get("cost", 0),
+                created_at=datetime.fromisoformat(item["created_at"].replace("Z", "+00:00"))
             ))
         
         return activities
@@ -194,25 +200,24 @@ async def get_usage_summary(
     db = Depends(get_db)
 ):
     """
-    Get usage summary by service type
+    Get usage summary from usage_logs
     """
     try:
         start_date = (datetime.utcnow() - timedelta(days=days)).isoformat()
         
-        # Fetch all generations for the period
-        response = db.table("generations")\
-            .select("type, credits_cost")\
+        # Fetch all logs for the period
+        response = db.table("usage_logs")\
+            .select("service_type, cost")\
             .eq("user_id", current_user.id)\
             .gte("created_at", start_date)\
             .execute()
             
-        # Aggregate in Python
         summary_dict = {}
         total_count = 0
         
         for item in response.data:
-            s_type = item["type"]
-            cost = item.get("credits_cost", 0)
+            s_type = item["service_type"]
+            cost = item.get("cost", 0)
             
             if s_type not in summary_dict:
                 summary_dict[s_type] = {"count": 0, "total_credits": 0.0}
@@ -221,7 +226,6 @@ async def get_usage_summary(
             summary_dict[s_type]["total_credits"] += cost
             total_count += 1
             
-        # Build summary list
         summary = []
         for s_type, data in summary_dict.items():
             percentage = (data["count"] / total_count * 100) if total_count > 0 else 0
@@ -232,10 +236,15 @@ async def get_usage_summary(
                 percentage=round(percentage, 2)
             ))
         
-        # Sort by count descending
         summary.sort(key=lambda x: x.count, reverse=True)
-        
         return summary
+    
+    except Exception as e:
+        logger.error(f"Error fetching usage summary: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch usage summary"
+        )
     
     except Exception as e:
         logger.error(f"Error fetching usage summary: {str(e)}")
