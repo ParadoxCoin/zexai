@@ -25,9 +25,9 @@ const Layout: React.FC = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = React.useState(false);
 
   const { data: statsData } = useQuery({
-    queryKey: ['dashboardStats'],
-    queryFn: () => apiService.get<any>('/dashboard/stats'),
-    refetchInterval: 5000, // Poll to keep dynamic credit update
+    queryKey: ['dashboardStats', new Date().getHours()], // Cache bust every hour
+    queryFn: () => apiService.get<any>('/dashboard/stats?v=1.0.5'),
+    refetchInterval: 10000, 
     staleTime: 5000,
     enabled: isAuthenticated
   });
