@@ -91,7 +91,12 @@ async def get_dashboard_stats(
         total_resp = db.table("usage_logs").select("id", count="exact").eq("user_id", current_user.id).execute()
         total_generations = total_resp.count or 0
         
-        # If usage_logs is empty, try image_generations as fallback
+        # If usage_logs is empty, try generations as fallback
+        if total_generations == 0:
+            gen_total = db.table("generations").select("id", count="exact").eq("user_id", current_user.id).execute()
+            total_generations = gen_total.count or 0
+            
+        # If STILL empty, try image_generations as fallback
         if total_generations == 0:
             img_total = db.table("image_generations").select("id", count="exact").eq("user_id", current_user.id).execute()
             total_generations = img_total.count or 0
@@ -117,9 +122,17 @@ async def get_dashboard_stats(
                 if s_type in gen_counts:
                     gen_counts[s_type] += 1
         else:
-            # Fallback for counts if usage_logs is empty
-            img_c = db.table("image_generations").select("id", count="exact").eq("user_id", current_user.id).execute()
-            gen_counts["image"] = img_c.count or 0
+            # Fallback 1: generations table
+            gen_all = db.table("generations").select("type").eq("user_id", current_user.id).execute()
+            if gen_all.data:
+                for item in gen_all.data:
+                    s_type = item.get("type", "").lower()
+                    if s_type in gen_counts:
+                        gen_counts[s_type] += 1
+            else:
+                # Fallback 2: image_generations table
+                img_c = db.table("image_generations").select("id", count="exact").eq("user_id", current_user.id).execute()
+                gen_counts["image"] = img_c.count or 0
             
         # 4. Favorite Model
         favorite_model = "Flux.1"
@@ -169,27 +182,63 @@ async def get_recent_activity(
             
         data = response.data or []
         
-        # Fallback to image_generations if no usage_logs
+        # Fallback 1: generations table
         if not data:
-            img_resp = db.table("image_generations")\
-                .select("*")\
-                .eq("user_id", current_user.id)\
-                .order("created_at", desc=True)\
-                .limit(limit)\
-                .execute()
-            
-            # Map image_generations to usage_logs format
-            for img in (img_resp.data or []):
-                data.append({
-                    "id": img["id"],
-                    "service_type": "image",
-                    "cost": 5, # default
-                    "created_at": img["created_at"],
-                    "details": {
-                        "prompt": img.get("prompt", ""),
-                        "image_url": img.get("output_url", "")
-                    }
-                })
+            try:
+                gen_resp = db.table("generations")\
+                    .select("*")\
+                    .eq("user_id", current_user.id)\
+                    .eq("status", "completed")\
+                    .order("created_at", desc=True)\
+                    .limit(limit)\
+                    .execute()
+                
+                # Map generations to usage_logs format
+                for gen in (gen_resp.data or []):
+                    details = gen.get("details", {})
+                    if isinstance(details, str):
+                        try:
+                            details = json.loads(details)
+                        except:
+                            details = {}
+                    
+                    data.append({
+                        "id": gen.get("id", ""),
+                        "service_type": gen.get("type", "unknown"),
+                        "cost": gen.get("credits_cost", 0),
+                        "created_at": gen.get("created_at", datetime.now().isoformat()),
+                        "details": {
+                            "prompt": gen.get("prompt") or details.get("prompt", ""),
+                            "image_url": gen.get("result_url") or details.get("image_url", "") or details.get("output_url", "")
+                        }
+                    })
+            except Exception as fallback_err:
+                logger.error(f"Fallback to generations failed: {fallback_err}")
+                
+        # Fallback 2: image_generations table
+        if not data:
+            try:
+                img_resp = db.table("image_generations")\
+                    .select("*")\
+                    .eq("user_id", current_user.id)\
+                    .order("created_at", desc=True)\
+                    .limit(limit)\
+                    .execute()
+                
+                # Map image_generations to usage_logs format
+                for img in (img_resp.data or []):
+                    data.append({
+                        "id": img.get("id", ""),
+                        "service_type": "image",
+                        "cost": 5, # default
+                        "created_at": img.get("created_at", datetime.now().isoformat()),
+                        "details": {
+                            "prompt": img.get("prompt", ""),
+                            "image_url": img.get("output_url", "")
+                        }
+                    })
+            except Exception as fallback_error:
+                logger.error(f"Fallback to image_generations failed: {fallback_error}")
             
         activities = []
         for item in data:
@@ -203,17 +252,26 @@ async def get_recent_activity(
             # Generate title
             title = details.get("prompt", "")
             if not title:
-                title = f"{item['service_type'].title()} Generation"
+                title = f"{item.get('service_type', 'AI').title()} Generation"
                 
             title = title[:50] + "..." if len(title) > 50 else title
             
+            created_at_str = item.get("created_at")
+            if not created_at_str:
+                created_at_str = datetime.now().isoformat()
+                
+            try:
+                created_dt = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
+            except:
+                created_dt = datetime.now()
+            
             activities.append(RecentActivity(
-                id=item["id"],
-                type=item["service_type"],
+                id=item.get("id", ""),
+                type=item.get("service_type", "unknown"),
                 title=title,
                 thumbnail_url=details.get("image_url") or details.get("output_url"),
                 credits_charged=item.get("cost", 0),
-                created_at=datetime.fromisoformat(item["created_at"].replace("Z", "+00:00"))
+                created_at=created_dt
             ))
         
         return activities
