@@ -156,9 +156,17 @@ async def get_dashboard_stats(
     
     except Exception as e:
         logger.error(f"Error fetching dashboard stats: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to fetch dashboard stats"
+        # Return empty stats instead of crashing the whole dashboard
+        return DashboardStats(
+            credits_balance=0.0,
+            credits_spent_today=0.0,
+            credits_spent_week=0.0,
+            credits_spent_month=0.0,
+            generations_today=0,
+            generations_week=0,
+            generations_month=0,
+            total_generations=0,
+            favorite_model="Flux.1"
         )
 
 
@@ -280,10 +288,7 @@ async def get_recent_activity(
     
     except Exception as e:
         logger.error(f"Error fetching recent activity: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to fetch recent activity"
-        )
+        return []
 
 
 @router.get("/usage-summary", response_model=List[UsageSummary])
