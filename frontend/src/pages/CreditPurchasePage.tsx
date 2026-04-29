@@ -385,14 +385,17 @@ export const CreditPurchasePage: React.FC = () => {
                                 {subscriptionPlans.map((plan: any) => (
                                     <div
                                         key={plan.id}
-                                        onClick={() => setSelectedPlan(plan)}
-                                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${selectedPlan?.id === plan.id
+                                        onClick={() => {}}
+                                        className={`p-4 rounded-xl border-2 transition-all opacity-75 grayscale cursor-not-allowed relative overflow-hidden ${selectedPlan?.id === plan.id
                                             ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-300'
                                             : plan.is_popular
                                                 ? 'border-purple-400 bg-purple-50'
-                                                : 'border-gray-200 hover:border-purple-300'
+                                                : 'border-gray-200'
                                             }`}
                                     >
+                                        <div className="absolute top-2 right-[-30px] bg-red-500 text-white text-[10px] font-bold py-1 px-8 transform rotate-45 z-10">
+                                            COMING SOON
+                                        </div>
                                         {plan.is_popular && (
                                             <div className="text-center mb-2">
                                                 <span className="px-3 py-1 bg-purple-600 text-white text-xs font-bold rounded-full">{t('billing.popularBadge')}</span>
@@ -433,14 +436,17 @@ export const CreditPurchasePage: React.FC = () => {
                                 {specialPackages.map((pkg) => (
                                     <div
                                         key={pkg.id}
-                                        onClick={() => setSelectedPackage(pkg)}
-                                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${selectedPackage?.id === pkg.id
+                                        onClick={() => {}}
+                                        className={`p-4 rounded-xl border-2 transition-all opacity-75 grayscale cursor-not-allowed relative overflow-hidden ${selectedPackage?.id === pkg.id
                                             ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-300'
                                             : pkg.is_featured
                                                 ? 'border-yellow-400 bg-yellow-50'
-                                                : 'border-gray-200 hover:border-purple-300'
+                                                : 'border-gray-200'
                                             }`}
                                     >
+                                        <div className="absolute top-2 right-[-30px] bg-red-500 text-white text-[10px] font-bold py-1 px-8 transform rotate-45 z-10">
+                                            COMING SOON
+                                        </div>
                                         <div className="flex justify-between items-start mb-2">
                                             <div>
                                                 <h3 className="font-semibold">{pkg.name}</h3>
@@ -605,15 +611,15 @@ export const CreditPurchasePage: React.FC = () => {
 
                         <button
                             onClick={handlePurchase}
-                            disabled={purchasing || !calculation}
-                            className="w-full py-4 bg-white text-purple-700 rounded-xl font-bold text-lg hover:bg-purple-50 disabled:opacity-50 flex items-center justify-center"
+                            disabled={purchasing || !calculation || purchaseType !== 'flexible'}
+                            className="w-full py-4 bg-white text-purple-700 rounded-xl font-bold text-lg hover:bg-purple-50 disabled:opacity-50 flex items-center justify-center relative overflow-hidden"
                         >
                             {purchasing ? (
                                 <RefreshCw className="h-5 w-5 animate-spin mr-2" />
                             ) : (
                                 <CreditCard className="h-5 w-5 mr-2" />
                             )}
-                            {purchasing ? t('billing.processing') : t('billing.buyNow')}
+                            {purchaseType !== 'flexible' ? "Coming Soon" : (purchasing ? t('billing.processing') : t('billing.buyNow'))}
                         </button>
 
                         <p className="text-xs text-purple-200 mt-4 text-center">
