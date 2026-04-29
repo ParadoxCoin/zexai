@@ -106,6 +106,8 @@ class VideoGenerateRequest(BaseModel):
     resolution: Optional[str] = Field(None, description="Target video resolution e.g. 720p, 1080p")
     quality: Optional[str] = Field(None, description="Quality preset e.g. standard, high, premium")
 
+    model_config = ConfigDict(protected_namespaces=())
+
 
 class VideoGenerateResponse(BaseModel):
     """Schema for video generation response"""
@@ -118,6 +120,8 @@ class VideoGenerateResponse(BaseModel):
     model_used: str
     download_formats: Optional[Dict[str, str]] = None
     estimated_time: Optional[int] = None  # seconds
+
+    model_config = ConfigDict(protected_namespaces=())
 
 
 class VideoEffectInfo(BaseModel):

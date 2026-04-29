@@ -70,6 +70,8 @@ class ImageToImageRequest(BaseModel):
     strength: float = Field(default=0.8, ge=0.1, le=1.0)
     num_images: int = Field(default=1, ge=1, le=4)
 
+    model_config = ConfigDict(protected_namespaces=())
+
 
 class ImageToolRequest(BaseModel):
     tool_id: str
