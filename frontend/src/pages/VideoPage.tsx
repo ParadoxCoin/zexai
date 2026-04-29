@@ -1709,16 +1709,7 @@ const VideoPage = () => {
                 </div>
               </div>
             </div>
-           <CheckCircle className="w-3 h-3 text-white" />
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            </div>
+
 
             {/* Right Panel - Apply Effect */}
             <div className="lg:col-span-2 space-y-4">
