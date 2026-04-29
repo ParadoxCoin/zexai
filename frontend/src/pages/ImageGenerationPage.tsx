@@ -8,7 +8,7 @@ import {
   Maximize2, Settings2, Layers, Check,
   ChevronRight, Zap, Image as ImageIcon, RefreshCw, GitCompare,
   Upload, X, SlidersHorizontal, Camera, Type, ImagePlus,
-  Clock, CreditCard, Eye, ChevronDown, Loader2
+  Clock, CreditCard, Eye, ChevronDown, Loader2, CheckCircle
 } from "lucide-react";
 import PromptEnhancer from "@/components/PromptEnhancer";
 import { useTranslation } from "react-i18next";
@@ -385,7 +385,7 @@ const ImageGenerationPage = () => {
           <button
             onClick={() => setActiveTab('generate')}
             className={`px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center gap-2 ${activeTab === 'generate'
-              ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/20'
+              ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20'
               : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
               }`}
           >
@@ -396,7 +396,7 @@ const ImageGenerationPage = () => {
           <button
             onClick={() => setActiveTab('gallery')}
             className={`px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center gap-2 ${activeTab === 'gallery'
-              ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
+              ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20'
               : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
               }`}
           >
@@ -407,7 +407,7 @@ const ImageGenerationPage = () => {
           <button
             onClick={() => setActiveTab('compare')}
             className={`px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center gap-2 ${activeTab === 'compare'
-              ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
+              ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20'
               : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
               }`}
           >
@@ -592,25 +592,30 @@ const ImageGenerationPage = () => {
 
                 {/* ── Model & Aspect Ratio ── */}
                 <div className="px-6 pb-6 border-t border-white/5 pt-6">
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block flex items-center gap-2">
                         <Layers className="w-3.5 h-3.5 text-purple-400" />
                         {t('imageGen.modelTitle', 'AI ENGINE')}
                       </label>
-                      <select
-                        value={modelId}
-                        onChange={(e) => setModelId(e.target.value)}
-                        disabled={isLoadingModels || isGenerating}
-                        className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl text-xs font-bold text-slate-300 focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500/50 outline-none appearance-none cursor-pointer"
-                      >
-                        <option value="" className="bg-slate-900">{t('imageGen.selectModel', 'SELECT ENGINE')}</option>
-                        {generateModels.map((model: any) => (
-                          <option key={model.id} value={model.id} className="bg-slate-900">
-                            {formatModelName(model.name)} ({model.credits} ZEX)
-                          </option>
-                        ))}
-                      </select>
+                      <div className="relative group">
+                        <select
+                          value={modelId}
+                          onChange={(e) => setModelId(e.target.value)}
+                          disabled={isLoadingModels || isGenerating}
+                          className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-300 focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500/50 outline-none appearance-none cursor-pointer transition-all hover:bg-white/5"
+                        >
+                          <option value="" className="bg-slate-900">{t('imageGen.selectModel', 'SELECT ENGINE')}</option>
+                          {generateModels.map((model: any) => (
+                            <option key={model.id} value={model.id} className="bg-slate-900">
+                              {formatModelName(model.name).toUpperCase()} ({model.credits} ZEX)
+                            </option>
+                          ))}
+                        </select>
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 group-hover:text-purple-400 transition-colors">
+                          <ChevronDown className="w-4 h-4" />
+                        </div>
+                      </div>
                     </div>
 
                     <div>
@@ -618,18 +623,19 @@ const ImageGenerationPage = () => {
                         <Maximize2 className="w-3.5 h-3.5 text-purple-400" />
                         {t('imageGen.sizeTitle', 'ASPECT RATIO')}
                       </label>
-                      <div className="flex gap-2">
+                      <div className="grid grid-cols-4 gap-2">
                         {aspectRatios.map((ratio) => (
                           <button
                             key={ratio.id}
                             onClick={() => setAspectRatio(ratio.id)}
-                            className={`flex-1 py-3 text-xs font-black rounded-xl transition-all border ${aspectRatio === ratio.id
-                              ? 'bg-purple-500 border-purple-400 text-white shadow-lg shadow-purple-500/20'
-                              : 'bg-black/40 border-white/5 text-slate-500 hover:text-slate-300 hover:border-white/10'
+                            className={`py-3 rounded-xl transition-all border flex flex-col items-center justify-center gap-1 group
+                              ${aspectRatio === ratio.id
+                                ? 'bg-purple-600 border-purple-500 text-white shadow-lg shadow-purple-500/20 scale-[1.05]'
+                                : 'bg-black/40 border-white/5 text-slate-500 hover:text-slate-300 hover:border-white/10'
                               }`}
-                            title={t(ratio.name)}
                           >
-                            {ratio.id}
+                            <span className={`text-sm transition-transform ${aspectRatio === ratio.id ? 'scale-110' : 'group-hover:scale-110'}`}>{ratio.icon}</span>
+                            <span className="text-[8px] font-black uppercase tracking-tighter">{ratio.id}</span>
                           </button>
                         ))}
                       </div>
@@ -799,30 +805,36 @@ const ImageGenerationPage = () => {
       {/* GALLERY TAB (Persistent from backend) */}
       {/* ═══════════════════════════════════════════════════════ */}
       {activeTab === 'gallery' && (
-         <motion.div
-            key="gallery"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2 }}
-            className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
-         >
-          <div className="bg-black/40 backdrop-blur-xl rounded-3xl border border-white/5 p-8 shadow-2xl">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-xl font-black text-white flex items-center gap-3 uppercase tracking-widest">
-                <Layers className="w-6 h-6 text-emerald-400" />
-                {t('imageGen.galleryTitle', 'Görsel Galerim')}
+        <motion.div
+          key="gallery"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.2 }}
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+        >
+          <div className="bg-black/40 backdrop-blur-xl rounded-3xl border border-white/5 p-6 md:p-8 shadow-2xl">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+              <div className="flex flex-col gap-1">
+                <h2 className="text-2xl font-black text-white flex items-center gap-3 uppercase italic tracking-tighter">
+                  <Layers className="w-6 h-6 text-emerald-400" />
+                  {t('imageGen.galleryTitle', 'Görsel Galerim')}
+                </h2>
                 {galleryTotal > 0 && (
-                  <span className="text-sm font-normal text-gray-400 ml-2">({galleryTotal} {t('imageGen.imagesCount', 'görsel')})</span>
+                  <span className="text-[10px] font-black text-emerald-500/60 uppercase tracking-[0.2em]">
+                    ARCHIVE: {galleryTotal} {t('imageGen.imagesCount', 'ASSETS')}
+                  </span>
                 )}
-              </h2>
-              <button
-                onClick={() => refetchGallery()}
-                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                title={t('imageGen.refresh', 'Yenile')}
-              >
-                <RefreshCw className="w-5 h-5" />
-              </button>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => refetchGallery()}
+                  className="px-4 py-2 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white rounded-xl border border-white/5 transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  {t('imageGen.refresh', 'SYNC')}
+                </button>
+              </div>
             </div>
 
             {isLoadingGallery ? (
@@ -832,18 +844,18 @@ const ImageGenerationPage = () => {
               </div>
             ) : galleryItems.length > 0 ? (
               <>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                   {galleryItems.map((item: any, idx: number) => (
                     <div
                       key={item.id || idx}
-                      className="relative group rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all cursor-pointer"
+                      className="relative group rounded-2xl overflow-hidden bg-black/40 border border-white/5 hover:border-emerald-500/30 transition-all cursor-pointer shadow-xl"
                       onClick={() => setGalleryLightboxItem(item)}
                     >
-                      <div className="aspect-square">
+                      <div className="aspect-square relative overflow-hidden">
                         <img
                           src={item.file_url || item.thumbnail_url}
                           alt={item.prompt || `Görsel ${idx}`}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                           loading="lazy"
                           onError={(e) => {
                             (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNGM0Y0RjYiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI0QxRDVEQiIgZm9udC1zaXplPSIxNCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiPkfDtnJzZWw8L3RleHQ+PC9zdmc+';
@@ -859,11 +871,15 @@ const ImageGenerationPage = () => {
                         )}
                       </div>
                       {/* Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
-                        <p className="text-white text-xs line-clamp-2 mb-2">{item.prompt}</p>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-white/70">{formatModelName(item.model_name || item.model_id || item.model)}</span>
-                          <div className="flex gap-1">
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-4 backdrop-blur-[1px]">
+                        <p className="text-white text-[10px] font-medium line-clamp-2 mb-3 leading-relaxed opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-500">
+                          {item.prompt}
+                        </p>
+                        <div className="flex items-center justify-between gap-2 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-500 delay-75">
+                          <span className="text-[9px] font-black text-emerald-400 uppercase tracking-tighter truncate max-w-[80px]">
+                            {formatModelName(item.model_name || item.model_id || item.model)}
+                          </span>
+                          <div className="flex gap-2">
                             {!item.is_nft_minted && (
                               <button
                                 onClick={(e) => {
@@ -871,9 +887,10 @@ const ImageGenerationPage = () => {
                                   setSelectedImageForNft(item);
                                   setNftModalOpen(true);
                                 }}
-                                className="px-2 py-1 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white rounded-lg text-xs font-medium shadow transition-all flex items-center gap-1"
+                                className="p-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-all shadow-lg shadow-purple-500/20"
+                                title={t('imageGen.makeNft', 'MINT NFT')}
                               >
-                                💎 {t('imageGen.makeNft', 'NFT Yap')}
+                                <Sparkles className="w-3 h-3" />
                               </button>
                             )}
                             <button
@@ -895,8 +912,8 @@ const ImageGenerationPage = () => {
                                   window.open(item.file_url, '_blank');
                                 }
                               }}
-                              className="p-1.5 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors"
-                              title={t('imageGen.download', 'İndir')}
+                              className="p-1.5 bg-white/10 backdrop-blur-md rounded-lg hover:bg-white/20 transition-all border border-white/10"
+                              title={t('imageGen.download', 'DOWNLOAD')}
                             >
                               <Download className="w-3 h-3 text-white" />
                             </button>
@@ -909,23 +926,23 @@ const ImageGenerationPage = () => {
 
                 {/* Pagination */}
                 {galleryTotal > GALLERY_LIMIT && (
-                  <div className="flex items-center justify-center mt-8 gap-2">
+                  <div className="flex items-center justify-center mt-12 gap-3">
                     <button
                       onClick={() => setGalleryPage(Math.max(0, galleryPage - 1))}
                       disabled={galleryPage === 0}
-                      className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-sm font-medium disabled:opacity-40 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                      className="px-6 py-2 rounded-xl bg-white/5 border border-white/5 text-[10px] font-black uppercase tracking-widest text-slate-400 disabled:opacity-20 hover:bg-white/10 hover:text-white transition-all"
                     >
-                      {t('imageGen.prevPage', '← Önceki')}
+                      {t('imageGen.prevPage', 'PREVIOUS')}
                     </button>
-                    <span className="text-sm text-gray-500 px-3">
-                      {t('imageGen.page', 'Sayfa')} {galleryPage + 1} / {Math.ceil(galleryTotal / GALLERY_LIMIT)}
-                    </span>
+                    <div className="px-4 py-2 bg-black/40 rounded-xl border border-white/5 text-[10px] font-black text-emerald-400 uppercase tracking-widest">
+                      {galleryPage + 1} / {Math.ceil(galleryTotal / GALLERY_LIMIT)}
+                    </div>
                     <button
                       onClick={() => setGalleryPage(galleryPage + 1)}
                       disabled={(galleryPage + 1) * GALLERY_LIMIT >= galleryTotal}
-                      className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-sm font-medium disabled:opacity-40 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                      className="px-6 py-2 rounded-xl bg-white/5 border border-white/5 text-[10px] font-black uppercase tracking-widest text-slate-400 disabled:opacity-20 hover:bg-white/10 hover:text-white transition-all"
                     >
-                      {t('imageGen.nextPage', 'Sonraki →')}
+                      {t('imageGen.nextPage', 'NEXT')}
                     </button>
                   </div>
                 )}
@@ -1033,21 +1050,26 @@ const ImageGenerationPage = () => {
            onDragEnd={handleDragEnd}
            className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 touch-pan-y"
         >
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-              <GitCompare className="w-5 h-5 text-orange-500" />
-              {t('imageGen.compareTitle', 'Model Karşılaştırma')}
-            </h2>
-            <p className="text-gray-500 dark:text-gray-400 mb-6">
-              {t('imageGen.compareDesc', 'Aynı prompt ile birden fazla model seçip sonuçları yan yana karşılaştırın')}
-            </p>
+          <div className="bg-black/40 backdrop-blur-xl rounded-3xl border border-white/5 p-6 md:p-8 shadow-2xl">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+              <div className="flex flex-col gap-1">
+                <h2 className="text-2xl font-black text-white flex items-center gap-3 uppercase italic tracking-tighter">
+                  <GitCompare className="w-6 h-6 text-orange-500" />
+                  {t('imageGen.compareTitle', 'Model Karşılaştırma')}
+                </h2>
+                <p className="text-[10px] font-black text-orange-500/60 uppercase tracking-[0.2em]">
+                  {t('imageGen.compareDesc', 'Aynı prompt ile birden fazla model seçip sonuçları yan yana karşılaştırın')}
+                </p>
+              </div>
+            </div>
 
             {/* Model Selection */}
-            <div className="mb-6">
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                {t('imageGen.selectModels', 'Model Seçin (en az 2, en fazla 4)')}
+            <div className="mb-8">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                <Layers className="w-3.5 h-3.5 text-orange-400" />
+                {t('imageGen.selectModels', 'SELECT ENGINES (MAX 4)')}
               </h3>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {compareModels.map((model: any) => (
                   <button
                     key={model.id}
@@ -1059,35 +1081,41 @@ const ImageGenerationPage = () => {
                       );
                     }}
                     disabled={isComparing}
-                    className={`p-3 rounded-xl text-left transition-all border-2 ${selectedModelsForCompare.includes(model.id)
-                      ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20'
-                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
-                      } disabled:opacity-50`}
+                    className={`group relative p-4 rounded-2xl border transition-all text-left overflow-hidden
+                      ${selectedModelsForCompare.includes(model.id) 
+                        ? 'border-orange-500 bg-orange-500/10' 
+                        : 'border-white/5 bg-white/5 hover:bg-white/10'}`}
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">{model.name}</span>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className={`text-[11px] font-black uppercase tracking-widest transition-colors ${selectedModelsForCompare.includes(model.id) ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>
+                        {formatModelName(model.name)}
+                      </span>
                       {selectedModelsForCompare.includes(model.id) && (
-                        <Check className="w-4 h-4 text-orange-500" />
+                        <div className="w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center shadow-lg shadow-orange-500/20">
+                          <Check className="w-3 h-3 text-white" />
+                        </div>
                       )}
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">{model.credits} {t('imageGen.credits', 'kredi')}</div>
+                    <div className="text-[9px] font-black text-orange-400 uppercase tracking-widest opacity-60">
+                      {model.credits} ZEX
+                    </div>
                   </button>
                 ))}
               </div>
             </div>
 
             {/* Prompt Input + Enhancer */}
-            <div className="mb-6">
-              <div className="relative">
+            <div className="mb-8">
+              <div className="relative group">
                 <textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder={t('imageGen.comparePromptPlaceholder', "Karşılaştırmak istediğiniz görseli tanımlayın...")}
                   rows={3}
                   disabled={isComparing}
-                  className="w-full px-4 py-3 pr-14 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl resize-none focus:ring-2 focus:ring-orange-500 text-gray-900 dark:text-white"
+                  className="w-full px-5 py-4 bg-black/40 border border-white/5 rounded-2xl resize-none focus:ring-1 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all text-slate-200 text-sm placeholder-slate-600 leading-relaxed"
                 />
-                <div className="absolute right-3 top-3">
+                <div className="absolute right-4 top-4">
                   <PromptEnhancer
                     contentType="image"
                     currentPrompt={prompt}
@@ -1101,17 +1129,17 @@ const ImageGenerationPage = () => {
             <button
               onClick={handleCompare}
               disabled={isComparing || selectedModelsForCompare.length < 2 || !prompt}
-              className="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold rounded-xl shadow-lg flex items-center justify-center gap-2"
+              className="w-full py-5 bg-orange-600 hover:bg-orange-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-black text-xs rounded-2xl shadow-xl shadow-orange-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-3 uppercase tracking-[0.3em] border-t border-white/10"
             >
               {isComparing ? (
                 <>
-                  <RefreshCw className="w-5 h-5 animate-spin" />
-                  {t('imageGen.comparing', 'Karşılaştırılıyor...')} ({selectedModelsForCompare.length} {t('imageGen.model', 'model')})
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  {t('imageGen.comparing', 'COMPARING...')}
                 </>
               ) : (
                 <>
-                  <GitCompare className="w-5 h-5" />
-                  {selectedModelsForCompare.length} {t('imageGen.compareBtn', 'Model ile Karşılaştır')}
+                  <GitCompare className="w-4 h-4" />
+                  {t('imageGen.compareBtn', 'INITIALIZE COMPARISON')}
                 </>
               )}
             </button>
@@ -1122,54 +1150,41 @@ const ImageGenerationPage = () => {
                 compareResults.length === 3 ? 'grid-cols-3' : 'grid-cols-2 lg:grid-cols-4'
                 }`}>
                 {compareResults.map((result, idx) => (
-                  <div key={idx} className="bg-gray-50 dark:bg-gray-900 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-md">
-                    <div className="p-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-medium text-center text-sm">
+                  <div key={idx} className="bg-black/40 backdrop-blur-xl rounded-2xl overflow-hidden border border-white/5 shadow-2xl">
+                    <div className="p-3 border-b border-white/5 bg-white/[0.02] text-white font-black text-[10px] text-center uppercase tracking-widest">
                       {result.model_name}
                     </div>
-                    <div className="aspect-square relative">
+                    <div className="aspect-square relative group">
                       {result.status === 'generating' ? (
-                        <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-800">
-                          <div className="relative w-16 h-16 mb-3">
-                            <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-red-400 rounded-full animate-pulse opacity-20" />
-                            <div className="absolute inset-1.5 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center overflow-hidden">
-                              <img src="/logo192.png" alt="ZexAi Loading" className="w-10 h-10 object-contain animate-pulse" style={{ animationDuration: '1s' }} />
-                            </div>
-                            <div className="absolute inset-0 border-3 border-transparent border-t-orange-500 rounded-full animate-spin" />
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-black/40 p-6">
+                          <div className="relative w-12 h-12 mb-4">
+                            <div className="absolute inset-0 bg-orange-500/20 rounded-full animate-pulse blur-xl" />
+                            <Loader2 className="w-10 h-10 animate-spin text-orange-500 mx-auto relative" />
                           </div>
-                          <p className="text-xs text-gray-500 font-medium">{result.progress}</p>
+                          <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest animate-pulse">{result.progress}</p>
                         </div>
                       ) : result.status === 'completed' && result.image_url ? (
-                        <div className="relative group w-full h-full">
+                        <div className="w-full h-full">
                           <img
                             src={result.image_url}
                             alt={result.model_name}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                              const parent = (e.target as HTMLImageElement).parentElement;
-                              if (parent) {
-                                const errDiv = document.createElement('div');
-                                errDiv.className = 'w-full h-full flex items-center justify-center text-gray-400 text-sm';
-                                errDiv.textContent = '⚠️ Image failed to load';
-                                parent.appendChild(errDiv);
-                              }
-                            }}
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                           />
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-[1px]">
                             <a
                               href={result.image_url}
                               download
-                              className="p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors"
+                              className="p-3 bg-white/10 backdrop-blur-md rounded-xl hover:bg-white/20 transition-all border border-white/10 shadow-xl"
                             >
                               <Download className="w-5 h-5 text-white" />
                             </a>
                           </div>
                         </div>
                       ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center text-red-500 p-4 text-center bg-red-50 dark:bg-red-900/10">
-                          <X className="w-8 h-8 mb-2 text-red-400" />
-                          <span className="text-sm font-medium">{t('imageGen.errorLabel', 'Error')}</span>
-                          <span className="text-xs text-red-400 mt-1">{result.error}</span>
+                        <div className="w-full h-full flex flex-col items-center justify-center text-red-500 p-6 text-center bg-red-500/5">
+                          <X className="w-8 h-8 mb-3 text-red-400 opacity-50" />
+                          <span className="text-[10px] font-black uppercase tracking-widest">{t('imageGen.errorLabel', 'ENGINE ERROR')}</span>
+                          <span className="text-[9px] text-red-400/60 mt-1 uppercase leading-tight">{result.error}</span>
                         </div>
                       )}
                     </div>
