@@ -1,10 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiService } from '@/services/api';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     Camera, Upload, Mic, Play, Download, RefreshCw, Sparkles,
     Volume2, Image as ImageIcon, Video, ChevronDown, User, Loader2, Check, X,
-    Globe, Star, Music, Pause, FileAudio, UploadCloud, Zap
+    Globe, Star, Music, Pause, FileAudio, UploadCloud, Zap, Eye
 } from 'lucide-react';
 import { Celebration, CreditToast } from '@/components/Celebration';
 import PromptEnhancer from '@/components/PromptEnhancer';
@@ -49,6 +50,8 @@ export const AvatarPage = () => {
     const [isUploading, setIsUploading] = useState(false);
     const [selectedEffect, setSelectedEffect] = useState<string | null>(null);
     const [hoveredEffect, setHoveredEffect] = useState<string | null>(null);
+    const [jobId, setJobId] = useState<string | null>(null);
+    const [resultUrl, setResultUrl] = useState<string | null>(null);
 
     const effects = [
         { id: 'ai-hug', name: 'AI Hug', icon: '🫂', color: 'from-blue-500/20', badge: 'Viral', preview: '/hug.png' },
