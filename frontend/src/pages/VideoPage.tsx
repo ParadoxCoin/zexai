@@ -5,10 +5,10 @@ import { apiService } from "@/services/api";
 import {
   Video, Sparkles, Package, FolderOpen, Play, Upload,
   Star, Download, Clock, CheckCircle, Loader2, ArrowRight,
-  Zap, Film, Wand2, Palette, ChevronRight, Eye, Filter,
-  Scissors, Camera, Move, RotateCcw, Volume2, Maximize,
-  Timer, Crown, Search, Image, RefreshCcw, X, Share2, Twitter, Facebook, Link2,
-  GitCompare, Check, User, Layers
+  Zap, Film, Wand2, Eye,
+  Camera, Move, RotateCcw, Volume2, Maximize,
+  Timer, Crown, Search, Image, X,
+  GitCompare, User, Layers, Check, Link2
 } from "lucide-react";
 import PromptEnhancer from "@/components/PromptEnhancer";
 import MotionBrushEditor from "@/components/video/MotionBrushEditor";
@@ -60,7 +60,7 @@ const VideoPage = () => {
     { id: "compare", name: t('videoGen.tabCompare', 'Karşılaştır'), icon: GitCompare, description: t('videoGen.compareDescModels', "Modelleri karşılaştır") },
     { id: "avatar", name: t('videoGen.tabAvatar', 'Avatar'), icon: User, description: t('videoGen.avatarDesc', "Avatar oluştur") },
     { id: "effects", name: t('videoGen.tabEffects', 'Efektler'), icon: Sparkles, description: t('videoGen.effectsDesc', "Video efektleri") },
-    // { id: "packages", name: t('videoGen.tabPackages', 'Paketler'), icon: Package, description: t('videoGen.packagesDesc', "Efekt paketleri") },
+    { id: "packages", name: t('videoGen.tabPackages', 'Paketler'), icon: Package, description: t('videoGen.packagesDesc', "Efekt paketleri") },
     { id: "gallery", name: t('videoGen.tabGallery', 'Galerim'), icon: FolderOpen, description: t('videoGen.galleryDesc', "Videolarım") },
   ];
 
@@ -166,9 +166,7 @@ const VideoPage = () => {
     },
   });
 
-  const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [purchaseSuccess, setPurchaseSuccess] = useState<string | null>(null);
-  const [applyingEffect, setApplyingEffect] = useState(false);
   const [effectSuccess, setEffectSuccess] = useState<string | null>(null);
 
   // Poll for task completion when currentTask exists
@@ -211,7 +209,7 @@ const VideoPage = () => {
     }
 
     try {
-      setApplyingEffect(true);
+
 
       // Upload image(s) first
       const formData = new FormData();
@@ -278,7 +276,6 @@ const VideoPage = () => {
 
       alert(errorMsg);
     } finally {
-      setApplyingEffect(false);
     }
   };
 
@@ -854,7 +851,14 @@ const VideoPage = () => {
                     }`}
                 >
                   <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  {type.name}
+                  <span>{type.name}</span>
+                  {(type.id === 'effects' || type.id === 'packages') && (
+                    <span className={`text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tighter ${
+                      isActive ? "bg-white text-gray-900" : "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
+                    }`}>
+                      Soon
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -1189,33 +1193,19 @@ const VideoPage = () => {
                           </div>
                         ) : (
                           <div className="flex flex-wrap gap-2">
-                            {(() => {
-                              const caps = selectedModel.video_caps || {};
-                              let durations = caps.durations || selectedModel.durations || [selectedModel.duration || 5];
-                              
-                              // FAIL-SAFE: If backend only sends [5] but we know the model supports more
-                              if (durations.length === 1 && durations[0] === 5) {
-                                const n = selectedModel.name.toLowerCase();
-                                if (n.includes('veo')) durations = [4, 6, 8];
-                                else if (n.includes('kling')) durations = [5, 10, 15];
-                                else if (n.includes('wan')) durations = [5, 10, 15];
-                                else if (n.includes('sora')) durations = [10, 15];
-                              }
-                              
-                              return durations.map((d: number) => (
-                                <button
-                                  key={d}
-                                  onClick={() => setSelectedDuration(d)}
-                                  className={`px-6 py-2.5 rounded-xl text-sm font-black transition-all border-2 flex-none ${
-                                    (selectedDuration || selectedModel.duration) === d
-                                      ? 'bg-indigo-600 text-white border-indigo-400 shadow-lg shadow-indigo-500/30 scale-105'
-                                      : 'bg-white dark:bg-gray-800 text-gray-500 border-gray-100 dark:border-gray-700 hover:border-indigo-300'
-                                  }`}
-                                >
-                                  {d}s
-                                </button>
-                              ));
-                            })()}
+                            {(selectedModel.video_caps?.durations || selectedModel.durations || [selectedModel.duration || 5]).map((d: number) => (
+                              <button
+                                key={d}
+                                onClick={() => setSelectedDuration(d)}
+                                className={`px-6 py-2.5 rounded-xl text-sm font-black transition-all border-2 flex-none ${
+                                  (selectedDuration || selectedModel.duration) === d
+                                    ? 'bg-indigo-600 text-white border-indigo-400 shadow-lg shadow-indigo-500/30 scale-105'
+                                    : 'bg-white dark:bg-gray-800 text-gray-500 border-gray-100 dark:border-gray-700 hover:border-indigo-300'
+                                }`}
+                              >
+                                {d}s
+                              </button>
+                            ))}
                           </div>
                         )}
                       </div>
@@ -1226,32 +1216,21 @@ const VideoPage = () => {
                           <Maximize className="w-4 h-4" />
                           03. {t('videoGen.stepQuality', 'Kalite')}
                         </h3>
-                        <div className="flex flex-wrap gap-2">
-                          {(() => {
-                            const caps = selectedModel.video_caps || {};
-                            const resolutions = caps.resolutions || selectedModel.resolutions || ["720p", "1080p", "4K"];
-                            
-                            return resolutions.map((r: string) => {
-                              const isAvailable = resolutions.includes(r);
-                              return (
-                                <button
-                                  key={r}
-                                  disabled={!isAvailable}
-                                  onClick={() => setSelectedResolution(r)}
-                                  className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all border-2 ${
-                                    selectedResolution === r
-                                      ? 'bg-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/30 scale-105'
-                                      : isAvailable
-                                      ? 'bg-white dark:bg-gray-800 text-gray-500 border-gray-100 dark:border-gray-700 hover:border-blue-300'
-                                      : 'bg-gray-50 dark:bg-gray-900 text-gray-300 border-gray-100 dark:border-gray-800 cursor-not-allowed'
-                                  }`}
-                                >
-                                  {r}
-                                </button>
-                              );
-                            });
-                          })()}
-                        </div>
+                          <div className="flex flex-wrap gap-2">
+                            {(selectedModel.video_caps?.resolutions || selectedModel.resolutions || ["720p", "1080p", "4K"]).map((r: string) => (
+                              <button
+                                key={r}
+                                onClick={() => setSelectedResolution(r)}
+                                className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all border-2 ${
+                                  selectedResolution === r
+                                    ? 'bg-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/30 scale-105'
+                                    : 'bg-white dark:bg-gray-800 text-gray-500 border-gray-100 dark:border-gray-700 hover:border-blue-300'
+                                }`}
+                              >
+                                {r}
+                              </button>
+                            ))}
+                          </div>
                       </div>
                     </div>
                     
@@ -1682,9 +1661,13 @@ const VideoPage = () => {
                           >
                             <div className="w-12 h-12 rounded-xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
                               {effect.icon || '✨'}
-                            <span className="text-4xl group-hover:scale-125 transition-transform duration-300">{effect.icon || '✨'}</span>
+                            </div>
                             <span className="text-[10px] font-bold text-gray-900 dark:text-white uppercase tracking-tighter line-clamp-1">{effect.name}</span>
                             
+                            <div className="absolute top-1.5 left-1.5">
+                               <span className="text-[8px] bg-purple-600 text-white px-1 py-0.5 rounded-full font-bold">SOON</span>
+                            </div>
+
                             {effect.requires_two_images && (
                               <div className="absolute top-1.5 right-1.5">
                                 <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" title="2 Görsel Gerekli" />
@@ -1692,8 +1675,8 @@ const VideoPage = () => {
                             )}
                             
                             {isSelected && (
-                              <div className="absolute -top-2 -right-2 w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-gray-800">
-                                <CheckCircle className="w-3.5 h-3.5 text-white" />
+                              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-purple-600 rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-gray-800">
+                                <CheckCircle className="w-3 h-3 text-white" />
                               </div>
                             )}
                           </div>
@@ -1816,18 +1799,23 @@ const VideoPage = () => {
                     </div>
 
                     {/* Apply Button */}
-                    <button
-                      onClick={handleApplyEffect}
-                      disabled={applyingEffect || !imageFile || (effects.find((e: any) => e.id === effectId)?.requires_two_images && !imageFile2)}
-                      className="w-full py-4 bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/25 disabled:shadow-none transition-all flex items-center justify-center gap-2"
-                    >
-                      {applyingEffect ? (
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <Sparkles className="w-5 h-5" />
-                      )}
-                      {applyingEffect ? t('videoGen.applyingEffect', 'İşleniyor...') : `${t('videoGen.applyEffect', 'Efekt Uygula')} (${effects.find((e: any) => e.id === effectId)?.credits}c)`}
-                    </button>
+                    {/* Apply Button - Coming Soon State */}
+                    <div className="relative group/btn">
+                      <button
+                        onClick={handleApplyEffect}
+                        disabled={true}
+                        className="w-full py-4 bg-gradient-to-r from-gray-400 to-gray-500 text-white font-semibold rounded-xl shadow-none cursor-not-allowed transition-all flex items-center justify-center gap-2 overflow-hidden relative"
+                      >
+                        <Sparkles className="w-5 h-5 opacity-50" />
+                        <span>{t('common.comingSoon', 'Çok Yakında')}</span>
+                        
+                        {/* Shimmer Effect */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:animate-shimmer" />
+                      </button>
+                      <div className="absolute -top-2 -right-2 bg-yellow-400 text-black text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm z-10 animate-bounce">
+                        COMING SOON
+                      </div>
+                    </div>
 
                     {effectSuccess && (
                       <div className="mt-4 p-4 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-xl flex items-center gap-2">
@@ -1902,9 +1890,12 @@ const VideoPage = () => {
                           <div className="flex items-center gap-3">
                             <span className="text-2xl">{pkg.icon || '📦'}</span>
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-gray-900 dark:text-white text-sm line-clamp-1">
-                                {pkg.name}
-                              </h4>
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-medium text-gray-900 dark:text-white text-sm line-clamp-1">
+                                  {pkg.name}
+                                </h4>
+                                <span className="text-[8px] bg-purple-600 text-white px-1 py-0.5 rounded-full font-bold">SOON</span>
+                              </div>
                               <div className="flex items-center gap-2 mt-1">
                                 <span className="text-xs text-gray-400 line-through">{pkg.original_credits || Math.round((pkg.total_credits || 100) * 1.25)}c</span>
                                 <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 text-xs font-bold rounded-full">
@@ -1934,22 +1925,21 @@ const VideoPage = () => {
             <div className="lg:col-span-2 space-y-4">
               {packageId ? (
                 <>
-                  {/* Selected Package Info */}
                   {(() => {
                     const selectedPkg = packages.find((p: any) => p.id === packageId);
                     if (!selectedPkg) return null;
 
                     return (
-                      <>
-                        <div className="bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 rounded-2xl p-6 text-white relative overflow-hidden">
-                          <div className="absolute top-0 right-0 px-4 py-2 bg-yellow-400 text-yellow-900 font-bold text-sm rounded-bl-xl">
+                      <div className="space-y-4">
+                        <div className="bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 rounded-2xl p-6 text-white relative overflow-hidden shadow-xl shadow-purple-500/20">
+                          <div className="absolute top-0 right-0 px-4 py-2 bg-yellow-400 text-yellow-900 font-bold text-sm rounded-bl-xl shadow-lg">
                             {selectedPkg.discount_percent || 20}% İNDİRİM
                           </div>
                           <div className="flex items-center gap-4">
-                            <span className="text-5xl">{selectedPkg.icon || '📦'}</span>
+                            <span className="text-5xl drop-shadow-lg">{selectedPkg.icon || '📦'}</span>
                             <div className="flex-1">
-                              <h3 className="font-bold text-2xl">{selectedPkg.name}</h3>
-                              <p className="text-purple-100 mt-1">{selectedPkg.description}</p>
+                              <h3 className="font-bold text-2xl drop-shadow-sm">{selectedPkg.name}</h3>
+                              <p className="text-purple-100 mt-1 text-sm">{selectedPkg.description}</p>
                             </div>
                             <div className="text-right">
                               <div className="text-purple-200 line-through text-lg">{selectedPkg.original_credits || Math.round((selectedPkg.total_credits || 100) * 1.25)}c</div>
@@ -1967,7 +1957,6 @@ const VideoPage = () => {
 
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
                             {(selectedPkg.effects || []).map((effectIdItem: string) => {
-                              // Find effect details from effects list
                               const effectDetail = effects.find((e: any) => e.id === effectIdItem);
                               return (
                                 <div key={effectIdItem} className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-xl">
@@ -1994,18 +1983,23 @@ const VideoPage = () => {
                           </div>
 
                           {/* Buy Button */}
-                          <button
-                            onClick={() => handlePurchasePackage(selectedPkg.id, selectedPkg.name, selectedPkg.total_credits || 100)}
-                            disabled={purchaseLoading}
-                            className="w-full py-4 bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/25 disabled:shadow-none transition-all flex items-center justify-center gap-2"
-                          >
-                            {purchaseLoading ? (
-                              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            ) : (
-                              <Package className="w-5 h-5" />
-                            )}
-                            {purchaseLoading ? 'İşleniyor...' : `${t('videoGen.buyPackage', 'Paketi Satın Al')} (${selectedPkg.total_credits || 100}c)`}
-                          </button>
+                          {/* Buy Button - Coming Soon State */}
+                          <div className="relative group/btn">
+                            <button
+                              onClick={() => {}}
+                              disabled={true}
+                              className="w-full py-4 bg-gradient-to-r from-gray-400 to-gray-500 text-white font-semibold rounded-xl shadow-none cursor-not-allowed transition-all flex items-center justify-center gap-2 overflow-hidden relative"
+                            >
+                              <Package className="w-5 h-5 opacity-50" />
+                              <span>{t('common.comingSoon', 'Çok Yakında')}</span>
+                              
+                              {/* Shimmer Effect */}
+                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:animate-shimmer" />
+                            </button>
+                            <div className="absolute -top-2 -right-2 bg-yellow-400 text-black text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm z-10 animate-bounce">
+                              COMING SOON
+                            </div>
+                          </div>
 
                           {purchaseSuccess && (
                             <div className="mt-4 p-4 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-xl flex items-center gap-2">
@@ -2014,7 +2008,7 @@ const VideoPage = () => {
                             </div>
                           )}
                         </div>
-                      </>
+                      </div>
                     );
                   })()}
                 </>

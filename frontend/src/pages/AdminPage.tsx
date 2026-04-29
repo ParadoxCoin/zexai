@@ -481,6 +481,8 @@ export const AdminPage: React.FC = () => {
             </h1>
             <p className="text-sm text-gray-500 mt-1">Platform yönetimi ve istatistikler</p>
           </div>
+          <button
+            onClick={() => fetchAdminData()}
             className="mt-3 sm:mt-0 flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
             <RefreshCw className="w-4 h-4" /> Yenile
           </button>
@@ -514,7 +516,7 @@ export const AdminPage: React.FC = () => {
         </div>
 
         {activeTab === 'users' && (
-          <>
+          <React.Fragment>
             {/* Stats Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               {[
@@ -578,11 +580,8 @@ export const AdminPage: React.FC = () => {
             </div>
           </div>
         </div>
-
-            </div>
-          </div>
-        </>
-      )}
+      </React.Fragment>
+    )}
 
       {/* Video Models Content */}
       {activeTab === 'models' && (
@@ -821,10 +820,9 @@ export const AdminPage: React.FC = () => {
           </div>
         </div>
       )}
-        </div>
-      </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default AdminPage;

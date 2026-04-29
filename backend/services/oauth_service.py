@@ -109,7 +109,7 @@ async def get_discord_user_info(token: dict) -> dict:
 
 async def create_or_update_oauth_user(db, provider: str, user_info: dict):
     """
-    Create or update user from OAuth provider
+    Create or update user from OAuth provider (Supabase Version)
     Returns user document and JWT token
     """
     # Extract email and name based on provider
@@ -137,20 +137,34 @@ async def create_or_update_oauth_user(db, provider: str, user_info: dict):
             detail=f"Email not provided by {provider}"
         )
     
-    # Check if user exists
-    existing_user = await db.users.find_one({"email": email})
+    # Check if user exists using Supabase
+    try:
+        response = db.table("users").select("*").eq("email", email).execute()
+        existing_user = response.data[0] if response.data else None
+    except Exception as e:
+        # Fallback for table name mapping if needed (some systems use 'profiles' instead of 'users' for public info)
+        try:
+            response = db.table("profiles").select("*").eq("email", email).execute()
+            existing_user = response.data[0] if response.data else None
+        except:
+            existing_user = None
     
     if existing_user:
         # Update last login and OAuth info
-        await db.users.update_one(
-            {"id": existing_user["id"]},
-            {
-                "$set": {
-                    "last_login": datetime.utcnow(),
+        try:
+            db.table("users").update({
+                "last_login": datetime.utcnow().isoformat(),
+                f"oauth_{provider}_id": provider_user_id,
+            }).eq("id", existing_user["id"]).execute()
+        except Exception:
+            # Try profiles table
+            try:
+                db.table("profiles").update({
+                    "last_login": datetime.utcnow().isoformat(),
                     f"oauth_{provider}_id": provider_user_id,
-                }
-            }
-        )
+                }).eq("id", existing_user["id"]).execute()
+            except:
+                pass
         user = existing_user
     else:
         # Create new user
@@ -162,24 +176,37 @@ async def create_or_update_oauth_user(db, provider: str, user_info: dict):
             "full_name": full_name,
             "role": "user",
             "package": "free",
-            "created_at": datetime.utcnow(),
-            "last_login": datetime.utcnow(),
+            "created_at": datetime.utcnow().isoformat(),
+            "last_login": datetime.utcnow().isoformat(),
             "is_active": True,
             f"oauth_{provider}_id": provider_user_id,
         }
         
-        await db.users.insert_one(user)
+        # Insert into users/profiles table
+        try:
+            db.table("users").insert(user).execute()
+        except Exception:
+            try:
+                db.table("profiles").insert(user).execute()
+            except Exception as e:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Failed to create user: {str(e)}"
+                )
         
-        # Initialize credit balance (0 for new users)
-        await db.user_credits.insert_one({
-            "user_id": user_id,
-            "credits_balance": 0.0,
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow()
-        })
+        # Initialize credit balance
+        try:
+            db.table("user_credits").insert({
+                "user_id": user_id,
+                "credits_balance": 0.0,
+                "created_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.utcnow().isoformat()
+            }).execute()
+        except Exception as e:
+            # Log error but continue
+            print(f"Warning: Failed to initialize credits for {user_id}: {e}")
     
     # Create JWT token
     token = create_access_token(user["id"])
     
     return user, token
-

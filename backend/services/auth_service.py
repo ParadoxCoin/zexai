@@ -17,7 +17,7 @@ class AuthService:
     @staticmethod
     async def register_user(email: str, password: str, full_name: str = "") -> Dict[str, Any]:
         """Register a new user using Supabase Auth"""
-        db = get_db()
+        db = await get_db()
         
         try:
             # Sign up with Supabase
@@ -73,7 +73,7 @@ class AuthService:
     @staticmethod
     async def login_user(email: str, password: str) -> Dict[str, Any]:
         """Login user using Supabase Auth"""
-        db = get_db()
+        db = await get_db()
         
         try:
             response = db.auth.sign_in_with_password({
@@ -106,7 +106,7 @@ class AuthService:
     @staticmethod
     async def get_user_by_id(user_id: str) -> Optional[Dict[str, Any]]:
         """Get user by ID from Supabase"""
-        db = get_db()
+        db = await get_db()
         try:
             # Try to get from public.users table first (if it exists and is synced)
             response = db.table("users").select("*").eq("id", user_id).execute()
@@ -115,14 +115,13 @@ class AuthService:
             return None
         except Exception:
             return None
-
+    
     @staticmethod
     async def change_password(user_id: str, new_password: str) -> bool:
         """Change user password using Supabase Admin"""
-        db = get_db()
+        db = await get_db()
         try:
             # Use admin API to update user password
-            # Note: The service role key allows this
             response = db.auth.admin.update_user_by_id(
                 user_id,
                 {"password": new_password}
@@ -138,7 +137,7 @@ class AuthService:
     @staticmethod
     async def update_user_profile(user_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """Update user profile in public.users table"""
-        db = get_db()
+        db = await get_db()
         try:
             # Update public.users table
             response = db.table("users").update(data).eq("id", user_id).execute()
@@ -160,4 +159,3 @@ class AuthService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to update profile"
             )
-

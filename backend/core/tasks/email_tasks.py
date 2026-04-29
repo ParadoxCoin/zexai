@@ -1,6 +1,6 @@
 """
 Email background tasks
-Handles user notifications, reports, and system emails
+Handles user notifications, reports, and system emails (Supabase Version)
 """
 from celery import Task
 from core.celery_app import celery_app
@@ -12,6 +12,7 @@ from email.mime.multipart import MIMEMultipart
 from typing import Dict, Any, List
 from datetime import datetime, timedelta
 import os
+import asyncio
 
 
 class EmailTask(Task):
@@ -55,26 +56,13 @@ def send_welcome_email(self, user_email: str, user_name: str, **kwargs):
                 </ul>
                 
                 <div style="text-align: center; margin: 30px 0;">
-                    <a href="{os.getenv('FRONTEND_URL', 'http://localhost:3000')}" 
+                    <a href="{os.getenv('FRONTEND_URL', 'https://app.zexai.io')}" 
                        style="background: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
                         Platforma Git
                     </a>
                 </div>
                 
-                <h3>💡 İpuçları:</h3>
-                <ul>
-                    <li>Detaylı prompt'lar daha iyi sonuçlar verir</li>
-                    <li>Farklı modelleri deneyerek en uygun olanı bulun</li>
-                    <li>Kredi sistemini takip edin</li>
-                </ul>
-                
-                <p>Herhangi bir sorunuz varsa, destek ekibimiz size yardımcı olmaktan mutluluk duyar.</p>
-                
                 <p>İyi kullanımlar!<br>AI Studio Ekibi</p>
-            </div>
-            
-            <div style="background: #f8f9fa; padding: 20px; text-align: center; color: #666;">
-                <p>Bu e-postayı almak istemiyorsanız, hesap ayarlarınızdan bildirim tercihlerinizi değiştirebilirsiniz.</p>
             </div>
         </body>
         </html>
@@ -111,27 +99,13 @@ def send_credit_low_email(self, user_email: str, user_name: str,
             
             <div style="padding: 30px;">
                 <h2>Merhaba {user_name}!</h2>
-                
                 <p>Kredi bakiyeniz düşük seviyede. Mevcut bakiyeniz: <strong>{current_credits} kredi</strong></p>
-                
-                <p>Kesintisiz AI deneyimi için kredi satın almanızı öneriyoruz.</p>
-                
                 <div style="text-align: center; margin: 30px 0;">
-                    <a href="{os.getenv('FRONTEND_URL', 'http://localhost:3000')}/billing" 
+                    <a href="{os.getenv('FRONTEND_URL', 'https://app.zexai.io')}/billing" 
                        style="background: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
                         Kredi Satın Al
                     </a>
                 </div>
-                
-                <h3>💳 Ödeme Seçenekleri:</h3>
-                <ul>
-                    <li>Kredi/Banka Kartı</li>
-                    <li>Kripto Para (Bitcoin, Ethereum, USDT)</li>
-                    <li>Binance Pay</li>
-                    <li>MetaMask (%15 indirim)</li>
-                </ul>
-                
-                <p>Herhangi bir sorunuz varsa, destek ekibimizle iletişime geçebilirsiniz.</p>
             </div>
         </body>
         </html>
@@ -165,22 +139,15 @@ def send_generation_complete_email(self, user_email: str, user_name: str,
             <div style="background: #4ecdc4; padding: 30px; text-align: center;">
                 <h1 style="color: white; margin: 0;">✅ Üretim Tamamlandı!</h1>
             </div>
-            
             <div style="padding: 30px;">
                 <h2>Merhaba {user_name}!</h2>
-                
                 <p>AI {generation_type} üretiminiz başarıyla tamamlandı.</p>
-                
                 <div style="text-align: center; margin: 30px 0;">
-                    <a href="{os.getenv('FRONTEND_URL', 'http://localhost:3000')}/library" 
+                    <a href="{os.getenv('FRONTEND_URL', 'https://app.zexai.io')}/library" 
                        style="background: #4ecdc4; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
                         Sonuçları Görüntüle
                     </a>
                 </div>
-                
-                <p><strong>Görev ID:</strong> {task_id}</p>
-                <p><strong>Tür:</strong> {generation_type.title()}</p>
-                <p><strong>Tarih:</strong> {datetime.now().strftime('%d.%m.%Y %H:%M')}</p>
             </div>
         </body>
         </html>
@@ -200,90 +167,73 @@ def send_generation_complete_email(self, user_email: str, user_name: str,
 
 
 @celery_app.task(bind=True, base=EmailTask, name="send_daily_reports")
-async def send_daily_reports(self, **kwargs):
+def send_daily_reports(self, **kwargs):
     """
-    Send daily reports to admins
+    Send daily reports to admins (Supabase Version)
     """
-    try:
-        # Get admin emails
-        db = get_database()
-        admin_users = await db.users.find({"role": "admin"}).to_list(length=100)
-        
-        if not admin_users:
-            return {"status": "no_admins", "message": "No admin users found"}
-        
-        # Get daily stats
-        yesterday = datetime.utcnow() - timedelta(days=1)
-        today = datetime.utcnow()
-        
-        # User registrations
-        new_users = await db.users.count_documents({
-            "created_at": {"$gte": yesterday, "$lt": today}
-        })
-        
-        # Total generations
-        total_generations = await db.ai_generations.count_documents({
-            "created_at": {"$gte": yesterday, "$lt": today}
-        })
-        
-        # Revenue (placeholder)
-        revenue = 0.0  # TODO: Calculate from billing records
-        
-        for admin in admin_users:
-            subject = f"Günlük Rapor - {today.strftime('%d.%m.%Y')}"
+    async def run():
+        try:
+            db = await get_database()
             
-            html_content = f"""
-            <html>
-            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <div style="background: #667eea; padding: 30px; text-align: center;">
-                    <h1 style="color: white; margin: 0;">📊 Günlük Rapor</h1>
-                    <p style="color: white; margin: 10px 0 0 0;">{today.strftime('%d.%m.%Y')}</p>
-                </div>
+            # Get admin emails using Supabase
+            response = db.table("users").select("email, full_name").eq("role", "admin").execute()
+            admin_users = response.data or []
+            
+            if not admin_users:
+                return {"status": "no_admins", "message": "No admin users found"}
+            
+            # Get daily stats
+            yesterday = (datetime.utcnow() - timedelta(days=1)).isoformat()
+            today = datetime.utcnow().isoformat()
+            
+            # User registrations count
+            new_users_res = db.table("users").select("id", count="exact").gte("created_at", yesterday).lt("created_at", today).execute()
+            new_users = new_users_res.count or 0
+            
+            # Total generations count
+            total_gen_res = db.table("ai_generations").select("id", count="exact").gte("created_at", yesterday).lt("created_at", today).execute()
+            total_generations = total_gen_res.count or 0
+            
+            # Revenue calculation (if billing table exists)
+            revenue = 0.0
+            try:
+                revenue_res = db.table("billing_records").select("amount").eq("status", "completed").gte("created_at", yesterday).execute()
+                revenue = sum(float(item["amount"]) for item in (revenue_res.data or []))
+            except:
+                pass
+            
+            for admin in admin_users:
+                subject = f"Günlük Rapor - {datetime.now().strftime('%d.%m.%Y')}"
                 
-                <div style="padding: 30px;">
-                    <h2>Platform İstatistikleri</h2>
-                    
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
-                        <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; text-align: center;">
-                            <h3 style="margin: 0; color: #667eea;">{new_users}</h3>
-                            <p style="margin: 5px 0 0 0;">Yeni Kullanıcı</p>
-                        </div>
-                        
-                        <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; text-align: center;">
-                            <h3 style="margin: 0; color: #4ecdc4;">{total_generations}</h3>
-                            <p style="margin: 5px 0 0 0;">AI Üretimi</p>
-                        </div>
+                html_content = f"""
+                <html>
+                <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <div style="background: #667eea; padding: 30px; text-align: center;">
+                        <h1 style="color: white; margin: 0;">📊 Günlük Rapor</h1>
                     </div>
-                    
-                    <h3>📈 Detaylı Analiz</h3>
-                    <ul>
-                        <li><strong>Yeni Kayıtlar:</strong> {new_users} kullanıcı</li>
-                        <li><strong>AI Üretimleri:</strong> {total_generations} işlem</li>
-                        <li><strong>Gelir:</strong> ${revenue:.2f}</li>
-                    </ul>
-                    
-                    <div style="text-align: center; margin: 30px 0;">
-                        <a href="{os.getenv('FRONTEND_URL', 'http://localhost:3000')}/admin" 
-                           style="background: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
-                            Admin Paneli
-                        </a>
+                    <div style="padding: 30px;">
+                        <h3>📈 İstatistikler</h3>
+                        <ul>
+                            <li><strong>Yeni Kayıtlar:</strong> {new_users} kullanıcı</li>
+                            <li><strong>AI Üretimleri:</strong> {total_generations} işlem</li>
+                            <li><strong>Gelir:</strong> ${revenue:.2f}</li>
+                        </ul>
                     </div>
-                </div>
-            </body>
-            </html>
-            """
+                </body>
+                </html>
+                """
+                _send_email(admin["email"], subject, html_content)
             
-            _send_email(admin["email"], subject, html_content)
-        
-        return {
-            "status": "sent",
-            "recipients": len(admin_users),
-            "type": "daily_report"
-        }
-        
-    except Exception as e:
-        logger.error(f"Daily reports failed: {e}")
-        raise
+            return {
+                "status": "sent",
+                "recipients": len(admin_users),
+                "type": "daily_report"
+            }
+        except Exception as e:
+            logger.error(f"Daily reports failed: {e}")
+            raise
+
+    return asyncio.run(run())
 
 
 def _send_email(to_email: str, subject: str, html_content: str):
@@ -320,4 +270,3 @@ def _send_email(to_email: str, subject: str, html_content: str):
     except Exception as e:
         logger.error(f"Failed to send email to {to_email}: {e}")
         raise
-

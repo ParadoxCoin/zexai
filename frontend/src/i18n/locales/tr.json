@@ -301,7 +301,8 @@
     "imageUploadFailed": "Görsel yükleme başarısız",
     "videoUrlFailed": "Video URL alınamadı",
     "localPathError": "Yükleme başarısız: Local path algılandı. Storage yapılandırılmalı.",
-    "videoUploadFailed": "Video yükleme başarısız"
+    "videoUploadFailed": "Video yükleme başarısız",
+    "modelsSelected": "model seçildi"
   },
   "audioGen": {
     "badge": "AI Ses Stüdyosu",
@@ -736,7 +737,15 @@
     "fast": "Hızlı",
     "fastDesc": "30-60 saniyede hazır",
     "errorOccurred": "Oluşturma hatası",
-    "generationComplete": "Üretim tamamlandı"
+    "generationComplete": "Üretim tamamlandı",
+    "effectsTitle": "AI Efekt Kütüphanesi",
+    "effectsDesc": "Viral Pollo AI efektleri ile videonuzu dönüştürün",
+    "examplePreview": "Örnek Önizleme",
+    "viralBadge": "Viral",
+    "magicBadge": "Sihirli",
+    "cinematicBadge": "Sinematik",
+    "artisticBadge": "Sanatsal",
+    "allBadge": "Tümü"
   },
   "mediaLibrary": {
     "close": "Kapat",

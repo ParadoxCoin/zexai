@@ -326,11 +326,31 @@ async def get_video_effects(
 ):
     """
     Get all available video effects
-    Reads from database video_effects table, falls back to hardcoded if table doesn't exist
+    Reads from database video_effects table AND merges with hardcoded fallbacks
     """
-    effects = []
+    effects_dict = {}
     
-    # Try database first
+    # 1. Load Hardcoded Fallbacks first (base set)
+    for effect_id, effect_data in POLLO_VIDEO_EFFECTS.items():
+        if category and effect_data.get("category") != category:
+            continue
+        
+        multiplier = float(effect_data.get("cost_multiplier", 2.0))
+        cost_usd = float(effect_data.get("pollo_cost_usd", 0))
+        credits_calc = int(cost_usd * multiplier * 100)
+        
+        effects_dict[effect_id] = VideoEffectInfo(
+            id=effect_id,
+            name=effect_data.get("name", effect_id),
+            description=effect_data.get("description", ""),
+            credits=effect_data.get("credits", credits_calc if credits_calc > 0 else 10),
+            icon=effect_data.get("icon", "✨"),
+            example_url=effect_data.get("example_url") or f"https://cdn.pollo.ai/effects/{effect_id}.mp4",
+            requires_two_images=effect_data.get("requires_two_images", False),
+            category=effect_data.get("category", "other")
+        )
+    
+    # 2. Merge with Database (DB takes priority for existing IDs)
     try:
         query = db.table("video_effects").select("*").eq("is_active", True)
         if category:
@@ -339,41 +359,22 @@ async def get_video_effects(
         
         if result.data:
             for e in result.data:
-                effects.append(VideoEffectInfo(
-                    id=e["id"],
-                    name=e.get("name", e["id"]),
+                e_id = e["id"]
+                effects_dict[e_id] = VideoEffectInfo(
+                    id=e_id,
+                    name=e.get("name", e_id),
                     description=e.get("description", ""),
                     credits=e.get("credits", 10),
                     icon=e.get("icon", "✨"),
-                    example_url=f"https://cdn.pollo.ai/effects/{e['id']}.mp4",
+                    example_url=e.get("example_url") or f"https://cdn.pollo.ai/effects/{e_id}.mp4",
                     requires_two_images=e.get("requires_two_images", False),
                     category=e.get("category", "other")
-                ))
-            return effects
+                )
     except Exception as e:
-        print(f"[Effects] Database query failed, using fallback: {e}")
+        print(f"[Effects] Database merge failed: {e}")
     
-    # Fallback to hardcoded
-    for effect_id, effect_data in POLLO_VIDEO_EFFECTS.items():
-        if category and effect_data.get("category") != category:
-            continue
-        
-        multiplier = float(effect_data.get("cost_multiplier", 2.0))
-        cost_usd = float(effect_data.get("pollo_cost_usd", 0))
-        credits = int(cost_usd * multiplier * 100)
-        
-        effects.append(VideoEffectInfo(
-            id=effect_id,
-            name=effect_data.get("name", effect_id),
-            description=effect_data.get("description", ""),
-            credits=credits if credits > 0 else 10,
-            icon=effect_data.get("icon", "✨"),
-            example_url=f"https://cdn.pollo.ai/effects/{effect_id}.mp4",
-            requires_two_images=effect_data.get("requires_two_images", False),
-            category=effect_data.get("category", "other")
-        ))
-    
-    return effects
+    # Sort and return
+    return list(effects_dict.values())
 
 
 @router.get("/effect-packages", response_model=List[EffectPackage])

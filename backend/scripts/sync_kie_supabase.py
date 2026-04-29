@@ -34,19 +34,31 @@ def sync_metadata():
             "durations": model.get("durations"),
             "resolutions": model.get("resolutions"),
             "slider_duration": model.get("slider_duration", False),
-            "credits": model.get("kie_credits", 0)
+            "credits": model.get("kie_credits", 0),
+            "quality": model.get("quality"),
+            "speed": model.get("speed"),
+            "capabilities": model.get("capabilities", {}),
+            "display_name": model.get("name"),
+            "is_active": True
         }
         
         # Update in 'video_models' table
         try:
+            # First try update
             response = supabase.table("video_models").update(update_data).eq("id", model_id).execute()
             if response.data:
                 print(f"Updated {model_id}")
                 count += 1
             else:
-                print(f"Model {model_id} not found in database.")
+                # If update failed (no match), try upsert or log
+                print(f"Model {model_id} not found in database. Attempting to insert...")
+                insert_data = {**update_data, "id": model_id, "provider_id": "kie", "model_type": "text_to_video"}
+                ins_resp = supabase.table("video_models").insert(insert_data).execute()
+                if ins_resp.data:
+                    print(f"Inserted NEW model {model_id}")
+                    count += 1
         except Exception as e:
-            print(f"Error updating {model_id}: {e}")
+            print(f"Error syncing {model_id}: {e}")
 
     print(f"Sync complete! {count} models updated.")
 

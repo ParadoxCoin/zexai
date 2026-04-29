@@ -42,7 +42,7 @@ const AudioPage = () => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("tts");
 
-  const tabIds = ["tts", "music", "voice", "packages", "library"];
+  const tabIds = ["tts", "music", "voice", "library"];
   const handleDragEnd = (event: any, info: any) => {
     const swipeThreshold = 50;
     if (info.offset.x < -swipeThreshold) {
@@ -169,61 +169,81 @@ const AudioPage = () => {
     { id: "tts", name: t('audio.tabTTS'), icon: Volume2 },
     { id: "music", name: t('audio.tabMusic'), icon: Music },
     { id: "voice", name: t('audio.tabVoice'), icon: Mic },
-    { id: "packages", name: t('audio.tabPackages'), icon: Package },
     { id: "library", name: t('audio.tabLibrary'), icon: FolderOpen },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen bg-[#030712] text-white selection:bg-pink-500/30 overflow-x-hidden">
+      {/* Background Ambient Effects */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-pink-900/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-rose-900/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] brightness-100 contrast-150" />
+      </div>
+
       {/* Hero Header */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-rose-500 via-pink-500 to-fuchsia-500">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTRzMiAyIDIgNC0yIDQtMiA0LTItMi0yLTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30" />
-        <div className="relative px-4 sm:px-6 py-4 sm:py-6 lg:px-8">
-          <div className="max-w-4xl mx-auto text-center text-white">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm mb-3">
-              <Headphones className="w-4 h-4" />
-              <span className="text-sm font-medium">{t('audio.badge')}</span>
+      <div className="relative pt-8 pb-4 px-4 sm:px-6 lg:px-8 border-b border-white/5 bg-white/[0.01] backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex flex-col gap-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/10 border border-pink-500/20 w-fit">
+              <Headphones className="w-3.5 h-3.5 text-pink-400" />
+              <span className="text-[10px] uppercase tracking-widest font-bold text-pink-300">
+                {t('audio.badge', 'AI AUDIO STUDIO')}
+              </span>
             </div>
-            <h1 className="text-2xl lg:text-3xl font-bold mb-1">
-              {t('audio.title')}<span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-white">{t('audio.titleHighlight')}</span>
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white uppercase italic">
+              {t('audio.title', 'Sesini ')}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-pink-500">
+                {t('audio.titleHighlight', 'Yeniden Yarat')}
+              </span>
             </h1>
-            <p className="text-sm text-pink-100">{t('audio.desc')}</p>
+            <p className="text-slate-400 text-sm max-w-xl font-medium uppercase tracking-wider opacity-80">
+              {t('audio.desc', 'Metinleri sese dönüştürün veya AI ile müzik besteleyin')}
+            </p>
           </div>
-        </div>
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 60" fill="none" className="h-6 sm:h-8 w-full text-gray-50 dark:text-gray-900" preserveAspectRatio="none"><path d="M0 60V0C240 40 480 60 720 60C960 60 1200 40 1440 0V60H0Z" fill="currentColor" /></svg>
+
+          <div className="flex items-center gap-4 bg-black/40 p-1.5 rounded-2xl border border-white/5 backdrop-blur-xl">
+            <div className="flex flex-col items-end px-3">
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Current Balance</span>
+              <span className="text-sm font-black text-pink-400">{userAudio?.credits || 0} ZEX</span>
+            </div>
+            <button
+              onClick={() => window.location.href = '/billing'}
+              className="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-pink-500/20"
+            >
+              Top Up
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 -mt-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Tab Navigation */}
-        <div className="flex justify-center mb-8">
-          <div className="inline-flex bg-white dark:bg-gray-800 rounded-2xl p-1 sm:p-1.5 shadow-lg border border-gray-100 dark:border-gray-700 max-w-full overflow-x-auto scrollbar-hide">
-            {tabs.map((tab) => {
-              const isActive = activeTab === tab.id;
-              const gradients: Record<string, string> = {
-                'tts': 'from-rose-500 to-pink-500',
-                'music': 'from-purple-500 to-violet-500',
-                'voice': 'from-blue-500 to-cyan-500',
-                'packages': 'from-amber-500 to-yellow-500',
-                'library': 'from-emerald-500 to-teal-500',
-              };
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-medium transition-all flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm whitespace-nowrap ${isActive
-                    ? `bg-gradient-to-r ${gradients[tab.id] || 'from-rose-500 to-pink-500'} text-white shadow-lg`
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                    }`}
-                >
-                  <tab.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  {tab.name}
-                </button>
-              );
-            })}
-          </div>
+        <div className="flex bg-black/40 backdrop-blur-xl border border-white/5 p-1 rounded-2xl w-fit mb-8">
+          {tabs.map((tab) => {
+            if (tab.id === 'packages') return null; // Hide packages for now
+            const isActive = activeTab === tab.id;
+            const gradients: Record<string, string> = {
+              'tts': 'bg-rose-500 shadow-rose-500/20',
+              'music': 'bg-purple-500 shadow-purple-500/20',
+              'voice': 'bg-blue-500 shadow-blue-500/20',
+              'library': 'bg-emerald-500 shadow-emerald-500/20',
+            };
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center gap-2 ${isActive
+                  ? `${gradients[tab.id] || 'bg-rose-500'} text-white shadow-lg`
+                  : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                  }`}
+              >
+                <tab.icon className="w-3.5 h-3.5" />
+                {tab.name}
+              </button>
+            );
+          })}
         </div>
 
         {/* TTS Tab */}
@@ -242,11 +262,11 @@ const AudioPage = () => {
              onDragEnd={handleDragEnd}
              className="grid grid-cols-1 lg:grid-cols-3 gap-6 touch-pan-y"
           >
-            <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+           <div className="lg:col-span-2 space-y-6">
+              <div className="bg-black/40 backdrop-blur-xl rounded-3xl border border-white/5 overflow-hidden shadow-2xl shadow-black/50">
                 <div className="p-6">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                    <Wand2 className="w-5 h-5 text-pink-500" />
+                  <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                    <Wand2 className="w-3.5 h-3.5 text-pink-400" />
                     {t('audio.ttsTitle')}
                   </h2>
                   <div className="relative">
@@ -256,7 +276,7 @@ const AudioPage = () => {
                       placeholder={t('audio.ttsPlaceholder')}
                       rows={4}
                       disabled={isGeneratingTTS}
-                      className="w-full px-4 py-3 pr-14 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl resize-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all text-gray-900 dark:text-white placeholder-gray-400"
+                      className="w-full px-5 py-5 bg-black/40 border border-white/5 rounded-2xl resize-none focus:ring-1 focus:ring-pink-500/50 focus:border-pink-500/50 transition-all text-slate-200 text-sm placeholder-slate-600 leading-relaxed"
                     />
                     <div className="absolute right-3 top-3">
                       <PromptEnhancer contentType="audio" currentPrompt={text} onSelectPrompt={(p) => setText(p)} />
@@ -266,8 +286,8 @@ const AudioPage = () => {
 
                 {/* Voice Selection */}
                 <div className="px-6 pb-6">
-                  <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                    <Mic className="w-4 h-4" />
+                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <Mic className="w-3.5 h-3.5" />
                     {t('audio.voiceCharacter')}
                   </h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -275,18 +295,18 @@ const AudioPage = () => {
                       <button
                         key={voice.id}
                         onClick={() => setSelectedVoice(voice.id)}
-                        className={`relative p-4 rounded-xl text-left transition-all ${selectedVoice === voice.id
-                          ? 'bg-gradient-to-br from-pink-500 to-rose-500 text-white shadow-lg'
-                          : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
+                        className={`relative p-4 rounded-xl text-left transition-all border ${selectedVoice === voice.id
+                          ? 'bg-rose-500 border-rose-400 text-white shadow-lg shadow-rose-500/20'
+                          : 'bg-black/40 border-white/5 text-slate-400 hover:text-slate-200 hover:border-white/10'
                           }`}
                       >
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-lg">{voice.lang}</span>
-                          <span className="font-medium">{voice.name}</span>
+                          <span className="font-black text-[10px] uppercase tracking-widest">{voice.name}</span>
                         </div>
-                        <div className="text-xs opacity-80">{t(voice.type)} • {t(voice.emotion)}</div>
+                        <div className="text-[9px] font-bold uppercase tracking-tighter opacity-60 italic">{t(voice.type)} • {t(voice.emotion)}</div>
                         {selectedVoice === voice.id && (
-                          <div className="absolute top-2 right-2 w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                          <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.5)]" />
                         )}
                       </button>
                     ))}
@@ -294,11 +314,11 @@ const AudioPage = () => {
                 </div>
 
                 {/* Speed & Model */}
-                <div className="px-6 pb-6 border-t border-gray-100 dark:border-gray-700 pt-6">
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="px-6 pb-6 border-t border-white/5 pt-6">
+                  <div className="grid grid-cols-2 gap-6">
                     <div>
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
-                        {t('audio.speed')}: {speed}x
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 block">
+                        {t('audio.speed')}: <span className="text-pink-400">{speed}x</span>
                       </label>
                       <input
                         type="range"
@@ -307,20 +327,20 @@ const AudioPage = () => {
                         step="0.1"
                         value={speed}
                         onChange={(e) => setSpeed(parseFloat(e.target.value))}
-                        className="w-full accent-pink-500"
+                        className="w-full h-1.5 bg-white/5 rounded-full appearance-none cursor-pointer accent-pink-500"
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">{t('audio.model')}</label>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 block">{t('audio.model')}</label>
                       <select
                         value={selectedModel}
                         onChange={(e) => setSelectedModel(e.target.value)}
                         disabled={isLoadingTTS}
-                        className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-pink-500"
+                        className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl text-xs font-bold text-slate-300 focus:ring-1 focus:ring-pink-500/50 focus:border-pink-500/50 outline-none appearance-none cursor-pointer"
                       >
-                        <option value="">{t('audio.selectModel')}</option>
+                        <option value="" className="bg-slate-900">{t('audio.selectModel')}</option>
                         {Array.isArray(models) && models.map((model: any) => (
-                          <option key={model.id} value={model.id}>{model.name} - {model.credits}c</option>
+                          <option key={model.id} value={model.id} className="bg-slate-900">{model.name} - {model.credits} ZEX</option>
                         ))}
                       </select>
                     </div>
@@ -328,13 +348,13 @@ const AudioPage = () => {
                 </div>
 
                 {/* Generate Button */}
-                <div className="p-6 bg-gray-50 dark:bg-gray-900/50">
+                <div className="p-6 bg-black/20">
                   <button
                     onClick={handleTTSSubmit}
                     disabled={isGeneratingTTS || !text || !selectedModel}
-                    className="w-full py-4 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold rounded-xl shadow-lg shadow-pink-500/25 disabled:shadow-none transition-all flex items-center justify-center gap-2"
+                    className="w-full py-5 bg-rose-600 hover:bg-rose-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-black text-xs uppercase tracking-[0.3em] rounded-2xl shadow-xl shadow-rose-500/20 transition-all flex items-center justify-center gap-3 border-t border-white/10"
                   >
-                    {isGeneratingTTS ? <><Loader2 className="w-5 h-5 animate-spin" />{t('audio.generating')}</> : <><Play className="w-5 h-5" />{t('audio.generateBtn')}</>}
+                    {isGeneratingTTS ? <><Loader2 className="w-4 h-4 animate-spin" />{t('audio.generating', 'SYNTHESIZING...')}</> : <><Play className="w-4 h-4" />{t('audio.generateBtn', 'INITIALIZE SYNTHESIS')}</>}
                   </button>
                 </div>
               </div>
@@ -342,28 +362,28 @@ const AudioPage = () => {
 
             {/* Model Cards */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <Star className="w-5 h-5 text-yellow-500" />
-                {t('audio.popModelsTitle')}
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 px-2">
+                <Star className="w-3.5 h-3.5 text-yellow-500" />
+                {t('audio.popModelsTitle', 'TOP ENGINES')}
               </h3>
               <div className="space-y-3">
                 {isLoadingTTS ? (
-                  [1, 2, 3].map(i => <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />)
+                  [1, 2, 3].map(i => <div key={i} className="h-28 bg-white/5 rounded-2xl animate-pulse border border-white/5" />)
                 ) : (
                   Array.isArray(models) && models.slice(0, 4).map((model: any) => (
                     <div
                       key={model.id}
                       onClick={() => setSelectedModel(model.id)}
-                      className={`p-4 bg-white dark:bg-gray-800 rounded-xl border-2 cursor-pointer transition-all hover:shadow-lg ${selectedModel === model.id ? 'border-pink-500 shadow-lg shadow-pink-500/20' : 'border-gray-100 dark:border-gray-700'
+                      className={`p-5 bg-black/40 backdrop-blur-xl rounded-2xl border-2 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98] ${selectedModel === model.id ? 'border-pink-500 shadow-xl shadow-pink-500/20 bg-pink-500/5' : 'border-white/5'
                         }`}
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-semibold text-gray-900 dark:text-white">{model.name}</h4>
-                        <span className="px-2 py-1 bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 text-xs font-medium rounded-full">
-                          {model.credits}c
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-black text-[10px] uppercase tracking-widest text-white">{model.name}</h4>
+                        <span className="px-2 py-1 bg-pink-500/10 border border-pink-500/20 text-pink-400 text-[9px] font-black rounded-lg">
+                          {model.credits} ZEX
                         </span>
                       </div>
-                      <p className="text-xs text-gray-500 line-clamp-2">{model.description || t('audio.modelDesc')}</p>
+                      <p className="text-[10px] text-slate-500 font-medium leading-relaxed italic line-clamp-2">"{model.description || t('audio.modelDesc')}"</p>
                     </div>
                   ))
                 )}

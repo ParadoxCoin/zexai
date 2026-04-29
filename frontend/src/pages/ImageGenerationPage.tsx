@@ -335,63 +335,85 @@ const ImageGenerationPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen bg-[#030712] text-white selection:bg-purple-500/30 overflow-x-hidden">
+      {/* Background Ambient Effects */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-900/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-900/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] brightness-100 contrast-150" />
+      </div>
+
       {/* Hero Header */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 text-white">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTRzMiAyIDIgNC0yIDQtMiA0LTItMi0yLTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30" />
-        <div className="relative px-4 sm:px-6 py-4 sm:py-6 lg:px-8">
-          <div className="max-w-4xl mx-auto text-center text-white">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm mb-3">
-              <Sparkles className="w-4 h-4" />
-              <span className="text-sm font-medium">{t('imageGen.badge', 'AI Görsel Üretici')}</span>
+      <div className="relative pt-8 pb-4 px-4 sm:px-6 lg:px-8 border-b border-white/5 bg-white/[0.01] backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex flex-col gap-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 w-fit">
+              <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+              <span className="text-[10px] uppercase tracking-widest font-bold text-purple-300">
+                {t('imageGen.badge', 'AI IMAGE STUDIO')}
+              </span>
             </div>
-            <h1 className="text-2xl lg:text-3xl font-bold mb-1">
-              {t('imageGen.title', 'Hayal Et, ')}<span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 to-yellow-300">{t('imageGen.titleHighlight', 'Oluştur')}</span>
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white uppercase italic">
+              {t('imageGen.title', 'Hayal Et, ')}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">
+                {t('imageGen.titleHighlight', 'Oluştur')}
+              </span>
             </h1>
-            <p className="text-sm text-purple-100">{t('imageGen.desc', 'Düşüncelerinizi saniyeler içinde etkileyici görsellere dönüştürün')}</p>
+            <p className="text-slate-400 text-sm max-w-xl font-medium uppercase tracking-wider opacity-80">
+              {t('imageGen.desc', 'Düşüncelerinizi saniyeler içinde etkileyici görsellere dönüştürün')}
+            </p>
           </div>
-        </div>
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 60" fill="none" className="h-6 sm:h-8 w-full text-gray-50 dark:text-gray-900" preserveAspectRatio="none"><path d="M0 60V0C240 40 480 60 720 60C960 60 1200 40 1440 0V60H0Z" fill="currentColor" /></svg>
+
+          <div className="flex items-center gap-4 bg-black/40 p-1.5 rounded-2xl border border-white/5 backdrop-blur-xl">
+            <div className="flex flex-col items-end px-3">
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Current Balance</span>
+              <span className="text-sm font-black text-purple-400">{user?.credits || 0} ZEX</span>
+            </div>
+            <button
+              onClick={() => window.location.href = '/billing'}
+              className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-purple-500/20"
+            >
+              Top Up
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Tab Navigation */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 -mt-4 mb-6">
-        <div className="flex justify-center">
-          <div className="inline-flex bg-white dark:bg-gray-800 rounded-2xl p-1 sm:p-1.5 shadow-lg border border-gray-100 dark:border-gray-700 max-w-full overflow-x-auto scrollbar-hide">
-            <button
-              onClick={() => setActiveTab('generate')}
-              className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-medium transition-all flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm whitespace-nowrap ${activeTab === 'generate'
-                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                }`}
-            >
-              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              {t('imageGen.tabGenerate', 'Üret')}
-            </button>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+        <div className="flex bg-black/40 backdrop-blur-xl border border-white/5 p-1 rounded-2xl w-fit">
+          <button
+            onClick={() => setActiveTab('generate')}
+            className={`px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center gap-2 ${activeTab === 'generate'
+              ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/20'
+              : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+              }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            {t('imageGen.tabGenerate', 'Üret')}
+          </button>
 
-            <button
-              onClick={() => setActiveTab('gallery')}
-              className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-medium transition-all flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm whitespace-nowrap ${activeTab === 'gallery'
-                ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                }`}
-            >
-              <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              {t('imageGen.tabGallery', 'Galeri')}
-            </button>
-            <button
-              onClick={() => setActiveTab('compare')}
-              className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-medium transition-all flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm whitespace-nowrap ${activeTab === 'compare'
-                ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                }`}
-            >
-              <GitCompare className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              {t('imageGen.tabCompare', 'Karşılaştır')}
-            </button>
-          </div>
+          <button
+            onClick={() => setActiveTab('gallery')}
+            className={`px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center gap-2 ${activeTab === 'gallery'
+              ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
+              : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+              }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            {t('imageGen.tabGallery', 'Galeri')}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('compare')}
+            className={`px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center gap-2 ${activeTab === 'compare'
+              ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
+              : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+              }`}
+          >
+            <GitCompare className="w-3.5 h-3.5" />
+            {t('imageGen.tabCompare', 'Karşılaştır')}
+          </button>
         </div>
       </div>
 
@@ -417,29 +439,29 @@ const ImageGenerationPage = () => {
 
             {/* Left Panel - Creation Tools */}
             <div className="space-y-6">
-              <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+              <div className="bg-black/40 backdrop-blur-xl rounded-3xl border border-white/5 overflow-hidden shadow-2xl shadow-black/50">
 
                 {/* ── Mode Toggle (Text→Image / Image→Image) ── */}
                 <div className="p-6 pb-0">
-                  <div className="relative bg-gray-100 dark:bg-gray-900 rounded-2xl p-1 flex">
+                  <div className="relative bg-black/40 rounded-2xl p-1 flex border border-white/5">
                     <button
                       onClick={() => setGenerationMode('text2img')}
-                      className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 text-sm ${generationMode === 'text2img'
-                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg transform scale-[1.02]'
-                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+                      className={`flex-1 py-3 px-4 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 ${generationMode === 'text2img'
+                        ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/20 transform scale-[1.02]'
+                        : 'text-slate-500 hover:text-slate-300'
                         }`}
                     >
-                      <Type className="w-4 h-4" />
+                      <Type className="w-3.5 h-3.5" />
                       {t('imageGen.modeText2Img', 'Metin → Görsel')}
                     </button>
                     <button
                       onClick={() => setGenerationMode('img2img')}
-                      className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 text-sm ${generationMode === 'img2img'
-                        ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg transform scale-[1.02]'
-                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+                      className={`flex-1 py-3 px-4 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 ${generationMode === 'img2img'
+                        ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20 transform scale-[1.02]'
+                        : 'text-slate-500 hover:text-slate-300'
                         }`}
                     >
-                      <ImagePlus className="w-4 h-4" />
+                      <ImagePlus className="w-3.5 h-3.5" />
                       {t('imageGen.modeImg2Img', 'Görsel → Görsel')}
                     </button>
                   </div>
@@ -457,17 +479,17 @@ const ImageGenerationPage = () => {
                     />
                     {referencePreview ? (
                       <div className="relative group">
-                        <div className="rounded-2xl overflow-hidden border-2 border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20">
+                        <div className="rounded-2xl overflow-hidden border border-blue-500/30 bg-blue-500/5">
                           <img src={referencePreview} alt="Referans" className="w-full h-40 object-contain" />
                         </div>
                         <button
                           onClick={() => { setReferenceImage(null); setReferencePreview(null); }}
-                          className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                          className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:scale-110 shadow-lg"
                         >
-                          <X className="w-4 h-4" />
+                          <X className="w-3.5 h-3.5" />
                         </button>
-                        <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/60 text-white text-xs rounded-lg backdrop-blur-sm">
-                          📷 {t('imageGen.refImage', 'Referans Görsel')}
+                        <div className="absolute bottom-2 left-2 px-3 py-1 bg-black/80 text-white text-[10px] font-black uppercase tracking-widest rounded-lg backdrop-blur-sm border border-white/10">
+                          📷 {t('imageGen.refImage', 'REFERENCE')}
                         </div>
                       </div>
                     ) : (
@@ -475,28 +497,28 @@ const ImageGenerationPage = () => {
                         onClick={() => refImageInputRef.current?.click()}
                         onDragOver={(e) => e.preventDefault()}
                         onDrop={handleRefImageDrop}
-                        className="border-2 border-dashed border-blue-300 dark:border-blue-600 rounded-2xl p-8 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-all group"
+                        className="border-2 border-dashed border-white/10 rounded-2xl p-8 text-center cursor-pointer hover:border-blue-500/50 hover:bg-blue-500/5 transition-all group"
                       >
-                        <div className="w-16 h-16 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-900/30 dark:to-cyan-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <Upload className="w-8 h-8 text-blue-500" />
+                        <div className="w-16 h-16 mx-auto mb-3 rounded-2xl bg-blue-500/10 flex items-center justify-center group-hover:scale-110 transition-transform border border-blue-500/20">
+                          <Upload className="w-8 h-8 text-blue-400" />
                         </div>
-                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {t('imageGen.uploadRef', 'Referans görsel yükleyin')}
+                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                          {t('imageGen.uploadRef', 'UPLOAD REFERENCE')}
                         </p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          {t('imageGen.dragDrop', 'Sürükle-bırak veya tıklayın')}
+                        <p className="text-[9px] text-slate-500 mt-1 uppercase tracking-tighter">
+                          {t('imageGen.dragDrop', 'Drag & drop or click')}
                         </p>
                       </div>
                     )}
 
                     {/* Strength Slider */}
-                    <div className="mt-4 space-y-2">
+                    <div className="mt-4 space-y-4">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                          <SlidersHorizontal className="w-4 h-4 text-blue-500" />
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                          <SlidersHorizontal className="w-3.5 h-3.5 text-blue-400" />
                           {t('imageGen.strength', 'Dönüşüm Gücü')}
                         </label>
-                        <span className="text-sm font-mono text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded-md">
+                        <span className="text-[10px] font-black text-blue-400 bg-blue-400/10 border border-blue-400/20 px-2 py-0.5 rounded-md">
                           {Math.round(strength * 100)}%
                         </span>
                       </div>
@@ -507,11 +529,11 @@ const ImageGenerationPage = () => {
                         step="0.05"
                         value={strength}
                         onChange={(e) => setStrength(parseFloat(e.target.value))}
-                        className="w-full h-2 bg-gradient-to-r from-blue-200 to-cyan-400 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-blue-500 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-lg"
+                        className="w-full h-1.5 bg-white/5 rounded-full appearance-none cursor-pointer accent-blue-500"
                       />
-                      <div className="flex justify-between text-xs text-gray-400">
-                        <span>{t('imageGen.lessChange', 'Az değişim')}</span>
-                        <span>{t('imageGen.moreChange', 'Çok değişim')}</span>
+                      <div className="flex justify-between text-[9px] text-slate-500 font-bold uppercase tracking-tighter">
+                        <span>{t('imageGen.lessChange', 'Less Change')}</span>
+                        <span>{t('imageGen.moreChange', 'More Change')}</span>
                       </div>
                     </div>
                   </div>
@@ -520,29 +542,29 @@ const ImageGenerationPage = () => {
                 {/* ── Prompt Card ── */}
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                      <Wand2 className="w-5 h-5 text-purple-500" />
-                      {generationMode === 'img2img' ? t('imageGen.promptTitleI2I', 'Yönlendirme Promptu') : t('imageGen.promptTitleT2I', 'Prompt Yaz')}
+                    <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                      <Wand2 className="w-3.5 h-3.5 text-purple-400" />
+                      {generationMode === 'img2img' ? t('imageGen.promptTitleI2I', 'PROMPT') : t('imageGen.promptTitleT2I', 'PROMPT')}
                     </h2>
                     <button
                       onClick={useInspiration}
-                      className="flex items-center gap-1 text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 transition-colors"
+                      className="flex items-center gap-1.5 text-[10px] font-black text-purple-400 uppercase tracking-widest hover:text-purple-300 transition-colors"
                     >
-                      <Zap className="w-4 h-4" />
-                      {t('imageGen.getInspiration', 'İlham Al')}
+                      <Zap className="w-3 h-3" />
+                      {t('imageGen.getInspiration', 'INSPIRE')}
                     </button>
                   </div>
 
                   {/* Inspiration Banner */}
                   <div
                     onClick={useInspiration}
-                    className="mb-4 p-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl cursor-pointer hover:shadow-md transition-all group"
+                    className="mb-4 p-4 bg-purple-500/5 border border-purple-500/10 rounded-xl cursor-pointer hover:bg-purple-500/10 transition-all group"
                   >
-                    <p className="text-sm text-purple-700 dark:text-purple-300 italic">
+                    <p className="text-xs text-purple-300 italic opacity-80 group-hover:opacity-100 transition-opacity">
                       "{inspirationPrompts[currentInspiration]}"
                     </p>
-                    <p className="text-xs text-purple-500 mt-1 group-hover:text-purple-700 transition-colors">
-                      {t('imageGen.clickToUse', 'Kullanmak için tıkla →')}
+                    <p className="text-[9px] font-black text-purple-500 mt-2 uppercase tracking-widest group-hover:text-purple-400">
+                      {t('imageGen.clickToUse', 'TAP TO USE →')}
                     </p>
                   </div>
 
@@ -551,12 +573,12 @@ const ImageGenerationPage = () => {
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
                       placeholder={generationMode === 'img2img'
-                        ? t('imageGen.promptPlaceholderI2I', "Referans görseli nasıl dönüştürmek istediğinizi yazın...")
-                        : t('imageGen.promptPlaceholderT2I', "Hayalinizdeki görseli detaylı bir şekilde tanımlayın...")
+                        ? t('imageGen.promptPlaceholderI2I', "How should we transform this image? Describe your vision...")
+                        : t('imageGen.promptPlaceholderT2I', "Describe the masterpiece you want to create in detail...")
                       }
                       rows={4}
                       disabled={isGenerating}
-                      className="w-full px-4 py-3 pr-14 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-gray-900 dark:text-white placeholder-gray-400"
+                      className="w-full px-4 py-4 bg-black/40 border border-white/5 rounded-2xl resize-none focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all text-slate-200 text-sm placeholder-slate-600 leading-relaxed"
                     />
                     <div className="absolute right-3 top-3">
                       <PromptEnhancer
@@ -569,45 +591,45 @@ const ImageGenerationPage = () => {
                 </div>
 
                 {/* ── Model & Aspect Ratio ── */}
-                <div className="px-6 pb-6 border-t border-gray-100 dark:border-gray-700 pt-6">
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="px-6 pb-6 border-t border-white/5 pt-6">
+                  <div className="grid grid-cols-2 gap-6">
                     <div>
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block flex items-center gap-2">
-                        <Layers className="w-4 h-4" />
-                        {t('imageGen.modelTitle', 'AI Model')}
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block flex items-center gap-2">
+                        <Layers className="w-3.5 h-3.5 text-purple-400" />
+                        {t('imageGen.modelTitle', 'AI ENGINE')}
                       </label>
                       <select
                         value={modelId}
                         onChange={(e) => setModelId(e.target.value)}
                         disabled={isLoadingModels || isGenerating}
-                        className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl text-xs font-bold text-slate-300 focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500/50 outline-none appearance-none cursor-pointer"
                       >
-                        <option value="">{t('imageGen.selectModel', 'Model seçin')}</option>
+                        <option value="" className="bg-slate-900">{t('imageGen.selectModel', 'SELECT ENGINE')}</option>
                         {generateModels.map((model: any) => (
-                          <option key={model.id} value={model.id}>
-                            {model.name} ({model.credits} {t('imageGen.credits', 'kredi')})
+                          <option key={model.id} value={model.id} className="bg-slate-900">
+                            {formatModelName(model.name)} ({model.credits} ZEX)
                           </option>
                         ))}
                       </select>
                     </div>
 
                     <div>
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block flex items-center gap-2">
-                        <Maximize2 className="w-4 h-4" />
-                        {t('imageGen.sizeTitle', 'Boyut')}
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block flex items-center gap-2">
+                        <Maximize2 className="w-3.5 h-3.5 text-purple-400" />
+                        {t('imageGen.sizeTitle', 'ASPECT RATIO')}
                       </label>
-                      <div className="flex gap-1">
+                      <div className="flex gap-2">
                         {aspectRatios.map((ratio) => (
                           <button
                             key={ratio.id}
                             onClick={() => setAspectRatio(ratio.id)}
-                            className={`flex-1 py-2 text-lg rounded-lg transition-all ${aspectRatio === ratio.id
-                              ? 'bg-purple-600 text-white'
-                              : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            className={`flex-1 py-3 text-xs font-black rounded-xl transition-all border ${aspectRatio === ratio.id
+                              ? 'bg-purple-500 border-purple-400 text-white shadow-lg shadow-purple-500/20'
+                              : 'bg-black/40 border-white/5 text-slate-500 hover:text-slate-300 hover:border-white/10'
                               }`}
                             title={t(ratio.name)}
                           >
-                            {ratio.icon}
+                            {ratio.id}
                           </button>
                         ))}
                       </div>
@@ -616,24 +638,24 @@ const ImageGenerationPage = () => {
                 </div>
 
                 {/* ── Generate Button ── */}
-                <div className="p-6 bg-gray-50 dark:bg-gray-900/50">
+                <div className="p-6 bg-black/20">
                   <button
                     onClick={handleGenerate}
                     disabled={isGenerating || !prompt || !modelId || (generationMode === 'img2img' && !referenceImage)}
-                    className={`w-full py-4 font-semibold rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 text-white ${generationMode === 'img2img'
-                      ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-blue-500/25'
-                      : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-purple-500/25'
-                      } disabled:from-gray-400 disabled:to-gray-500 disabled:shadow-none`}
+                    className={`w-full py-5 font-black text-xs uppercase tracking-[0.3em] rounded-2xl shadow-xl transition-all flex items-center justify-center gap-3 text-white ${generationMode === 'img2img'
+                      ? 'bg-blue-600 hover:bg-blue-500 shadow-blue-500/20'
+                      : 'bg-purple-600 hover:bg-purple-500 shadow-purple-500/20'
+                      } disabled:bg-slate-800 disabled:text-slate-600 disabled:shadow-none hover:scale-[1.01] active:scale-[0.99] border-t border-white/10`}
                   >
                     {isGenerating ? (
                       <>
-                        <RefreshCw className="w-5 h-5 animate-spin" />
-                        {t('imageGen.generating', 'Oluşturuluyor...')}
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        {t('imageGen.generating', 'PROCESSING...')}
                       </>
                     ) : (
                       <>
-                        {generationMode === 'img2img' ? <Camera className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
-                        {generationMode === 'img2img' ? t('imageGen.generateBtnI2I', 'Görseli Dönüştür') : t('imageGen.generateBtnT2I', 'Görsel Oluştur')}
+                        {generationMode === 'img2img' ? <Camera className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+                        {generationMode === 'img2img' ? t('imageGen.generateBtnI2I', 'TRANSFORM') : t('imageGen.generateBtnT2I', 'GENERATE')}
                       </>
                     )}
                   </button>
@@ -643,40 +665,41 @@ const ImageGenerationPage = () => {
 
             {/* Right Panel - Preview */}
             <div className="space-y-6">
-              <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden min-h-[500px] flex flex-col">
-                <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex-shrink-0">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                    <ImageIcon className="w-5 h-5 text-purple-500" />
-                    {t('imageGen.previewTitle', 'Önizleme')}
+              <div className="bg-black/40 backdrop-blur-xl rounded-3xl border border-white/5 overflow-hidden shadow-2xl shadow-black/50 min-h-[600px] flex flex-col">
+                <div className="p-6 border-b border-white/5 flex-shrink-0">
+                  <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                    <ImageIcon className="w-3.5 h-3.5 text-purple-400" />
+                    {t('imageGen.previewTitle', 'PREVIEW')}
                   </h2>
                 </div>
 
                 <div className="flex-1 p-6">
                   {isGenerating ? (
-                    <div className="h-full flex flex-col items-center justify-center">
-                      <div className="relative w-32 h-32">
-                        <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full animate-pulse opacity-20" />
-                        <div className="absolute inset-2 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center overflow-hidden">
-                          <img src="/logo192.png" alt="ZexAi Loading" className="w-20 h-20 object-contain animate-pulse" style={{ animationDuration: '1s' }} />
+                    <div className="h-full flex flex-col items-center justify-center py-20">
+                      <div className="relative w-40 h-40">
+                        <div className="absolute inset-0 bg-purple-500/20 rounded-full animate-pulse blur-xl" />
+                        <div className="absolute inset-0 border-t-2 border-l-2 border-purple-500 rounded-full animate-spin" />
+                        <div className="absolute inset-4 border-t-2 border-r-2 border-purple-400/30 rounded-full animate-spin-reverse" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Sparkles className="w-10 h-10 text-purple-500 animate-pulse" />
                         </div>
-                        <div className="absolute inset-0 border-4 border-transparent border-t-purple-500 rounded-full animate-spin" />
                       </div>
-                      <p className="mt-6 text-gray-600 dark:text-gray-400 font-medium">
-                        {generationMode === 'img2img' ? t('imageGen.previewGeneratingI2I', 'Görsel dönüştürülüyor...') : t('imageGen.previewGeneratingT2I', 'Görseliniz oluşturuluyor...')}
+                      <p className="mt-10 text-slate-200 font-black text-xs uppercase tracking-[0.3em] animate-pulse">
+                        {generationMode === 'img2img' ? t('imageGen.previewGeneratingI2I', 'ENGINEERING IMAGE...') : t('imageGen.previewGeneratingT2I', 'SYNTHESIZING IMAGE...')}
                       </p>
-                      <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
-                        {t('imageGen.waitSecs', 'Bu birkaç saniye sürebilir')}
+                      <p className="text-[10px] text-slate-500 mt-2 font-bold uppercase tracking-widest">
+                        {t('imageGen.waitSecs', 'ESTIMATED TIME: 5-15 SECONDS')}
                       </p>
                     </div>
                   ) : generatedImages.length > 0 ? (
                     <div className="h-full flex flex-col">
-                      <div className="flex-1 relative group">
+                      <div className="flex-1 relative group rounded-2xl overflow-hidden border border-white/5 bg-black/40 shadow-inner">
                         <img
                           src={generatedImages[selectedImageIndex]}
                           alt="Generated"
-                          className="w-full h-full object-contain rounded-2xl"
+                          className="w-full h-full object-contain"
                         />
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center gap-4">
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-4 backdrop-blur-[2px]">
                           <button
                             onClick={async () => {
                               playHapticFeedback('medium');
@@ -691,7 +714,6 @@ const ImageGenerationPage = () => {
                                     finalBlob = await addWatermark(generatedImages[selectedImageIndex], "ZexAi Studio");
                                   } catch (fwErr) {
                                     console.error("Watermark error:", fwErr);
-                                    // Fallback to original if watermark fails
                                   }
                                 }
 
@@ -707,38 +729,34 @@ const ImageGenerationPage = () => {
                                 console.error("Download failed:", err);
                               }
                             }}
-                            className="p-3 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors"
+                            className="p-4 bg-purple-500 text-white rounded-2xl hover:bg-purple-400 transition-all hover:scale-110 shadow-lg shadow-purple-500/20"
                             title={t('imageGen.download', 'İndir')}
                           >
-                            <Download className="w-6 h-6 text-white" />
+                            <Download className="w-5 h-5" />
                           </button>
 
                           <button
                             onClick={() => setGenerateLightboxImage(generatedImages[selectedImageIndex])}
-                            className="p-3 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-colors"
+                            className="p-4 bg-white/10 text-white rounded-2xl hover:bg-white/20 transition-all hover:scale-110 border border-white/10 backdrop-blur-xl"
                             title={t('imageGen.fullscreen', 'Tam Ekran Göster')}
                           >
-                            <Maximize2 className="w-6 h-6 text-white" />
+                            <Maximize2 className="w-5 h-5" />
                           </button>
-                          <SocialButtons
-                            contentType="image"
-                            contentId={generatedTaskIds[selectedImageIndex] || `gen_${Date.now()}_${selectedImageIndex}`}
-                            contentUrl={generatedImages[selectedImageIndex]}
-                            contentTitle={prompt}
-                            className="bg-white/20 backdrop-blur-sm rounded-full p-1"
-                          />
                         </div>
                       </div>
                       {/* Thumbnail strip for recent generations */}
                       {generatedImages.length > 1 && (
-                        <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+                        <div className="mt-6 flex gap-3 overflow-x-auto pb-2 px-1">
                           {generatedImages.slice(0, 8).map((img, idx) => (
                             <button
                               key={idx}
-                              onClick={() => setSelectedImageIndex(idx)}
-                              className={`flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${selectedImageIndex === idx
-                                ? 'border-purple-500 ring-2 ring-purple-300 scale-105'
-                                : 'border-gray-200 dark:border-gray-600 opacity-60 hover:opacity-100'
+                              onClick={() => {
+                                playHapticFeedback('light');
+                                setSelectedImageIndex(idx);
+                              }}
+                              className={`flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all ${selectedImageIndex === idx
+                                ? 'border-purple-500 shadow-lg shadow-purple-500/30 scale-105'
+                                : 'border-white/5 opacity-40 hover:opacity-100 hover:border-white/20'
                                 }`}
                             >
                               <img src={img} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
@@ -748,24 +766,24 @@ const ImageGenerationPage = () => {
                       )}
                     </div>
                   ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-center">
-                      <div className="w-24 h-24 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-full flex items-center justify-center mb-4">
-                        <ImageIcon className="w-12 h-12 text-purple-400" />
+                    <div className="h-full flex flex-col items-center justify-center text-center py-20">
+                      <div className="w-24 h-24 bg-purple-500/5 border border-purple-500/10 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                        <ImageIcon className="w-10 h-10 text-purple-400/50" />
                       </div>
-                      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                        {t('imageGen.emptyPreviewTitle', 'Hayal edin, biz oluşturalım')}
+                      <h3 className="text-sm font-black text-slate-200 uppercase tracking-widest mb-2">
+                        {t('imageGen.emptyPreviewTitle', 'READY FOR ACTION')}
                       </h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
-                        {t('imageGen.emptyPreviewDesc', "Sol taraftan bir prompt yazın ve AI'ın sihrini izleyin")}
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest max-w-xs leading-relaxed">
+                        {t('imageGen.emptyPreviewDesc', "Enter your prompt on the left and unleash the AI power")}
                       </p>
                     </div>
                   )}
                 </div>
 
                 {generationError && (
-                  <div className="p-4 bg-red-50 dark:bg-red-900/20 border-t border-red-200 dark:border-red-800">
-                    <p className="text-sm text-red-600 dark:text-red-400">
-                      ❌ {t('imageGen.errorLabel', 'Error')}: {generationError}
+                  <div className="p-4 bg-red-500/10 border-t border-red-500/20">
+                    <p className="text-[10px] font-black text-red-400 uppercase tracking-widest text-center">
+                      ⚠ {t('imageGen.errorLabel', 'ENGINE ERROR')}: {generationError}
                     </p>
                   </div>
                 )}
@@ -781,23 +799,18 @@ const ImageGenerationPage = () => {
       {/* GALLERY TAB (Persistent from backend) */}
       {/* ═══════════════════════════════════════════════════════ */}
       {activeTab === 'gallery' && (
-        <motion.div
-           key="gallery"
-           initial={{ opacity: 0, x: 20 }}
-           animate={{ opacity: 1, x: 0 }}
-           exit={{ opacity: 0, x: -20 }}
-           transition={{ duration: 0.2 }}
-           drag="x"
-           dragConstraints={{ left: 0, right: 0 }}
-           dragElastic={0.2}
-           dragDirectionLock
-           onDragEnd={handleDragEnd}
-           className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 touch-pan-y"
-        >
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <Layers className="w-5 h-5 text-emerald-500" />
+         <motion.div
+            key="gallery"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
+            className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+         >
+          <div className="bg-black/40 backdrop-blur-xl rounded-3xl border border-white/5 p-8 shadow-2xl">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-xl font-black text-white flex items-center gap-3 uppercase tracking-widest">
+                <Layers className="w-6 h-6 text-emerald-400" />
                 {t('imageGen.galleryTitle', 'Görsel Galerim')}
                 {galleryTotal > 0 && (
                   <span className="text-sm font-normal text-gray-400 ml-2">({galleryTotal} {t('imageGen.imagesCount', 'görsel')})</span>

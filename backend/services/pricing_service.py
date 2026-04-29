@@ -1,14 +1,15 @@
 """
 Merkezi Fiyatlandırma Servisi
-Tüm provider'lar için tek noktadan fiyat yönetimi
+Tüm provider'lar için tek noktadan fiyat yönetimi (Supabase Version)
 """
 from typing import Dict, Any, Optional
+from datetime import datetime
 from core.database import get_database
 from core.pricing_config import ServiceCost, calculate_credits, DEFAULT_SERVICE_COSTS
 from core.config import settings
 
 class PricingService:
-    """Merkezi fiyatlandırma yönetimi"""
+    """Merkezi fiyatlandırma yönetimi using Supabase"""
     
     @staticmethod
     async def get_service_cost(
@@ -17,19 +18,18 @@ class PricingService:
         model_id: str, 
         db
     ) -> Optional[ServiceCost]:
-        """Veritabanından servis maliyetini getir"""
-        # Önce veritabanından ara
-        cost_record = await db.service_costs.find_one({
-            "service_type": service_type,
-            "provider": provider,
-            "model_id": model_id,
-            "is_active": True
-        })
+        """Veritabanından servis maliyetini getir (Supabase)"""
+        try:
+            # Query Supabase table
+            response = db.table("service_costs").select("*").eq("service_type", service_type).eq("provider", provider).eq("model_id", model_id).eq("is_active", True).execute()
+            cost_record = response.data[0] if response.data else None
+            
+            if cost_record:
+                return ServiceCost(**cost_record)
+        except Exception as e:
+            print(f"Warning: Failed to fetch service cost from DB: {e}")
         
-        if cost_record:
-            return ServiceCost(**cost_record)
-        
-        # Veritabanında yoksa varsayılan değerleri kullan
+        # Veritabanında yoksa veya hata oluşursa varsayılan değerleri kullan
         key = f"{service_type}_{provider}_{model_id}"
         return DEFAULT_SERVICE_COSTS.get(key)
     
@@ -54,8 +54,13 @@ class PricingService:
     
     @staticmethod
     async def get_all_service_costs(db) -> Dict[str, Any]:
-        """Tüm servis maliyetlerini getir"""
-        costs = await db.service_costs.find({"is_active": True}).to_list(length=None)
+        """Tüm servis maliyetlerini getir (Supabase)"""
+        try:
+            response = db.table("service_costs").select("*").eq("is_active", True).execute()
+            costs = response.data or []
+        except Exception as e:
+            print(f"Warning: Failed to fetch all service costs: {e}")
+            costs = []
         
         # Varsayılan maliyetleri de ekle
         all_costs = {}
@@ -79,24 +84,27 @@ class PricingService:
         multiplier: float = 2.0,
         db = None
     ) -> bool:
-        """Servis maliyetini güncelle"""
+        """Servis maliyetini güncelle (Supabase upsert)"""
         try:
-            await db.service_costs.update_one(
-                {
-                    "service_type": service_type,
-                    "provider": provider,
-                    "model_id": model_id
-                },
-                {
-                    "$set": {
-                        "cost_per_unit": cost_per_unit,
-                        "multiplier": multiplier,
-                        "is_active": True,
-                        "updated_at": datetime.utcnow()
-                    }
-                },
-                upsert=True
-            )
+            # Check if record exists
+            response = db.table("service_costs").select("id").eq("service_type", service_type).eq("provider", provider).eq("model_id", model_id).execute()
+            existing = response.data[0] if response.data else None
+            
+            data = {
+                "service_type": service_type,
+                "provider": provider,
+                "model_id": model_id,
+                "cost_per_unit": cost_per_unit,
+                "multiplier": multiplier,
+                "is_active": True,
+                "updated_at": datetime.utcnow().isoformat()
+            }
+            
+            if existing:
+                db.table("service_costs").update(data).eq("id", existing["id"]).execute()
+            else:
+                db.table("service_costs").insert(data).execute()
+                
             return True
         except Exception as e:
             print(f"Error updating service cost: {e}")
@@ -104,4 +112,3 @@ class PricingService:
 
 # Global instance
 pricing_service = PricingService()
-

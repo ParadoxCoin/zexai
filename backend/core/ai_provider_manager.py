@@ -478,20 +478,22 @@ class AIProviderManager:
         user_id: str,
         error_message: str = None
     ):
-        """Log provider request for analytics"""
+        """Log provider request for analytics (Supabase)"""
         try:
-            db = get_database()
-            
+            supabase = get_supabase_client()
+            if not supabase:
+                return
+                
             log_entry = {
                 "provider_name": provider_name,
                 "service_type": service_type,
                 "success": success,
                 "user_id": user_id,
                 "error_message": error_message,
-                "timestamp": datetime.utcnow()
+                "timestamp": datetime.utcnow().isoformat()
             }
             
-            await db.provider_requests.insert_one(log_entry)
+            supabase.table("provider_requests").insert(log_entry).execute()
             
         except Exception as e:
             logger.error(f"Failed to log provider request: {e}")

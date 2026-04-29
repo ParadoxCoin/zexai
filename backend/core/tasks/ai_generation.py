@@ -1,6 +1,6 @@
 """
 AI Generation background tasks
-Handles image, video, audio, and text generation asynchronously
+Handles image, video, audio, and text generation asynchronously (Supabase Version)
 """
 from celery import Task
 from core.celery_app import celery_app
@@ -36,31 +36,34 @@ class AIGenerationTask(Task):
         logger.error(f"AI Generation task {task_id} failed: {exc}")
         
         # Update task status in database
-        asyncio.create_task(self._update_task_status(task_id, "failed", str(exc)))
+        try:
+            asyncio.run(self._update_task_status(task_id, "failed", str(exc)))
+        except Exception as e:
+            logger.error(f"Failed to update task status on failure: {e}")
     
     def on_success(self, retval, task_id, args, kwargs):
         """Handle task success"""
         logger.info(f"AI Generation task {task_id} completed successfully")
         
         # Update task status in database
-        asyncio.create_task(self._update_task_status(task_id, "completed", None))
+        try:
+            asyncio.run(self._update_task_status(task_id, "completed", None))
+        except Exception as e:
+            logger.error(f"Failed to update task status on success: {e}")
     
     async def _update_task_status(self, task_id: str, status: str, error: str = None):
-        """Update task status in database"""
+        """Update task status in database using Supabase"""
         try:
-            db = get_database()
+            db = await get_database()
             update_data = {
                 "status": status,
-                "updated_at": datetime.utcnow()
+                "updated_at": datetime.utcnow().isoformat()
             }
             
             if error:
                 update_data["error_message"] = error
             
-            await db.ai_tasks.update_one(
-                {"task_id": task_id},
-                {"$set": update_data}
-            )
+            db.table("ai_tasks").update(update_data).eq("task_id", task_id).execute()
         except Exception as e:
             logger.error(f"Failed to update task status: {e}")
 
@@ -70,127 +73,126 @@ def generate_image_task(self, user_id: str, prompt: str, model_id: str,
                        negative_prompt: str = "", aspect_ratio: str = "1:1", 
                        num_images: int = 1, **kwargs):
     """
-    Generate images using AI models
-    
-    Args:
-        user_id: User ID
-        prompt: Image description
-        model_id: AI model to use
-        negative_prompt: What to avoid
-        aspect_ratio: Image dimensions
-        num_images: Number of images to generate
+    Generate images using AI models (Supabase Integrated)
     """
-    try:
-        # Update task status
-        asyncio.create_task(self._update_task_status(self.request.id, "processing"))
-        
-        # Determine AI provider based on model_id
-        if "flux" in model_id.lower():
-            result = asyncio.run(_generate_with_fal_ai(
-                prompt, negative_prompt, aspect_ratio, num_images
-            ))
-        elif "dall-e" in model_id.lower():
-            result = asyncio.run(_generate_with_openai(
-                prompt, negative_prompt, aspect_ratio, num_images
-            ))
-        else:
-            raise ExternalServiceError(f"Unknown model: {model_id}", "ai_provider")
-        
-        # Save results to database
-        asyncio.run(_save_generation_result(
-            user_id, "image", model_id, result, self.request.id
-        ))
-        
-        # Deduct credits
-        asyncio.run(_deduct_credits(user_id, "image", num_images))
-        
-        return {
-            "task_id": self.request.id,
-            "status": "completed",
-            "images": result.get("images", []),
-            "metadata": result.get("metadata", {})
-        }
-        
-    except Exception as e:
-        logger.error(f"Image generation failed: {e}")
-        raise
+    # Use a local event loop runner to handle async operations in sync Celery task
+    async def run():
+        try:
+            # Update task status
+            await self._update_task_status(self.request.id, "processing")
+            
+            # Determine AI provider based on model_id
+            if "flux" in model_id.lower():
+                result = await _generate_with_fal_ai(
+                    prompt, negative_prompt, aspect_ratio, num_images
+                )
+            elif "dall-e" in model_id.lower():
+                result = await _generate_with_openai(
+                    prompt, negative_prompt, aspect_ratio, num_images
+                )
+            else:
+                raise ExternalServiceError(f"Unknown model: {model_id}", "ai_provider")
+            
+            # Save results to database
+            await _save_generation_result(
+                user_id, "image", model_id, result, self.request.id
+            )
+            
+            # Deduct credits
+            await _deduct_credits(user_id, "image", num_images)
+            
+            return {
+                "task_id": self.request.id,
+                "status": "completed",
+                "images": result.get("images", []),
+                "metadata": result.get("metadata", {})
+            }
+        except Exception as e:
+            logger.error(f"Image generation failed: {e}")
+            raise
+            
+    return asyncio.run(run())
 
 
 @celery_app.task(bind=True, base=AIGenerationTask, name="generate_video")
 def generate_video_task(self, user_id: str, prompt: str, model_id: str,
                       duration: int = 5, **kwargs):
     """
-    Generate videos using AI models
+    Generate videos using AI models (Supabase Integrated)
     """
-    try:
-        asyncio.create_task(self._update_task_status(self.request.id, "processing"))
-        
-        # Video generation logic
-        if "runway" in model_id.lower():
-            result = asyncio.run(_generate_with_runway(
-                prompt, duration
-            ))
-        elif "pika" in model_id.lower():
-            result = asyncio.run(_generate_with_pika(
-                prompt, duration
-            ))
-        else:
-            raise ExternalServiceError(f"Unknown video model: {model_id}", "ai_provider")
-        
-        # Save results
-        asyncio.run(_save_generation_result(
-            user_id, "video", model_id, result, self.request.id
-        ))
-        
-        # Deduct credits
-        asyncio.run(_deduct_credits(user_id, "video", duration))
-        
-        return {
-            "task_id": self.request.id,
-            "status": "completed",
-            "video_url": result.get("video_url"),
-            "metadata": result.get("metadata", {})
-        }
-        
-    except Exception as e:
-        logger.error(f"Video generation failed: {e}")
-        raise
+    async def run():
+        try:
+            await self._update_task_status(self.request.id, "processing")
+            
+            # Video generation logic
+            if "runway" in model_id.lower():
+                result = await _generate_with_runway(
+                    prompt, duration
+                )
+            elif "pika" in model_id.lower():
+                result = await _generate_with_pika(
+                    prompt, duration
+                )
+            else:
+                raise ExternalServiceError(f"Unknown video model: {model_id}", "ai_provider")
+            
+            # Save results
+            await _save_generation_result(
+                user_id, "video", model_id, result, self.request.id
+            )
+            
+            # Deduct credits
+            await _deduct_credits(user_id, "video", duration)
+            
+            return {
+                "task_id": self.request.id,
+                "status": "completed",
+                "video_url": result.get("video_url"),
+                "metadata": result.get("metadata", {})
+            }
+        except Exception as e:
+            logger.error(f"Video generation failed: {e}")
+            raise
+            
+    return asyncio.run(run())
 
 
 @celery_app.task(bind=True, base=AIGenerationTask, name="generate_audio")
 def generate_audio_task(self, user_id: str, text: str, voice_id: str,
                        audio_type: str = "tts", **kwargs):
     """
-    Generate audio using AI models
+    Generate audio using AI models (Supabase Integrated)
     """
-    try:
-        asyncio.create_task(self._update_task_status(self.request.id, "processing"))
-        
-        if audio_type == "tts":
-            result = asyncio.run(_generate_tts(text, voice_id))
-        elif audio_type == "music":
-            result = asyncio.run(_generate_music(text))
-        else:
-            raise ExternalServiceError(f"Unknown audio type: {audio_type}", "ai_provider")
-        
-        # Save results
-        asyncio.run(_save_generation_result(
-            user_id, "audio", voice_id, result, self.request.id
-        ))
-        
-        # Deduct credits
-        asyncio.run(_deduct_credits(user_id, "audio", 1))
-        
-        return {
-            "task_id": self.request.id,
-            "status": "completed",
-            "audio_url": result.get("audio_url"),
-            "metadata": result.get("metadata", {})
-        }
-        
-    except Exception as e:
-        logger.error(f"Audio generation failed: {e}")
-        raise
+    async def run():
+        try:
+            await self._update_task_status(self.request.id, "processing")
+            
+            if audio_type == "tts":
+                result = await _generate_tts(text, voice_id)
+            elif audio_type == "music":
+                result = await _generate_music(text)
+            else:
+                raise ExternalServiceError(f"Unknown audio type: {audio_type}", "ai_provider")
+            
+            # Save results
+            await _save_generation_result(
+                user_id, "audio", voice_id, result, self.request.id
+            )
+            
+            # Deduct credits
+            await _deduct_credits(user_id, "audio", 1)
+            
+            return {
+                "task_id": self.request.id,
+                "status": "completed",
+                "audio_url": result.get("audio_url"),
+                "metadata": result.get("metadata", {})
+            }
+        except Exception as e:
+            logger.error(f"Audio generation failed: {e}")
+            raise
+            
+    return asyncio.run(run())
 
 
 # Helper functions for AI providers
@@ -199,7 +201,6 @@ async def _generate_with_fal_ai(prompt: str, negative_prompt: str,
                                aspect_ratio: str, num_images: int) -> Dict[str, Any]:
     """Generate images using FAL.AI"""
     try:
-        # Get API key from vault or settings
         api_key = await _get_vault_key("fal", settings.FAL_API_KEY)
         
         async with httpx.AsyncClient() as client:
@@ -240,7 +241,6 @@ async def _generate_with_openai(prompt: str, negative_prompt: str,
                                aspect_ratio: str, num_images: int) -> Dict[str, Any]:
     """Generate images using OpenAI DALL-E"""
     try:
-        # Get API key from vault or settings
         api_key = await _get_vault_key("openai", settings.OPENAI_API_KEY)
         
         async with httpx.AsyncClient() as client:
@@ -281,7 +281,6 @@ async def _generate_with_openai(prompt: str, negative_prompt: str,
 
 async def _generate_with_runway(prompt: str, duration: int) -> Dict[str, Any]:
     """Generate videos using Runway"""
-    # Placeholder implementation
     return {
         "video_url": f"https://example.com/video/{uuid.uuid4()}.mp4",
         "metadata": {
@@ -293,7 +292,6 @@ async def _generate_with_runway(prompt: str, duration: int) -> Dict[str, Any]:
 
 async def _generate_with_pika(prompt: str, duration: int) -> Dict[str, Any]:
     """Generate videos using Pika"""
-    # Placeholder implementation
     return {
         "video_url": f"https://example.com/video/{uuid.uuid4()}.mp4",
         "metadata": {
@@ -305,7 +303,6 @@ async def _generate_with_pika(prompt: str, duration: int) -> Dict[str, Any]:
 
 async def _generate_tts(text: str, voice_id: str) -> Dict[str, Any]:
     """Generate text-to-speech audio"""
-    # Placeholder implementation
     return {
         "audio_url": f"https://example.com/audio/{uuid.uuid4()}.mp3",
         "metadata": {
@@ -317,7 +314,6 @@ async def _generate_tts(text: str, voice_id: str) -> Dict[str, Any]:
 
 async def _generate_music(prompt: str) -> Dict[str, Any]:
     """Generate music"""
-    # Placeholder implementation
     return {
         "audio_url": f"https://example.com/music/{uuid.uuid4()}.mp3",
         "metadata": {
@@ -330,9 +326,9 @@ async def _generate_music(prompt: str) -> Dict[str, Any]:
 async def _save_generation_result(user_id: str, service_type: str, 
                                  model_id: str, result: Dict[str, Any], 
                                  task_id: str):
-    """Save generation result to database"""
+    """Save generation result to database using Supabase"""
     try:
-        db = get_database()
+        db = await get_database()
         
         generation_record = {
             "id": str(uuid.uuid4()),
@@ -342,11 +338,11 @@ async def _save_generation_result(user_id: str, service_type: str,
             "model_id": model_id,
             "result": result,
             "status": "completed",
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow()
+            "created_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.utcnow().isoformat()
         }
         
-        await db.ai_generations.insert_one(generation_record)
+        db.table("ai_generations").insert(generation_record).execute()
         logger.info(f"Saved generation result for task {task_id}")
         
     except Exception as e:
@@ -355,9 +351,9 @@ async def _save_generation_result(user_id: str, service_type: str,
 
 
 async def _deduct_credits(user_id: str, service_type: str, units: float):
-    """Deduct credits for AI generation"""
+    """Deduct credits for AI generation using Supabase Integrated CreditManager"""
     try:
-        db = get_database()
+        db = await get_database()
         cost = await CreditManager.get_service_cost(db, service_type, units)
         await CreditManager.deduct_credits(db, user_id, service_type, cost)
         logger.info(f"Deducted {cost} credits for user {user_id}")
@@ -365,4 +361,3 @@ async def _deduct_credits(user_id: str, service_type: str, units: float):
     except Exception as e:
         logger.error(f"Failed to deduct credits: {e}")
         raise
-

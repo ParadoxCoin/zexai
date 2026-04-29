@@ -2,6 +2,11 @@
 AI SaaS Platform - Main Application
 Modular FastAPI application with credit-based billing system
 """
+# Add the current directory to sys.path to ensure modules are found correctly
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 # Load .env before anything else
 from dotenv import load_dotenv
 load_dotenv()
@@ -15,7 +20,6 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
-import os
 
 from routes.webhooks import router as webhooks_router
 from routes.referral import router as referral_router
@@ -40,7 +44,6 @@ from routes.dashboard import router as dashboard_router
 from routes.files import router as files_router
 from routes.chat import router as chat_router
 from routes.image import router as image_tools_router  # Image tools (img2img, face-swap, inpaint, etc.)
-# from routes.video import router as video_router  # Old - doesn't exist
 from routes.video_new import router as video_new_router
 from routes.image_new import router as image_new_router
 from routes.audio import router as audio_tts_router  # TTS, Music generation
@@ -56,8 +59,6 @@ from routes.admin_pricing_enhanced import router as admin_pricing_enhanced_route
 from routes.admin_models import router as admin_models_router
 from routes.dashboard_enhanced import router as dashboard_enhanced_router
 from routes.admin_enhanced import router as admin_enhanced_router
-from routes.webhooks import router as webhooks_router
-from routes.referral import router as referral_router
 from routes.admin_providers import router as admin_providers_router
 from routes.admin_settings import router as admin_settings_router
 from routes.admin_audit import router as admin_audit_router
@@ -238,16 +239,6 @@ async def external_service_exception_handler(request: Request, exc: ExternalServ
     })
     return convert_to_http_exception(exc)
 
-# CORS Middleware - Security: Specific methods and headers only
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "X-Requested-With"],
-    expose_headers=["X-Total-Count", "X-Page-Count"]
-)
-
 # Request logging middleware
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
@@ -269,7 +260,6 @@ app.include_router(files_router, prefix=API_V1_PREFIX)
 app.include_router(chat_router, prefix=API_V1_PREFIX)
 app.include_router(image_tools_router, prefix=API_V1_PREFIX)  # Image tools router
 app.include_router(image_new_router, prefix=API_V1_PREFIX)  # New multi-provider image router
-# app.include_router(video_router, prefix=API_V1_PREFIX)  # Old video router - doesn't exist
 app.include_router(video_new_router, prefix=API_V1_PREFIX)  # New Pollo.ai video router
 app.include_router(audio_tts_router, prefix=API_V1_PREFIX)  # Audio TTS, Music (/audio prefix)
 app.include_router(audio_extended_router, prefix=API_V1_PREFIX)  # Audio Extended features
@@ -310,12 +300,12 @@ app.include_router(prompt_router, prefix=API_V1_PREFIX)  # AI Prompt Enhancer
 app.include_router(social_router, prefix=API_V1_PREFIX)  # Social Features
 app.include_router(voice_clone_router, prefix=API_V1_PREFIX)  # Voice Clone
 from routes.packages import router as packages_router
-from routes.staking import router as staking_router
 app.include_router(packages_router, prefix=API_V1_PREFIX)  # Effect Packages
 app.include_router(comparison_router, prefix=API_V1_PREFIX)  # Model Comparison
 app.include_router(staking_router, prefix=API_V1_PREFIX)  # Web3 Staking Claims
 app.include_router(nft_router, prefix=API_V1_PREFIX)  # NFT Minting
 app.include_router(collections_router, prefix=API_V1_PREFIX) # AI NFT Collections
+
 # WebSocket endpoints
 @app.websocket("/ws")
 async def websocket_route(websocket: WebSocket, token: str = None):
@@ -349,7 +339,7 @@ async def root():
 
 
 @app.get("/health")
-async def health_check():
+async def health_check_simple():
     """Simple health check endpoint"""
     return {
         "status": "healthy",

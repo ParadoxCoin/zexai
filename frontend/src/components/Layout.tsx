@@ -118,8 +118,8 @@ const Layout: React.FC = () => {
                 <w3m-button />
               </div>
 
-              {/* Dynamic Credits Display */}
-              <div className="flex items-center gap-1.5">
+              {/* Dynamic Credits Display - Hidden for now */}
+              {/* <div className="flex items-center gap-1.5">
                 <Link
                   to="/credits"
                   className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-r from-amber-500/10 to-orange-500/10 hover:from-amber-500/20 hover:to-orange-500/20 border border-amber-500/20 rounded-xl transition-all"
@@ -135,7 +135,7 @@ const Layout: React.FC = () => {
                     {t('layout.noExpiration', 'NO EXPIRY')}
                   </span>
                 </div>
-              </div>
+              </div> */}
 
               {/* Theme Toggle */}
               <button
@@ -213,7 +213,7 @@ const Layout: React.FC = () => {
                       <div className="my-2 border-t border-gray-100 dark:border-gray-700" />
                       <p className="px-3 py-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{t('layout.exploreSection', 'Keşfet')}</p>
 
-                      <Link
+                      {/* <Link
                         to="/credits"
                         onClick={() => setIsUserMenuOpen(false)}
                         className="flex items-center gap-3 px-3 py-2.5 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl"
@@ -221,7 +221,7 @@ const Layout: React.FC = () => {
                         <Wallet className="h-4 w-4" />
                         {t('layout.creditsSub', 'Kredi & Abonelik')}
                         <span className="ml-auto text-[10px] bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded-full">{t('layout.proBadge', 'Pro')}</span>
-                      </Link>
+                      </Link> */}
                       <Link
                         to="/marketplace"
                         onClick={() => setIsUserMenuOpen(false)}

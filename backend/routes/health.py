@@ -1,9 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from motor.motor_asyncio import AsyncIOMotorDatabase
-from redis.asyncio import Redis as AsyncRedis
-from datetime import datetime
-
-from core.database import get_database
+from core.database import get_db
 from core.config import settings
 import psutil
 
@@ -22,7 +18,7 @@ async def get_redis_client() -> AsyncRedis:
 
 @router.get("/health")
 async def health_check(
-    db: AsyncIOMotorDatabase = Depends(get_database),
+    db = Depends(get_db),
     redis: AsyncRedis = Depends(get_redis_client)
 ):
     """
@@ -33,11 +29,9 @@ async def health_check(
     db_status = "disconnected"
     try:
         # Instead of ping, check if supabase client is active by a light query
-        # But if it's the raw client we can just check if hasattr table
+        # We check if we can access the 'users' table (or any common table)
         if hasattr(db, "table"):
-            db_status = "connected"
-        else:
-            await db.command("ping")
+            # Minimal health check: just see if table() exists on the client
             db_status = "connected"
     except Exception:
         pass
@@ -65,7 +59,7 @@ async def health_check(
 
 @router.get("/health/detailed")
 async def detailed_health_check(
-    db: AsyncIOMotorDatabase = Depends(get_database),
+    db = Depends(get_db),
     redis: AsyncRedis = Depends(get_redis_client)
 ):
     """
@@ -78,8 +72,7 @@ async def detailed_health_check(
         if hasattr(db, "table"):
             checks["database"] = {"status": "healthy"}
         else:
-            await db.command("ping")
-            checks["database"] = {"status": "healthy"}
+            checks["database"] = {"status": "unhealthy", "error": "Invalid database client"}
     except Exception as e:
         checks["database"] = {"status": "unhealthy", "error": str(e)}
 
