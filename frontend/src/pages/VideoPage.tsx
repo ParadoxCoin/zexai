@@ -1658,7 +1658,14 @@ const VideoPage = () => {
                 {/* Motion Brush Button */}
                 <button
                   onClick={() => setShowMotionBrush(true)}
-                  className="w-full mb-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-medium rounded-xl flex items-center j                {/* Effect List */}
+                  className="w-full mb-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-medium rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/25 transition-all"
+                >
+                  <Wand2 className="w-4 h-4" />
+                  Motion Brush
+                  <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">50c</span>
+                </button>
+
+                {/* Effect List */}
                 <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1 custom-scrollbar">
                   {isLoadingEffects ? (
                     [1, 2, 3, 4, 5].map(i => (
