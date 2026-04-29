@@ -33,27 +33,6 @@ POLLO_VIDEO_MODELS = {
             }
         }
     },
-    # "veo31_text_5s": {
-    #     "provider": "Veo 3.1 (Google)",
-    #     "name": "Veo 3.1, 5s, text to video",
-    #     "type": "text_to_video",
-    #     "duration": 5,
-    #     "pollo_cost_usd": 0.50,
-    #     "quality": 5,
-    #     "speed": "medium",
-    #     "badge": "🔥 En Yeni!",
-    #     "description": "Google'ın en son video modeli, ultra gerçekçi"
-    # },
-    # "veo31_text_10s": {
-    #     "provider": "Veo 3.1 (Google)",
-    #     "name": "Veo 3.1, 10s, text to video",
-    #     "type": "text_to_video",
-    #     "duration": 10,
-    #     "pollo_cost_usd": 1.00,
-    #     "quality": 5,
-    #     "speed": "medium",
-    #     "badge": "🔥 En Yeni!"
-    # },
     "veo3_text": {
         "provider": "Veo 3 (Google)",
         "name": "Veo 3 (Text)",
@@ -184,27 +163,6 @@ POLLO_VIDEO_MODELS = {
             }
         }
     },
-    # "sora2_text_5s": {
-    #     "provider": "Sora 2 (OpenAI)",
-    #     "name": "Sora 2, 5s, text to video",
-    #     "type": "text_to_video",
-    #     "duration": 5,
-    #     "pollo_cost_usd": 0.45,
-    #     "quality": 5,
-    #     "speed": "slow",
-    #     "badge": "⭐ En Kaliteli!",
-    #     "description": "OpenAI'ın en gerçekçi video modeli"
-    # },
-    # "sora2_text_10s": {
-    #     "provider": "Sora 2 (OpenAI)",
-    #     "name": "Sora 2, 10s, text to video",
-    #     "type": "text_to_video",
-    #     "duration": 10,
-    #     "pollo_cost_usd": 0.90,
-    #     "quality": 5,
-    #     "speed": "slow",
-    #     "badge": "⭐ En Kaliteli!"
-    # },
     "sora2_image": {
         "provider": "Sora 2 (OpenAI)",
         "name": "Sora 2 (Image)",
@@ -291,27 +249,6 @@ POLLO_VIDEO_MODELS = {
             }
         }
     },
-    # "kling25_turbo_text_5s": {
-    #     "provider": "Kling AI",
-    #     "name": "Kling 2.5 Turbo, 5s, text to video",
-    #     "type": "text_to_video",
-    #     "duration": 5,
-    #     "pollo_cost_usd": 0.35,
-    #     "quality": 4,
-    #     "speed": "fast",
-    #     "badge": "💰 En Ekonomik!",
-    #     "description": "Hızlı ve uygun fiyatlı"
-    # },
-    # "kling25_turbo_text_10s": {
-    #     "provider": "Kling AI",
-    #     "name": "Kling 2.5 Turbo, 10s, text to video",
-    #     "type": "text_to_video",
-    #     "duration": 10,
-    #     "pollo_cost_usd": 0.70,
-    #     "quality": 4,
-    #     "speed": "fast",
-    #     "badge": "💰 En Ekonomik!"
-    # },
     "kling25_turbo_image": {
         "provider": "Kling AI",
         "name": "Kling 2.5 Turbo (Image)",
@@ -376,24 +313,6 @@ POLLO_VIDEO_MODELS = {
             }
         }
     },
-    # "kling21_master_text_5s": {
-    #     "provider": "Kling AI",
-    #     "name": "Kling 2.1 Master, 5s, text to video",
-    #     "type": "text_to_video",
-    #     "duration": 5,
-    #     "pollo_cost_usd": 1.20,
-    #     "quality": 5,
-    #     "speed": "medium"
-    # },
-    # "kling21_master_text_10s": {
-    #     "provider": "Kling AI",
-    #     "name": "Kling 2.1 Master, 10s, text to video",
-    #     "type": "text_to_video",
-    #     "duration": 10,
-    #     "pollo_cost_usd": 2.40,
-    #     "quality": 5,
-    #     "speed": "medium"
-    # },
     "kling21_master_image_5s": {
         "provider": "Kling AI",
         "name": "Kling 2.1 Master, 5s, image to video",
@@ -455,8 +374,6 @@ POLLO_VIDEO_MODELS = {
             }
         }
     },
-    # \"runway_gen3_text_5s\": {...} - commented out
-    # \"runway_gen3_text_10s\": {...} - commented out
     "runway_gen3_image": {
         "provider": "Runway",
         "name": "Runway Gen-3 Alpha (Image)",
@@ -1063,7 +980,27 @@ EFFECT_PACKAGES = {
         "description": "Fizik kurallarını zorlayan dönüşüm efektleri",
         "effects": ["ai_squish", "ai_melt", "ai_inflate", "earth_zoom"],
         "discount_percent": 25,
+        "icon": "✨"
+    },
+    "cinematic_pro_pack": {
+        "name": "Sinematik Pro Paket",
+        "description": "Hollywood kalitesinde kamera hareketleri ve derinlik",
+        "effects": ["cinematic_orbit", "parallax_3d", "zoom_out", "wide_lens"],
+        "discount_percent": 20,
+        "icon": "🎬"
+    },
+    "anime_art_pack": {
+        "name": "Anime & Sanat Paketi",
+        "description": "Fotoğrafları sanatsal şaheserlere dönüştüren stiller",
+        "effects": ["anime_style", "cartoon_style", "oil_painting", "sketch_art"],
+        "discount_percent": 35,
+        "icon": "🎌"
+    },
+    "ultimate_creator_pack": {
+        "name": "Ultimate Creator",
+        "description": "Tüm premium modellere sınırsız erişim ve özel efektler",
+        "effects": ["all_effects"],
+        "discount_percent": 50,
+        "icon": "👑"
+    }
 }
-
-# Total: 5 effect packages
-

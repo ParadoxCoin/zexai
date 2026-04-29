@@ -145,7 +145,7 @@ async def purchase_package(
     await CreditManager.check_sufficient_credits(db, current_user.id, credits_required)
     
     # Deduct credits
-    new_balance = await CreditManager.deduct_credits(db, current_user.id, credits_required)
+    new_balance = await CreditManager.deduct_credits(db, current_user.id, "package_purchase", credits_required)
     
     # Record purchase
     purchase_record = {

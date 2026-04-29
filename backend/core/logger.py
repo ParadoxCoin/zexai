@@ -11,6 +11,9 @@ def setup_logger():
     """
     Configure loguru logger with appropriate settings
     """
+    import os
+    # Ensure logs directory exists at the very beginning
+    os.makedirs("logs", exist_ok=True)
     # Force stdout to be utf-8 on Windows
     try:
         import sys

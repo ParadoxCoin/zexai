@@ -152,9 +152,10 @@ class CreditManager:
         service_type: str,
         cost: float,
         details: Dict[str, Any] = None
-    ) -> bool:
+    ) -> float:
         """
         Deduct credits from user balance and log the usage
+        Returns the new balance.
         """
         # Check balance first
         current_balance = await CreditManager.get_user_balance(db, user_id)
@@ -211,7 +212,7 @@ class CreditManager:
                 except Exception as email_error:
                     logger.warning(f"Failed to send low credits email: {email_error}")
             
-            return True
+            return new_balance
             
         except Exception as e:
             logger.error(f"Error deducting credits: {e}")

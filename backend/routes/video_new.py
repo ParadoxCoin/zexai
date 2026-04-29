@@ -992,7 +992,7 @@ async def edit_video(
     )
     
     # Deduct credits
-    await CreditManager.deduct_credits(db, current_user.id, credits_required)
+    await CreditManager.deduct_credits(db, current_user.id, "video", credits_required)
     
     # TODO: Call kie.ai or provider API for actual V2V transformation
     # For now, return task ID for async processing
