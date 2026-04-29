@@ -915,231 +915,154 @@ POLLO_VIDEO_MODELS = {
 # Total: 30 models from 13 providers
 
 POLLO_VIDEO_EFFECTS = {
-    # ============ Romantic Effects ============
-    "ai_kissing": {
-        "name": "AI Kissing",
-        "description": "İki kişiyi öpüştüren viral efekt",
-        "pollo_cost_usd": 0.10,
-        "icon": "💋",
-        "category": "romantic",
-        "requires_two_images": True
-    },
+    # ============ Viral (Kling/Pollo Style) ============
     "ai_hug": {
         "name": "AI Hug",
-        "description": "İki kişiyi sarılan efekt",
-        "pollo_cost_usd": 0.10,
+        "description": "İki kişiyi gerçekçi bir şekilde kucaklaştıran viral efekt",
+        "credits": 15,
         "icon": "🤗",
-        "category": "romantic",
-        "requires_two_images": True
+        "category": "viral",
+        "requires_two_images": True,
+        "example_url": "https://pub-2f767856338b479e951475c754024361.r2.dev/hug_example.mp4"
+    },
+    "ai_kissing": {
+        "name": "AI Kissing",
+        "description": "İki kişiyi öpüştüren romantik ve akıcı efekt",
+        "credits": 15,
+        "icon": "💋",
+        "category": "viral",
+        "requires_two_images": True,
+        "example_url": "https://pub-2f767856338b479e951475c754024361.r2.dev/kiss_example.mp4"
+    },
+    "ai_dance": {
+        "name": "AI Dance",
+        "description": "Fotoğraftaki kişiyi dans ettiren eğlenceli efekt",
+        "credits": 12,
+        "icon": "💃",
+        "category": "viral",
+        "requires_two_images": False,
+        "example_url": "https://pub-2f767856338b479e951475c754024361.r2.dev/dance_example.mp4"
+    },
+    "ai_face_swap": {
+        "name": "AI Face Swap",
+        "description": "Videonuzdaki veya fotoğrafınızdaki yüzü değiştirin",
+        "credits": 18,
+        "icon": "🎭",
+        "category": "viral",
+        "requires_two_images": True,
+        "example_url": "https://pub-2f767856338b479e951475c754024361.r2.dev/faceswap_example.mp4"
     },
     
-    # ============ Transform Effects ============
-    "earth_zoom": {
-        "name": "Earth Zoom In",
-        "description": "Dünya'dan fotoğrafınıza zoom efekti",
-        "pollo_cost_usd": 0.15,
-        "icon": "🌍",
-        "category": "transform",
-        "requires_two_images": False
+    # ============ Magic (Transformations) ============
+    "ai_squish": {
+        "name": "AI Squish",
+        "description": "Objeleri parmağınızla eziyormuş gibi gösteren efekt",
+        "credits": 10,
+        "icon": "🤏",
+        "category": "magic",
+        "requires_two_images": False,
+        "example_url": "https://pub-2f767856338b479e951475c754024361.r2.dev/squish_example.mp4"
     },
+    "ai_melt": {
+        "name": "AI Melt",
+        "description": "Objeleri sihirli bir şekilde eriten efekt",
+        "credits": 10,
+        "icon": "🫠",
+        "category": "magic",
+        "requires_two_images": False,
+        "example_url": "https://pub-2f767856338b479e951475c754024361.r2.dev/melt_example.mp4"
+    },
+    "ai_inflate": {
+        "name": "AI Inflate",
+        "description": "Objeleri balon gibi şişiren efekt",
+        "credits": 10,
+        "icon": "🎈",
+        "category": "magic",
+        "requires_two_images": False,
+        "example_url": "https://pub-2f767856338b479e951475c754024361.r2.dev/inflate_example.mp4"
+    },
+    "earth_zoom": {
+        "name": "Earth Zoom",
+        "description": "Uzaydan tam fotoğrafınıza odaklanan zoom efekt",
+        "credits": 20,
+        "icon": "🌍",
+        "category": "magic",
+        "requires_two_images": False,
+        "example_url": "https://pub-2f767856338b479e951475c754024361.r2.dev/earth_zoom.mp4"
+    },
+    
+    # ============ Cinematic (Motion) ============
     "360_rotation": {
-        "name": "360° Rotation",
-        "description": "Fotoğrafı 360 derece döndürme",
-        "pollo_cost_usd": 0.12,
+        "name": "360° Orbit",
+        "description": "Objenin etrafında tam tur dönen sinematik kamera",
+        "credits": 15,
         "icon": "🔄",
-        "category": "transform",
-        "requires_two_images": False
+        "category": "cinematic",
+        "requires_two_images": False,
+        "example_url": "https://pub-2f767856338b479e951475c754024361.r2.dev/orbit_example.mp4"
+    },
+    "parallax_3d": {
+        "name": "3D Parallax",
+        "description": "Derinlik hissi veren üç boyutlu hareket efekti",
+        "credits": 12,
+        "icon": "📐",
+        "category": "cinematic",
+        "requires_two_images": False,
+        "example_url": "https://pub-2f767856338b479e951475c754024361.r2.dev/parallax_example.mp4"
     },
     "zoom_out": {
-        "name": "AI Zoom Out",
-        "description": "Fotoğraftan uzaklaşma efekti",
-        "pollo_cost_usd": 0.10,
+        "name": "Cinematic Zoom Out",
+        "description": "Sürekli uzaklaşan profesyonel kamera hareketi",
+        "credits": 10,
         "icon": "🔍",
-        "category": "transform",
-        "requires_two_images": False
+        "category": "cinematic",
+        "requires_two_images": False,
+        "example_url": "https://pub-2f767856338b479e951475c754024361.r2.dev/zoomout_example.mp4"
     },
     
-    # ============ Celebrity & Fun ============
-    "celebrity_selfie": {
-        "name": "AI Selfie with Celebrities",
-        "description": "Ünlülerle selfie çek",
-        "pollo_cost_usd": 0.20,
-        "icon": "🌟",
-        "category": "fun",
-        "requires_two_images": False
-    },
-    "polaroid_duo": {
-        "name": "Polaroid Duo",
-        "description": "Polaroid fotoğraf efekti",
-        "pollo_cost_usd": 0.08,
-        "icon": "📸",
-        "category": "fun",
-        "requires_two_images": False
-    },
-    "ai_caricature": {
-        "name": "AI Caricature Maker",
-        "description": "Karikatür efekti",
-        "pollo_cost_usd": 0.10,
-        "icon": "🎨",
-        "category": "fun",
-        "requires_two_images": False
-    },
-    "baby_filter": {
-        "name": "AI Baby Filter",
-        "description": "Bebek yüzü filtresi",
-        "pollo_cost_usd": 0.10,
-        "icon": "👶",
-        "category": "fun",
-        "requires_two_images": False
-    },
-    
-    # ============ Animation ============
+    # ============ Artistic (Style) ============
     "anime_style": {
-        "name": "AI Anime Style",
-        "description": "Anime karakterine dönüştür",
-        "pollo_cost_usd": 0.12,
+        "name": "Anime Style",
+        "description": "Fotoğrafınızı akıcı bir anime sahnesine dönüştürür",
+        "credits": 12,
         "icon": "🎌",
-        "category": "animation",
-        "requires_two_images": False
+        "category": "artistic",
+        "requires_two_images": False,
+        "example_url": "https://pub-2f767856338b479e951475c754024361.r2.dev/anime_example.mp4"
     },
     "cartoon_style": {
-        "name": "AI Cartoon Style",
-        "description": "Çizgi film karakterine dönüştür",
-        "pollo_cost_usd": 0.12,
+        "name": "3D Cartoon",
+        "description": "Pixar tarzı bir animasyon karakterine dönüşün",
+        "credits": 12,
         "icon": "🎬",
-        "category": "animation",
-        "requires_two_images": False
+        "category": "artistic",
+        "requires_two_images": False,
+        "example_url": "https://pub-2f767856338b479e951475c754024361.r2.dev/cartoon_example.mp4"
     },
-    
-    # ============ Avatar ============
-    "talking_avatar": {
-        "name": "Photo to Video Avatar",
-        "description": "Konuşan avatar oluştur",
-        "pollo_cost_usd": 0.25,
-        "icon": "🗣️",
-        "category": "avatar",
-        "requires_two_images": False
-    },
-    "singing_avatar": {
-        "name": "AI Singing Avatar",
-        "description": "Şarkı söyleyen avatar",
-        "pollo_cost_usd": 0.30,
-        "icon": "🎤",
-        "category": "avatar",
-        "requires_two_images": False
-    },
-    
-    # ============ Time Effects ============
-    "age_progression": {
-        "name": "AI Age Progression",
-        "description": "Yaşlandırma efekti",
-        "pollo_cost_usd": 0.15,
-        "icon": "👴",
-        "category": "time",
-        "requires_two_images": False
-    },
-    "age_regression": {
-        "name": "AI Age Regression",
-        "description": "Gençleştirme efekti",
-        "pollo_cost_usd": 0.15,
-        "icon": "👦",
-        "category": "time",
-        "requires_two_images": False
-    },
-    
-    # ============ Style Transfer ============
     "oil_painting": {
-        "name": "AI Oil Painting",
-        "description": "Yağlı boya resim efekti",
-        "pollo_cost_usd": 0.10,
+        "name": "Oil Painting",
+        "description": "Yağlı boya tablosunun canlanması efekti",
+        "credits": 10,
         "icon": "🖼️",
-        "category": "style",
-        "requires_two_images": False
-    },
-    "watercolor": {
-        "name": "AI Watercolor",
-        "description": "Sulu boya efekti",
-        "pollo_cost_usd": 0.10,
-        "icon": "🎨",
-        "category": "style",
-        "requires_two_images": False
-    },
-    
-    # ============ Motion ============
-    "parallax_3d": {
-        "name": "3D Parallax Effect",
-        "description": "3D derinlik efekti",
-        "pollo_cost_usd": 0.18,
-        "icon": "📐",
-        "category": "motion",
-        "requires_two_images": False
-    },
-    "slow_motion": {
-        "name": "AI Slow Motion",
-        "description": "Ağır çekim efekti",
-        "pollo_cost_usd": 0.12,
-        "icon": "⏱️",
-        "category": "motion",
-        "requires_two_images": False
-    },
-    
-    # ============ Background ============
-    "background_removal": {
-        "name": "AI Background Removal",
-        "description": "Arka plan kaldırma",
-        "pollo_cost_usd": 0.08,
-        "icon": "✂️",
-        "category": "background",
-        "requires_two_images": False
-    },
-    "background_change": {
-        "name": "AI Background Change",
-        "description": "Arka plan değiştirme",
-        "pollo_cost_usd": 0.12,
-        "icon": "🌄",
-        "category": "background",
-        "requires_two_images": False
+        "category": "artistic",
+        "requires_two_images": False,
+        "example_url": "https://pub-2f767856338b479e951475c754024361.r2.dev/oil_example.mp4"
     }
 }
 
-# Total: 21 effects across 8 categories
-
 EFFECT_PACKAGES = {
-    "romantic_pack": {
-        "name": "Romantik Paket",
-        "description": "Sevgilinizle viral videolar için",
-        "effects": ["ai_kissing", "ai_hug", "360_rotation"],
-        "discount_percent": 20,
-        "icon": "💕"
-    },
-    "viral_pack": {
-        "name": "Viral Paket",
-        "description": "TikTok ve Instagram için",
-        "effects": ["celebrity_selfie", "earth_zoom", "ai_caricature", "baby_filter"],
-        "discount_percent": 22,
+    "viral_master_pack": {
+        "name": "Viral Master Paket",
+        "description": "Sosyal medyada patlayacak tüm viral efektler bir arada",
+        "effects": ["ai_hug", "ai_kissing", "ai_dance", "ai_face_swap"],
+        "discount_percent": 30,
         "icon": "🔥"
     },
-    "animation_pack": {
-        "name": "Animasyon Paketi",
-        "description": "Çizgi film ve anime efektleri",
-        "effects": ["anime_style", "cartoon_style", "oil_painting", "watercolor"],
-        "discount_percent": 18,
-        "icon": "🎨"
-    },
-    "avatar_pack": {
-        "name": "Avatar Paketi",
-        "description": "Konuşan ve şarkı söyleyen avatarlar",
-        "effects": ["talking_avatar", "singing_avatar", "parallax_3d"],
+    "magic_motion_pack": {
+        "name": "Sihirli Hareket Paketi",
+        "description": "Fizik kurallarını zorlayan dönüşüm efektleri",
+        "effects": ["ai_squish", "ai_melt", "ai_inflate", "earth_zoom"],
         "discount_percent": 25,
-        "icon": "🗣️"
-    },
-    "transform_pack": {
-        "name": "Dönüşüm Paketi",
-        "description": "Yaş, stil ve hareket efektleri",
-        "effects": ["age_progression", "age_regression", "slow_motion", "zoom_out"],
-        "discount_percent": 20,
-        "icon": "✨"
-    }
 }
 
 # Total: 5 effect packages

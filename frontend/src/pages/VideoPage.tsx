@@ -60,7 +60,7 @@ const VideoPage = () => {
     { id: "compare", name: t('videoGen.tabCompare', 'Karşılaştır'), icon: GitCompare, description: t('videoGen.compareDescModels', "Modelleri karşılaştır") },
     { id: "avatar", name: t('videoGen.tabAvatar', 'Avatar'), icon: User, description: t('videoGen.avatarDesc', "Avatar oluştur") },
     { id: "effects", name: t('videoGen.tabEffects', 'Efektler'), icon: Sparkles, description: t('videoGen.effectsDesc', "Video efektleri") },
-    { id: "packages", name: t('videoGen.tabPackages', 'Paketler'), icon: Package, description: t('videoGen.packagesDesc', "Efekt paketleri") },
+    // { id: "packages", name: t('videoGen.tabPackages', 'Paketler'), icon: Package, description: t('videoGen.packagesDesc', "Efekt paketleri") },
     { id: "gallery", name: t('videoGen.tabGallery', 'Galerim'), icon: FolderOpen, description: t('videoGen.galleryDesc', "Videolarım") },
   ];
 
@@ -196,17 +196,8 @@ const VideoPage = () => {
   }, [myVideosData, currentTask?.taskId]);
 
   const handlePurchasePackage = async (pkgId: string, pkgName: string, credits: number) => {
-    try {
-      setPurchaseLoading(true);
-      const response = await apiService.post("/packages/purchase", { package_id: pkgId });
-      setPurchaseSuccess(t('videoGen.purchaseSuccess', { name: pkgName, credits }));
-      queryClient.invalidateQueries({ queryKey: ["userCredits"] });
-      setTimeout(() => setPurchaseSuccess(null), 5000);
-    } catch (error: any) {
-      alert(error?.response?.data?.detail || t('videoGen.purchaseFailed'));
-    } finally {
-      setPurchaseLoading(false);
-    }
+    // Redirect to billing/pricing page for purchase
+    navigate('/billing');
   };
 
   // Upload image to get URL, then apply effect
@@ -1635,22 +1626,22 @@ const VideoPage = () => {
                 {/* Category Filters */}
                 <div className="flex flex-wrap gap-1 mb-4">
                   {[
-                    { id: 'all', name: 'Tümü', icon: '🎬' },
-                    { id: 'romantic', name: 'Romantik', icon: '💕' },
-                    { id: 'transform', name: 'Dönüşüm', icon: '🔄' },
-                    { id: 'fun', name: 'Eğlence', icon: '🎉' },
-                    { id: 'animation', name: 'Animasyon', icon: '🎨' },
-                    { id: 'avatar', name: 'Avatar', icon: '🗣️' },
+                    { id: 'all', name: 'Tümü', icon: '✨' },
+                    { id: 'viral', name: 'Viral', icon: '🔥' },
+                    { id: 'magic', name: 'Sihir', icon: '🪄' },
+                    { id: 'cinematic', name: 'Sinematik', icon: '🎥' },
+                    { id: 'artistic', name: 'Sanatsal', icon: '🎨' },
                   ].map((cat) => (
                     <button
                       key={cat.id}
                       onClick={() => setEffectCategory(cat.id)}
-                      className={`px-2 py-1 rounded-md text-xs font-medium transition-all ${effectCategory === cat.id
-                        ? 'bg-purple-500 text-white'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200'
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${effectCategory === cat.id
+                        ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-500/20'
+                        : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-100 dark:border-gray-700 hover:border-purple-300'
                         }`}
                     >
-                      {cat.icon}
+                      <span>{cat.icon}</span>
+                      <span>{cat.name}</span>
                     </button>
                   ))}
                 </div>
@@ -1691,21 +1682,18 @@ const VideoPage = () => {
                           >
                             <div className="w-12 h-12 rounded-xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
                               {effect.icon || '✨'}
-                            </div>
-                            <div className="min-w-0">
-                              <h4 className="font-bold text-gray-900 dark:text-white text-[11px] leading-tight line-clamp-1">
-                                {effect.name}
-                              </h4>
-                              <div className="mt-1 flex items-center justify-center gap-1">
-                                <span className="px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 text-[9px] font-bold rounded-md">
-                                  {effect.credits}c
-                                </span>
+                            <span className="text-4xl group-hover:scale-125 transition-transform duration-300">{effect.icon || '✨'}</span>
+                            <span className="text-[10px] font-bold text-gray-900 dark:text-white uppercase tracking-tighter line-clamp-1">{effect.name}</span>
+                            
+                            {effect.requires_two_images && (
+                              <div className="absolute top-1.5 right-1.5">
+                                <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" title="2 Görsel Gerekli" />
                               </div>
-                            </div>
-
+                            )}
+                            
                             {isSelected && (
-                              <div className="absolute -top-1 -right-1 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-gray-800">
-                                <CheckCircle className="w-3 h-3 text-white" />
+                              <div className="absolute -top-2 -right-2 w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-gray-800">
+                                <CheckCircle className="w-3.5 h-3.5 text-white" />
                               </div>
                             )}
                           </div>
@@ -1737,7 +1725,7 @@ const VideoPage = () => {
                              </div>
                              {effects.find((e: any) => e.id === effectId)?.requires_two_images && (
                                 <div className="px-4 py-2 bg-orange-500/20 backdrop-blur-md rounded-2xl border border-orange-500/30 text-orange-400 font-bold text-xs uppercase tracking-wider">
-                                   2 Image Required
+                                   2 Images Required
                                 </div>
                              )}
                           </div>
