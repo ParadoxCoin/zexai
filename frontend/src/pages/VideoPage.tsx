@@ -7,8 +7,8 @@ import {
   Star, Download, Clock, CheckCircle, Loader2, ArrowRight,
   Zap, Film, Wand2, Eye,
   Camera, Move, RotateCcw, Volume2, Maximize,
-  Timer, Crown, Search, Image, X,
-  GitCompare, User, Layers, Check, Link2
+  Timer, Crown, Search, Image, X, RefreshCw,
+  GitCompare, User, Layers, Check, Link2, Layout
 } from "lucide-react";
 import PromptEnhancer from "@/components/PromptEnhancer";
 import MotionBrushEditor from "@/components/video/MotionBrushEditor";
