@@ -1184,9 +1184,9 @@ const VideoPage = () => {
                             {["16:9", "9:16", "1:1", "21:9"].map((a) => (
                               <button
                                 key={a}
-                                onClick={() => setSelectedAspectRatio(a)}
+                                onClick={() => setAspectRatio(a)}
                                 className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border
-                                  ${selectedAspectRatio === a
+                                  ${aspectRatio === a
                                     ? 'bg-cyan-600 border-cyan-500 text-white shadow-lg shadow-cyan-600/20'
                                     : 'bg-black/40 border-white/5 text-slate-500 hover:text-slate-300'}`}
                               >
