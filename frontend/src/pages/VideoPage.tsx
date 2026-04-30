@@ -795,44 +795,65 @@ const VideoPage = () => {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Hero Header - Corporate Dark Theme */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-gray-900 via-slate-900 to-gray-900 border-b border-cyan-500/10">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(6,182,212,0.08),transparent_60%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,transparent,rgba(6,182,212,0.03),transparent)]" />
-        <div className="relative px-4 sm:px-6 py-4 sm:py-6 lg:px-8">
-          <div className="max-w-4xl mx-auto text-center text-white">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 backdrop-blur-sm mb-3">
-              <Video className="w-4 h-4 text-cyan-400" />
-              <span className="text-sm font-medium text-cyan-300">{t('videoGen.badge', 'AI Video Stüdyosu')}</span>
+    <div className="min-h-screen bg-[#030712] text-white selection:bg-cyan-500/30 overflow-x-hidden">
+      {/* Background Ambient Effects */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-900/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-900/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] brightness-100 contrast-150" />
+      </div>
+
+      {/* Hero Header */}
+      <div className="relative pt-8 pb-4 px-4 sm:px-6 lg:px-8 border-b border-white/5 bg-white/[0.01] backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex flex-col gap-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 w-fit">
+              <Film className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="text-[10px] uppercase tracking-widest font-bold text-cyan-300">
+                {t('videoGen.badge', 'AI VIDEO STUDIO')}
+              </span>
             </div>
-            <h1 className="text-2xl lg:text-3xl font-bold mb-1 text-white">
-              {t('videoGen.title', 'Video ')}<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">{t('videoGen.titleHighlight', 'Stüdyosu')}</span>
-              <span className="ml-2 text-[10px] bg-cyan-500/20 text-cyan-300 px-1.5 py-0.5 rounded-full font-bold border border-cyan-500/30">v2.6</span>
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white uppercase italic">
+              {t('videoGen.title', 'Video ')}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+                {t('videoGen.titleHighlight', 'Stüdyosu')}
+              </span>
             </h1>
-            <p className="text-sm text-gray-400">{t('videoGen.desc', 'Sora 2, Veo 3.1, Kling 2.6, Runway ve daha fazlası')}</p>
+            <p className="text-slate-400 text-sm max-w-xl font-medium uppercase tracking-wider opacity-80">
+              {t('videoGen.desc', 'Sora 2, Veo 3.1, Kling 2.6, Runway ve daha fazlası ile yüksek kaliteli üretim.')}
+            </p>
           </div>
-        </div>
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 60" fill="none" className="h-6 sm:h-8 w-full text-gray-50 dark:text-gray-900" preserveAspectRatio="none"><path d="M0 60V0C240 40 480 60 720 60C960 60 1200 40 1440 0V60H0Z" fill="currentColor" /></svg>
+
+          <div className="flex items-center gap-4 bg-black/40 p-1.5 rounded-2xl border border-white/5 backdrop-blur-xl">
+            <div className="flex flex-col items-end px-3">
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Current Balance</span>
+              <span className="text-sm font-black text-cyan-400">1.000 ZEX</span>
+            </div>
+            <button
+              onClick={() => navigate('/billing')}
+              className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-cyan-500/20"
+            >
+              Top Up
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 -mt-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Content Type Navigation */}
-        <div className="flex justify-center mb-6">
-          <div className="inline-flex bg-white dark:bg-gray-800 rounded-2xl p-1 sm:p-1.5 shadow-lg border border-gray-100 dark:border-gray-700 max-w-full overflow-x-auto scrollbar-hide">
+        <div className="flex justify-start mb-8 overflow-x-auto pb-4 scrollbar-hide">
+          <div className="flex bg-black/40 backdrop-blur-xl rounded-2xl p-1 border border-white/5">
             {contentTypes.map((type) => {
               const Icon = type.icon;
               const isActive = activeTab === type.id;
-              const gradients: Record<string, string> = {
-                'text-to-video': 'from-purple-500 to-violet-500',
-                'image-to-video': 'from-blue-500 to-cyan-500',
-                'compare': 'from-orange-500 to-red-500',
-                'effects': 'from-pink-500 to-rose-500',
-                'packages': 'from-amber-500 to-yellow-500',
-                'gallery': 'from-emerald-500 to-teal-500',
+              const activeStyles: Record<string, string> = {
+                'text-to-video': 'bg-purple-600 text-white shadow-purple-600/20',
+                'image-to-video': 'bg-blue-600 text-white shadow-blue-600/20',
+                'compare': 'bg-orange-600 text-white shadow-orange-600/20',
+                'effects': 'bg-pink-600 text-white shadow-pink-600/20',
+                'packages': 'bg-amber-600 text-white shadow-amber-600/20',
+                'gallery': 'bg-emerald-600 text-white shadow-emerald-600/20',
               };
               return (
                 <button
@@ -845,9 +866,18 @@ const VideoPage = () => {
                     setActiveTab(type.id);
                     setModelId("");
                   }}
-                  className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-medium transition-all flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm whitespace-nowrap ${isActive
-                    ? `bg-gradient-to-r ${gradients[type.id] || 'from-purple-500 to-violet-500'} text-white shadow-lg`
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  className={`px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center gap-2 whitespace-nowrap ${isActive
+                    ? `${activeStyles[type.id] || 'bg-cyan-600 text-white shadow-cyan-600/20'} shadow-lg scale-[1.02]`
+                    : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                    }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {type.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
                     }`}
                 >
                   <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -883,24 +913,24 @@ const VideoPage = () => {
           >
 
             {/* Left Panel - Model Selection */}
-            <div className="lg:col-span-1 h-[600px] flex flex-col bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div className="lg:col-span-1 h-[700px] flex flex-col bg-black/40 backdrop-blur-xl rounded-3xl border border-white/5 overflow-hidden shadow-2xl">
               {/* Search Header */}
-              <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+              <div className="p-5 border-b border-white/5 bg-white/[0.02]">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                    <Crown className="w-5 h-5 text-yellow-500" />
-                    {t('videoGen.modelsList', "Modeller")}
+                  <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                    <Crown className="w-3.5 h-3.5 text-cyan-400" />
+                    {t('videoGen.modelsList', "AVAILABLE ENGINES")}
                   </h2>
-                  <span className="text-xs text-gray-500">{modelsData?.length || 0} {t('videoGen.modelCount', 'model')}</span>
+                  <span className="text-[10px] font-black text-cyan-500/60 uppercase tracking-widest">{modelsData?.length || 0} UNITS</span>
                 </div>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <div className="relative group">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 group-focus-within:text-cyan-400 transition-colors" />
                   <input
                     type="text"
-                    placeholder={t('videoGen.searchModel', 'Model ara...')}
+                    placeholder={t('videoGen.searchModel', 'SEARCH ENGINE...')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
+                    className="w-full pl-9 pr-4 py-2.5 bg-black/40 border border-white/5 rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-300 focus:ring-1 focus:ring-cyan-500/50 outline-none placeholder:text-slate-700 transition-all"
                   />
                 </div>
               </div>
@@ -908,34 +938,37 @@ const VideoPage = () => {
               <div className="flex-1 flex overflow-hidden">
                 {/* Brand Sidebar */}
                 {!searchQuery && (
-                  <div className="w-28 sm:w-36 border-r border-gray-100 dark:border-gray-700 overflow-y-auto bg-gray-50/50 dark:bg-gray-900/20">
+                  <div className="w-28 sm:w-32 border-r border-white/5 overflow-y-auto bg-black/20">
                     {brands.map((b) => (
                       <button
                         key={b.id}
                         onClick={() => setSelectedProvider(b.id)}
-                        className={`w-full p-3 flex flex-col items-center gap-1 transition-all border-l-4 ${
+                        className={`w-full p-4 flex flex-col items-center gap-2 transition-all relative group ${
                           selectedProvider === b.id
-                            ? 'bg-white dark:bg-gray-800 border-purple-500 text-purple-600 dark:text-purple-400 shadow-sm'
-                            : 'border-transparent text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
+                            ? 'bg-cyan-500/10 text-cyan-400'
+                            : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
                         }`}
                       >
-                        <span className="text-xl">{b.icon}</span>
-                        <span className="text-[10px] font-bold text-center uppercase tracking-tight line-clamp-1">{b.name}</span>
-                        <span className="text-[9px] opacity-60 px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded-full">{b.count} {t('videoGen.versions', 'sürüm')}</span>
+                        {selectedProvider === b.id && (
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.5)]" />
+                        )}
+                        <span className="text-xl group-hover:scale-110 transition-transform">{b.icon}</span>
+                        <span className="text-[9px] font-black text-center uppercase tracking-tighter line-clamp-1">{b.name}</span>
+                        <span className="text-[8px] font-black opacity-40 px-1.5 py-0.5 bg-white/5 rounded-full">{b.count} VAR</span>
                       </button>
                     ))}
                   </div>
                 )}
 
                 {/* Models Grid */}
-                <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-hide">
                   {isLoadingModels ? (
-                    [1, 2, 3, 4].map(i => (
-                      <div key={i} className="h-20 bg-gray-100 dark:bg-gray-700 rounded-xl animate-pulse" />
+                    [1, 2, 3, 4, 5].map(i => (
+                      <div key={i} className="h-24 bg-white/5 rounded-2xl animate-pulse" />
                     ))
                   ) : filteredModels.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <p className="text-sm">{t('videoGen.noModelInCategory', 'Model bulunamadı')}</p>
+                    <div className="text-center py-12 opacity-40">
+                      <p className="text-[10px] font-black uppercase tracking-widest">{t('videoGen.noModelInCategory', 'NO ENGINES FOUND')}</p>
                     </div>
                   ) : (
                     filteredModels.map((model: any) => {
@@ -945,44 +978,38 @@ const VideoPage = () => {
                         <div
                           key={model.id}
                           onClick={() => isSupported && setModelId(model.id)}
-                          className={`relative p-3 rounded-xl transition-all border-2 ${
-                            !isSupported ? 'opacity-60 grayscale cursor-not-allowed border-gray-200 dark:border-gray-800' :
-                            isSelected ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20 shadow-md cursor-pointer' :
-                            'border-transparent bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer'
+                          className={`relative p-4 rounded-2xl transition-all border-2 group cursor-pointer overflow-hidden ${
+                            !isSupported ? 'opacity-30 grayscale cursor-not-allowed border-white/5' :
+                            isSelected ? 'border-cyan-500 bg-cyan-500/10 shadow-[0_0_20px_rgba(6,182,212,0.1)]' :
+                            'border-white/5 bg-white/5 hover:border-white/10 hover:bg-white/[0.07]'
                             }`}
                         >
-                          <div className="flex items-start justify-between mb-1">
-                            <h4 className="font-bold text-gray-900 dark:text-white text-sm line-clamp-1">
+                          <div className="flex items-start justify-between mb-2">
+                            <h4 className={`text-[11px] font-black uppercase tracking-widest line-clamp-1 transition-colors ${isSelected ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>
                               {model.baseName}
                             </h4>
-                            <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 text-xs font-bold rounded-full">
-                              {model.representative.credits}c
+                            <span className="text-[9px] font-black text-cyan-400 uppercase tracking-widest">
+                              {model.representative.credits} ZEX
                             </span>
                           </div>
 
-                          <div className="flex items-center gap-2 text-[10px] text-gray-500">
-                             <span className="px-2 py-0.5 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-md font-medium uppercase tracking-tight">
-                                {model.variants.length > 1 ? `${model.variants.length} versiyon` : model.representative.version_name || 'Standard'}
+                          <div className="flex items-center gap-2">
+                             <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-2 py-0.5 bg-black/40 rounded border border-white/5">
+                                {model.variants.length > 1 ? `${model.variants.length} VER` : model.representative.version_name || 'STD'}
                              </span>
-                             <span className="text-gray-400">•</span>
-                             <span className="uppercase font-bold text-cyan-500/70">{model.representative.resolution}</span>
+                             <span className="text-[9px] font-black text-cyan-500/60 uppercase tracking-widest">{model.representative.resolution}</span>
                           </div>
 
                           {model.representative.badge && isSupported && (
-                            <span className="mt-2 inline-block px-2 py-0.5 bg-gradient-to-r from-yellow-400/20 to-orange-400/20 text-yellow-600 dark:text-yellow-400 text-[10px] font-bold rounded border border-yellow-400/20">
+                            <div className="mt-3 inline-flex items-center gap-1.5 px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/20 rounded text-[9px] font-black text-cyan-400 uppercase tracking-widest">
+                              <Zap className="w-2.5 h-2.5" />
                               {model.representative.badge}
-                            </span>
-                          )}
-
-                          {!isSupported && (
-                            <span className="mt-2 inline-block px-2 py-0.5 bg-gray-200 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-[10px] font-bold rounded border border-gray-300 dark:border-gray-700">
-                              Yakında
-                            </span>
+                            </div>
                           )}
 
                           {isSelected && (
-                            <div className="absolute top-2 right-2 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center">
-                              <CheckCircle className="w-3 h-3 text-white" />
+                            <div className="absolute top-2 right-2 w-5 h-5 bg-cyan-500 rounded-full flex items-center justify-center shadow-lg shadow-cyan-500/40">
+                              <Check className="w-3 h-3 text-white" />
                             </div>
                           )}
                         </div>
@@ -995,27 +1022,40 @@ const VideoPage = () => {
 
 
             {/* Right Panel - Creation */}
-            <div className="lg:col-span-2 space-y-4">
+            <div className="lg:col-span-2 space-y-6">
 
               {/* Selected Model Info */}
               {selectedModel && (
-                <div className="bg-gradient-to-r from-gray-800 via-slate-800 to-gray-800 rounded-2xl p-4 text-white border border-cyan-500/20">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-bold text-lg text-white">{selectedModel.name}</h3>
-                      <p className="text-gray-400 text-sm">{selectedModel.description}</p>
+                <div className="bg-black/40 backdrop-blur-xl rounded-3xl p-6 border border-white/5 relative overflow-hidden group shadow-2xl">
+                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-3">
+                        <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter">{selectedModel.name}</h3>
+                        <span className="px-2 py-0.5 bg-white/5 border border-white/10 rounded-md text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                          {selectedModel.provider || 'AI ENGINE'}
+                        </span>
+                      </div>
+                      <p className="text-slate-400 text-xs font-medium uppercase tracking-wider opacity-60 line-clamp-1">{selectedModel.description}</p>
                     </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-cyan-400">{currentPrice}c</div>
-                      <div className="text-gray-400 text-xs">{selectedDuration || selectedModel.duration}s • {selectedResolution || selectedModel.resolution}</div>
+                    <div className="flex items-center gap-6">
+                      <div className="text-right">
+                        <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">TOTAL COST</div>
+                        <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 leading-none">{currentPrice} ZEX</div>
+                      </div>
+                      <div className="h-10 w-px bg-white/5" />
+                      <div className="text-right">
+                        <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">DYNAMICS</div>
+                        <div className="text-xs font-black text-white uppercase tracking-widest">{selectedDuration || selectedModel.duration}S / {selectedResolution || selectedModel.resolution}</div>
+                      </div>
                     </div>
                   </div>
 
                   {modelCapabilities.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-3">
+                    <div className="flex flex-wrap gap-2 mt-6">
                       {modelCapabilities.map((cap, idx) => (
-                        <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 bg-white/20 rounded-full text-xs">
-                          <cap.icon className="w-3 h-3" />
+                        <span key={idx} className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/5 rounded-xl text-[9px] font-black text-slate-400 uppercase tracking-widest hover:border-cyan-500/30 transition-all">
+                          <cap.icon className="w-3 h-3 text-cyan-400" />
                           {cap.label}
                         </span>
                       ))}
@@ -1025,18 +1065,18 @@ const VideoPage = () => {
               )}
 
               {/* Input Section - Changes based on content type */}
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+              <div className="bg-black/40 backdrop-blur-xl rounded-3xl border border-white/5 overflow-hidden shadow-2xl">
 
                 {/* Image Upload for Image-to-Video */}
                 {activeTab === "image-to-video" && (
-                  <div className="p-5 border-b border-gray-100 dark:border-gray-700">
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                      <Image className="w-5 h-5 text-purple-500" />
-                      {t('videoGen.startImage', 'Başlangıç Görseli')}
+                  <div className="p-6 border-b border-white/5">
+                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                      <Image className="w-3.5 h-3.5 text-blue-400" />
+                      {t('videoGen.startImage', 'INITIAL SOURCE IMAGE')}
                     </h3>
                     <div
-                      className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${imageFile ? 'border-purple-400 bg-purple-50 dark:bg-purple-900/20' : 'border-gray-300 dark:border-gray-600 hover:border-purple-400'
-                        }`}
+                      className={`group relative border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all duration-500 overflow-hidden
+                        ${imageFile ? 'border-blue-500 bg-blue-500/5' : 'border-white/5 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.04]'}`}
                       onClick={() => document.getElementById('image-upload')?.click()}
                     >
                       <input
@@ -1046,19 +1086,25 @@ const VideoPage = () => {
                         className="hidden"
                         onChange={(e) => setImageFile(e.target.files?.[0] || null)}
                       />
-                      {imageFile ? (
-                        <>
-                          <CheckCircle className="w-10 h-10 text-purple-500 mx-auto mb-2" />
-                          <p className="text-purple-600 font-medium">{imageFile.name}</p>
-                          <p className="text-xs text-gray-500 mt-1">{t('videoGen.uploadChangeImage', 'Değiştirmek için tıklayın')}</p>
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-                          <p className="text-gray-600 dark:text-gray-400">{t('videoGen.uploadClickImage', 'Görsel yüklemek için tıklayın')}</p>
-                          <p className="text-xs text-gray-500 mt-1">{t('videoGen.formatsImage', 'PNG, JPG, WebP')}</p>
-                        </>
-                      )}
+                      <div className="relative z-10">
+                        {imageFile ? (
+                          <div className="flex flex-col items-center">
+                            <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-blue-500/20">
+                              <Check className="w-8 h-8 text-white" />
+                            </div>
+                            <p className="text-[11px] font-black text-white uppercase tracking-widest">{imageFile.name}</p>
+                            <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-2">{t('videoGen.uploadChangeImage', 'CLICK TO REPLACE')}</p>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center">
+                            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                              <Upload className="w-6 h-6 text-slate-500 group-hover:text-white transition-colors" />
+                            </div>
+                            <p className="text-[11px] font-black text-slate-300 uppercase tracking-widest">{t('videoGen.uploadClickImage', 'DROP IMAGE HERE OR CLICK')}</p>
+                            <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest mt-2">PNG, JPG, WEBP • MIN 256PX</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1100,202 +1146,173 @@ const VideoPage = () => {
                 )}
 
                 {/* Prompt Section */}
-                <div className="p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <h2 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                      <Wand2 className="w-5 h-5 text-purple-500" />
-                      {activeTab === "video-to-video" ? t('videoGen.promptTitleV2V', "Dönüşüm Talimatı") : t('videoGen.promptTitleT2V', "Video Senaryosu")}
-                    </h2>
-                  </div>
-                  <div className="relative">
-                    <textarea
-                      value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
-                      placeholder={
-                        activeTab === "video-to-video"
-                          ? t('videoGen.promptPlaceholderV2V', "Dönüşüm talimatı yazın... (Örn: Anime stiline çevir, gece vakti yap)")
-                          : t('videoGen.promptPlaceholderT2V', "Videonuzun detaylı bir tanımını yazın...")
-                      }
-                      rows={4}
-                      disabled={isGenerating}
-                      className="w-full px-4 py-3 pr-14 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-400"
-                    />
-                    <div className="absolute right-3 top-3">
-                      <PromptEnhancer contentType="video" currentPrompt={prompt} onSelectPrompt={(p) => setPrompt(p)} />
+                <div className="p-8 border-b border-white/5">
+                  <div className="flex items-center justify-between mb-4">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                      <Wand2 className="w-3.5 h-3.5 text-cyan-400" />
+                      {t('videoGen.promptLabel', 'SYNTHESIS PARAMETERS')}
+                    </label>
+                    <div className="flex items-center gap-4">
+                      <PromptEnhancer
+                        contentType="video"
+                        currentPrompt={prompt}
+                        onSelectPrompt={(p) => setPrompt(p)}
+                      />
                     </div>
                   </div>
+                  <textarea
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    placeholder={t('videoGen.promptPlaceholder', "Describe your vision in high fidelity...")}
+                    className="w-full px-6 py-5 bg-black/40 border border-white/5 rounded-2xl text-slate-200 text-sm placeholder-slate-700 focus:ring-1 focus:ring-cyan-500/50 outline-none resize-none transition-all leading-relaxed shadow-inner"
+                    rows={4}
+                  />
                 </div>
 
-                {/* Dynamic Parameters Section - 3 Steps Flow */}
+                {/* Parameters Section */}
                 {selectedModel && (
-                  <div className="px-5 pb-5 space-y-6 border-t border-gray-100 dark:border-gray-700 pt-5 bg-gray-50/30 dark:bg-gray-900/10">
-                    
-                    {/* Step 1: Version Selection */}
-                    {availableVersions.length > 1 && (
-                      <div className="space-y-3">
-                        <h3 className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                          <Layers className="w-3.5 h-3.5" />
-                          01. {t('videoGen.stepVersion', 'Versiyon Seçimi')}
-                        </h3>
-                        <div className="flex flex-wrap gap-2">
-                          {availableVersions.map((v) => (
-                            <button
-                              key={v.id}
-                              onClick={() => {
-                                setSelectedVersionName(v.version_name);
-                                setModelId(v.id);
-                              }}
-                              className={`px-4 py-2 rounded-xl text-sm font-bold transition-all border-2 ${
-                                (selectedVersionName || selectedModel.version_name) === v.version_name
-                                  ? 'bg-purple-600 text-white border-purple-400 shadow-lg shadow-purple-500/20'
-                                  : 'bg-white dark:bg-gray-800 text-gray-500 border-gray-200 dark:border-gray-700 hover:border-purple-300'
-                              }`}
-                            >
-                              {v.version_name || "Standard"}
-                              {v.badge && <span className="ml-2 text-[8px] opacity-70 px-1.5 py-0.5 bg-white/20 rounded uppercase">{v.badge.split(' ')[0]}</span>}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Step 2 & 3: Duration & Quality */}
-                    <div className="flex flex-col md:flex-row gap-8">
-                      {/* Duration */}
-                      <div className="flex-1 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                            <Timer className="w-4 h-4" />
-                            02. {t('videoGen.stepDuration', 'Süre')}
-                          </h3>
-                          <span className="text-xs font-black text-indigo-500 bg-indigo-50 dark:bg-indigo-900/40 px-2.5 py-1 rounded-lg border border-indigo-100 dark:border-indigo-800">
-                            {selectedDuration || selectedModel.duration}s
-                          </span>
-                        </div>
-
-                        {selectedModel.slider_duration ? (
-                          <div className="px-2 pt-4 pb-2">
-                            <input
-                              type="range"
-                              min="1"
-                              max="15"
-                              step="1"
-                              value={selectedDuration || selectedModel.duration}
-                              onChange={(e) => setSelectedDuration(parseInt(e.target.value))}
-                              className="w-full h-2 bg-indigo-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-                            />
-                            <div className="flex justify-between mt-3 text-[10px] text-gray-400 font-bold">
-                              <span>1s</span>
-                              <span>5s</span>
-                              <span>10s</span>
-                              <span>15s</span>
+                  <div className="p-8 space-y-10 bg-white/[0.01]">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                      {/* Version & Duration */}
+                      <div className="space-y-8">
+                        {availableVersions.length > 1 && (
+                          <div className="space-y-4">
+                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                              <Layers className="w-3 h-3" />
+                              ENGINE VERSION
+                            </label>
+                            <div className="flex flex-wrap gap-2">
+                              {availableVersions.map((v) => (
+                                <button
+                                  key={v.id}
+                                  onClick={() => {
+                                    setSelectedVersionName(v.version_name);
+                                    setModelId(v.id);
+                                  }}
+                                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border
+                                    ${(selectedVersionName || selectedModel.version_name) === v.version_name
+                                      ? 'bg-cyan-600 border-cyan-500 text-white shadow-lg shadow-cyan-500/20'
+                                      : 'bg-black/40 border-white/5 text-slate-500 hover:text-slate-300'}`}
+                                >
+                                  {v.version_name || "STANDARD"}
+                                </button>
+                              ))}
                             </div>
                           </div>
-                        ) : (
+                        )}
+
+                        <div className="space-y-4">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                            <Timer className="w-3 h-3" />
+                            TEMPORAL DURATION
+                          </label>
                           <div className="flex flex-wrap gap-2">
                             {(selectedModel.video_caps?.durations || selectedModel.durations || [selectedModel.duration || 5]).map((d: number) => (
                               <button
                                 key={d}
                                 onClick={() => setSelectedDuration(d)}
-                                className={`px-6 py-2.5 rounded-xl text-sm font-black transition-all border-2 flex-none ${
-                                  (selectedDuration || selectedModel.duration) === d
-                                    ? 'bg-indigo-600 text-white border-indigo-400 shadow-lg shadow-indigo-500/30 scale-105'
-                                    : 'bg-white dark:bg-gray-800 text-gray-500 border-gray-100 dark:border-gray-700 hover:border-indigo-300'
-                                }`}
+                                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border
+                                  ${(selectedDuration || selectedModel.duration) === d
+                                    ? 'bg-cyan-600 border-cyan-500 text-white shadow-lg shadow-cyan-600/20'
+                                    : 'bg-black/40 border-white/5 text-slate-500 hover:text-slate-300'}`}
                               >
-                                {d}s
+                                {d} SECONDS
                               </button>
                             ))}
                           </div>
-                        )}
+                        </div>
                       </div>
 
-                      {/* Quality */}
-                      <div className="flex-1 space-y-4">
-                        <h3 className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                          <Maximize className="w-4 h-4" />
-                          03. {t('videoGen.stepQuality', 'Kalite')}
-                        </h3>
+                      {/* Resolution & Aspect */}
+                      <div className="space-y-8">
+                        <div className="space-y-4">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                            <Maximize className="w-3 h-3" />
+                            PRODUCTION QUALITY
+                          </label>
                           <div className="flex flex-wrap gap-2">
                             {(selectedModel.video_caps?.resolutions || selectedModel.resolutions || ["720p", "1080p", "4K"]).map((r: string) => (
                               <button
                                 key={r}
                                 onClick={() => setSelectedResolution(r)}
-                                className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all border-2 ${
-                                  selectedResolution === r
-                                    ? 'bg-blue-600 text-white border-blue-400 shadow-lg shadow-blue-500/30 scale-105'
-                                    : 'bg-white dark:bg-gray-800 text-gray-500 border-gray-100 dark:border-gray-700 hover:border-blue-300'
-                                }`}
+                                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border
+                                  ${selectedResolution === r
+                                    ? 'bg-cyan-600 border-cyan-500 text-white shadow-lg shadow-cyan-500/20'
+                                    : 'bg-black/40 border-white/5 text-slate-500 hover:text-slate-300'}`}
                               >
                                 {r}
                               </button>
                             ))}
                           </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                            <Move className="w-3 h-3" />
+                            FRAME ASPECT RATIO
+                          </label>
+                          <div className="flex gap-2">
+                            {[
+                              { id: '16:9', label: 'WIDESCREEN', icon: <Monitor className="w-3.5 h-3.5" /> },
+                              { id: '9:16', label: 'PORTRAIT', icon: <Smartphone className="w-3.5 h-3.5" /> },
+                              { id: '1:1', label: 'SQUARE', icon: <Square className="w-3.5 h-3.5" /> }
+                            ].map((ratio) => (
+                              <button
+                                key={ratio.id}
+                                onClick={() => setAspectRatio(ratio.id)}
+                                className={`flex-1 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border flex flex-col items-center gap-2
+                                  ${aspectRatio === ratio.id
+                                    ? 'bg-cyan-600 border-cyan-500 text-white shadow-lg shadow-cyan-600/20'
+                                    : 'bg-black/40 border-white/5 text-slate-500 hover:text-slate-300'}`}
+                              >
+                                {ratio.icon}
+                                {ratio.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    
-                    {/* Aspect Ratio (Global) */}
-                    <div className="space-y-3 pt-2">
-                      <h3 className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                        <Move className="w-3.5 h-3.5" />
-                        {t('videoGen.stepAspect', 'En-Boy Oranı')}
-                      </h3>
-                      <div className="flex gap-2">
-                        {[
-                          { id: '16:9', label: t('common.horizontal'), icon: '🖥️' },
-                          { id: '9:16', label: t('common.vertical'), icon: '📱' },
-                          { id: '1:1', label: t('common.square'), icon: '⬜' }
-                        ].map((ratio) => (
-                          <button
-                            key={ratio.id}
-                            onClick={() => setAspectRatio(ratio.id)}
-                            className={`flex-1 px-4 py-3 rounded-xl text-sm font-bold transition-all flex flex-col items-center gap-1 ${
-                              aspectRatio === ratio.id
-                                ? 'bg-white dark:bg-gray-800 border-2 border-purple-500 text-purple-600 dark:text-purple-400 shadow-lg'
-                                : 'bg-white/50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 text-gray-500 hover:border-purple-300'
-                            }`}
-                          >
-                            <span className="text-lg">{ratio.icon}</span>
-                            <span className="text-[10px] uppercase">{ratio.label}</span>
-                          </button>
-                        ))}
-                      </div>
+
+                    {/* Generate Button */}
+                    <div className="pt-6 border-t border-white/5 flex gap-4">
+                      <button
+                        onClick={() => {
+                          setPrompt("");
+                          setImageFile(null);
+                          setVideoFile(null);
+                        }}
+                        className="px-6 bg-white/5 border border-white/5 text-slate-500 rounded-2xl hover:text-white transition-all"
+                        title="RESET"
+                      >
+                        <RotateCcw className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={handleGenerate}
+                        disabled={isGenerating || !prompt || !modelId ||
+                          (activeTab === "image-to-video" && !imageFile) ||
+                          (activeTab === "video-to-video" && !videoFile)
+                        }
+                        className="flex-1 py-5 bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-black text-xs rounded-2xl shadow-xl shadow-cyan-500/20 transition-all flex items-center justify-center gap-3 uppercase tracking-[0.3em] border-t border-white/10"
+                      >
+                        {isGenerating ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            {t('videoGen.generating', 'INITIALIZING SYNTHESIS...')}
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4" />
+                            {activeTab === "text-to-video" && t('videoGen.generateBtnT2V', "EXECUTE PRODUCTION")}
+                            {activeTab === "image-to-video" && t('videoGen.generateBtnI2V', "ANIMATE SOURCE")}
+                            {activeTab === "video-to-video" && t('videoGen.generateBtnV2V', "TRANSFORM SIGNAL")}
+                          </>
+                        )}
+                      </button>
                     </div>
                   </div>
                 )}
-
-                {/* Generate Button */}
-                <div className="p-5 bg-gray-50 dark:bg-gray-900/50 flex gap-3">
-                  {selectedModel && (
-                    <button
-                      onClick={() => setModelId("")}
-                      className="px-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 rounded-xl hover:bg-gray-50 transition-colors"
-                      title={t('common.reset', 'Sıfırla')}
-                    >
-                      <RotateCcw className="w-5 h-5" />
-                    </button>
-                  )}
-                  <button
-                    onClick={handleGenerate}
-                    disabled={isGenerating || !prompt || !modelId ||
-                      (activeTab === "image-to-video" && !imageFile) ||
-                      (activeTab === "video-to-video" && !videoFile)
-                    }
-                    className="flex-1 py-4 bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/25 disabled:shadow-none transition-all flex items-center justify-center gap-2"
-                  >
-                    {isGenerating ? (
-                      <><Loader2 className="w-5 h-5 animate-spin" />{t('videoGen.generating', 'Video Oluşturuluyor...')}</>
-                    ) : (
-                      <>
-                        <Play className="w-5 h-5" />
-                        {activeTab === "text-to-video" && t('videoGen.generateBtnT2V', "Video Oluştur")}
-                        {activeTab === "image-to-video" && t('videoGen.generateBtnI2V', "Görseli Hareketlendir")}
-                        {activeTab === "video-to-video" && t('videoGen.generateBtnV2V', "Videoyu Dönüştür")}
-                        {selectedModel && ` (${currentPrice}c)`}
-                      </>
-                    )}
-                  </button>
-                </div>
+              </div>
               </div>
 
               {/* Inline Video Preview - Shows generated video on same screen */}
@@ -1375,58 +1392,54 @@ const VideoPage = () => {
           >
 
             {/* Left Panel - Model Selection */}
-            <div className="lg:col-span-1 space-y-4">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                    <GitCompare className="w-5 h-5 text-purple-500" />
-                    {t('videoGen.compareTitle', 'Modelleri Karşılaştır')}
+            <div className="lg:col-span-1 space-y-6">
+              <div className="bg-black/40 backdrop-blur-xl rounded-3xl border border-white/5 p-6 shadow-2xl">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                    <GitCompare className="w-3.5 h-3.5 text-orange-400" />
+                    {t('videoGen.compareTitle', 'ENGINE DIAGNOSTICS')}
                   </h2>
-                  <span className="text-xs text-gray-500">
-                    {selectedCompareModels.length}/4 seçili
+                  <span className="text-[10px] font-black text-orange-500/60 uppercase tracking-widest">
+                    {selectedCompareModels.length}/4 ACTIVE
                   </span>
                 </div>
 
-                <p className="text-xs text-gray-500 mb-4">
-                  {t('videoGen.compareDesc', '2-4 model seçin ve aynı prompt ile karşılaştırın')}
-                </p>
-
                 {/* Model Grid */}
-                <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+                <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1 scrollbar-hide">
                   {isLoadingModels ? (
-                    [1, 2, 3, 4].map(i => (
-                      <div key={i} className="h-16 bg-gray-100 dark:bg-gray-700 rounded-xl animate-pulse" />
+                    [1, 2, 3, 4, 5].map(i => (
+                      <div key={i} className="h-16 bg-white/5 rounded-2xl animate-pulse" />
                     ))
                   ) : allAvailableModelsSorted.map((model: any) => (
                     <button
                       key={model.id}
                       onClick={() => toggleCompareModel(model.id)}
-                      className={`w-full p-3 rounded-xl border transition-all text-left ${selectedCompareModels.includes(model.id)
-                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-purple-300'
+                      className={`w-full p-4 rounded-2xl border transition-all text-left relative overflow-hidden group ${selectedCompareModels.includes(model.id)
+                        ? 'border-orange-500 bg-orange-500/10'
+                        : 'border-white/5 bg-white/5 hover:bg-white/10'
                         }`}
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between relative z-10">
                         <div className="flex items-center gap-3">
-                          <div className={`w-6 h-6 rounded-md flex items-center justify-center text-sm ${selectedCompareModels.includes(model.id)
-                            ? 'bg-purple-500 text-white'
-                            : 'bg-gray-100 dark:bg-gray-700'
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${selectedCompareModels.includes(model.id)
+                            ? 'bg-orange-500 shadow-lg shadow-orange-500/20'
+                            : 'bg-black/40'
                             }`}>
                             {selectedCompareModels.includes(model.id) ? (
-                              <Check className="w-4 h-4" />
+                              <Check className="w-4 h-4 text-white" />
                             ) : (
-                              <span className="text-lg">{model.badge?.charAt(0) || '🎬'}</span>
+                              <span className="text-lg opacity-60 group-hover:opacity-100 transition-opacity">{model.representative.icon || '🎬'}</span>
                             )}
                           </div>
                           <div>
-                            <div className="font-medium text-sm text-gray-900 dark:text-white">
+                            <div className={`text-[11px] font-black uppercase tracking-widest transition-colors ${selectedCompareModels.includes(model.id) ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>
                                {model.baseName}
                             </div>
-                            <div className="text-[10px] text-gray-500">{model.brand}</div>
+                            <div className="text-[9px] font-black text-slate-600 uppercase tracking-tighter">{model.brand}</div>
                           </div>
                         </div>
-                        <div className="text-sm font-bold text-purple-600">
-                          {model.representative.credits}c
+                        <div className="text-[10px] font-black text-orange-400 uppercase tracking-widest">
+                          {model.representative.credits} ZEX
                         </div>
                       </div>
                     </button>
@@ -1435,13 +1448,13 @@ const VideoPage = () => {
 
                 {/* Total Credits */}
                 {selectedCompareModels.length > 0 && (
-                  <div className="mt-4 p-3 bg-purple-50 dark:bg-purple-900/30 rounded-xl">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-purple-700 dark:text-purple-300">
-                        {selectedCompareModels.length} {t('videoGen.modelCount', 'model')} seçili
+                  <div className="mt-6 p-4 bg-orange-500/10 border border-orange-500/20 rounded-2xl">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest">
+                        {selectedCompareModels.length} NODES SELECTED
                       </span>
-                      <span className="font-bold text-purple-600">
-                        Toplam: {totalCompareCredits}💎
+                      <span className="text-sm font-black text-white">
+                        {totalCompareCredits} ZEX
                       </span>
                     </div>
                   </div>
@@ -2036,56 +2049,82 @@ const VideoPage = () => {
              dragElastic={0.2}
              dragDirectionLock
              onDragEnd={handleDragEnd}
-             className="space-y-6 touch-pan-y"
+             className="space-y-8 touch-pan-y"
           >
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <FolderOpen className="w-6 h-6 text-purple-500" />
-              {t('videoGen.galleryTitle', 'Videolarım')}
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="flex flex-col gap-1">
+              <h2 className="text-2xl font-black text-white flex items-center gap-3 uppercase italic tracking-tighter">
+                <FolderOpen className="w-6 h-6 text-emerald-400" />
+                {t('videoGen.galleryTitle', 'Görsel Arşivim')}
+              </h2>
+              <span className="text-[10px] font-black text-emerald-500/60 uppercase tracking-[0.2em]">
+                DATABASE: {myVideos.length} {t('videoGen.imagesCount', 'ASSETS')}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {isLoadingMyVideos ? (
-                [1, 2, 3].map(i => <div key={i} className="aspect-video bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />)
+                [1, 2, 3, 4].map(i => <div key={i} className="aspect-video bg-white/5 rounded-2xl animate-pulse border border-white/5" />)
               ) : !Array.isArray(myVideos) || myVideos.length === 0 ? (
-                <div className="col-span-full text-center py-12">
-                  <Video className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500 font-medium">{t('videoGen.galleryNoVideos', 'Henüz video yok')}</p>
-                  <p className="text-sm text-gray-400">{t('videoGen.galleryCreateFirst', 'İlk videonuzu oluşturun!')}</p>
+                <div className="col-span-full text-center py-24 bg-black/20 rounded-3xl border border-white/5 backdrop-blur-xl">
+                  <Video className="w-16 h-16 text-slate-700 mx-auto mb-4 opacity-20" />
+                  <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{t('videoGen.galleryNoVideos', 'NO ARCHIVES DETECTED')}</p>
                 </div>
               ) : (
                 myVideos.map((video: any) => (
-                  <div key={video.id} className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-all">
-                    <div className="aspect-video bg-gray-900 relative">
+                  <div key={video.id} className="group relative bg-black/40 backdrop-blur-xl rounded-2xl overflow-hidden border border-white/5 hover:border-emerald-500/30 transition-all shadow-2xl">
+                    <div className="aspect-video bg-black relative overflow-hidden">
                       {video.url || video.file_url ? (
-                        <video src={video.url || video.file_url} className="w-full h-full object-cover" controls />
+                        <video src={video.url || video.file_url} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-black/40">
+                          <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mb-2" />
+                          <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest animate-pulse">PROCESSING</span>
                         </div>
                       )}
-                      <div className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${video.status === 'completed' ? 'bg-green-500' : video.status === 'processing' ? 'bg-yellow-500' : 'bg-gray-500'
-                        } text-white`}>
-                        {video.status === 'completed' ? t('videoGen.statusCompleted', '✓ Hazır') : video.status === 'processing' ? t('videoGen.statusProcessing', '⏳ İşleniyor') : t('videoGen.statusPending', 'Bekliyor')}
+                      
+                      {/* Status Badge */}
+                      <div className="absolute top-3 right-3 z-10">
+                        <div className={`px-2 py-1 rounded font-black text-[8px] uppercase tracking-widest shadow-lg ${
+                          video.status === 'completed' ? 'bg-emerald-600 text-white shadow-emerald-600/20' : 
+                          video.status === 'processing' ? 'bg-orange-600 text-white animate-pulse' : 
+                          'bg-slate-700 text-slate-300'
+                        }`}>
+                          {video.status === 'completed' ? 'SYNCED' : video.status === 'processing' ? 'WORKING' : 'PENDING'}
+                        </div>
                       </div>
+
+                      {/* Play Hover Overlay */}
+                      {video.status === 'completed' && (
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                          <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 scale-150 group-hover:scale-100 transition-all duration-500">
+                            <Play className="w-5 h-5 text-white fill-white ml-1" />
+                          </div>
+                        </div>
+                      )}
                     </div>
+
                     <div className="p-4">
                       {video.is_nft_minted && (
-                        <div className="flex items-center gap-1.5 mb-2 px-2.5 py-1 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 border border-purple-500/20 rounded-md w-fit">
-                          <CheckCircle className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-                          <span className="text-xs font-semibold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-400 dark:to-indigo-400">
-                            ZexAI Ecosystem NFT Olarak Basıldı
+                        <div className="flex items-center gap-1.5 mb-3 px-2 py-1 bg-purple-500/10 border border-purple-500/20 rounded w-fit">
+                          <CheckCircle className="w-3 h-3 text-purple-400" />
+                          <span className="text-[8px] font-black text-purple-400 uppercase tracking-widest">
+                            NFT MINTED
                           </span>
                         </div>
                       )}
-                      <p className="text-sm text-gray-900 dark:text-white line-clamp-2 mb-2">{video.prompt || 'Video'}</p>
-                      <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-                        <span>{video.model_name || video.model}</span>
-                        <span>{video.created_at && new Date(video.created_at).toLocaleDateString('tr-TR')}</span>
+                      <p className="text-[11px] font-medium text-slate-200 line-clamp-2 mb-4 leading-relaxed italic opacity-80 group-hover:opacity-100 transition-opacity">
+                        "{video.prompt || 'Synthesized Video Archive'}"
+                      </p>
+                      <div className="flex items-center justify-between text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4">
+                        <span className="text-emerald-500/60">{video.model_name || video.model}</span>
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-2.5 h-2.5" />
+                          {video.created_at && new Date(video.created_at).toLocaleDateString('tr-TR')}
+                        </div>
                       </div>
 
                       {/* Action Buttons */}
                       {video.status === 'completed' && (video.url || video.file_url) && (
-                        <div className="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-gray-700 flex-wrap">
-                          {/* NFT Mint Button */}
+                        <div className="flex items-center gap-2 pt-4 border-t border-white/5 flex-wrap">
                           {!video.is_nft_minted && (
                             <button
                               onClick={(e) => {
@@ -2093,32 +2132,13 @@ const VideoPage = () => {
                                 setSelectedVideoForNft(video);
                                 setNftModalOpen(true);
                               }}
-                              className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow hover:from-purple-600 hover:to-indigo-600"
-                              title="NFT Olarak Bas"
+                              className="px-3 py-1.5 rounded-lg bg-purple-600 text-white text-[9px] font-black uppercase tracking-widest hover:bg-purple-500 transition-all shadow-lg shadow-purple-500/20"
                             >
-                              💎 NFT Yap
+                              <Sparkles className="w-3 h-3 inline mr-1" />
+                              MINT NFT
                             </button>
                           )}
 
-                          {/* Showcase Toggle */}
-                          <button
-                            onClick={async () => {
-                              try {
-                                await apiService.post(`/video/my-videos/${video.id}/showcase`, { is_showcase: !video.is_showcase });
-                                queryClient.invalidateQueries({ queryKey: ["myVideos"] });
-                              } catch (e) { console.error(e); }
-                            }}
-                            className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors ${video.is_showcase
-                              ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                              : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20'
-                              }`}
-                            title={video.is_showcase ? "Showcase'dan kaldır" : "Showcase'a ekle"}
-                          >
-                            <Star className={`w-3.5 h-3.5 ${video.is_showcase ? 'fill-yellow-500' : ''}`} />
-                            <span className="hidden sm:inline">{video.is_showcase ? 'Showcase' : t('videoGen.share', 'Paylaş')}</span>
-                          </button>
-
-                          {/* Download */}
                           <button
                             onClick={async (e) => {
                               e.stopPropagation();
@@ -2138,8 +2158,8 @@ const VideoPage = () => {
                                 window.open(video.url || video.file_url, '_blank');
                               }
                             }}
-                            className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 text-xs font-medium transition-colors"
-                            title="İndir"
+                            className="p-2 bg-white/5 rounded-lg text-slate-400 hover:bg-white/10 hover:text-white transition-all border border-white/5"
+                            title="DOWNLOAD"
                           >
                             <Download className="w-3.5 h-3.5" />
                           </button>
@@ -2147,10 +2167,7 @@ const VideoPage = () => {
                           {/* Share to Earn - Twitter */}
                           <button
                             onClick={(e) => {
-                              // 1. Synchronous popup bypass wrapper
                               window.open(`https://twitter.com/intent/tweet?text=ZexAI ile ürettiğim muhteşem videoya göz atın! 🚀&url=${encodeURIComponent(video.url || video.file_url)}`, '_blank');
-
-                              // 2. Async reward logic
                               apiService.post('/social/share', { content_type: 'video', content_id: video.id, platform: 'twitter' })
                                 .then((response) => {
                                   const data = response?.data || response;
@@ -2159,21 +2176,19 @@ const VideoPage = () => {
                                     alert('🎉 Harika! X (Twitter) paylaşımınız için hesabınıza 5 AI Kredisi eklendi!');
                                   }
                                 })
-                                .catch((err) => {
-                                  console.log('Reward already claimed or error', err);
-                                });
+                                .catch((err) => { console.log('Reward already claimed or error', err); });
                             }}
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-xs font-semibold transition-colors border border-blue-200 dark:border-blue-800/50 shadow-sm"
-                            title="Twitter'da Paylaş & Kazan"
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-[9px] font-black text-slate-300 uppercase tracking-widest hover:bg-cyan-500/10 hover:border-cyan-500/30 transition-all"
+                            title="X (TWITTER) SHARE"
                           >
-                            <span className="text-black dark:text-white font-bold">𝕏</span> Twitter <span className="text-[10px] bg-blue-100 dark:bg-blue-800 px-1 py-0.5 rounded text-blue-700 dark:text-blue-300">+5c</span>
+                            <span className="text-white">𝕏</span>
+                            <span className="text-cyan-400">+5 ZEX</span>
                           </button>
 
                           {/* Share to Earn - Facebook */}
                           <button
                             onClick={(e) => {
                               window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(video.url || video.file_url)}`, '_blank');
-
                               apiService.post('/social/share', { content_type: 'video', content_id: video.id, platform: 'facebook' })
                                 .then((response) => {
                                   const data = response?.data || response;
@@ -2182,72 +2197,26 @@ const VideoPage = () => {
                                     alert('Facebook üzerinden paylaştığınız için 5 kredi kazandınız!');
                                   }
                                 })
-                                .catch((err) => {
-                                  console.log('Reward already claimed or error', err);
-                                });
+                                .catch((err) => { console.log('Reward already claimed or error', err); });
                             }}
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-xs font-semibold transition-colors border border-indigo-200 dark:border-indigo-800/50 shadow-sm"
-                            title="Facebook'ta Paylaş & Kazan"
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-[9px] font-black text-slate-300 uppercase tracking-widest hover:bg-blue-500/10 hover:border-blue-500/30 transition-all"
+                            title="FACEBOOK SHARE"
                           >
-                            <span className="text-blue-600 font-bold">f</span> Facebook <span className="text-[10px] bg-indigo-100 dark:bg-indigo-800 px-1 py-0.5 rounded text-indigo-700 dark:text-indigo-300">+15c</span>
+                            <span className="text-blue-500 font-bold">f</span>
+                            <span className="text-blue-400">+15 ZEX</span>
                           </button>
-                          <a
-                            href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(video.url || video.file_url)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
-                          >
-                            <span className="text-blue-700 font-bold">in</span> LinkedIn
-                          </a>
-                          <a
-                            href={`https://t.me/share/url?url=${encodeURIComponent(video.url || video.file_url)}&text=AI ile üretilmiş video!`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
-                          >
-                            <span className="text-blue-500">✈️</span> Telegram
-                          </a>
-                          <a
-                            href={`https://api.whatsapp.com/send?text=AI ile üretilmiş video! ${encodeURIComponent(video.url || video.file_url)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
-                          >
-                            <span className="text-green-500">📱</span> WhatsApp
-                          </a>
-                          <a
-                            href={`https://www.youtube.com/upload`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
-                          >
-                            <span className="text-red-600">▶️</span> YouTube
-                          </a>
-                          <a
-                            href={`https://www.tiktok.com/upload`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
-                          >
-                            <span>🎵</span> TikTok
-                          </a>
-                          <a
-                            href={`https://www.instagram.com/`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
-                          >
-                            <span className="text-pink-500">📷</span> Instagram
-                          </a>
-                          <button
-                            onClick={() => {
-                              navigator.clipboard.writeText(video.url || video.file_url);
-                              alert(t('videoGen.linkCopied', 'Link kopyalandı!'));
-                            }}
-                            className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm border-t border-gray-100 dark:border-gray-700"
-                          >
-                            <Link2 className="w-4 h-4" /> {t('videoGen.copyLink', 'Linki Kopyala')}
-                          </button>
+                          <div className="flex items-center gap-3 ml-auto">
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(video.url || video.file_url);
+                                alert(t('videoGen.linkCopied', 'Link kopyalandı!'));
+                              }}
+                              className="p-2 bg-white/5 rounded-lg text-slate-400 hover:bg-white/10 hover:text-white transition-all border border-white/5"
+                              title="COPY LINK"
+                            >
+                              <Link2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
                       )}
                     </div>

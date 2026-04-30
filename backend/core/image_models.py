@@ -6,24 +6,35 @@ FAL.AI (fastest, cheapest), Replicate (variety), Pollo.ai (premium)
 # FAL.AI Models (15 models) - Fastest and most cost-effective
 FAL_IMAGE_MODELS = {
     # Flux Models
-    "fal_flux_pro": {
+    # Flux v1.1 Models
+    "fal_flux_v1_1_pro": {
         "provider": "FAL.AI",
-        "name": "Flux Pro",
+        "name": "Flux v1.1 Pro",
         "type": "text_to_image",
         "cost_usd": 0.05,
         "quality": 5,
         "speed": "fast",
-        "badge": "⚡ En Hızlı!",
-        "description": "En hızlı ve kaliteli model"
+        "badge": "💎 Yeni v1.1",
+        "description": "En yeni ve en kaliteli Flux v1.1 Pro"
+    },
+    "fal_flux_pro": {
+        "provider": "FAL.AI",
+        "name": "Flux Pro",
+        "type": "text_to_image",
+        "cost_usd": 0.04,
+        "quality": 5,
+        "speed": "fast",
+        "badge": "⚡ Hızlı",
+        "description": "Güvenilir ve kaliteli Flux Pro"
     },
     "fal_flux_dev": {
         "provider": "FAL.AI",
         "name": "Flux Dev",
         "type": "text_to_image",
-        "cost_usd": 0.025,
+        "cost_usd": 0.02,
         "quality": 4,
         "speed": "fast",
-        "badge": "💰 En Ekonomik!",
+        "badge": "💰 Ekonomik",
         "description": "Hızlı ve uygun fiyatlı"
     },
     "fal_flux_schnell": {
@@ -33,8 +44,8 @@ FAL_IMAGE_MODELS = {
         "cost_usd": 0.01,
         "quality": 3,
         "speed": "very_fast",
-        "badge": "⚡ Süper Hızlı!",
-        "description": "2 saniyede görsel"
+        "badge": "⚡ Ultra Hızlı",
+        "description": "Saniyeler içinde görsel"
     },
     
     # SDXL Models
@@ -239,10 +250,82 @@ REPLICATE_IMAGE_MODELS = {
     }
 }
 
-# NOTE: Pollo.ai does NOT have image generation API
-# Pollo.ai is VIDEO-ONLY provider
-# These models are placeholders and should be removed or replaced
-POLLO_IMAGE_MODELS = {}
+# Premium Models (Pollo.ai Wrapper / Custom)
+POLLO_IMAGE_MODELS = {
+    # Flux v1.1 Series - Next-Gen Synthesis
+    "pollo_flux_1_1_pro": {
+        "provider": "Premium",
+        "name": "FLUX V1.1 PRO [STABLE]",
+        "type": "text_to_image",
+        "cost_usd": 0.0875,
+        "quality": 5,
+        "speed": "fast",
+        "badge": "💎 NEURAL ELITE",
+        "description": "Ultra-fidelity neural synthesis engine for professional-grade imaging."
+    },
+    "pollo_flux_1_1_dev": {
+        "provider": "Premium",
+        "name": "FLUX V1.1 DEV [ALPHA]",
+        "type": "text_to_image",
+        "cost_usd": 0.035,
+        "quality": 4,
+        "speed": "fast",
+        "badge": "🔬 DEV CORE",
+        "description": "Balanced high-fidelity synthesis for iterative design workflows."
+    },
+    "pollo_flux_1_1_schnell": {
+        "provider": "Premium",
+        "name": "FLUX V1.1 SCHNELL [TURBO]",
+        "type": "text_to_image",
+        "cost_usd": 0.0175,
+        "quality": 3,
+        "speed": "very_fast",
+        "badge": "⚡ TURBO CORE",
+        "description": "Real-time rapid synthesis for immediate visual prototyping."
+    },
+    
+    # Premium Specialized - Industry Giants
+    "pollo_midjourney_v6": {
+        "provider": "Pollo.ai",
+        "name": "MIDJOURNEY V6 CINEMA",
+        "type": "text_to_image",
+        "cost_usd": 0.15,
+        "quality": 5,
+        "speed": "medium",
+        "badge": "🏆 ARTISTIC GOLD",
+        "description": "The global benchmark for artistic and cinematic visual excellence."
+    },
+    "pollo_dalle3": {
+        "provider": "OpenAI",
+        "name": "DALL-E 3 NEURAL SYSTEM",
+        "type": "text_to_image",
+        "cost_usd": 0.10,
+        "quality": 5,
+        "speed": "medium",
+        "badge": "🤖 LOGIC CORE",
+        "description": "Sophisticated semantic understanding and complex prompt execution."
+    },
+    "pollo_ideogram_v2_1": {
+        "provider": "Premium",
+        "name": "IDEOGRAM V2.1 TYPOGRAPHY",
+        "type": "text_to_image",
+        "cost_usd": 0.0725,
+        "quality": 5,
+        "speed": "medium",
+        "badge": "📝 TEXT MASTER",
+        "description": "State-of-the-art typographic rendering and graphic design synthesis."
+    },
+    "pollo_recraft_v3": {
+        "provider": "Premium",
+        "name": "RECRAFT V3 VECTOR",
+        "type": "text_to_image",
+        "cost_usd": 0.075,
+        "quality": 5,
+        "speed": "fast",
+        "badge": "🎨 DESIGN PRO",
+        "description": "Industrial-grade vector synthesis and professional illustration logic."
+    }
+}
 
 # Image Tools (10 tools)
 IMAGE_TOOLS = {

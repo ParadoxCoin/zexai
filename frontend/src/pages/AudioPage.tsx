@@ -182,36 +182,40 @@ const AudioPage = () => {
       </div>
 
       {/* Hero Header */}
-      <div className="relative pt-8 pb-4 px-4 sm:px-6 lg:px-8 border-b border-white/5 bg-white/[0.01] backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex flex-col gap-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/10 border border-pink-500/20 w-fit">
+      <div className="relative pt-12 pb-10 px-8 border-b border-white/5 bg-white/[0.01] backdrop-blur-md overflow-hidden">
+        <div className="absolute top-0 right-0 p-8 opacity-10">
+          <Waves className="w-64 h-64 text-pink-500" />
+        </div>
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-10 relative z-10">
+          <div className="flex flex-col gap-4">
+            <div className="inline-flex items-center gap-2.5 px-3 py-1 rounded-full bg-pink-500/10 border border-pink-500/20 w-fit">
               <Headphones className="w-3.5 h-3.5 text-pink-400" />
-              <span className="text-[10px] uppercase tracking-widest font-bold text-pink-300">
-                {t('audio.badge', 'AI AUDIO STUDIO')}
+              <span className="text-[10px] uppercase tracking-[0.2em] font-black text-pink-400">
+                {t('audio.badge', 'NEURAL AUDIO ENGINE')}
               </span>
             </div>
-            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white uppercase italic">
-              {t('audio.title', 'Sesini ')}
+            <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-white uppercase italic leading-none">
+              {t('audio.title', 'SONIC ')}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-pink-500">
-                {t('audio.titleHighlight', 'Yeniden Yarat')}
+                {t('audio.titleHighlight', 'SYNTHESIS')}
               </span>
             </h1>
-            <p className="text-slate-400 text-sm max-w-xl font-medium uppercase tracking-wider opacity-80">
-              {t('audio.desc', 'Metinleri sese dönüştürün veya AI ile müzik besteleyin')}
+            <p className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] max-w-xl opacity-80 leading-relaxed">
+              {t('audio.desc', 'GENERATE HIGH-FIDELITY SPEECH, ATMOSPHERIC SOUNDSCAPES, AND NEURAL CLONES.')}
             </p>
           </div>
 
-          <div className="flex items-center gap-4 bg-black/40 p-1.5 rounded-2xl border border-white/5 backdrop-blur-xl">
-            <div className="flex flex-col items-end px-3">
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Current Balance</span>
-              <span className="text-sm font-black text-pink-400">{userAudio?.credits || 0} ZEX</span>
+          <div className="flex items-center gap-6 bg-black/60 p-4 rounded-3xl border border-white/10 backdrop-blur-2xl shadow-2xl">
+            <div className="flex flex-col items-end gap-1">
+              <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest">SYSTEM CREDITS</span>
+              <span className="text-xl font-black text-white">{userAudio?.credits || 0} <span className="text-pink-500">ZEX</span></span>
             </div>
+            <div className="h-10 w-px bg-white/10" />
             <button
               onClick={() => window.location.href = '/billing'}
-              className="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-pink-500/20"
+              className="px-6 py-3 bg-pink-600 hover:bg-pink-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-lg shadow-pink-600/20 border-t border-white/20 active:scale-95"
             >
-              Top Up
+              UPGRADE
             </button>
           </div>
         </div>
@@ -220,30 +224,34 @@ const AudioPage = () => {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Tab Navigation */}
-        <div className="flex bg-black/40 backdrop-blur-xl border border-white/5 p-1 rounded-2xl w-fit mb-8">
-          {tabs.map((tab) => {
-            if (tab.id === 'packages') return null; // Hide packages for now
-            const isActive = activeTab === tab.id;
-            const gradients: Record<string, string> = {
-              'tts': 'bg-rose-500 shadow-rose-500/20',
-              'music': 'bg-purple-500 shadow-purple-500/20',
-              'voice': 'bg-blue-500 shadow-blue-500/20',
-              'library': 'bg-emerald-500 shadow-emerald-500/20',
-            };
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center gap-2 ${isActive
-                  ? `${gradients[tab.id] || 'bg-rose-500'} text-white shadow-lg`
-                  : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
-                  }`}
-              >
-                <tab.icon className="w-3.5 h-3.5" />
-                {tab.name}
-              </button>
-            );
-          })}
+        <div className="flex items-center justify-center mb-12">
+          <div className="flex bg-black/60 backdrop-blur-2xl border border-white/5 p-1.5 rounded-3xl shadow-2xl">
+            {tabs.map((tab) => {
+              if (tab.id === 'packages') return null;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-8 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center gap-3 relative overflow-hidden group ${isActive
+                    ? 'text-white'
+                    : 'text-slate-500 hover:text-slate-300'
+                    }`}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeTabAudio"
+                      className="absolute inset-0 bg-gradient-to-r from-rose-600 to-pink-600 shadow-xl shadow-pink-600/20"
+                      initial={false}
+                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                    />
+                  )}
+                  <tab.icon className={`w-4 h-4 relative z-10 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : 'text-slate-500'}`} />
+                  <span className="relative z-10">{tab.name}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* TTS Tab */}
@@ -405,46 +413,46 @@ const AudioPage = () => {
              dragElastic={0.2}
              dragDirectionLock
              onDragEnd={handleDragEnd}
-             className="space-y-6 touch-pan-y"
+             className="space-y-8 touch-pan-y"
           >
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-                <Music className="w-6 h-6 text-pink-500" />
-                {t('audio.musicTitle')}
+            <div className="bg-black/40 backdrop-blur-xl rounded-3xl border border-white/5 p-8 shadow-2xl">
+              <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
+                <Music className="w-3.5 h-3.5 text-purple-400" />
+                {t('audio.musicTitle', 'ATMOSPHERIC COMPOSITION')}
               </h2>
 
               {/* Genre Selection */}
-              <div className="mb-6">
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{t('audio.musicSelectGenre')}</h3>
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+              <div className="mb-10">
+                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6">{t('audio.musicSelectGenre', 'GENRE SELECTOR')}</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
                   {musicGenres.map((genre) => (
                     <button
                       key={genre.id}
                       onClick={() => setSelectedGenre(genre.id)}
-                      className={`relative p-4 rounded-xl text-center transition-all ${selectedGenre === genre.id
-                        ? `bg-gradient-to-br ${genre.color} text-white shadow-lg scale-105`
-                        : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      className={`relative p-6 rounded-2xl text-center transition-all border group ${selectedGenre === genre.id
+                        ? `bg-gradient-to-br ${genre.color} border-white/20 text-white shadow-xl scale-[1.02]`
+                        : 'bg-white/5 border-white/5 text-slate-500 hover:text-slate-300 hover:bg-white/10'
                         }`}
                     >
-                      <span className="text-3xl block mb-2">{genre.icon}</span>
-                      <span className="text-xs font-medium">{(t(`audio.musicGenres.${genre.id}`, genre.name))}</span>
+                      <span className="text-3xl block mb-3 group-hover:scale-110 transition-transform">{genre.icon}</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest block">{(t(`audio.musicGenres.${genre.id}`, genre.name))}</span>
                     </button>
                   ))}
                 </div>
               </div>
 
               {/* Mood Selection */}
-              <div className="mb-6">
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{t('audio.musicMood')}</h3>
+              <div className="mb-10">
+                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6">{t('audio.musicMood', 'EMOTIONAL STATE')}</h3>
                 <div className="flex flex-wrap gap-2">
                   {['happy', 'sad', 'epic', 'calm', 'energetic', 'romantic'].map((m) => {
                     return (
                       <button
                         key={m}
                         onClick={() => setMood(m)}
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${mood === m
-                          ? 'bg-pink-500 text-white'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200'
+                        className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${mood === m
+                          ? 'bg-purple-600 border-purple-500 text-white shadow-lg'
+                          : 'bg-black/40 border-white/5 text-slate-500 hover:text-slate-300'
                           }`}
                       >
                         {t(`audio.musicMoods.${m}`)}
@@ -454,21 +462,24 @@ const AudioPage = () => {
                 </div>
               </div>
 
-              <textarea
-                value={musicPrompt}
-                onChange={(e) => setMusicPrompt(e.target.value)}
-                placeholder={t('audio.musicPlaceholder')}
-                rows={3}
-                disabled={isGeneratingMusic}
-                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl resize-none focus:ring-2 focus:ring-pink-500 mb-4"
-              />
+              <div className="relative mb-8">
+                <textarea
+                  value={musicPrompt}
+                  onChange={(e) => setMusicPrompt(e.target.value)}
+                  placeholder={t('audio.musicPlaceholder', 'Describe the soundscape or composition details...')}
+                  rows={4}
+                  disabled={isGeneratingMusic}
+                  className="w-full px-6 py-5 bg-black/40 border border-white/5 rounded-2xl text-slate-200 text-sm placeholder-slate-700 focus:ring-1 focus:ring-purple-500/50 outline-none resize-none transition-all leading-relaxed shadow-inner"
+                />
+              </div>
 
               <button
                 onClick={handleMusicSubmit}
                 disabled={isGeneratingMusic || (!musicPrompt.trim() && !selectedGenre)}
-                className="w-full py-4 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all">
-                {isGeneratingMusic ? <Loader2 className="w-5 h-5 animate-spin" /> : <Music className="w-5 h-5" />}
-                {isGeneratingMusic ? t('audio.generating') : t('audio.musicGenerateBtn')}
+                className="w-full py-5 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-black text-xs uppercase tracking-[0.3em] rounded-2xl shadow-xl shadow-purple-600/20 transition-all flex items-center justify-center gap-3 border-t border-white/10"
+              >
+                {isGeneratingMusic ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                {isGeneratingMusic ? t('audio.generating', 'COMPOSING...') : t('audio.musicGenerateBtn', 'EXECUTE COMPOSITION')}
               </button>
             </div>
           </motion.div>
@@ -487,141 +498,160 @@ const AudioPage = () => {
              dragElastic={0.2}
              dragDirectionLock
              onDragEnd={handleDragEnd}
-             className="max-w-2xl mx-auto space-y-6 touch-pan-y"
+             className="max-w-4xl mx-auto space-y-10 touch-pan-y"
           >
             {/* Clone New Voice */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-8">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-                <Mic className="w-6 h-6 text-pink-500" />
-                {t('audio.cloneTitle')}
+            <div className="bg-black/40 backdrop-blur-xl rounded-3xl border border-white/5 p-10 shadow-2xl">
+              <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-10 flex items-center gap-2">
+                <Mic className="w-3.5 h-3.5 text-blue-400" />
+                {t('audio.cloneTitle', 'NEURAL VOICE CLONING')}
               </h2>
 
-              {/* Voice Name Input */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {t('audio.cloneVoiceNameLabel')}
-                </label>
-                <input
-                  type="text"
-                  value={voiceName}
-                  onChange={(e) => setVoiceName(e.target.value)}
-                  placeholder={t('audio.cloneVoiceNamePlaceholder')}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-pink-500"
-                />
-              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <div className="space-y-8">
+                  {/* Voice Name Input */}
+                  <div>
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 block">
+                      {t('audio.cloneVoiceNameLabel', 'IDENTIFIER NAME')}
+                    </label>
+                    <input
+                      type="text"
+                      value={voiceName}
+                      onChange={(e) => setVoiceName(e.target.value)}
+                      placeholder={t('audio.cloneVoiceNamePlaceholder', 'E.g. Professional Narrative...')}
+                      className="w-full px-5 py-4 bg-black/40 border border-white/5 rounded-2xl text-slate-200 text-sm focus:ring-1 focus:ring-blue-500/50 outline-none transition-all shadow-inner"
+                    />
+                  </div>
 
-              {/* File Upload */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {t('audio.cloneAudioFileLabel')}
-                </label>
-                <div
-                  className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${audioFile
-                    ? 'border-pink-400 bg-pink-50 dark:bg-pink-900/20'
-                    : 'border-gray-300 dark:border-gray-600 hover:border-pink-400'
-                    }`}
-                  onClick={() => document.getElementById('voiceFileInput')?.click()}
-                >
-                  <input
-                    id="voiceFileInput"
-                    type="file"
-                    accept="audio/*"
-                    className="hidden"
-                    onChange={(e) => setAudioFile(e.target.files?.[0] || null)}
-                  />
-                  {audioFile ? (
-                    <>
-                      <Music className="w-12 h-12 text-pink-500 mx-auto mb-3" />
-                      <p className="text-pink-600 dark:text-pink-400 font-medium">{audioFile.name}</p>
-                      <p className="text-xs text-gray-500 mt-1">{t('audio.cloneUploadChange')}</p>
-                    </>
-                  ) : (
-                    <>
-                      <Mic className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                      <p className="text-gray-600 dark:text-gray-400 mb-2">{t('audio.cloneUploadClick')}</p>
-                      <p className="text-xs text-gray-500">{t('audio.cloneUploadReqs')}</p>
-                    </>
-                  )}
+                  {/* File Upload */}
+                  <div>
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 block">
+                      {t('audio.cloneAudioFileLabel', 'SOURCE SIGNAL')}
+                    </label>
+                    <div
+                      className={`border-2 border-dashed rounded-3xl p-10 text-center transition-all cursor-pointer group ${audioFile
+                        ? 'border-blue-500 bg-blue-500/5'
+                        : 'border-white/5 bg-white/[0.02] hover:border-blue-500/50 hover:bg-blue-500/5'
+                        }`}
+                      onClick={() => document.getElementById('voiceFileInput')?.click()}
+                    >
+                      <input
+                        id="voiceFileInput"
+                        type="file"
+                        accept="audio/*"
+                        className="hidden"
+                        onChange={(e) => setAudioFile(e.target.files?.[0] || null)}
+                      />
+                      {audioFile ? (
+                        <>
+                          <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/20">
+                            <Music className="w-8 h-8 text-white" />
+                          </div>
+                          <p className="text-blue-400 font-black text-[11px] uppercase tracking-widest truncate max-w-xs mx-auto">{audioFile.name}</p>
+                          <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest mt-2">{t('audio.cloneUploadChange', 'CLICK TO RE-UPLOAD')}</p>
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                            <Mic className="w-8 h-8 text-slate-500 group-hover:text-blue-400 transition-colors" />
+                          </div>
+                          <p className="text-[11px] font-black text-slate-300 uppercase tracking-widest">{t('audio.cloneUploadClick', 'DROP SIGNAL FILE OR CLICK')}</p>
+                          <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest mt-2">MP3, WAV, M4A • MAX 10MB</p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-8">
+                  {/* Tips */}
+                  <div className="bg-blue-500/5 border border-blue-500/10 p-6 rounded-3xl">
+                    <h4 className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-4">{t('audio.cloneTipsTitle', 'BEST PRACTICES')}</h4>
+                    <ul className="space-y-3">
+                      {[1, 2, 3].map(i => (
+                        <li key={i} className="flex gap-3 text-[11px] text-slate-400 font-medium leading-relaxed italic">
+                          <span className="text-blue-500 font-black">0{i}.</span>
+                          {t(`audio.cloneTip${i}`)}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Messages */}
+                  <AnimatePresence>
+                    {(cloneError || cloneSuccess) && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        className={`p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 ${cloneError ? 'bg-red-500/10 border border-red-500/20 text-red-400' : 'bg-green-500/10 border border-green-500/20 text-green-400'}`}
+                      >
+                        {cloneError ? <X className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
+                        {cloneError || cloneSuccess}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Clone Button */}
+                  <button
+                    onClick={handleVoiceClone}
+                    disabled={isCloning || !audioFile || !voiceName.trim()}
+                    className="w-full py-5 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-black text-xs uppercase tracking-[0.3em] rounded-2xl shadow-xl shadow-blue-600/20 transition-all flex items-center justify-center gap-3 border-t border-white/10 active:scale-95"
+                  >
+                    {isCloning ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        {t('audio.cloning', 'CLONING SIGNAL...')}
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" />
+                        {t('audio.cloneBtn', 'INITIALIZE CLONING')} (100 ZEX)
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
-
-              {/* Messages */}
-              {cloneError && (
-                <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400">
-                  {cloneError}
-                </div>
-              )}
-              {cloneSuccess && (
-                <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl text-green-600 dark:text-green-400">
-                  {cloneSuccess}
-                </div>
-              )}
-
-              {/* Tips */}
-              <div className="bg-pink-50 dark:bg-pink-900/20 p-4 rounded-xl mb-6">
-                <h4 className="font-medium text-pink-900 dark:text-pink-300 mb-2">{t('audio.cloneTipsTitle')}</h4>
-                <ul className="text-sm text-pink-800 dark:text-pink-200 space-y-1">
-                  <li>{t('audio.cloneTip1')}</li>
-                  <li>{t('audio.cloneTip2')}</li>
-                  <li>{t('audio.cloneTip3')}</li>
-                </ul>
-              </div>
-
-              {/* Clone Button */}
-              <button
-                onClick={handleVoiceClone}
-                disabled={isCloning || !audioFile || !voiceName.trim()}
-                className="w-full py-4 bg-gradient-to-r from-rose-500 to-pink-500 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all"
-              >
-                {isCloning ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    {t('audio.cloning')}
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-5 h-5" />
-                    {t('audio.cloneBtn')} (100 ZEX)
-                  </>
-                )}
-              </button>
             </div>
 
             {/* My Cloned Voices */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-6">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                <Volume2 className="w-5 h-5 text-pink-500" />
-                {t('audio.clonedVoicesTitle')}
+            <div className="bg-black/40 backdrop-blur-xl rounded-3xl border border-white/5 p-8 shadow-2xl">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
+                <Volume2 className="w-3.5 h-3.5 text-blue-400" />
+                {t('audio.clonedVoicesTitle', 'REGISTERED VOICES')}
               </h3>
 
               {isLoadingVoices ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-pink-500" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[1, 2, 3].map(i => <div key={i} className="h-20 bg-white/5 rounded-2xl animate-pulse border border-white/5" />)
                 </div>
               ) : myVoices.length === 0 ? (
-                <p className="text-center text-gray-500 py-8">{t('audio.noClonedVoices')}</p>
+                <div className="text-center py-12 bg-white/[0.02] rounded-3xl border border-white/5">
+                  <Mic className="w-10 h-10 text-slate-700 mx-auto mb-4" />
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('audio.noClonedVoices', 'NO REGISTERED SIGNALS')}</p>
+                </div>
               ) : (
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {myVoices.map((voice: any) => (
-                    <div key={voice.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-xl">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center">
-                          <Mic className="w-5 h-5 text-white" />
+                    <div key={voice.id} className="flex items-center justify-between p-5 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-all group">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                          <Mic className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900 dark:text-white">{voice.name}</p>
-                          <p className="text-xs text-gray-500">
-                            {voice.status === 'ready' ? t('audio.statusReady') :
-                              voice.status === 'processing' ? t('audio.statusProcessing') :
-                                voice.status === 'failed' ? t('audio.statusFailed') : voice.status}
+                          <p className="font-black text-[11px] text-white uppercase tracking-widest">{voice.name}</p>
+                          <p className="text-[9px] font-bold text-blue-400 uppercase tracking-widest mt-1">
+                            {voice.status === 'ready' ? t('audio.statusReady', 'OPERATIONAL') :
+                              voice.status === 'processing' ? t('audio.statusProcessing', 'PROCESSING') :
+                                voice.status === 'failed' ? t('audio.statusFailed', 'OFFLINE') : voice.status}
                           </p>
                         </div>
                       </div>
                       <button
                         onClick={() => deleteVoice(voice.id)}
-                        className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                        className="p-2 text-slate-600 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all opacity-0 group-hover:opacity-100"
                       >
-                        <X className="w-5 h-5" />
+                        <X className="w-4 h-4" />
                       </button>
                     </div>
                   ))}
@@ -690,31 +720,41 @@ const AudioPage = () => {
              dragElastic={0.2}
              dragDirectionLock
              onDragEnd={handleDragEnd}
-             className="space-y-6 touch-pan-y"
+             className="space-y-8 touch-pan-y"
           >
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('audio.libraryTitle')}</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+              <FolderOpen className="w-3.5 h-3.5 text-emerald-400" />
+              {t('audio.libraryTitle', 'SYNTHESIS ARCHIVE')}
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {isLoadingAudio ? (
-                [1, 2, 3].map(i => <div key={i} className="h-40 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />)
+                [1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-48 bg-white/5 rounded-3xl animate-pulse border border-white/5" />)
               ) : myAudio.length === 0 ? (
-                <div className="col-span-full text-center py-12">
-                  <Volume2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500 font-medium">{t('audio.noAudio')}</p>
-                  <p className="text-sm text-gray-400">{t('audio.createFirstAudio')}</p>
+                <div className="col-span-full text-center py-24 bg-white/[0.02] rounded-3xl border border-white/5">
+                  <Volume2 className="w-12 h-12 text-slate-700 mx-auto mb-4" />
+                  <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest">{t('audio.noAudio', 'NO SYNTHESIZED OUTPUTS FOUND')}</p>
+                  <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest mt-2">{t('audio.createFirstAudio', 'INITIALIZE YOUR FIRST GENERATION')}</p>
                 </div>
               ) : (
                 myAudio.map((audio: any) => (
-                  <div key={audio.id} className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-all">
-                    <div className="h-20 bg-gradient-to-r from-pink-100 to-rose-100 dark:from-pink-900/30 dark:to-rose-900/30 flex items-center justify-center">
-                      <Waves className="w-12 h-12 text-pink-400" />
-                    </div>
-                    <div className="p-4">
-                      <p className="text-sm text-gray-900 dark:text-white line-clamp-2 mb-2">{audio.prompt || t('audio.audioItem')}</p>
-                      <div className="flex items-center justify-between">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${audio.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                  <div key={audio.id} className="group bg-black/40 backdrop-blur-xl rounded-3xl overflow-hidden border border-white/5 hover:border-white/10 transition-all hover:shadow-2xl hover:shadow-black/50">
+                    <div className="h-28 bg-gradient-to-br from-white/[0.02] to-white/[0.05] flex items-center justify-center relative overflow-hidden">
+                      <Waves className="w-16 h-16 text-slate-800 group-hover:text-emerald-500/20 transition-colors" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      <div className="absolute bottom-3 left-4">
+                        <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${audio.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/20'
                           }`}>
-                          {audio.status === 'completed' ? t('audio.statusReady2') : t('audio.statusProcessing2')}
+                          {audio.status === 'completed' ? t('audio.statusReady2', 'COMPLETED') : t('audio.statusProcessing2', 'PROCESSING')}
                         </span>
+                      </div>
+                    </div>
+                    <div className="p-6">
+                      <p className="text-[11px] text-slate-300 font-medium line-clamp-2 mb-4 leading-relaxed italic group-hover:text-white transition-colors">"{audio.prompt || t('audio.audioItem', 'Neural Audio Signal')}"</p>
+                      
+                      <div className="flex items-center justify-between pt-4 border-t border-white/5">
+                         <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">
+                           {new Date(audio.created_at).toLocaleDateString()}
+                         </span>
                         {audio.status === 'completed' && audio.file_url && (
                           <div className="flex gap-2">
                             <button
@@ -723,13 +763,18 @@ const AudioPage = () => {
                                 setSelectedAudioForNft(audio);
                                 setNftModalOpen(true);
                               }}
-                              className="px-2 py-1 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white rounded-lg text-xs font-medium shadow transition-all flex items-center gap-1"
+                              className="px-3 py-1.5 bg-purple-500/10 border border-purple-500/20 text-purple-400 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm transition-all hover:bg-purple-500 hover:text-white flex items-center gap-1.5"
                               title={t('audio.mintNft')}
                             >
-                              💎 {t('audio.mintNft')}
+                              MINT NFT
                             </button>
-                            <button className="p-2 text-pink-500 hover:bg-pink-50 rounded-lg">
-                              <Download className="w-4 h-4" />
+                            <button 
+                              onClick={() => {
+                                window.open(audio.file_url, '_blank');
+                              }}
+                              className="p-2 bg-white/5 border border-white/5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+                            >
+                              <Download className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         )}

@@ -344,125 +344,119 @@ const ImageGenerationPage = () => {
       </div>
 
       {/* Hero Header */}
-      <div className="relative pt-8 pb-4 px-4 sm:px-6 lg:px-8 border-b border-white/5 bg-white/[0.01] backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex flex-col gap-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 w-fit">
-              <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-              <span className="text-[10px] uppercase tracking-widest font-bold text-purple-300">
-                {t('imageGen.badge', 'AI IMAGE STUDIO')}
+      <div className="relative pt-12 pb-6 px-8 border-b border-white/5 bg-white/[0.01] backdrop-blur-xl relative z-10 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-transparent pointer-events-none" />
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-10">
+          <div className="flex flex-col gap-3">
+            <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 w-fit">
+              <Sparkles className="w-4 h-4 text-purple-400" />
+              <span className="text-[10px] font-black text-purple-300 uppercase tracking-[0.2em]">
+                {t('imageGen.badge', 'NEURAL IMAGING CORE')}
               </span>
             </div>
-            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white uppercase italic">
-              {t('imageGen.title', 'Hayal Et, ')}
+            <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white uppercase italic leading-none drop-shadow-2xl">
+              {t('imageGen.title', 'SYNTHESIZE ')}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">
-                {t('imageGen.titleHighlight', 'Oluştur')}
+                {t('imageGen.titleHighlight', 'REALITY')}
               </span>
             </h1>
-            <p className="text-slate-400 text-sm max-w-xl font-medium uppercase tracking-wider opacity-80">
-              {t('imageGen.desc', 'Düşüncelerinizi saniyeler içinde etkileyici görsellere dönüştürün')}
+            <p className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] max-w-xl leading-relaxed">
+              {t('imageGen.desc', 'CONVERT ABSTRACT THOUGHTS INTO HIGH-FIDELITY VISUAL ASSETS USING NEXT-GEN NEURAL ENGINES.')}
             </p>
           </div>
 
-          <div className="flex items-center gap-4 bg-black/40 p-1.5 rounded-2xl border border-white/5 backdrop-blur-xl">
-            <div className="flex flex-col items-end px-3">
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Current Balance</span>
-              <span className="text-sm font-black text-purple-400">{user?.credits || 0} ZEX</span>
+          <div className="flex items-center gap-6 bg-black/60 p-2.5 rounded-[2rem] border border-white/10 backdrop-blur-3xl shadow-2xl">
+            <div className="flex flex-col items-end px-5">
+              <span className="text-[9px] text-slate-600 font-black uppercase tracking-widest mb-1">AVAILABLE SYNTHESIS POWER</span>
+              <span className="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 tracking-tighter italic">{user?.credits || 0} ZEX</span>
             </div>
             <button
               onClick={() => window.location.href = '/billing'}
-              className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-purple-500/20"
+              className="px-6 py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-purple-600/30 border-t border-white/10 active:scale-95"
             >
-              Top Up
+              INITIALIZE RECHARGE
             </button>
           </div>
         </div>
       </div>
 
       {/* Tab Navigation */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-        <div className="flex bg-black/40 backdrop-blur-xl border border-white/5 p-1 rounded-2xl w-fit">
+      <div className="max-w-7xl mx-auto px-8 mt-10">
+        <div className="flex bg-black/40 backdrop-blur-2xl border border-white/5 p-1.5 rounded-[2rem] w-fit shadow-2xl relative z-20">
           <button
             onClick={() => setActiveTab('generate')}
-            className={`px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center gap-2 ${activeTab === 'generate'
-              ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20'
+            className={`px-8 py-3.5 rounded-[1.25rem] font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center gap-3 relative overflow-hidden ${activeTab === 'generate'
+              ? 'bg-purple-600 text-white shadow-xl shadow-purple-600/30'
               : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
               }`}
           >
-            <Sparkles className="w-3.5 h-3.5" />
-            {t('imageGen.tabGenerate', 'Üret')}
+            <Sparkles className="w-4 h-4" />
+            {t('imageGen.tabGenerate', 'SYNTHESIZE')}
           </button>
 
           <button
             onClick={() => setActiveTab('gallery')}
-            className={`px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center gap-2 ${activeTab === 'gallery'
-              ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20'
+            className={`px-8 py-3.5 rounded-[1.25rem] font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center gap-3 relative overflow-hidden ${activeTab === 'gallery'
+              ? 'bg-emerald-600 text-white shadow-xl shadow-emerald-600/30'
               : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
               }`}
           >
-            <Layers className="w-3.5 h-3.5" />
-            {t('imageGen.tabGallery', 'Galeri')}
+            <Layers className="w-4 h-4" />
+            {t('imageGen.tabGallery', 'ARCHIVE')}
           </button>
 
           <button
             onClick={() => setActiveTab('compare')}
-            className={`px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center gap-2 ${activeTab === 'compare'
-              ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20'
+            className={`px-8 py-3.5 rounded-[1.25rem] font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center gap-3 relative overflow-hidden ${activeTab === 'compare'
+              ? 'bg-orange-600 text-white shadow-xl shadow-orange-600/30'
               : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
               }`}
           >
-            <GitCompare className="w-3.5 h-3.5" />
-            {t('imageGen.tabCompare', 'Karşılaştır')}
+            <GitCompare className="w-4 h-4" />
+            {t('imageGen.tabCompare', 'DIAGNOSTIC')}
           </button>
         </div>
       </div>
 
-      {/* ═══════════════════════════════════════════════════════ */}
-      {/* GENERATE TAB */}
-      {/* ═══════════════════════════════════════════════════════ */}
       <AnimatePresence mode="wait">
       {activeTab === 'generate' && (
         <motion.div
            key="generate"
-           initial={{ opacity: 0, x: -20 }}
-           animate={{ opacity: 1, x: 0 }}
-           exit={{ opacity: 0, x: 20 }}
-           transition={{ duration: 0.2 }}
-           drag="x"
-           dragConstraints={{ left: 0, right: 0 }}
-           dragElastic={0.2}
-           dragDirectionLock
-           onDragEnd={handleDragEnd}
-           className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 touch-pan-y"
+           initial={{ opacity: 0, scale: 0.98 }}
+           animate={{ opacity: 1, scale: 1 }}
+           exit={{ opacity: 0, scale: 0.98 }}
+           transition={{ duration: 0.3 }}
+           className="max-w-7xl mx-auto px-8 py-10"
         >
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
 
             {/* Left Panel - Creation Tools */}
-            <div className="space-y-6">
-              <div className="bg-black/40 backdrop-blur-xl rounded-3xl border border-white/5 overflow-hidden shadow-2xl shadow-black/50">
+            <div className="space-y-8">
+              <div className="bg-black/40 backdrop-blur-xl rounded-[2.5rem] border border-white/5 overflow-hidden shadow-2xl relative">
+                <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none" />
 
                 {/* ── Mode Toggle (Text→Image / Image→Image) ── */}
-                <div className="p-6 pb-0">
-                  <div className="relative bg-black/40 rounded-2xl p-1 flex border border-white/5">
+                <div className="p-8 pb-0">
+                  <div className="relative bg-black/60 rounded-[1.5rem] p-1.5 flex border border-white/5 shadow-inner">
                     <button
                       onClick={() => setGenerationMode('text2img')}
-                      className={`flex-1 py-3 px-4 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 ${generationMode === 'text2img'
-                        ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/20 transform scale-[1.02]'
-                        : 'text-slate-500 hover:text-slate-300'
+                      className={`flex-1 py-4 px-6 rounded-2xl font-black text-[10px] uppercase tracking-[0.25em] transition-all duration-500 flex items-center justify-center gap-3 ${generationMode === 'text2img'
+                        ? 'bg-purple-600 text-white shadow-xl shadow-purple-600/20 border-t border-white/10 scale-[1.02] z-10'
+                        : 'text-slate-600 hover:text-slate-400'
                         }`}
                     >
-                      <Type className="w-3.5 h-3.5" />
-                      {t('imageGen.modeText2Img', 'Metin → Görsel')}
+                      <Type className="w-4 h-4" />
+                      {t('imageGen.modeText2Img', 'SEMANTIC SYNTHESIS')}
                     </button>
                     <button
                       onClick={() => setGenerationMode('img2img')}
-                      className={`flex-1 py-3 px-4 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 ${generationMode === 'img2img'
-                        ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20 transform scale-[1.02]'
-                        : 'text-slate-500 hover:text-slate-300'
+                      className={`flex-1 py-4 px-6 rounded-2xl font-black text-[10px] uppercase tracking-[0.25em] transition-all duration-500 flex items-center justify-center gap-3 ${generationMode === 'img2img'
+                        ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/20 border-t border-white/10 scale-[1.02] z-10'
+                        : 'text-slate-600 hover:text-slate-400'
                         }`}
                     >
-                      <ImagePlus className="w-3.5 h-3.5" />
-                      {t('imageGen.modeImg2Img', 'Görsel → Görsel')}
+                      <ImagePlus className="w-4 h-4" />
+                      {t('imageGen.modeImg2Img', 'IMAGE EVOLUTION')}
                     </button>
                   </div>
                 </div>
@@ -540,35 +534,36 @@ const ImageGenerationPage = () => {
                 )}
 
                 {/* ── Prompt Card ── */}
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                      <Wand2 className="w-3.5 h-3.5 text-purple-400" />
-                      {generationMode === 'img2img' ? t('imageGen.promptTitleI2I', 'PROMPT') : t('imageGen.promptTitleT2I', 'PROMPT')}
+                <div className="p-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.25em] flex items-center gap-3">
+                      <Wand2 className="w-4 h-4 text-purple-400" />
+                      {generationMode === 'img2img' ? t('imageGen.promptTitleI2I', 'EVOLUTION COMMAND') : t('imageGen.promptTitleT2I', 'SEMANTIC COMMAND')}
                     </h2>
                     <button
                       onClick={useInspiration}
-                      className="flex items-center gap-1.5 text-[10px] font-black text-purple-400 uppercase tracking-widest hover:text-purple-300 transition-colors"
+                      className="flex items-center gap-2 text-[10px] font-black text-purple-500 uppercase tracking-widest hover:text-purple-400 transition-all group"
                     >
-                      <Zap className="w-3 h-3" />
-                      {t('imageGen.getInspiration', 'INSPIRE')}
+                      <Zap className="w-3.5 h-3.5 group-hover:scale-125 transition-transform" />
+                      {t('imageGen.getInspiration', 'INJECT CREATIVITY')}
                     </button>
                   </div>
 
                   {/* Inspiration Banner */}
                   <div
                     onClick={useInspiration}
-                    className="mb-4 p-4 bg-purple-500/5 border border-purple-500/10 rounded-xl cursor-pointer hover:bg-purple-500/10 transition-all group"
+                    className="mb-6 p-5 bg-purple-500/5 border border-purple-500/10 rounded-2xl cursor-pointer hover:bg-purple-500/10 transition-all group relative overflow-hidden"
                   >
-                    <p className="text-xs text-purple-300 italic opacity-80 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-purple-500/30" />
+                    <p className="text-[13px] text-purple-200 italic opacity-80 group-hover:opacity-100 transition-opacity leading-relaxed font-medium">
                       "{inspirationPrompts[currentInspiration]}"
                     </p>
-                    <p className="text-[9px] font-black text-purple-500 mt-2 uppercase tracking-widest group-hover:text-purple-400">
-                      {t('imageGen.clickToUse', 'TAP TO USE →')}
+                    <p className="text-[9px] font-black text-purple-600 mt-3 uppercase tracking-[0.2em] group-hover:text-purple-400 transition-colors">
+                      {t('imageGen.clickToUse', 'EXECUTE PROTOCOL →')}
                     </p>
                   </div>
 
-                  <div className="relative">
+                  <div className="relative group">
                     <textarea
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
@@ -576,11 +571,11 @@ const ImageGenerationPage = () => {
                         ? t('imageGen.promptPlaceholderI2I', "How should we transform this image? Describe your vision...")
                         : t('imageGen.promptPlaceholderT2I', "Describe the masterpiece you want to create in detail...")
                       }
-                      rows={4}
+                      rows={5}
                       disabled={isGenerating}
-                      className="w-full px-4 py-4 bg-black/40 border border-white/5 rounded-2xl resize-none focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all text-slate-200 text-sm placeholder-slate-600 leading-relaxed"
+                      className="w-full px-6 py-6 bg-black/60 border border-white/5 rounded-3xl resize-none focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all text-slate-200 text-[14px] font-medium placeholder-slate-800 leading-relaxed shadow-inner"
                     />
-                    <div className="absolute right-3 top-3">
+                    <div className="absolute right-4 top-4">
                       <PromptEnhancer
                         contentType="image"
                         currentPrompt={prompt}
@@ -591,51 +586,51 @@ const ImageGenerationPage = () => {
                 </div>
 
                 {/* ── Model & Aspect Ratio ── */}
-                <div className="px-6 pb-6 border-t border-white/5 pt-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="px-8 pb-8 border-t border-white/5 pt-8 bg-white/[0.01]">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block flex items-center gap-2">
-                        <Layers className="w-3.5 h-3.5 text-purple-400" />
-                        {t('imageGen.modelTitle', 'AI ENGINE')}
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 block flex items-center gap-3">
+                        <Layers className="w-4 h-4 text-purple-400" />
+                        {t('imageGen.modelTitle', 'NEURAL ENGINE')}
                       </label>
                       <div className="relative group">
                         <select
                           value={modelId}
                           onChange={(e) => setModelId(e.target.value)}
                           disabled={isLoadingModels || isGenerating}
-                          className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-300 focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500/50 outline-none appearance-none cursor-pointer transition-all hover:bg-white/5"
+                          className="w-full px-5 py-4 bg-black/60 border border-white/5 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] text-slate-300 focus:ring-1 focus:ring-purple-500/50 outline-none appearance-none cursor-pointer transition-all hover:bg-white/5 shadow-inner"
                         >
                           <option value="" className="bg-slate-900">{t('imageGen.selectModel', 'SELECT ENGINE')}</option>
                           {generateModels.map((model: any) => (
                             <option key={model.id} value={model.id} className="bg-slate-900">
-                              {formatModelName(model.name).toUpperCase()} ({model.credits} ZEX)
+                              {formatModelName(model.name).toUpperCase()} [{model.credits} ZEX]
                             </option>
                           ))}
                         </select>
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 group-hover:text-purple-400 transition-colors">
-                          <ChevronDown className="w-4 h-4" />
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-600 group-hover:text-purple-400 transition-colors">
+                          <ChevronDown className="w-5 h-5" />
                         </div>
                       </div>
                     </div>
 
                     <div>
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block flex items-center gap-2">
-                        <Maximize2 className="w-3.5 h-3.5 text-purple-400" />
-                        {t('imageGen.sizeTitle', 'ASPECT RATIO')}
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 block flex items-center gap-3">
+                        <Maximize2 className="w-4 h-4 text-purple-400" />
+                        {t('imageGen.sizeTitle', 'CANVAS RATIO')}
                       </label>
-                      <div className="grid grid-cols-4 gap-2">
+                      <div className="grid grid-cols-4 gap-3">
                         {aspectRatios.map((ratio) => (
                           <button
                             key={ratio.id}
                             onClick={() => setAspectRatio(ratio.id)}
-                            className={`py-3 rounded-xl transition-all border flex flex-col items-center justify-center gap-1 group
+                            className={`py-4 rounded-2xl transition-all border flex flex-col items-center justify-center gap-2 group
                               ${aspectRatio === ratio.id
-                                ? 'bg-purple-600 border-purple-500 text-white shadow-lg shadow-purple-500/20 scale-[1.05]'
-                                : 'bg-black/40 border-white/5 text-slate-500 hover:text-slate-300 hover:border-white/10'
+                                ? 'bg-purple-600 border-purple-500/50 text-white shadow-xl shadow-purple-600/30 scale-[1.05] z-10'
+                                : 'bg-black/60 border-white/5 text-slate-600 hover:text-slate-400 hover:bg-white/5'
                               }`}
                           >
-                            <span className={`text-sm transition-transform ${aspectRatio === ratio.id ? 'scale-110' : 'group-hover:scale-110'}`}>{ratio.icon}</span>
-                            <span className="text-[8px] font-black uppercase tracking-tighter">{ratio.id}</span>
+                            <span className={`text-lg transition-transform ${aspectRatio === ratio.id ? 'scale-110' : 'group-hover:scale-110 opacity-60 group-hover:opacity-100'}`}>{ratio.icon}</span>
+                            <span className="text-[9px] font-black uppercase tracking-widest">{ratio.id}</span>
                           </button>
                         ))}
                       </div>
@@ -644,24 +639,25 @@ const ImageGenerationPage = () => {
                 </div>
 
                 {/* ── Generate Button ── */}
-                <div className="p-6 bg-black/20">
+                <div className="p-8 bg-black/40 border-t border-white/5 relative z-10">
                   <button
                     onClick={handleGenerate}
                     disabled={isGenerating || !prompt || !modelId || (generationMode === 'img2img' && !referenceImage)}
-                    className={`w-full py-5 font-black text-xs uppercase tracking-[0.3em] rounded-2xl shadow-xl transition-all flex items-center justify-center gap-3 text-white ${generationMode === 'img2img'
-                      ? 'bg-blue-600 hover:bg-blue-500 shadow-blue-500/20'
-                      : 'bg-purple-600 hover:bg-purple-500 shadow-purple-500/20'
-                      } disabled:bg-slate-800 disabled:text-slate-600 disabled:shadow-none hover:scale-[1.01] active:scale-[0.99] border-t border-white/10`}
+                    className={`w-full py-6 font-black text-xs uppercase tracking-[0.4em] rounded-2xl shadow-2xl transition-all flex items-center justify-center gap-4 text-white relative overflow-hidden group/btn ${generationMode === 'img2img'
+                      ? 'bg-blue-600 hover:bg-blue-500 shadow-blue-500/30'
+                      : 'bg-purple-600 hover:bg-purple-500 shadow-purple-500/30'
+                      } disabled:bg-slate-900 disabled:text-slate-700 disabled:shadow-none hover:scale-[1.02] active:scale-[0.98] border-t border-white/20`}
                   >
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none" />
                     {isGenerating ? (
                       <>
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                        {t('imageGen.generating', 'PROCESSING...')}
+                        <RefreshCw className="w-5 h-5 animate-spin" />
+                        {t('imageGen.generating', 'EXECUTING NEURAL SYNTHESIS...')}
                       </>
                     ) : (
                       <>
-                        {generationMode === 'img2img' ? <Camera className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
-                        {generationMode === 'img2img' ? t('imageGen.generateBtnI2I', 'TRANSFORM') : t('imageGen.generateBtnT2I', 'GENERATE')}
+                        {generationMode === 'img2img' ? <Camera className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
+                        {generationMode === 'img2img' ? t('imageGen.generateBtnI2I', 'EVOLVE IMAGE') : t('imageGen.generateBtnT2I', 'SYNTHESIZE')}
                       </>
                     )}
                   </button>
@@ -670,12 +666,13 @@ const ImageGenerationPage = () => {
             </div>
 
             {/* Right Panel - Preview */}
-            <div className="space-y-6">
-              <div className="bg-black/40 backdrop-blur-xl rounded-3xl border border-white/5 overflow-hidden shadow-2xl shadow-black/50 min-h-[600px] flex flex-col">
-                <div className="p-6 border-b border-white/5 flex-shrink-0">
-                  <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                    <ImageIcon className="w-3.5 h-3.5 text-purple-400" />
-                    {t('imageGen.previewTitle', 'PREVIEW')}
+            <div className="space-y-8">
+              <div className="bg-black/40 backdrop-blur-xl rounded-[2.5rem] border border-white/5 overflow-hidden shadow-2xl min-h-[600px] flex flex-col relative">
+                <div className="absolute inset-0 bg-gradient-to-tr from-white/[0.01] to-transparent pointer-events-none" />
+                <div className="p-8 border-b border-white/5 flex-shrink-0 relative z-10">
+                  <h2 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.25em] flex items-center gap-3">
+                    <ImageIcon className="w-4 h-4 text-purple-400" />
+                    {t('imageGen.previewTitle', 'SYNTHESIS PREVIEW')}
                   </h2>
                 </div>
 
@@ -772,15 +769,16 @@ const ImageGenerationPage = () => {
                       )}
                     </div>
                   ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-center py-20">
-                      <div className="w-24 h-24 bg-purple-500/5 border border-purple-500/10 rounded-full flex items-center justify-center mb-6 shadow-inner">
-                        <ImageIcon className="w-10 h-10 text-purple-400/50" />
+                    <div className="h-full flex flex-col items-center justify-center text-center py-20 relative z-10">
+                      <div className="w-28 h-28 bg-purple-500/5 border border-purple-500/10 rounded-[2rem] flex items-center justify-center mb-8 shadow-2xl relative group">
+                        <div className="absolute inset-0 bg-purple-500/10 rounded-[2rem] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <ImageIcon className="w-12 h-12 text-purple-500/40 relative z-10" />
                       </div>
-                      <h3 className="text-sm font-black text-slate-200 uppercase tracking-widest mb-2">
-                        {t('imageGen.emptyPreviewTitle', 'READY FOR ACTION')}
+                      <h3 className="text-sm font-black text-slate-300 uppercase tracking-[0.3em] mb-4">
+                        {t('imageGen.emptyPreviewTitle', 'ENGINE IDLE')}
                       </h3>
-                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest max-w-xs leading-relaxed">
-                        {t('imageGen.emptyPreviewDesc', "Enter your prompt on the left and unleash the AI power")}
+                      <p className="text-[10px] text-slate-600 font-black uppercase tracking-[0.2em] max-w-xs leading-relaxed italic">
+                        {t('imageGen.emptyPreviewDesc', "INPUT SEMANTIC COMMANDS TO INITIALIZE THE NEURAL SYNTHESIS CLUSTER.")}
                       </p>
                     </div>
                   )}
@@ -810,29 +808,30 @@ const ImageGenerationPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.2 }}
-          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+          transition={{ duration: 0.4 }}
+          className="max-w-7xl mx-auto px-8 py-10"
         >
-          <div className="bg-black/40 backdrop-blur-xl rounded-3xl border border-white/5 p-6 md:p-8 shadow-2xl">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-              <div className="flex flex-col gap-1">
-                <h2 className="text-2xl font-black text-white flex items-center gap-3 uppercase italic tracking-tighter">
-                  <Layers className="w-6 h-6 text-emerald-400" />
-                  {t('imageGen.galleryTitle', 'Görsel Galerim')}
+          <div className="bg-black/40 backdrop-blur-xl rounded-[2.5rem] border border-white/5 p-10 shadow-2xl relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/[0.02] to-transparent pointer-events-none" />
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12 relative z-10">
+              <div className="flex flex-col gap-2">
+                <h2 className="text-3xl font-black text-white flex items-center gap-4 uppercase italic tracking-tighter leading-none">
+                  <Layers className="w-8 h-8 text-emerald-500" />
+                  {t('imageGen.galleryTitle', 'NEURAL ARCHIVE')}
                 </h2>
                 {galleryTotal > 0 && (
-                  <span className="text-[10px] font-black text-emerald-500/60 uppercase tracking-[0.2em]">
-                    ARCHIVE: {galleryTotal} {t('imageGen.imagesCount', 'ASSETS')}
+                  <span className="text-[10px] font-black text-emerald-500/60 uppercase tracking-[0.25em]">
+                    SYSTEM LOG: {galleryTotal} HIGH-FIDELITY ASSETS DETECTED
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 <button
                   onClick={() => refetchGallery()}
-                  className="px-4 py-2 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white rounded-xl border border-white/5 transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest"
+                  className="px-6 py-3 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white rounded-2xl border border-white/5 transition-all flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] shadow-lg"
                 >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  {t('imageGen.refresh', 'SYNC')}
+                  <RefreshCw className="w-4 h-4" />
+                  {t('imageGen.refresh', 'SYNC CLOUD')}
                 </button>
               </div>
             </div>
@@ -968,40 +967,40 @@ const ImageGenerationPage = () => {
           {/* Lightbox Modal */}
           {galleryLightboxItem && (
             <div
-              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              className="fixed inset-0 bg-black/95 backdrop-blur-xl z-[9999] flex items-center justify-center p-8 cursor-zoom-out"
               onClick={() => setGalleryLightboxItem(null)}
             >
               <div
-                className="bg-white dark:bg-gray-800 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
+                className="bg-[#030712] border border-white/10 rounded-[2.5rem] max-w-6xl w-full max-h-[95vh] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.8)] relative"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-xs font-medium rounded-md">
-                      {formatModelName(galleryLightboxItem.model_name || galleryLightboxItem.model_id || galleryLightboxItem.model)}
+                <div className="p-6 px-10 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+                  <div className="flex items-center gap-6">
+                    <span className="px-4 py-1.5 bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[10px] font-black uppercase tracking-[0.2em] rounded-full">
+                      {formatModelName(galleryLightboxItem.model_name || galleryLightboxItem.model_id || galleryLightboxItem.model)} ENGINE
                     </span>
-                    <span className="text-xs text-gray-400 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {new Date(galleryLightboxItem.created_at).toLocaleDateString('tr-TR')}
+                    <span className="text-[10px] font-black text-slate-600 flex items-center gap-2 uppercase tracking-[0.2em]">
+                      <Clock className="w-3.5 h-3.5" />
+                      SYNTHESIZED: {new Date(galleryLightboxItem.created_at).toLocaleDateString('tr-TR')}
                     </span>
                   </div>
                   <button
                     onClick={() => setGalleryLightboxItem(null)}
-                    className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="p-3 text-slate-500 hover:text-white rounded-2xl hover:bg-white/5 border border-transparent hover:border-white/10 transition-all"
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-6 h-6" />
                   </button>
                 </div>
-                <div className="p-4 flex items-center justify-center bg-gray-50 dark:bg-gray-900" style={{ maxHeight: 'calc(90vh - 140px)' }}>
+                <div className="p-10 flex items-center justify-center bg-black/40" style={{ maxHeight: 'calc(95vh - 220px)' }}>
                   <img
                     src={galleryLightboxItem.file_url}
                     alt={galleryLightboxItem.prompt}
-                    className="max-w-full max-h-full object-contain rounded-xl"
+                    className="max-w-full max-h-full object-contain rounded-3xl shadow-2xl"
                   />
                 </div>
-                <div className="p-4 border-t border-gray-100 dark:border-gray-700">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 italic">"{galleryLightboxItem.prompt}"</p>
-                  <div className="mt-3 flex gap-2">
+                <div className="p-8 px-10 border-t border-white/5 bg-white/[0.01]">
+                  <p className="text-slate-300 text-[14px] font-medium italic leading-relaxed">"{galleryLightboxItem.prompt}"</p>
+                  <div className="mt-8 flex gap-4">
                     <button
                       onClick={async () => {
                         try {
@@ -1020,10 +1019,10 @@ const ImageGenerationPage = () => {
                           window.open(galleryLightboxItem.file_url, '_blank');
                         }
                       }}
-                      className="px-4 py-2 bg-purple-500 text-white text-sm rounded-lg hover:bg-purple-600 transition-colors flex items-center gap-2"
+                      className="px-8 py-4 bg-purple-600 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-purple-500 transition-all shadow-xl shadow-purple-600/30 flex items-center gap-3 border-t border-white/10"
                     >
                       <Download className="w-4 h-4" />
-                      {t('imageGen.download', 'İndir')}
+                      {t('imageGen.download', 'DOWNLOAD SOURCE')}
                     </button>
                   </div>
                 </div>
@@ -1039,37 +1038,33 @@ const ImageGenerationPage = () => {
       {activeTab === 'compare' && (
         <motion.div
            key="compare"
-           initial={{ opacity: 0, x: 20 }}
-           animate={{ opacity: 1, x: 0 }}
-           exit={{ opacity: 0, x: -20 }}
-           transition={{ duration: 0.2 }}
-           drag="x"
-           dragConstraints={{ left: 0, right: 0 }}
-           dragElastic={0.2}
-           dragDirectionLock
-           onDragEnd={handleDragEnd}
-           className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 touch-pan-y"
+           initial={{ opacity: 0, scale: 0.98 }}
+           animate={{ opacity: 1, scale: 1 }}
+           exit={{ opacity: 0, scale: 0.98 }}
+           transition={{ duration: 0.4 }}
+           className="max-w-7xl mx-auto px-8 py-10"
         >
-          <div className="bg-black/40 backdrop-blur-xl rounded-3xl border border-white/5 p-6 md:p-8 shadow-2xl">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-              <div className="flex flex-col gap-1">
-                <h2 className="text-2xl font-black text-white flex items-center gap-3 uppercase italic tracking-tighter">
-                  <GitCompare className="w-6 h-6 text-orange-500" />
-                  {t('imageGen.compareTitle', 'Model Karşılaştırma')}
+          <div className="bg-black/40 backdrop-blur-xl rounded-[2.5rem] border border-white/5 p-10 shadow-2xl relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-b from-orange-500/[0.02] to-transparent pointer-events-none" />
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12 relative z-10">
+              <div className="flex flex-col gap-2">
+                <h2 className="text-3xl font-black text-white flex items-center gap-4 uppercase italic tracking-tighter leading-none">
+                  <GitCompare className="w-8 h-8 text-orange-500" />
+                  {t('imageGen.compareTitle', 'DIAGNOSTIC ANALYSIS')}
                 </h2>
-                <p className="text-[10px] font-black text-orange-500/60 uppercase tracking-[0.2em]">
-                  {t('imageGen.compareDesc', 'Aynı prompt ile birden fazla model seçip sonuçları yan yana karşılaştırın')}
+                <p className="text-[10px] font-black text-orange-500/60 uppercase tracking-[0.25em]">
+                  {t('imageGen.compareDesc', 'MULTI-ENGINE CROSS-COMPARISON PROTOCOL. ANALYZE NEURAL VARIATIONS FOR THE SAME SEMANTIC COMMAND.')}
                 </p>
               </div>
             </div>
 
             {/* Model Selection */}
-            <div className="mb-8">
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                <Layers className="w-3.5 h-3.5 text-orange-400" />
-                {t('imageGen.selectModels', 'SELECT ENGINES (MAX 4)')}
+            <div className="mb-12 relative z-10">
+              <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.25em] mb-6 flex items-center gap-3">
+                <Layers className="w-4 h-4 text-orange-400" />
+                {t('imageGen.selectModels', 'SELECT ENGINES [MAX 04]')}
               </h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {compareModels.map((model: any) => (
                   <button
                     key={model.id}
@@ -1081,23 +1076,23 @@ const ImageGenerationPage = () => {
                       );
                     }}
                     disabled={isComparing}
-                    className={`group relative p-4 rounded-2xl border transition-all text-left overflow-hidden
+                    className={`group relative p-6 rounded-[1.5rem] border transition-all text-left overflow-hidden shadow-lg
                       ${selectedModelsForCompare.includes(model.id) 
-                        ? 'border-orange-500 bg-orange-500/10' 
-                        : 'border-white/5 bg-white/5 hover:bg-white/10'}`}
+                        ? 'border-orange-500 bg-orange-500/10 scale-[1.02] shadow-orange-500/10' 
+                        : 'border-white/5 bg-black/40 hover:bg-white/5 hover:border-white/10'}`}
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className={`text-[11px] font-black uppercase tracking-widest transition-colors ${selectedModelsForCompare.includes(model.id) ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>
+                    <div className="flex items-center justify-between mb-4">
+                      <span className={`text-[11px] font-black uppercase tracking-[0.2em] transition-colors ${selectedModelsForCompare.includes(model.id) ? 'text-white' : 'text-slate-600 group-hover:text-slate-400'}`}>
                         {formatModelName(model.name)}
                       </span>
                       {selectedModelsForCompare.includes(model.id) && (
-                        <div className="w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center shadow-lg shadow-orange-500/20">
-                          <Check className="w-3 h-3 text-white" />
+                        <div className="w-6 h-6 bg-orange-600 rounded-full flex items-center justify-center shadow-xl shadow-orange-500/30 border-t border-white/20">
+                          <Check className="w-3.5 h-3.5 text-white" />
                         </div>
                       )}
                     </div>
-                    <div className="text-[9px] font-black text-orange-400 uppercase tracking-widest opacity-60">
-                      {model.credits} ZEX
+                    <div className="text-[10px] font-black text-orange-500/60 uppercase tracking-widest italic">
+                      {model.credits} ZEX POWER
                     </div>
                   </button>
                 ))}
@@ -1105,17 +1100,17 @@ const ImageGenerationPage = () => {
             </div>
 
             {/* Prompt Input + Enhancer */}
-            <div className="mb-8">
+            <div className="mb-10 relative z-10">
               <div className="relative group">
                 <textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder={t('imageGen.comparePromptPlaceholder', "Karşılaştırmak istediğiniz görseli tanımlayın...")}
-                  rows={3}
+                  rows={4}
                   disabled={isComparing}
-                  className="w-full px-5 py-4 bg-black/40 border border-white/5 rounded-2xl resize-none focus:ring-1 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all text-slate-200 text-sm placeholder-slate-600 leading-relaxed"
+                  className="w-full px-8 py-6 bg-black/60 border border-white/5 rounded-[2rem] resize-none focus:ring-1 focus:ring-orange-500/50 outline-none transition-all text-slate-200 text-[14px] font-medium placeholder-slate-800 leading-relaxed shadow-inner"
                 />
-                <div className="absolute right-4 top-4">
+                <div className="absolute right-6 top-6">
                   <PromptEnhancer
                     contentType="image"
                     currentPrompt={prompt}
@@ -1129,16 +1124,16 @@ const ImageGenerationPage = () => {
             <button
               onClick={handleCompare}
               disabled={isComparing || selectedModelsForCompare.length < 2 || !prompt}
-              className="w-full py-5 bg-orange-600 hover:bg-orange-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-black text-xs rounded-2xl shadow-xl shadow-orange-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-3 uppercase tracking-[0.3em] border-t border-white/10"
+              className="w-full py-6 bg-orange-600 hover:bg-orange-500 disabled:bg-slate-900 disabled:text-slate-700 text-white font-black text-xs rounded-2xl shadow-2xl shadow-orange-500/30 active:scale-[0.98] transition-all flex items-center justify-center gap-4 uppercase tracking-[0.4em] border-t border-white/20 relative z-10"
             >
               {isComparing ? (
                 <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  {t('imageGen.comparing', 'COMPARING...')}
+                  <RefreshCw className="w-5 h-5 animate-spin" />
+                  {t('imageGen.comparing', 'DIAGNOSING ENGINES...')}
                 </>
               ) : (
                 <>
-                  <GitCompare className="w-4 h-4" />
+                  <GitCompare className="w-5 h-5" />
                   {t('imageGen.compareBtn', 'INITIALIZE COMPARISON')}
                 </>
               )}

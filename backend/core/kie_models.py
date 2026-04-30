@@ -21,94 +21,37 @@ Includes:
 KIE_IMAGE_MODELS = {
     # ── FLUX-2 (Market API) ──────────────────────
     # CURRENTLY DISABLED: API rejects all resolutions. Use Flux Kontext instead.
-    # "kie_flux2_pro": {
-    #     "provider": "kie.ai",
-    #     "api_type": "market",
-    #     "name": "FLUX 2 Pro",
-    #     "type": "text_to_image",
-    #     "model_id": "flux-2/pro-text-to-image",
-    #     "kie_credits": 5,
-    #     "cost_usd": 0.025,
-    #     "quality": 5,
-    #     "speed": "fast",
-    #     "resolution": "1024x1024",
-    #     "badge": "🏆 En Kaliteli!",
-    #     "description": "Fotorealistik, yüksek detay, metin render",
-    #     "capabilities": {
-    #         "multi_reference": True,
-    #         "text_rendering": True,
-    #         "max_references": 8
-    #     }
-    # },
+    # ── FLUX-2 (Market API) ──────────────────────
+    "kie_flux2_pro": {
+        "provider": "kie.ai",
+        "api_type": "market",
+        "name": "FLUX V1.1 PRO [STABLE]",
+        "type": "text_to_image",
+        "model_id": "flux-2/pro-text-to-image",
+        "kie_credits": 10,
+        "cost_usd": 0.0875,
+        "quality": 5,
+        "speed": "fast",
+        "badge": "💎 NEURAL ELITE",
+        "description": "Ultra-fidelity neural synthesis engine for professional-grade imaging.",
+        "capabilities": {
+            "text_rendering": True
+        }
+    },
     
-    # ── FLUX.1 Schnell (Market API) ──────────────
-    # DISABLED: User request - remove Flux 1
-    # "kie_flux1_schnell": {
-    #     "provider": "kie.ai",
-    #     "api_type": "market",
-    #     "name": "Flux.1 Schnell",
-    #     "type": "text_to_image",
-    #     "model_id": "black-forest-labs/flux-1-schnell",
-    #     "kie_credits": 4,
-    #     "cost_usd": 0.02,
-    #     "quality": 5,
-    #     "speed": "very_fast",
-    #     "badge": "⚡ Çok Hızlı",
-    #     "description": "Flux 1 Schnell - Ultra hızlı görsel üretim",
-    #     "capabilities": {
-    #         "image_editing": True,
-    #         "text_rendering": True
-    #     }
-    # },
-
-    # ── GPT-Image-1.5 (Market API) ───────────────
-    # DISABLED: User request - remove GPT 1.5
-    # "kie_gpt_image_1_5": {
-    #     "provider": "kie.ai",
-    #     "api_type": "market",
-    #     "name": "GPT-Image-1.5",
-    #     "type": "text_to_image",
-    #     "model_id": "openai/gpt-image-1.5",
-    #     "kie_credits": 8,
-    #     "cost_usd": 0.04,
-    #     "quality": 5,
-    #     "speed": "fast",
-    #     "badge": "🤖 OpenAI",
-    #     "description": "OpenAI GPT-Image-1.5",
-    #     "capabilities": {
-    #         "image_editing": True,
-    #         "text_rendering": True
-    #     }
-    # },
-    # "kie_flux2_flex": {
-    #     "provider": "kie.ai",
-    #     "api_type": "market",
-    #     "name": "FLUX 2 Flex",
-    #     "type": "text_to_image",
-    #     "model_id": "flux-2/flex-text-to-image",
-    #     "kie_credits": 14,
-    #     "cost_usd": 0.07,
-    #     "quality": 5,
-    #     "speed": "medium",
-    #     "resolution": "1024x1024",
-    #     "badge": None,
-    #     "description": "Esnek stil kontrolü ile görsel üretim",
-    #     "capabilities": {}
-    # },
-
     # ── Flux Kontext (Dedicated API) ─────────────
     "kie_flux_kontext_pro": {
         "provider": "kie.ai",
         "api_type": "flux_kontext",
-        "name": "Flux Kontext Pro",
+        "name": "FLUX KONTEXT PRO [EDIT]",
         "type": "text_to_image",
         "model_id": "flux-kontext-pro",
-        "kie_credits": 8,
+        "kie_credits": 5,
         "cost_usd": 0.04,
         "quality": 5,
         "speed": "fast",
-        "badge": "✏️ AI Düzenleme",
-        "description": "Metin ve görsel düzenleme, hızlı",
+        "badge": "✏️ NEURAL EDIT",
+        "description": "Advanced context-aware neural image transformation engine.",
         "capabilities": {
             "character_consistency": True
         }
@@ -116,15 +59,15 @@ KIE_IMAGE_MODELS = {
     "kie_flux_kontext_max": {
         "provider": "kie.ai",
         "api_type": "flux_kontext",
-        "name": "Flux Kontext Max",
+        "name": "FLUX KONTEXT MAX [ULTRA]",
         "type": "text_to_image",
         "model_id": "flux-kontext-max",
-        "kie_credits": 16,
+        "kie_credits": 10,
         "cost_usd": 0.08,
         "quality": 5,
         "speed": "medium",
-        "badge": "🖼️ Maksimum Kalite",
-        "description": "Maksimum kalite görsel düzenleme",
+        "badge": "🖼️ MAX FIDELITY",
+        "description": "Maximum resolution neural synthesis for elite production.",
         "capabilities": {
             "character_consistency": True
         }
@@ -134,15 +77,15 @@ KIE_IMAGE_MODELS = {
     "kie_ideogram_v3": {
         "provider": "kie.ai",
         "api_type": "market",
-        "name": "Ideogram V3",
+        "name": "IDEOGRAM V3 TYPOGRAPHY",
         "type": "text_to_image",
         "model_id": "ideogram/v3-text-to-image",
         "kie_credits": 7,
-        "cost_usd": 0.035,
+        "cost_usd": 0.055,
         "quality": 5,
         "speed": "medium",
-        "badge": "📝 Metin Uzmanı",
-        "description": "Metin render, logo tasarımı, yüksek kalite",
+        "badge": "📝 TEXT MASTER",
+        "description": "Next-gen typography and logo synthesis engine.",
         "capabilities": {
             "text_rendering": True,
             "logo_design": True,
@@ -154,36 +97,19 @@ KIE_IMAGE_MODELS = {
     "kie_nano_banana": {
         "provider": "kie.ai",
         "api_type": "market",
-        "name": "Nano Banana",
+        "name": "GEMINI NANO BANANA [FLASH]",
         "type": "text_to_image",
         "model_id": "google/nano-banana",
         "kie_credits": 10,
         "cost_usd": 0.05,
         "quality": 5,
         "speed": "fast",
-        "badge": "🍌 Gemini Flash",
-        "description": "Google Gemini 2.5 Flash ile hızlı görsel üretim",
+        "badge": "🍌 FLASH CORE",
+        "description": "Ultra-fast Google Gemini 2.5 Flash synthesis engine for instant imaging.",
         "capabilities": {
             "text_rendering": True
         }
     },
-    # "kie_nano_banana_pro": {
-    #     "provider": "kie.ai",
-    #     "api_type": "market",
-    #     "name": "Nano Banana Pro",
-    #     "type": "text_to_image",
-    #     "model_id": "google/nano-banana-pro", # Updated guess
-    #     "kie_credits": 18,
-    #     "cost_usd": 0.09,
-    #     "quality": 5,
-    #     "speed": "medium",
-    #     "capabilities": {
-    #         "text_rendering": True,
-    #         "character_consistency": True,
-    #         "upscale_4k": True,
-    #         "image_editing": True
-    #     }
-    # },
     "kie_nano_banana_edit": {
         "provider": "kie.ai",
         "api_type": "market",
@@ -194,8 +120,8 @@ KIE_IMAGE_MODELS = {
         "cost_usd": 0.06,
         "quality": 5,
         "speed": "medium",
-        "badge": "✏️ Google Edit",
-        "description": "Google AI ile görsel düzenleme",
+        "badge": "✏️ GOOGLE EDIT",
+        "description": "Google AI neural image-to-image transformation engine.",
         "capabilities": {
             "image_editing": True,
             "text_rendering": True
@@ -206,15 +132,15 @@ KIE_IMAGE_MODELS = {
     "kie_gpt4o_image": {
         "provider": "kie.ai",
         "api_type": "gpt4o_image",
-        "name": "GPT-4o Image",
+        "name": "GPT-4O OMNI ENGINE [COMMAND CENTER]",
         "type": "text_to_image",
         "model_id": "gpt-4o-image",
-        "kie_credits": 20,
+        "kie_credits": 12,
         "cost_usd": 0.10,
         "quality": 5,
         "speed": "medium",
-        "badge": "🤖 OpenAI",
-        "description": "OpenAI'ın en yeni görsel modeli",
+        "badge": "🤖 OPENAI CORE",
+        "description": "Official OpenAI DALL-E 3 neural architecture for stable imaging.",
         "capabilities": {
             "text_rendering": True,
             "multi_modal": True
@@ -225,15 +151,15 @@ KIE_IMAGE_MODELS = {
     "kie_imagen4": {
         "provider": "kie.ai",
         "api_type": "market",
-        "name": "Google Imagen 4",
+        "name": "GOOGLE IMAGEN 4 [COMMAND CENTER]",
         "type": "text_to_image",
         "model_id": "google/imagen4",
-        "kie_credits": 12,
+        "kie_credits": 7,
         "cost_usd": 0.06,
         "quality": 5,
         "speed": "medium",
-        "badge": "🎨 Google Imagen",
-        "description": "Google Imagen 4 görsel üretim",
+        "badge": "🎨 GOOGLE CORE",
+        "description": "High-fidelity Google Imagen 4 synthesis for photorealistic outputs.",
         "capabilities": {
             "negative_prompt": True
         }
@@ -243,30 +169,47 @@ KIE_IMAGE_MODELS = {
     "kie_recraft_remove_bg": {
         "provider": "kie.ai",
         "api_type": "market",
-        "name": "Recraft Remove BG",
+        "name": "RECRAFT NEURAL PURGE [COMMAND CENTER]",
         "type": "background_remover",
         "model_id": "recraft/remove-background",
-        "kie_credits": 6,
-        "cost_usd": 0.03,
+        "kie_credits": 2,
+        "cost_usd": 0.015,
         "quality": 5,
         "speed": "fast",
-        "badge": "✂️ Arka Plan Sil",
-        "description": "Profesyonel arka plan temizleme",
+        "badge": "✂️ NEURAL PURGE",
+        "description": "High-precision AI background elimination using Recraft neural logic.",
         "capabilities": {
-            "remove_background": True
+            "image_editing": True
+        }
+    },
+    "kie_recraft_vector": {
+        "provider": "kie.ai",
+        "api_type": "market",
+        "name": "RECRAFT VECTOR CORE [COMMAND CENTER]",
+        "type": "text_to_image",
+        "model_id": "recraft/v3-vector",
+        "kie_credits": 9,
+        "cost_usd": 0.075,
+        "quality": 5,
+        "speed": "medium",
+        "badge": "🎨 VECTOR CORE",
+        "description": "Professional-grade vector synthesis and iconographic design logic.",
+        "capabilities": {
+            "vector_output": True,
+            "image_editing": True
         }
     },
     "kie_recraft": {
         "provider": "kie.ai",
         "api_type": "market",
-        "name": "Recraft Upscale",
+        "name": "RECRAFT UPSCALE [COMMAND CENTER]",
         "type": "upscaler",
         "model_id": "recraft/crisp-upscale",
         "kie_credits": 6,
         "cost_usd": 0.03,
         "quality": 4,
         "speed": "fast",
-        "badge": "🎨 Recraft",
+        "badge": "🎨 RECRAFT CORE",
         "description": "AI görsel büyütme ve iyileştirme",
         "capabilities": {
             "upscale": True,
@@ -278,14 +221,14 @@ KIE_IMAGE_MODELS = {
     "kie_zimage": {
         "provider": "kie.ai",
         "api_type": "market",
-        "name": "Z-Image",
+        "name": "Z-IMAGE [COMMAND CENTER]",
         "type": "text_to_image",
         "model_id": "z-image",
-        "kie_credits": 0.8,
-        "cost_usd": 0.004,
+        "kie_credits": 1,
+        "cost_usd": 0.005,
         "quality": 4,
         "speed": "fast",
-        "badge": "💰 Süper Ucuz!",
+        "badge": "💰 ECONOMY CORE",
         "description": "Ekonomik fotorealistik, çift dil metin",
         "capabilities": {
             "bilingual_text": True,
@@ -297,14 +240,14 @@ KIE_IMAGE_MODELS = {
     "kie_seedream": {
         "provider": "kie.ai",
         "api_type": "market",
-        "name": "Seedream 3.0",
+        "name": "SEEDREAM 3.0 [COMMAND CENTER]",
         "type": "text_to_image",
         "model_id": "bytedance/seedream",
         "kie_credits": 5,
         "cost_usd": 0.025,
         "quality": 4,
         "speed": "fast",
-        "badge": None,
+        "badge": "✨ SEEDREAM CORE",
         "description": "ByteDance Seedream yaratıcı görseller",
         "capabilities": {}
     },
@@ -313,53 +256,63 @@ KIE_IMAGE_MODELS = {
     "kie_grok_imagine": {
         "provider": "kie.ai",
         "api_type": "market",
-        "name": "Grok Imagine",
+        "name": "GROK IMAGINE [COMMAND CENTER]",
         "type": "text_to_image",
         "model_id": "grok-imagine/text-to-image",
         "kie_credits": 10,
         "cost_usd": 0.05,
         "quality": 4,
         "speed": "medium",
-        "badge": "𝕏 xAI",
+        "badge": "𝕏 XAI CORE",
         "description": "xAI Grok görsel üretimi",
         "capabilities": {}
     },
 
     # ── Qwen (Market API) ────────────────────────
-    # "kie_qwen": {
-    #     "provider": "kie.ai",
-    #     "api_type": "market",
-    #     "name": "Qwen",
-    #     "type": "text_to_image",
-    #     "model_id": "qwen/text-to-image",
-    #     "kie_credits": 5,
-    #     "cost_usd": 0.025,
-    #     "quality": 4,
-    #     "speed": "fast",
-    #     "badge": None,
-    #     "description": "Alibaba Qwen görsel üretim",
-    #     "capabilities": {
-    #         "negative_prompt": True,
-    #         "image_editing": True
-    #     }
-    # },
+    "kie_qwen": {
+        "provider": "kie.ai",
+        "api_type": "market",
+        "name": "QWEN NEURAL CLUSTER [COMMAND CENTER]",
+        "type": "text_to_image",
+        "model_id": "qwen/text-to-image",
+        "kie_credits": 3,
+        "cost_usd": 0.025,
+        "quality": 4,
+        "speed": "fast",
+        "badge": "⚡ QUANTUM CORE",
+        "description": "High-speed Alibaba Qwen synthesis cluster for rapid visual iteration.",
+        "capabilities": {
+            "negative_prompt": True,
+            "image_editing": True
+        }
+    },
     
-    # "kie_qwen_image_edit": { ... DISABLED: Invalid ID ... },
-    # "kie_ideogram_character": { ... DISABLED: Invalid ID ... },
-    # "kie_midjourney_v6": { ... DISABLED: Invalid ID ... },
+    "kie_midjourney_v6": {
+        "provider": "kie.ai",
+        "api_type": "market",
+        "name": "MIDJOURNEY V6 CINEMA [COMMAND CENTER]",
+        "type": "text_to_image",
+        "model_id": "midjourney/v6",
+        "kie_credits": 18,
+        "cost_usd": 0.15,
+        "quality": 5,
+        "speed": "medium",
+        "badge": "🏆 ARTISTIC GOLD",
+        "description": "The global benchmark for artistic and cinematic visual excellence."
+    },
 
     # ── Topaz Upscale (Market API) ───────────────
     "kie_topaz_upscale": {
         "provider": "kie.ai",
         "api_type": "market",
-        "name": "Topaz Upscale",
+        "name": "TOPAZ UPSCALE [COMMAND CENTER]",
         "type": "upscaler",
         "model_id": "topaz/image-upscale",
         "kie_credits": 4,
         "cost_usd": 0.02,
         "quality": 5,
         "speed": "medium",
-        "badge": "🔍 Büyütme",
+        "badge": "🔍 OPTIC CORE",
         "description": "Profesyonel görsel büyütme",
         "capabilities": {
             "upscale_4x": True,
@@ -373,64 +326,61 @@ KIE_IMAGE_MODELS = {
 # ============================================
 
 KIE_VIDEO_MODELS = {
-    # ============================================
-    # Google Veo 3 / 3.1 - Official Pricing Sync
-    # ============================================
     "kie_veo3_quality": {
         "provider": "kie.ai",
-        "name": "Veo 3 (Quality)",
+        "name": "VEO 3 SYNTHESIS CLUSTER [HQ]",
         "base_name": "Veo 3",
         "version_name": "Quality",
         "type": "text_to_video",
         "model_id": "veo-3-quality",
-        "kie_credits": 180,
-        "cost_usd": 0.90,
+        "kie_credits": 110,
+        "cost_usd": 0.9166,
         "duration": 5,
         "durations": [4, 6, 8],
         "resolution": "1080p",
         "resolutions": ["720p", "1080p", "4K"],
         "quality": 5,
         "speed": "slow",
-        "badge": "🎬 Premium",
-        "description": "Yüksek kaliteli Google Veo 3",
+        "badge": "🎬 GOOGLE ELITE",
+        "description": "Premium-grade Google Veo 3 cinematic synthesis engine.",
         "capabilities": {"synchronized_audio": True}
     },
     "kie_veo3_fast": {
         "provider": "kie.ai",
-        "name": "Veo 3 (Fast)",
+        "name": "VEO 3 TURBO [FAST]",
         "base_name": "Veo 3",
         "version_name": "Fast",
         "type": "text_to_video",
         "model_id": "veo-3-fast",
-        "kie_credits": 80,
-        "cost_usd": 0.40,
+        "kie_credits": 69,
+        "cost_usd": 0.5766,
         "duration": 5,
         "durations": [4, 6, 8],
         "resolution": "1080p",
         "resolutions": ["720p", "1080p"],
         "quality": 4,
         "speed": "fast",
-        "badge": "⚡ Hızlı",
-        "description": "Hızlı Veo 3 modeli",
+        "badge": "⚡ TURBO CORE",
+        "description": "High-speed Google Veo 3 synthesis for rapid production.",
         "capabilities": {}
     },
     "kie_veo31_quality": {
         "provider": "kie.ai",
-        "name": "Veo 3.1 (Quality)",
+        "name": "VEO 3.1 CINEMATIC [ULTRA]",
         "base_name": "Veo 3.1",
         "version_name": "Quality",
         "type": "text_to_video",
         "model_id": "veo-3.1-quality",
-        "kie_credits": 255,
-        "cost_usd": 1.275,
+        "kie_credits": 129,
+        "cost_usd": 1.075,
         "duration": 8,
         "durations": [4, 6, 8],
         "resolution": "1080p",
         "resolutions": ["720p", "1080p", "4K"],
         "quality": 5,
         "speed": "slow",
-        "badge": "🏆 Sinematik",
-        "description": "Premium kalite, senkronize ses",
+        "badge": "🏆 NEURAL CINEMA",
+        "description": "Ultra-fidelity Google Veo 3.1 with synchronized neural audio.",
         "capabilities": {
             "synchronized_audio": True,
             "cinematic_motion": True
@@ -438,104 +388,71 @@ KIE_VIDEO_MODELS = {
     },
     "kie_veo31_fast": {
         "provider": "kie.ai",
-        "name": "Veo 3.1 (Fast)",
+        "name": "VEO 3.1 FAST TRACK [PRO]",
         "base_name": "Veo 3.1",
         "version_name": "Fast",
         "type": "text_to_video",
         "model_id": "veo-3.1-fast",
-        "kie_credits": 65,
-        "cost_usd": 0.325,
+        "kie_credits": 64,
+        "cost_usd": 0.5316,
         "duration": 8,
         "durations": [4, 6, 8],
         "resolution": "1080p",
         "resolutions": ["720p", "1080p"],
         "quality": 4,
         "speed": "fast",
-        "badge": "⚡ Hızlı",
-        "description": "Dengeli hız ve kalite",
+        "badge": "⚡ PRO CORE",
+        "description": "Balanced high-speed performance for professional creators.",
         "capabilities": {}
     },
     "kie_veo31_lite": {
         "provider": "kie.ai",
-        "name": "Veo 3.1 (Lite)",
+        "name": "VEO 3.1 LITE CORE [ECONOMY]",
         "base_name": "Veo 3.1",
         "version_name": "Lite",
         "type": "text_to_video",
         "model_id": "veo-3.1-lite",
         "kie_credits": 35,
-        "cost_usd": 0.175,
+        "cost_usd": 0.295,
         "duration": 8,
         "durations": [4, 6, 8],
         "resolution": "1080p",
         "resolutions": ["720p"],
         "quality": 3,
         "speed": "very_fast",
-        "badge": "💰 Ekonomik",
-        "description": "En uygun fiyatlı mod",
+        "badge": "💰 ECONOMY",
+        "description": "Cost-effective entry-level video synthesis core.",
         "capabilities": {}
     },
-    
-    # ============================================
-    # OpenAI Sora 2 - Official Pricing Sync
-    # ============================================
-    "kie_sora2_stable_10s": {
+    "kie_sora2": {
         "provider": "kie.ai",
-        "name": "Open AI Sora 2 (10s)",
-        "base_name": "OpenAI Sora",
-        "version_name": "10s",
+        "name": "SORA 2 STABLE ENGINE",
+        "base_name": "Sora 2",
         "type": "text_to_video",
-        "model_id": "sora-2-text-to-video-stable",
-        "kie_credits": 35,
-        "cost_usd": 0.175,
+        "model_id": "openai/sora-2",
+        "kie_credits": 480,
+        "cost_usd": 0.4025,
         "duration": 10,
-        "durations": [10],
         "resolution": "1080p",
-        "resolutions": ["1080p"],
         "quality": 5,
         "speed": "medium",
-        "badge": "🎬 OpenAI Sora",
-        "description": "Gerçekçi hareket, tutarlı fizik",
+        "badge": "🎬 HOLLYWOOD CORE",
+        "description": "Institutional-grade OpenAI Sora 2 physics simulation and cinematic motion.",
         "capabilities": {
             "text_to_video": True,
             "image_to_video": True,
             "consistent_physics": True
         }
     },
-    "kie_sora2_stable_15s": {
+    "kie_kling26_audio": {
         "provider": "kie.ai",
-        "name": "Open AI Sora 2 (15s)",
-        "base_name": "OpenAI Sora",
-        "version_name": "15s",
-        "type": "text_to_video",
-        "model_id": "sora-2-text-to-video-stable-15s",
-        "kie_credits": 40,
-        "cost_usd": 0.20,
-        "duration": 15,
-        "durations": [15],
-        "resolution": "1080p",
-        "resolutions": ["1080p"],
-        "quality": 5,
-        "speed": "medium",
-        "badge": "✨ Uzun Süre",
-        "description": "15 saniyelik uzun video",
-        "capabilities": {
-            "text_to_video": True,
-            "image_to_video": True
-        }
-    },
-    
-    # ============================================
-    # Kling 2.6 - Official Pricing Sync
-    # ============================================
-    "kie_kling26_audio_10s": {
-        "provider": "kie.ai",
-        "name": "Kling 2.6 + Audio",
-        "base_name": "Kling AI",
+        "name": "KLING 2.6 SONIC SYNC [HQ]",
+        "base_name": "Kling 2.6",
         "version_name": "Audio",
         "type": "text_to_video",
-        "model_id": "kling-2.6-audio-10s",
-        "kie_credits": 220,
-        "cost_usd": 1.10,
+        "model_id": "kling-2.6-audio",
+        "kie_credits": 74,
+        "cost_usd": 0.6133,
         "duration": 10,
         "durations": [5, 10, 15],
         "slider_duration": True,
@@ -543,21 +460,21 @@ KIE_VIDEO_MODELS = {
         "resolutions": ["720p", "1080p", "4K"],
         "quality": 5,
         "speed": "medium",
-        "badge": "🔊 Sesli",
-        "description": "Kling 2.6 yüksek kalite + Ses",
+        "badge": "🔊 SONIC SYNC",
+        "description": "State-of-the-art Kling 2.6 synthesis with synchronized neural audio.",
         "capabilities": {
             "synchronized_audio": True
         }
     },
     "kie_kling26_no_audio_10s": {
         "provider": "kie.ai",
-        "name": "Kling 2.6 (Standard)",
+        "name": "KLING 2.6 STANDARD ENGINE",
         "base_name": "Kling AI",
         "version_name": "Standard",
         "type": "text_to_video",
         "model_id": "kling-2.6-10s",
-        "kie_credits": 110,
-        "cost_usd": 0.55,
+        "kie_credits": 46,
+        "cost_usd": 0.38,
         "duration": 10,
         "durations": [5, 10, 15],
         "slider_duration": True,
@@ -565,57 +482,13 @@ KIE_VIDEO_MODELS = {
         "resolutions": ["720p", "1080p", "4K"],
         "quality": 5,
         "speed": "medium",
-        "badge": None,
-        "description": "Kling 2.6 yüksek kalite HD",
+        "badge": "🎥 ULTRA HD",
+        "description": "High-fidelity cinematic video synthesis without audio constraints.",
         "capabilities": {}
     },
-    "kie_kling26_audio_5s": {
-        "provider": "kie.ai",
-        "name": "Kling 2.6 + Audio (5s)",
-        "base_name": "Kling AI",
-        "version_name": "Audio Lite",
-        "type": "text_to_video",
-        "model_id": "kling-2.6-audio-5s",
-        "kie_credits": 110,
-        "cost_usd": 0.55,
-        "duration": 5,
-        "durations": [5],
-        "resolution": "1080p",
-        "resolutions": ["1080p"],
-        "quality": 5,
-        "speed": "fast",
-        "badge": "🔊 Sesli",
-        "description": "5s sesli video",
-        "capabilities": {
-            "synchronized_audio": True
-        }
-    },
-    "kie_kling26_no_audio_5s": {
-        "provider": "kie.ai",
-        "name": "Kling 2.6 (5s)",
-        "base_name": "Kling AI",
-        "version_name": "Standard Lite",
-        "type": "text_to_video",
-        "model_id": "kling-2.6-5s",
-        "kie_credits": 55,
-        "cost_usd": 0.275,
-        "duration": 5,
-        "durations": [5],
-        "resolution": "1080p",
-        "resolutions": ["1080p"],
-        "quality": 5,
-        "speed": "fast",
-        "badge": "💰 Ekonomik",
-        "description": "5s sessiz HD video",
-        "capabilities": {}
-    },
-    
-    # ============================================
-    # Wan 2.6 (Alibaba) - Official Pricing Sync
-    # ============================================
     "kie_wan26_1080p_15s": {
         "provider": "kie.ai",
-        "name": "Wan 2.6 (1080p, 15s)",
+        "name": "WAN 2.6 [COMMAND CENTER]",
         "base_name": "Wan AI",
         "version_name": "15s High",
         "type": "text_to_video",
@@ -628,7 +501,7 @@ KIE_VIDEO_MODELS = {
         "resolutions": ["1080p"],
         "quality": 5,
         "speed": "slow",
-        "badge": "🎥 Ultra HD",
+        "badge": "🎥 ULTRA HD",
         "description": "15s 1080p yüksek kalite",
         "capabilities": {
             "multi_shot": True,
@@ -637,12 +510,12 @@ KIE_VIDEO_MODELS = {
     },
     "kie_wan26_1080p_10s": {
         "provider": "kie.ai",
-        "name": "Wan 2.6 (1080p, 10s)",
+        "name": "WAN 2.6 [COMMAND CENTER]",
         "base_name": "Wan AI",
         "version_name": "10s Standard",
         "type": "text_to_video",
         "model_id": "wan-2.6-1080p-10s",
-        "kie_credits": 209.5,
+        "kie_credits": 210,
         "cost_usd": 1.0475,
         "duration": 10,
         "durations": [10],
@@ -650,18 +523,18 @@ KIE_VIDEO_MODELS = {
         "resolutions": ["1080p"],
         "quality": 5,
         "speed": "medium",
-        "badge": "💎 Değer/Kalite",
+        "badge": "💎 DEĞER/KALİTE",
         "description": "10s 1080p video",
         "capabilities": {}
     },
     "kie_wan26_1080p_5s": {
         "provider": "kie.ai",
-        "name": "Wan 2.6 (1080p, 5s)",
+        "name": "WAN 2.6 [COMMAND CENTER]",
         "base_name": "Wan AI",
         "version_name": "5s Fast",
         "type": "text_to_video",
         "model_id": "wan-2.6-1080p-5s",
-        "kie_credits": 104.5,
+        "kie_credits": 105,
         "cost_usd": 0.5225,
         "duration": 5,
         "durations": [5],
@@ -669,13 +542,13 @@ KIE_VIDEO_MODELS = {
         "resolutions": ["1080p"],
         "quality": 5,
         "speed": "fast",
-        "badge": None,
+        "badge": "⚡ PRO SPEED",
         "description": "5s 1080p video",
         "capabilities": {}
     },
     "kie_wan26_720p_10s": {
         "provider": "kie.ai",
-        "name": "Wan 2.6 (720p, 10s)",
+        "name": "WAN 2.6 [COMMAND CENTER]",
         "base_name": "Wan AI",
         "version_name": "10s Lite",
         "type": "text_to_video",
@@ -688,13 +561,13 @@ KIE_VIDEO_MODELS = {
         "resolutions": ["720p"],
         "quality": 4,
         "speed": "medium",
-        "badge": None,
+        "badge": "⚖️ BALANCED",
         "description": "10s 720p video",
         "capabilities": {}
     },
     "kie_wan26_720p_5s": {
         "provider": "kie.ai",
-        "name": "Wan 2.6 (720p, 5s)",
+        "name": "WAN 2.6 [COMMAND CENTER]",
         "type": "text_to_video",
         "model_id": "wan-2.6-720p-5s",
         "kie_credits": 70,
@@ -705,51 +578,56 @@ KIE_VIDEO_MODELS = {
         "resolutions": ["720p"],
         "quality": 4,
         "speed": "fast",
-        "badge": "💰 Ekonomik",
+        "badge": "💰 EKONOMİK",
         "description": "5s 720p video",
         "capabilities": {}
     },
-    
-    # ============================================
-    # Grok Imagine Video (xAI)
-    # ============================================
     "kie_grok_video": {
         "provider": "kie.ai",
-        "name": "Grok Imagine Video",
+        "api_type": "market",
+        "name": "GROK IMAGINE VIDEO [COMMAND CENTER]",
         "type": "text_to_video",
-        "model_id": "grok-imagine-video",
-        "kie_credits": 20,
+        "model_id": "xai/grok-video",
+        "kie_credits": 80,
         "cost_usd": 0.10,
-        "duration": 6,
-        "resolution": "720p",
-        "quality": 4,
-        "speed": "fast",
-        "badge": "𝕏 xAI Video",
-        "description": "Text/image to video, senkronize ses",
-        "capabilities": {
-            "text_to_video": True,
-            "image_to_video": True,
-            "synchronized_audio": True
-        }
+        "quality": 5,
+        "speed": "medium",
+        "badge": "🚀 XAI CORE",
+        "description": "Elon Musk's X.AI high-fidelity video synthesis engine.",
+        "capabilities": {}
     },
-    
-    # ============================================
-    # Hailuo 2.3 (MiniMax) - Official Pricing Sync
-    # ============================================
     "kie_hailuo23": {
         "provider": "kie.ai",
-        "name": "Hailuo 2.3",
+        "api_type": "market",
+        "name": "HAILUO 2.3 CINEMATIC [COMMAND CENTER]",
         "type": "text_to_video",
-        "model_id": "hailuo-2.3",
-        "kie_credits": 100,
+        "model_id": "hailuo/v2.3",
+        "kie_credits": 60,
         "cost_usd": 0.50,
-        "duration": 8,
+        "quality": 5,
+        "speed": "medium",
+        "badge": "🎬 NEURAL CINEMA",
+        "description": "Hailuo MiniMax ultra-realistic cinematic video synthesis.",
+        "capabilities": {}
+    },
+    "kie_runway_gen3": {
+        "provider": "kie.ai",
+        "name": "RUNWAY GEN-3 ALPHA SYSTEM [COMMAND CENTER]",
+        "base_name": "Runway Gen-3",
+        "type": "text_to_video",
+        "model_id": "runway/gen3",
+        "kie_credits": 45,
+        "cost_usd": 0.225,
+        "duration": 10,
         "resolution": "1080p",
         "quality": 5,
         "speed": "medium",
-        "badge": "🎬 MiniMax",
-        "description": "MiniMax video üretimi",
-        "capabilities": {}
+        "badge": "🎬 HOLLYWOOD CORE",
+        "description": "Institutional-grade Runway Gen-3 Alpha synthesis for cinematic productions.",
+        "capabilities": {
+            "text_to_video": True,
+            "image_to_video": True
+        }
     },
 }
 
@@ -758,39 +636,37 @@ KIE_VIDEO_MODELS = {
 # ============================================
 
 KIE_MUSIC_MODELS = {
-    "kie_suno_v35": {
+    "kie_suno_v3_5": {
         "provider": "kie.ai",
-        "name": "Suno V3.5",
-        "type": "text_to_music",
-        "model_id": "suno-v3.5",
-        "kie_credits": 10,
+        "api_type": "market",
+        "name": "SONIC ENGINE V3.5 [STUDIO]",
+        "type": "music_generation",
+        "model_id": "suno/v3.5",
+        "kie_credits": 6,
         "cost_usd": 0.05,
-        "duration": 60,  # seconds
-        "quality": 4,
+        "quality": 5,
         "speed": "medium",
-        "badge": None,
-        "description": "Temel müzik üretimi",
-        "capabilities": {}
+        "badge": "🎵 STUDIO CORE",
+        "description": "High-fidelity Suno V3.5 neural music synthesis for professional compositions.",
+        "capabilities": {"full_song": True, "instrumental": True}
     },
     "kie_suno_v4": {
         "provider": "kie.ai",
-        "name": "Suno V4",
-        "type": "text_to_music",
-        "model_id": "suno-v4",
-        "kie_credits": 15,
-        "cost_usd": 0.075,
-        "duration": 120,
-        "quality": 4,
+        "api_type": "market",
+        "name": "SONIC ENGINE V4.0 [ELITE]",
+        "type": "music_generation",
+        "model_id": "suno/v4",
+        "kie_credits": 12,
+        "cost_usd": 0.10,
+        "quality": 5,
         "speed": "medium",
-        "badge": None,
-        "description": "Gelişmiş vokal ve ses",
-        "capabilities": {
-            "enhanced_vocals": True
-        }
+        "badge": "🔥 NEURAL ELITE",
+        "description": "Next-generation Suno V4 music synthesis for industry-standard production.",
+        "capabilities": {"full_song": True, "instrumental": True}
     },
     "kie_suno_v45": {
         "provider": "kie.ai",
-        "name": "Suno V4.5",
+        "name": "SONIC ENGINE V4.5 [COMMAND CENTER]",
         "type": "text_to_music",
         "model_id": "suno-v4.5",
         "kie_credits": 20,
@@ -798,7 +674,7 @@ KIE_MUSIC_MODELS = {
         "duration": 240,
         "quality": 5,
         "speed": "medium",
-        "badge": "🎵 Profesyonel",
+        "badge": "🎵 PRO STUDIO",
         "description": "4 dakikaya kadar profesyonel müzik",
         "capabilities": {
             "enhanced_vocals": True,
@@ -808,7 +684,7 @@ KIE_MUSIC_MODELS = {
     },
     "kie_suno_v45_plus": {
         "provider": "kie.ai",
-        "name": "Suno V4.5 Plus",
+        "name": "SONIC ENGINE V4.5 PLUS [COMMAND CENTER]",
         "type": "text_to_music",
         "model_id": "suno-v4.5-plus",
         "kie_credits": 40,
@@ -816,7 +692,7 @@ KIE_MUSIC_MODELS = {
         "duration": 480,
         "quality": 5,
         "speed": "slow",
-        "badge": "🎼 8 Dakika!",
+        "badge": "🎼 8 MINUTE CORE",
         "description": "8 dakikaya kadar, akıllı promptlar",
         "capabilities": {
             "smart_prompts": True,
@@ -832,46 +708,47 @@ KIE_MUSIC_MODELS = {
 KIE_TTS_MODELS = {
     "kie_elevenlabs_turbo_25": {
         "provider": "kie.ai",
-        "name": "Elevenlabs Turbo 2.5",
+        "name": "ELEVENLABS TURBO 2.5 [COMMAND CENTER]",
         "type": "text_to_speech",
         "model_id": "elevenlabs-text-to-speech-turbo-2.5",
-        "kie_credits": 6,  # 6.0 per 1000 characters
-        "cost_usd": 0.03,  # per 1000 characters
+        "kie_credits": 6,
+        "cost_usd": 0.03,
         "quality": 5,
         "speed": "fast",
-        "badge": "⚡ Turbo",
+        "badge": "⚡ TURBO CORE",
         "description": "Hızlı, gerçekçi İngilizce seslendirme",
         "capabilities": {"multilingual": False}
     },
     "kie_elevenlabs_multilingual_v2": {
         "provider": "kie.ai",
-        "name": "Elevenlabs Multilingual V2",
+        "name": "ELEVENLABS OMNI V2 [COMMAND CENTER]",
         "type": "text_to_speech",
         "model_id": "elevenlabs-text-to-speech-multilingual-v2",
-        "kie_credits": 12, # 12.0 per 1000 characters
-        "cost_usd": 0.06,  # per 1000 characters
+        "kie_credits": 12,
+        "cost_usd": 0.06,
         "quality": 5,
         "speed": "medium",
-        "badge": "🌍 Çok Dilli",
+        "badge": "🌍 MULTI-CORE",
         "description": "29 dilde yüksek kaliteli seslendirme",
         "capabilities": {"multilingual": True}
     },
     "kie_elevenlabs_v3": {
         "provider": "kie.ai",
-        "name": "Elevenlabs V3 (Text to Dialogue)",
+        "api_type": "market",
+        "name": "NEURAL VOICE CLONE [V3]",
         "type": "text_to_speech",
         "model_id": "elevenlabs-v3-text-to-dialogue",
-        "kie_credits": 14, # 14 per 1000 characters
-        "cost_usd": 0.07,  # per 1000 characters
+        "kie_credits": 8,
+        "cost_usd": 0.07,
         "quality": 5,
         "speed": "medium",
-        "badge": "🗣️ Diyalog",
-        "description": "Diyaloglar için özel tasarlanmış v3 modeli",
+        "badge": "🗣️ OMNI VOICE",
+        "description": "Advanced ElevenLabs V3 neural speech synthesis with emotional depth.",
         "capabilities": {"multilingual": True, "dialogue": True}
     },
     "kie_elevenlabs_sfx": {
         "provider": "kie.ai",
-        "name": "Elevenlabs Sound Effect V2",
+        "name": "SONIC SFX ENGINE [V2]",
         "type": "sound_effects",
         "model_id": "elevenlabs-sound-effect-v2",
         "kie_credits": 0.24, # per second

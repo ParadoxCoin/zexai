@@ -35,25 +35,32 @@ const MessageContent = ({ content }: { content: string }) => {
   if (!content) return null;
   const parts = content.split(/(```\w*\n[\s\S]*?```)/g);
   return (
-    <div className="space-y-3 leading-relaxed">
+    <div className="space-y-4 leading-relaxed font-medium">
       {parts.map((part, idx) => {
         const codeMatch = part.match(/```(\w*)\n([\s\S]*?)```/);
         if (codeMatch) {
           const [, lang, code] = codeMatch;
-          return <CodeBlock key={idx} code={code} language={lang || 'javascript'} />;
+          return (
+            <div key={idx} className="rounded-2xl overflow-hidden border border-white/5 shadow-2xl">
+              <div className="bg-white/5 px-4 py-2 flex items-center justify-between border-b border-white/5">
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{lang || 'CODE'}</span>
+              </div>
+              <CodeBlock code={code} language={lang || 'javascript'} />
+            </div>
+          );
         }
         if (part.trim()) {
           const formatted = part
-            .replace(/`([^`]+)`/g, '<code class="bg-gray-200/80 dark:bg-gray-600/80 px-1.5 py-0.5 rounded text-emerald-700 dark:text-emerald-300 text-[13px] font-mono">$1</code>')
-            .replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold">$1</strong>')
-            .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-            .replace(/^### (.+)$/gm, '<h3 class="text-base font-bold mt-3 mb-1">$1</h3>')
-            .replace(/^## (.+)$/gm, '<h2 class="text-lg font-bold mt-4 mb-2">$1</h2>')
-            .replace(/^# (.+)$/gm, '<h1 class="text-xl font-bold mt-4 mb-2">$1</h1>')
-            .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc">$1</li>')
-            .replace(/^(\d+)\. (.+)$/gm, '<li class="ml-4 list-decimal">$1. $2</li>')
+            .replace(/`([^`]+)`/g, '<code class="bg-emerald-500/10 px-1.5 py-0.5 rounded text-emerald-400 text-[12px] font-mono border border-emerald-500/20">$1</code>')
+            .replace(/\*\*([^*]+)\*\*/g, '<strong class="font-black text-white">$1</strong>')
+            .replace(/\*([^*]+)\*/g, '<em class="italic text-slate-300">$1</em>')
+            .replace(/^### (.+)$/gm, '<h3 class="text-sm font-black text-white uppercase tracking-widest mt-6 mb-2 border-l-2 border-emerald-500 pl-3">$1</h3>')
+            .replace(/^## (.+)$/gm, '<h2 class="text-base font-black text-white uppercase tracking-[0.15em] mt-8 mb-3">$1</h2>')
+            .replace(/^# (.+)$/gm, '<h1 class="text-lg font-black text-white uppercase tracking-[0.2em] mt-10 mb-4">$1</h1>')
+            .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc text-slate-300 mb-1">$1</li>')
+            .replace(/^(\d+)\. (.+)$/gm, '<li class="ml-4 list-decimal text-slate-300 mb-1">$1. $2</li>')
             .replace(/\n/g, '<br/>');
-          return <div key={idx} className="text-[14px]" dangerouslySetInnerHTML={{ __html: formatted }} />;
+          return <div key={idx} className="text-[14px] text-slate-300" dangerouslySetInnerHTML={{ __html: formatted }} />;
         }
         return null;
       })}
@@ -361,54 +368,60 @@ const ChatPage = () => {
 
   return (
     <div 
-      className="flex h-[calc(100vh-64px)] overflow-hidden bg-white dark:bg-gray-900"
+      className="flex h-[calc(100vh-64px)] overflow-hidden bg-[#030712] text-white selection:bg-emerald-500/30"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
+      {/* Background Ambient Effects */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-900/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-teal-900/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] brightness-100 contrast-150" />
+      </div>
+
       {/* ═══ Left Sidebar (overlay on mobile) ═══ */}
       {showSidebar && (
         <>
           {/* Backdrop for mobile */}
-          <div className="fixed inset-0 bg-black/30 z-20 md:hidden" onClick={() => setShowSidebar(false)} />
-          <div className="fixed md:relative z-30 md:z-auto w-72 h-full border-r border-gray-200 dark:border-gray-700 flex flex-col bg-gray-50 dark:bg-gray-800 md:bg-gray-50/50 md:dark:bg-gray-800/50">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-20 md:hidden" onClick={() => setShowSidebar(false)} />
+          <div className="fixed md:relative z-30 md:z-auto w-80 h-full border-r border-white/5 flex flex-col bg-black/40 backdrop-blur-2xl shadow-2xl">
             {/* New Chat + Toggle */}
-            <div className="p-3 border-b border-gray-200 dark:border-gray-700">
+            <div className="p-4 border-b border-white/5">
               <button onClick={startNewConversation}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-medium text-sm hover:shadow-lg hover:shadow-emerald-500/20 transition-all active:scale-[0.98]">
-                <Plus className="w-4 h-4" /> {t('chat.newChat', 'Yeni Sohbet')}
+                className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-lg shadow-emerald-600/20 transition-all active:scale-[0.98] border-t border-white/10">
+                <Plus className="w-4 h-4" /> {t('chat.newChat', 'INITIALIZE NEURAL CHAT')}
               </button>
             </div>
 
             {/* Model Selector */}
-            <div className="p-3 border-b border-gray-200 dark:border-gray-700 max-h-[45vh] flex flex-col">
+            <div className="p-4 border-b border-white/5 max-h-[45vh] flex flex-col">
               {/* Search */}
-              <div className="relative mb-2">
-                <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input type="text" placeholder={t('chat.searchModel', 'Model ara...')} value={modelSearch} onChange={e => setModelSearch(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 text-xs bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-emerald-500" />
+              <div className="relative mb-4">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                <input type="text" placeholder={t('chat.searchModel', 'FILTER ENGINES...')} value={modelSearch} onChange={e => setModelSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 text-[10px] bg-black/40 border border-white/5 rounded-xl text-slate-300 placeholder-slate-700 font-black uppercase tracking-widest focus:outline-none focus:ring-1 focus:ring-emerald-500/50" />
               </div>
 
-              <div className="overflow-y-auto space-y-1 flex-1" style={{ scrollbarWidth: 'thin' }}>
+              <div className="overflow-y-auto space-y-1.5 flex-1 scrollbar-hide">
                 {/* 🆓 Free Section */}
                 {freeModels.length > 0 && (
                   <>
                     <button onClick={() => setShowFreeModels(!showFreeModels)}
-                      className="w-full flex items-center gap-1.5 px-1 py-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-md transition-colors">
-                      {showFreeModels ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                      🆓 Free ({freeModels.length})
+                      className="w-full flex items-center gap-2 px-1 py-2 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] hover:text-emerald-400 transition-colors">
+                      {showFreeModels ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                      STANDARD ENGINES ({freeModels.length})
                     </button>
                     {showFreeModels && freeModels.map((model) => (
                       <button key={model.id} onClick={() => setSelectedModel(model.id)}
-                        className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm transition-all ${selectedModel === model.id
-                          ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50'}`}>
-                        <span className="text-sm">{model.icon}</span>
-                        <div className="flex-1 text-left min-w-0">
-                          <div className="font-medium text-[11px] truncate">{model.name}</div>
-                          <div className="text-[9px] opacity-50 truncate">{model.desc}</div>
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all border group relative overflow-hidden ${selectedModel === model.id
+                          ? 'bg-emerald-500/10 border-emerald-500/50 text-white shadow-lg'
+                          : 'bg-white/[0.02] border-white/5 text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}>
+                        <span className="text-lg relative z-10 opacity-60 group-hover:opacity-100 transition-opacity">{model.icon}</span>
+                        <div className="flex-1 text-left min-w-0 relative z-10">
+                          <div className={`font-black text-[11px] uppercase tracking-widest truncate ${selectedModel === model.id ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>{model.name}</div>
+                          <div className="text-[9px] font-bold text-slate-600 uppercase tracking-tighter truncate">{model.desc}</div>
                         </div>
-                        <span className="text-[9px] font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded-full shrink-0">FREE</span>
-                        {selectedModel === model.id && <Check className="w-3 h-3 text-emerald-500 shrink-0" />}
+                        <span className="text-[9px] font-black text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20 shrink-0 relative z-10 uppercase">FREE</span>
                       </button>
                     ))}
                   </>
@@ -418,22 +431,21 @@ const ChatPage = () => {
                 {premiumModels.length > 0 && (
                   <>
                     <button onClick={() => setShowPremiumModels(!showPremiumModels)}
-                      className="w-full flex items-center gap-1.5 px-1 py-1 mt-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-md transition-colors">
-                      {showPremiumModels ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                      💎 Premium ({premiumModels.length})
+                      className="w-full flex items-center gap-2 px-1 py-2 mt-2 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] hover:text-amber-400 transition-colors">
+                      {showPremiumModels ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                      PREMIUM ENGINES ({premiumModels.length})
                     </button>
                     {showPremiumModels && premiumModels.map((model) => (
                       <button key={model.id} onClick={() => setSelectedModel(model.id)}
-                        className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm transition-all ${selectedModel === model.id
-                          ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50'}`}>
-                        <span className="text-sm">{model.icon}</span>
-                        <div className="flex-1 text-left min-w-0">
-                          <div className="font-medium text-[11px] truncate">{model.name}</div>
-                          <div className="text-[9px] opacity-50 truncate">{model.desc}</div>
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all border group relative overflow-hidden ${selectedModel === model.id
+                          ? 'bg-amber-500/10 border-amber-500/50 text-white shadow-lg'
+                          : 'bg-white/[0.02] border-white/5 text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}>
+                        <span className="text-lg relative z-10 opacity-60 group-hover:opacity-100 transition-opacity">{model.icon}</span>
+                        <div className="flex-1 text-left min-w-0 relative z-10">
+                          <div className={`font-black text-[11px] uppercase tracking-widest truncate ${selectedModel === model.id ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>{model.name}</div>
+                          <div className="text-[9px] font-bold text-slate-600 uppercase tracking-tighter truncate">{model.desc}</div>
                         </div>
-                        <span className="text-[9px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded-full shrink-0">{model.cost}cr</span>
-                        {selectedModel === model.id && <Check className="w-3 h-3 text-amber-500 shrink-0" />}
+                        <span className="text-[9px] font-black text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-lg border border-amber-400/20 shrink-0 relative z-10 uppercase">{model.cost} ZEX</span>
                       </button>
                     ))}
                   </>
@@ -442,45 +454,45 @@ const ChatPage = () => {
             </div>
 
             {/* History Header */}
-            <div className="px-3 pt-3 pb-1 flex items-center justify-between">
-              <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider px-1">{t('chat.pastChats', 'Geçmiş Sohbetler')}</p>
-              <span className="text-[10px] text-gray-400 bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded-full">{conversationsList.length}</span>
+            <div className="px-4 pt-6 pb-2 flex items-center justify-between">
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{t('chat.pastChats', 'TERMINAL LOGS')}</p>
+              <span className="text-[9px] font-black text-slate-600 bg-white/5 px-2 py-0.5 rounded-full border border-white/5">{conversationsList.length}</span>
             </div>
 
-            {/* Conversation History - always visible */}
-            <div className="flex-1 overflow-y-auto px-3 pb-2">
-              <div className="space-y-1">
+            {/* Conversation History */}
+            <div className="flex-1 overflow-y-auto px-4 pb-4 scrollbar-hide">
+              <div className="space-y-1.5">
                 {isLoadingConversations ? (
-                  [1, 2, 3].map(i => <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />)
+                  [1, 2, 3, 4, 5].map(i => <div key={i} className="h-20 bg-white/5 rounded-2xl animate-pulse border border-white/5" />)
                 ) : conversationsList.length === 0 ? (
-                  <div className="text-center py-10">
-                    <History className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
-                    <p className="text-xs text-gray-400">{t('chat.noChats', 'Henüz sohbet yok')}</p>
-                    <p className="text-[10px] text-gray-300 dark:text-gray-600 mt-1">{t('chat.firstMsg', 'İlk mesajınızı yazın!')}</p>
+                  <div className="text-center py-12">
+                    <History className="w-10 h-10 text-slate-800 mx-auto mb-4" />
+                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('chat.noChats', 'NO NEURAL LOGS FOUND')}</p>
                   </div>
                 ) : conversationsList.map((conv: any) => (
                   <div key={conv.id} onClick={() => loadConversation(conv.id)}
-                    className={`p-3 rounded-xl cursor-pointer transition-all group border ${currentConversation?.id === conv.id
-                      ? 'bg-emerald-500/10 border-emerald-300 dark:border-emerald-700 shadow-sm'
-                      : 'border-transparent hover:bg-gray-100 dark:hover:bg-gray-700/50 hover:border-gray-200 dark:hover:border-gray-600'
+                    className={`p-4 rounded-2xl cursor-pointer transition-all group border relative overflow-hidden ${currentConversation?.id === conv.id
+                      ? 'bg-emerald-500/10 border-emerald-500/30 shadow-xl'
+                      : 'border-transparent bg-white/[0.01] hover:bg-white/5 hover:border-white/5'
                       }`}>
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start justify-between gap-3 relative z-10">
                       <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate leading-tight">
-                          {conv.title || t('chat.untitled', "Başlıksız Sohbet")}
+                        <p className={`text-[12px] font-black uppercase tracking-widest truncate leading-tight transition-colors ${currentConversation?.id === conv.id ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>
+                          {conv.title || t('chat.untitled', "UNTITLED LOG")}
                         </p>
-                        <p className="text-[11px] text-gray-400 truncate mt-1 leading-tight">{conv.last_message}</p>
-                        <div className="flex items-center gap-2 mt-1.5">
-                          <span className="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">
-                            {conv.message_count} {t('chat.msgCount', 'mesaj')}
+                        <p className="text-[10px] text-slate-600 font-medium truncate mt-1.5 leading-tight italic line-clamp-1 opacity-60">"{conv.last_message}"</p>
+                        <div className="flex items-center gap-3 mt-3">
+                          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1">
+                            <MessageCircle className="w-3 h-3" /> {conv.message_count}
                           </span>
-                          <span className="text-[10px] text-gray-400">
+                          <div className="w-1 h-1 bg-slate-700 rounded-full" />
+                          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
                             {new Date(conv.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
                           </span>
                         </div>
                       </div>
                       <button onClick={(e) => { e.stopPropagation(); deleteConversation(conv.id); }}
-                        className="p-1.5 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0">
+                        className="p-2 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all rounded-xl hover:bg-red-500/10 flex-shrink-0">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -490,10 +502,10 @@ const ChatPage = () => {
             </div>
 
             {/* Compare button at bottom */}
-            <div className="p-3 border-t border-gray-200 dark:border-gray-700">
+            <div className="p-4 border-t border-white/5">
               <button onClick={() => setActiveTab("compare")}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-emerald-500/20 transition-all active:scale-[0.98]">
-                <Zap className="w-4 h-4" /> {t('chat.compare', 'Model Karşılaştır')}
+                className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white/5 hover:bg-white/10 text-slate-300 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all border border-white/10 group">
+                <Zap className="w-4 h-4 text-emerald-500 group-hover:scale-110 transition-transform" /> {t('chat.compare', 'DIAGNOSTIC COMPARISON')}
               </button>
             </div>
           </div>
@@ -506,48 +518,62 @@ const ChatPage = () => {
           <ComparisonChatPage onBack={() => setActiveTab("chat")} />
         ) : (
           <>
-            {/* Chat Header (Premium Gradient) */}
-            <div className="relative overflow-hidden bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white flex-shrink-0 shadow-md">
-              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTRzMiAyIDIgNC0yIDQtMiA0LTItMi0yLTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30" />
-              <div className="absolute bottom-0 left-0 right-0">
-                <svg viewBox="0 0 1440 40" fill="none" className="h-4 sm:h-6 w-full text-gray-50 dark:text-gray-900" preserveAspectRatio="none"><path d="M0 40V0C240 26.6667 480 40 720 40C960 40 1200 26.6667 1440 0V40H0Z" fill="currentColor" /></svg>
-              </div>
-              
-              <div className="relative h-16 px-4 flex items-center justify-between z-10 pb-2">
+            {/* Chat Header (Institutional Dark) */}
+            <div className="relative border-b border-white/5 bg-white/[0.01] backdrop-blur-xl flex-shrink-0 z-10">
+              <div className="h-20 px-8 flex items-center justify-between">
                 {/* Left */}
-                <div className="flex-1 flex items-center justify-start">
-                  <button onClick={() => setShowSidebar(!showSidebar)} className="p-1.5 text-emerald-100 hover:text-white hover:bg-white/10 rounded-lg transition-all">
-                    {showSidebar ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeft className="w-5 h-5" />}
-                  </button>
-                </div>
-
-                {/* Center */}
-                <div className="flex-1 flex items-center justify-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm shadow-inner flex items-center justify-center text-lg border border-white/30`}>
-                    {currentModel.icon}
-                  </div>
-                  <div className="text-center">
-                    <h3 className="text-lg sm:text-xl font-bold text-white leading-tight drop-shadow-sm">{currentConversation?.title || t('chat.newChat', "Yeni Sohbet")}</h3>
-                    <p className="text-xs text-emerald-100 font-medium flex items-center justify-center gap-1">
-                      <Cpu className="w-3.5 h-3.5" /> {currentModel.name}
-                    </p>
+                <div className="flex items-center gap-6">
+                  {!showSidebar && (
+                    <button onClick={() => setShowSidebar(true)} className="p-2.5 text-slate-500 hover:text-white hover:bg-white/5 rounded-xl transition-all border border-transparent hover:border-white/10">
+                      <PanelLeft className="w-5 h-5" />
+                    </button>
+                  )}
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-black/40 border border-white/10 shadow-2xl flex items-center justify-center text-2xl relative group">
+                       <div className="absolute inset-0 bg-emerald-500/10 rounded-2xl blur-xl group-hover:bg-emerald-500/20 transition-all" />
+                       <span className="relative z-10">{currentModel.icon}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <h3 className="text-[13px] font-black text-white uppercase tracking-[0.2em] leading-tight drop-shadow-sm">
+                        {currentConversation?.title || t('chat.newChat', "NEURAL SESSION")}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                          {currentModel.name}
+                        </span>
+                        <div className="w-1 h-1 bg-slate-700 rounded-full" />
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                          {currentModel.tier === 'free' ? 'STANDARD CORE' : 'PREMIUM CORE'}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 {/* Right */}
-                <div className="flex-1 flex items-center justify-end gap-2">
-                  {isTyping && (
-                    <span className="hidden sm:flex items-center gap-1.5 text-xs text-emerald-100 mr-2 bg-black/20 px-2 py-1 rounded-full backdrop-blur-sm">
-                      <span className="flex gap-0.5">
-                        <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" />
-                        <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                      </span>
-                      {t('chat.typing', 'Yazıyor...')}
-                    </span>
-                  )}
-                  <button onClick={startNewConversation} className="p-2 text-emerald-100 hover:text-white bg-white/10 hover:bg-white/20 rounded-xl transition-all shadow-sm border border-white/10" title="Yeni Sohbet">
-                    <RotateCcw className="w-4 h-4" />
+                <div className="flex items-center gap-4">
+                  <AnimatePresence>
+                    {isTyping && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-2xl border border-white/5 backdrop-blur-md"
+                      >
+                        <div className="flex gap-1">
+                          <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce" />
+                          <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
+                        <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">{t('chat.typing', 'SYNTHESIZING...')}</span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  
+                  <div className="h-8 w-px bg-white/5 mx-2" />
+                  
+                  <button onClick={startNewConversation} className="p-3 text-slate-500 hover:text-white bg-white/5 hover:bg-emerald-600/20 rounded-2xl transition-all shadow-xl border border-white/10 group" title="Yeni Sohbet">
+                    <RotateCcw className="w-4 h-4 group-hover:rotate-[-45deg] transition-transform" />
                   </button>
                 </div>
               </div>
@@ -558,29 +584,32 @@ const ChatPage = () => {
               <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
                 {/* Empty State */}
                 {!currentConversation?.messages?.length && (
-                  <div className="flex flex-col items-center justify-center pt-8 pb-12">
-                    <div className="relative mb-8 group">
-                      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full blur-3xl opacity-20 group-hover:opacity-40 transition-opacity duration-500" />
-                      <div className="w-24 h-24 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 rounded-3xl shadow-2xl flex items-center justify-center border border-gray-100 dark:border-gray-700 relative z-10">
-                        <img src="/logo192.png" alt="ZexAi" className="w-14 h-14 object-contain" />
+                  <div className="flex flex-col items-center justify-center pt-12 pb-16">
+                    <div className="relative mb-12 group">
+                      <div className="absolute inset-0 bg-emerald-500/20 rounded-[2.5rem] blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                      <div className="w-28 h-28 bg-black/40 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl flex items-center justify-center border border-white/10 relative z-10 overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent" />
+                        <img src="/logo192.png" alt="ZexAi" className="w-16 h-16 object-contain relative z-10" />
                       </div>
                     </div>
-                    <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 mb-3 text-center">
-                      {t('chat.emptyTitle', 'Size nasıl yardımcı olabilirim?')}
+                    <h2 className="text-4xl font-black text-white mb-4 text-center uppercase tracking-tighter italic">
+                      {t('chat.emptyTitle', 'SYSTEM ')}
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-500">
+                        {t('chat.emptyTitleHighlight', 'READY')}
+                      </span>
                     </h2>
-                    <p className="text-gray-500 dark:text-gray-400 mb-10 max-w-md text-center text-sm leading-relaxed">
-                      {t('chat.emptyDesc', 'Yapay zeka asistanınız hazır. İstediğiniz herhangi bir konuda soru sorabilir, kod yazdırabilir veya beyin fırtınası yapabilirsiniz.')}
+                    <p className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] mb-12 max-w-md text-center leading-relaxed">
+                      {t('chat.emptyDesc', 'INITIALIZE NEURAL INTERACTION. ASK QUESTIONS, GENERATE CODE, OR EXECUTE COMPLEX ANALYSES.')}
                     </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl px-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-3xl">
                       {suggestedPrompts.map((item, idx) => (
                         <button key={idx} onClick={() => setMessage(item.prompt)}
-                          className={`p-4 rounded-2xl text-left bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-xl hover:shadow-emerald-500/10 hover:-translate-y-1 transition-all group relative overflow-hidden`}>
-                          <div className={`absolute top-0 left-0 w-1 h-full bg-gradient-to-b ${item.gradient.split(' ')[0]} opacity-0 group-hover:opacity-100 transition-opacity`} />
-                          <div className="flex items-center gap-3 mb-2">
-                            <span className="text-2xl">{item.icon}</span>
-                            <span className="font-bold text-gray-800 dark:text-gray-200 text-sm">{item.title}</span>
+                          className="p-5 rounded-3xl text-left bg-black/40 backdrop-blur-xl border border-white/5 hover:border-emerald-500/30 hover:shadow-2xl hover:shadow-emerald-500/10 transition-all group relative overflow-hidden">
+                          <div className="flex items-center gap-4 mb-3">
+                            <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">{item.icon}</div>
+                            <span className="text-[11px] font-black text-white uppercase tracking-widest">{item.title}</span>
                           </div>
-                          <span className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{item.prompt}</span>
+                          <span className="text-[11px] text-slate-500 font-medium line-clamp-2 leading-relaxed italic">"{item.prompt}"</span>
                         </button>
                       ))}
                     </div>
@@ -589,45 +618,47 @@ const ChatPage = () => {
 
                 {/* Messages List */}
                 {currentConversation?.messages?.map((msg, index) => (
-                  <div key={index} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
+                  <div key={index} className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-4 duration-500`}>
                     {msg.role === 'assistant' && (
-                      <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
-                        <Bot className="w-3.5 h-3.5 text-white" />
+                      <div className="w-10 h-10 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-center flex-shrink-0 mt-1 shadow-2xl relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-emerald-500/10 group-hover:bg-emerald-500/20 transition-all" />
+                        <Bot className="w-5 h-5 text-emerald-400 relative z-10" />
                       </div>
                     )}
-                    <div className={`max-w-[80%] min-w-[60px] ${msg.role === 'user' ? 'order-first' : ''}`}>
-                      <div className={`px-4 py-3 rounded-2xl ${msg.role === 'user'
-                        ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-tr-md shadow-lg shadow-emerald-500/10'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-tl-md border border-gray-200 dark:border-gray-700'}`}>
+                    <div className={`max-w-[85%] min-w-[100px] ${msg.role === 'user' ? 'order-first' : ''}`}>
+                      <div className={`px-6 py-4 rounded-[2rem] shadow-2xl relative overflow-hidden border ${msg.role === 'user'
+                        ? 'bg-gradient-to-br from-emerald-600 to-teal-700 text-white rounded-tr-lg border-white/20'
+                        : 'bg-black/40 backdrop-blur-xl text-slate-200 rounded-tl-lg border-white/5'}`}>
                         {msg.role === 'assistant' ? (
                           <MessageContent content={msg.content} />
                         ) : (
-                          <p className="whitespace-pre-wrap text-[14px]">{msg.content}</p>
+                          <p className="whitespace-pre-wrap text-[14px] leading-relaxed font-medium">{msg.content}</p>
                         )}
                         {msg.role === 'assistant' && !msg.content && isTyping && (
-                          <div className="flex gap-1 py-1">
-                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" />
-                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                          <div className="flex gap-1.5 py-2">
+                            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" />
+                            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                           </div>
                         )}
                       </div>
                       {/* Meta row */}
-                      <div className={`flex items-center gap-2 mt-1 px-1 ${msg.role === 'user' ? 'justify-end' : ''}`}>
-                        <span className="text-[10px] text-gray-400">
+                      <div className={`flex items-center gap-3 mt-2.5 px-3 ${msg.role === 'user' ? 'justify-end' : ''}`}>
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
                           {new Date(msg.timestamp).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
                         </span>
                         {msg.content && (
                           <button onClick={() => copyToClipboard(msg.content, `${index}`)}
-                            className="p-0.5 text-gray-300 hover:text-gray-500 dark:text-gray-600 dark:hover:text-gray-400 transition-colors">
-                            {copiedMessageId === `${index}` ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                            className="p-1 text-slate-600 hover:text-white transition-colors">
+                            {copiedMessageId === `${index}` ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
                           </button>
                         )}
                       </div>
                     </div>
                     {msg.role === 'user' && (
-                      <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
-                        <User className="w-3.5 h-3.5 text-white" />
+                      <div className="w-10 h-10 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-center flex-shrink-0 mt-1 shadow-2xl relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-purple-500/10 group-hover:bg-purple-500/20 transition-all" />
+                        <User className="w-5 h-5 text-purple-400 relative z-10" />
                       </div>
                     )}
                   </div>
@@ -645,27 +676,35 @@ const ChatPage = () => {
             </div>
 
             {/* Input Area */}
-            <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3">
-              <form onSubmit={handleSendMessage} className="max-w-3xl mx-auto">
-                <div className="flex items-end gap-2 bg-gray-50 dark:bg-gray-800 rounded-2xl p-2 border border-gray-200 dark:border-gray-700 focus-within:border-emerald-300 dark:focus-within:border-emerald-700 focus-within:ring-2 focus-within:ring-emerald-500/10 transition-all">
+            <div className="border-t border-white/5 bg-black/40 backdrop-blur-2xl p-6 relative z-10">
+              <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto relative">
+                <div className="absolute inset-0 bg-emerald-500/5 rounded-3xl blur-2xl opacity-50 pointer-events-none" />
+                <div className="flex items-end gap-3 bg-black/60 backdrop-blur-3xl rounded-[2rem] p-3 border border-white/5 focus-within:border-emerald-500/50 focus-within:ring-4 focus-within:ring-emerald-500/5 transition-all shadow-2xl relative z-10">
                   <textarea
                     ref={textareaRef}
-                    placeholder={t('chat.typeMsg', "Mesajınızı yazın...")}
+                    placeholder={t('chat.typeMsg', "ENTER NEURAL COMMAND...")}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     rows={1}
                     disabled={isTyping}
-                    className="flex-1 px-3 py-2 bg-transparent border-0 resize-none focus:ring-0 focus:outline-none text-gray-900 dark:text-white placeholder-gray-400 text-sm max-h-[160px]"
+                    className="flex-1 px-5 py-3 bg-transparent border-0 resize-none focus:ring-0 focus:outline-none text-slate-100 placeholder-slate-700 text-[14px] font-medium max-h-[200px] scrollbar-hide"
                     onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(e); } }}
                   />
                   <button type="submit" disabled={isTyping || !message.trim()}
-                    className="p-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 disabled:from-gray-300 disabled:to-gray-400 dark:disabled:from-gray-600 dark:disabled:to-gray-700 text-white rounded-xl transition-all shadow-md disabled:shadow-none hover:shadow-lg hover:shadow-emerald-500/20 active:scale-95">
-                    {isTyping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    className="w-12 h-12 flex items-center justify-center bg-emerald-600 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded-[1.25rem] transition-all shadow-xl shadow-emerald-600/20 active:scale-90 border-t border-white/10 shrink-0">
+                    {isTyping ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                   </button>
                 </div>
-                <p className="text-center text-[10px] text-gray-400 mt-2">
-                  {currentModel.icon} {currentModel.name} · {t('chat.shortcut', "Shift+Enter ile yeni satır")}
-                </p>
+                <div className="flex items-center justify-center gap-4 mt-4">
+                  <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.2em] flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    {currentModel.name} · {currentModel.tier === 'free' ? 'STANDARD' : 'PREMIUM'} ENGINE ACTIVE
+                  </p>
+                  <div className="w-1 h-1 bg-slate-800 rounded-full" />
+                  <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.2em]">
+                    SHIFT+ENTER FOR MULTILINE COMMAND
+                  </p>
+                </div>
               </form>
             </div>
           </>
