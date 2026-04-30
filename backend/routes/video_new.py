@@ -297,19 +297,61 @@ async def get_video_models(
         if provider_display.lower() in ["kie", "kie.ai"]:
             provider_display = "Premium"
         
+        # Duration handling: robust list parser
+        duration_options = model_data.get("durations") or [model_data.get("duration", 5)]
+        primary_duration = duration_options[0] if duration_options else 5
+        
+        # Resolution handling
+        resolutions = model_data.get("resolutions") or ["720p", "1080p", "4K"]
+        
+        # Build video_caps
+        v_caps = model_data.get("video_caps") or {
+            "durations": duration_options,
+            "resolutions": resolutions,
+            "slider_duration": bool(model_data.get("slider_duration", False)),
+        }
+        
+        # Pricing matrix (duration x resolution)
+        pricing = {}
+        base_credits = int(model_data.get("kie_credits") or model_data.get("credits", 100))
+        
+        # For KIE models, base_credits is per-second price
+        # For others, we assume it's for 5 seconds by default
+        is_per_sec = "kie_" in model_id or model_data.get("per_second_pricing")
+        
+        for d in duration_options:
+            pricing[str(d)] = {}
+            for r in resolutions:
+                r_lower = r.lower()
+                res_mult = 1.0
+                if r_lower == "1080p": res_mult = 1.5
+                elif r_lower in ("4k", "2160p"): res_mult = 2.5
+                
+                if is_per_sec:
+                    pricing[str(d)][r] = int(base_credits * d * res_mult)
+                else:
+                    pricing[str(d)][r] = int(base_credits * (d / 5.0) * res_mult)
+        
+        v_caps["pricing"] = pricing
+        
         models.append(VideoModelInfo(
             id=model_id,
             provider=provider_display,
             name=model_data.get("name", model_id),
             type=model_type,
-            duration=model_data.get("duration", 5),
-            credits=credits,
+            duration=primary_duration,
+            credits=base_credits,
             quality=VideoQuality(model_data.get("quality", 4)),
             speed=VideoSpeed(model_data.get("speed", "medium")),
             badge=model_data.get("badge"),
-            example_video_url=f"https://cdn.example.com/videos/{model_id}.mp4",
             description=model_data.get("description"),
-            capabilities=model_data.get("capabilities")
+            capabilities=model_data.get("capabilities", {}),
+            video_caps=v_caps,
+            base_name=model_data.get("base_name") or _extract_base_name(model_data.get("name", model_id)),
+            version_name=model_data.get("version_name") or _extract_version_name(model_data.get("name", model_id)),
+            durations=duration_options,
+            resolutions=resolutions,
+            slider_duration=bool(model_data.get("slider_duration", False))
         ))
 
     
