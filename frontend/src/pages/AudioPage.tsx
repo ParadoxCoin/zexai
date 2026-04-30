@@ -623,7 +623,7 @@ const AudioPage = () => {
 
               {isLoadingVoices ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {[1, 2, 3].map(i => <div key={i} className="h-20 bg-white/5 rounded-2xl animate-pulse border border-white/5" />)
+                  {[1, 2, 3].map(i => <div key={i} className="h-20 bg-white/5 rounded-2xl animate-pulse border border-white/5" />)}
                 </div>
               ) : myVoices.length === 0 ? (
                 <div className="text-center py-12 bg-white/[0.02] rounded-3xl border border-white/5">
