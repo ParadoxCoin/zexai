@@ -368,7 +368,7 @@ const ImageGenerationPage = () => {
           <div className="flex items-center gap-6 bg-black/60 p-2.5 rounded-[2rem] border border-white/10 backdrop-blur-3xl shadow-2xl">
             <div className="flex flex-col items-end px-5">
               <span className="text-[9px] text-slate-600 font-black uppercase tracking-widest mb-1">AVAILABLE SYNTHESIS POWER</span>
-              <span className="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 tracking-tighter italic">{user?.credits || 0} ZEX</span>
+              <span className="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 tracking-tighter italic">{user?.credits || 0} Kredi</span>
             </div>
             <button
               onClick={() => window.location.href = '/billing'}
@@ -603,7 +603,7 @@ const ImageGenerationPage = () => {
                           <option value="" className="bg-slate-900">{t('imageGen.selectModel', 'SELECT ENGINE')}</option>
                           {generateModels.map((model: any) => (
                             <option key={model.id} value={model.id} className="bg-slate-900">
-                              {formatModelName(model.name).toUpperCase()} [{model.credits} ZEX]
+                              {formatModelName(model.name).toUpperCase()} [{model.credits} Kredi]
                             </option>
                           ))}
                         </select>
@@ -1092,7 +1092,7 @@ const ImageGenerationPage = () => {
                       )}
                     </div>
                     <div className="text-[10px] font-black text-orange-500/60 uppercase tracking-widest italic">
-                      {model.credits} ZEX POWER
+                      {model.credits} Kredi
                     </div>
                   </button>
                 ))}

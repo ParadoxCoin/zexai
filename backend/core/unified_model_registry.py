@@ -67,9 +67,7 @@ class UnifiedModelRegistry:
         add_models(REPLICATE_VIDEO_MODELS, ModelCategory.VIDEO, "Replicate")
         add_models(KIE_VIDEO_MODELS, ModelCategory.VIDEO, "kie.ai")  # Premium video models
         
-        add_models(FAL_IMAGE_MODELS, ModelCategory.IMAGE, "Fal.ai")
-        add_models(REPLICATE_IMAGE_MODELS, ModelCategory.IMAGE, "Replicate")
-        add_models(POLLO_IMAGE_MODELS, ModelCategory.IMAGE, "Pollo.ai")
+        # Only Kie.ai image models are allowed
         add_models(KIE_IMAGE_MODELS, ModelCategory.IMAGE, "kie.ai")  # Premium image models
         
         add_models(KIE_MUSIC_MODELS, ModelCategory.AUDIO, "kie.ai")  # Music generation
