@@ -35,7 +35,9 @@ from core.config import settings
 from core.pollo_models import EFFECT_PACKAGES, POLLO_VIDEO_MODELS, POLLO_VIDEO_EFFECTS
 from core.kie_models import KIE_VIDEO_MODELS  # Premium kie.ai video models
 from core.notification_service import notify_generation_complete
+import logging
 
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/video", tags=["Video Generation"])
 
@@ -58,6 +60,23 @@ def _extract_version_name(display_name: str) -> str:
         return match.group(1).strip()
     return "Standard"
 
+def _extract_base_name(name: str) -> str:
+    """Extract base model name from display name"""
+    # Remove bracket content like [HQ], [FAST], (Quality) etc.
+    import re
+    clean = re.sub(r'\[.*?\]|\(.*?\)', '', name).strip()
+    # Take first 2-3 words as base name
+    parts = clean.split()
+    return ' '.join(parts[:3]) if len(parts) > 3 else clean
+
+def _extract_version_name(name: str) -> str:
+    """Extract version/variant name from display name"""
+    import re
+    brackets = re.findall(r'\[(.*?)\]|\((.*?)\)', name)
+    if brackets:
+        return brackets[0][0] or brackets[0][1]
+    return "Standard"
+
 
 @router.get("/models", response_model=List[VideoModelInfo])
 async def get_video_models(
@@ -66,299 +85,71 @@ async def get_video_models(
 ):
     """
     Get all available video models with pricing.
-    Priority: video_models table (admin-managed) → ai_models table → hardcoded fallback
+    Uses the Unified Model Registry for consistency.
     """
-    print("DEBUG: /video/models called - VERSION: ULTRA_ROBUST_V4")
-    models = []
+    from core.unified_model_registry import model_registry
     
-    # ── Priority 1: Read from video_models table (Admin Panel manages this) ──
     try:
-        query = db.table("video_models").select("*").eq("is_active", True)
-        result = query.order("sort_order").execute()
-        vm_list = result.data if result.data else []
+        # Get models from the unified registry (handles DB + Hardcoded + Overrides)
+        registry_models = await model_registry.get_models(
+            db, 
+            category="video", 
+            type=type.value if type else None,
+            active_only=True
+        )
         
-        if vm_list:
-            type_filter = type.value if type else None
-            
-            for m in vm_list:
-                m_id = m.get("id")
-                if not m_id:
-                    continue
-                
-                m_type = str(m.get("model_type") or m.get("type") or "text_to_video").lower()
-                
-                # Type filter
-                if type_filter and type_filter not in m_type:
-                    continue
-                
-                # Duration handling: robust list parser
-                raw_durations = m.get("duration_options") or []
-                if isinstance(raw_durations, (list, tuple)):
-                    duration_options = list(raw_durations)
-                else:
-                    # Parse string format: {4,6,8} or [4,6,8] or "4,6,8"
-                    s = str(raw_durations).strip()
-                    for char in '{}[]"': s = s.replace(char, '')
-                    duration_options = [x.strip() for x in s.split(',') if x.strip()]
-                
-                # Ensure durations are integers
-                duration_options = [int(d) for d in duration_options if str(d).strip().isdigit()]
-                
-                if not duration_options:
-                    duration_options = [int(m.get("duration", 5))]
-                
-                primary_duration = duration_options[0] if duration_options else 5
-                
-                # Resolution handling
-                raw_resolutions = m.get("resolutions") or []
-                if isinstance(raw_resolutions, (list, tuple)):
-                    resolutions = list(raw_resolutions)
-                else:
-                    s = str(raw_resolutions).strip()
-                    for char in '{}[]"': s = s.replace(char, '')
-                    resolutions = [x.strip() for x in s.split(',') if x.strip()]
-                
-                if not resolutions:
-                    max_res = m.get("max_resolution", "720p")
-                    if max_res == "4K" or max_res == "2160p":
-                        resolutions = ["720p", "1080p", "4K"]
-                    elif max_res == "1080p":
-                        resolutions = ["720p", "1080p"]
-                    else:
-                        resolutions = ["720p"]
-                
-                # Quality rating
-                quality_val = m.get("quality_rating", 4)
-                try:
-                    quality_val = int(quality_val)
-                    quality_val = max(1, min(5, quality_val))
-                except:
-                    quality_val = 4
-                
-                # Speed
-                speed_val = m.get("speed", "medium")
-                if not isinstance(speed_val, str) or speed_val not in ("very_fast", "fast", "medium", "slow"):
-                    speed_val = "medium"
-                
-                # Build video_caps for frontend consumption
-                v_caps = {
-                    "durations": duration_options,
-                    "resolutions": resolutions,
-                    "slider_duration": bool(m.get("slider_duration", False)),
-                }
-                
-                # Per-second pricing support
-                if m.get("per_second_pricing"):
-                    v_caps["per_second_pricing"] = True
-                    v_caps["base_duration"] = m.get("base_duration", duration_options[0] if duration_options else 5)
-                
-                # Quality multipliers
-                if m.get("quality_multipliers"):
-                    v_caps["quality_multipliers"] = m["quality_multipliers"]
-                
-                # Pricing matrix (duration x resolution)
-                pricing = {}
-                base_credits = int(m.get("credits", 100))
-                base_dur = m.get("base_duration", duration_options[0] if duration_options else 5)
-                
-                custom_q_mult = m.get("quality_multipliers") or {}
-                if isinstance(custom_q_mult, str):
-                    try:
-                        custom_q_mult = json.loads(custom_q_mult)
-                    except:
-                        custom_q_mult = {}
-                        
-                def get_res_mult(r_str):
-                    r_lower = r_str.lower()
-                    if r_lower in custom_q_mult: return float(custom_q_mult[r_lower])
-                    if r_str in custom_q_mult: return float(custom_q_mult[r_str])
-                    defaults = {"720p": 1.0, "1080p": 1.5, "4k": 2.5, "2160p": 2.5}
-                    return defaults.get(r_lower, 1.0)
-
-                for d in duration_options:
-                    pricing[str(d)] = {}
-                    for r in resolutions:
-                        dur_mult = (d / base_dur) if m.get("per_second_pricing") else 1.0
-                        pricing[str(d)][r] = int(base_credits * dur_mult * get_res_mult(r))
-                
-                v_caps["pricing"] = pricing
-                
-                # Provider display cleanup
-                provider = m.get("provider_id", "premium")
-                if provider.lower() in ("kie", "kie.ai"):
-                    provider = "Premium"
-                
-                # Capabilities from DB
-                capabilities = m.get("capabilities") or {}
-                
-                models.append(VideoModelInfo(
-                    id=m_id,
-                    provider=provider,
-                    name=m.get("display_name") or m.get("name") or m_id,
-                    type=m_type,
-                    duration=primary_duration,
-                    credits=base_credits,
-                    quality=VideoQuality(quality_val),
-                    speed=VideoSpeed(speed_val),
-                    badge=m.get("badge"),
-                    description=m.get("description", ""),
-                    capabilities=capabilities,
-                    video_caps=v_caps,
-                    base_name=m.get("base_name") or _extract_base_name(m.get("display_name") or m.get("name") or m_id),
-                    version_name=m.get("version_name") or _extract_version_name(m.get("display_name") or m.get("name") or "Standard"),
-                    resolution=resolutions[-1] if resolutions else "720p",
-                    durations=duration_options,
-                    resolutions=resolutions,
-                    slider_duration=bool(m.get("slider_duration", False))
-                ))
-            
-            if models:
-                models.sort(key=lambda x: (-x.quality.value if hasattr(x.quality, 'value') else -4, x.credits))
-                print(f"[/video/models] Loaded {len(models)} models from video_models table")
-                return models
-    except Exception as e:
-        print(f"[/video/models] video_models table query failed: {e}")
-    
-    # ── Priority 2: Fall back to ai_models table ──
-    try:
-        res = db.table("ai_models").select("*").execute()
-        db_models = res.data if res.data else []
-        
-        type_filter = type.value if type else None
-        for m in db_models:
-            m_id = m.get("id")
-            if not m_id: continue
-            
-            m_type = str(m.get("type") or m.get("model_type") or "text_to_video").lower()
-            m_category = str(m.get("category") or "").lower()
-            caps = m.get("capabilities") or {}
-            video_caps = caps.get("video") or caps.get("video_params") or {}
-            
-            # BROAD FILTER: Include if type/category contains 'video' OR has video_caps
-            is_video = "video" in m_type or "video" in m_category or len(video_caps) > 0
-            if not is_video:
-                continue
-                
-            if type_filter and type_filter not in m_type:
-                continue
-                
-            # DEEP CLEAN: Only use the new video_caps engine
+        models = []
+        for m in registry_models:
+            # Get video_caps (Registry already calculated this correctly!)
             v_caps = m.get("video_caps") or {}
-            if not v_caps:
-                caps = m.get("capabilities") or {}
-                v_caps = caps.get("video") or {}
             
-            # Use dynamic list from caps, fallback only to core duration column
-            d_list = v_caps.get("durations") or [m.get("duration", 5)]
-            primary_duration = int(d_list[0]) if d_list else 5
-            
-            # Map to schema
+            # Map registry model to VideoModelInfo schema
             models.append(VideoModelInfo(
-                id=m_id,
-                provider=m.get("provider", "Premium"),
-                name=m.get("display_name") or m.get("name") or m_id,
-                type=m_type,
-                duration=primary_duration,
-                credits=int(m.get("credits", 100)),
-                quality=VideoQuality(int(m.get("quality", 4)) if str(m.get("quality", "")).isdigit() else 4),
-                speed=VideoSpeed(m.get("speed", "medium") if isinstance(m.get("speed"), str) else "medium"),
+                id=m["id"],
+                provider="Premium" if (m.get("provider") or "").lower() in ("kie", "kie.ai") else (m.get("provider") or "unknown"),
+                name=m.get("name", m["id"]),
+                type=m.get("type", "text_to_video"),
+                duration=int(m.get("base_duration") or m.get("duration") or 5),
+                credits=int(m.get("credits") or 100),
+                quality=VideoQuality(int(m.get("quality") or 4)),
+                speed=VideoSpeed(m.get("speed") or "medium"),
                 badge=m.get("badge"),
                 description=m.get("description", ""),
                 capabilities=m.get("capabilities", {}),
                 video_caps=v_caps,
-                base_name=m.get("base_name") or (m_id.split('/')[1] if '/' in m_id else m_id),
-                version_name=m.get("version_name") or "Standard",
-                durations=d_list,
-                resolutions=v_caps.get("resolutions") or ["720p", "1080p", "4K"],
-                slider_duration=bool(v_caps.get("slider_duration", False))
+                base_name=m.get("base_name") or _extract_base_name(m.get("name", m["id"])),
+                version_name=m.get("version_name") or _extract_version_name(m.get("name", m["id"])),
+                resolution=m.get("resolution"),
+                durations=m.get("durations") or [5],
+                resolutions=m.get("resolutions") or ["720p", "1080p"],
+                slider_duration=bool(m.get("slider_duration", False))
             ))
             
-        if models:
-            models.sort(key=lambda x: (-x.quality.value if hasattr(x.quality, 'value') else -4, x.credits))
-            print(f"[/video/models] Loaded {len(models)} models from ai_models table (fallback)")
-            return models
+        # Sort by Audio capability (descending), then Quality (descending)
+        def sort_key(x):
+            has_audio = 1 if "audio" in x.name.lower() or "sonic" in x.name.lower() or x.capabilities.get("synchronized_audio") else 0
+            quality_val = x.quality.value if hasattr(x.quality, 'value') else 4
+            return (-has_audio, -quality_val, x.name.lower())
+            
+        models.sort(key=sort_key)
+        
+        logger.info(f"Returning {len(models)} video models")
+        return models
+        
     except Exception as e:
-        print(f"[/video/models] ai_models table query failed: {e}")
-    
-    # ── Priority 3: Hardcoded fallback ──
-    combined_models = {**POLLO_VIDEO_MODELS, **KIE_VIDEO_MODELS}
-    for model_id, model_data in combined_models.items():
-        model_type = model_data.get("type", "text_to_video")
-        if type and model_type != type.value:
-            continue
-        
-        # Calculate credits (Dynamic Pricing)
-        cost_usd = float(model_data.get("cost_usd", model_data.get("pollo_cost_usd", 0.30)))
-        multiplier = float(model_data.get("cost_multiplier", 2.0))
-        credits = max(1, int(cost_usd * multiplier * 100))
-        
-        # Branding Cleanup
-        provider_display = model_data.get("provider", "unknown")
-        if provider_display.lower() in ["kie", "kie.ai"]:
-            provider_display = "Premium"
-        
-        # Duration handling: robust list parser
-        duration_options = model_data.get("durations") or [model_data.get("duration", 5)]
-        primary_duration = duration_options[0] if duration_options else 5
-        
-        # Resolution handling
-        resolutions = model_data.get("resolutions") or ["720p", "1080p", "4K"]
-        
-        # Build video_caps
-        v_caps = model_data.get("video_caps") or {
-            "durations": duration_options,
-            "resolutions": resolutions,
-            "slider_duration": bool(model_data.get("slider_duration", False)),
-        }
-        
-        # Pricing matrix (duration x resolution)
-        pricing = {}
-        base_credits = int(model_data.get("kie_credits") or model_data.get("credits", 100))
-        
-        # For KIE models, base_credits is per-second price
-        # For others, we assume it's for 5 seconds by default
-        is_per_sec = "kie_" in model_id or model_data.get("per_second_pricing")
-        
-        for d in duration_options:
-            pricing[str(d)] = {}
-            for r in resolutions:
-                r_lower = r.lower()
-                res_mult = 1.0
-                if r_lower == "1080p": res_mult = 1.5
-                elif r_lower in ("4k", "2160p"): res_mult = 2.5
-                
-                if is_per_sec:
-                    pricing[str(d)][r] = int(base_credits * d * res_mult)
-                else:
-                    pricing[str(d)][r] = int(base_credits * (d / 5.0) * res_mult)
-        
-        v_caps["pricing"] = pricing
-        
-        models.append(VideoModelInfo(
-            id=model_id,
-            provider=provider_display,
-            name=model_data.get("name", model_id),
-            type=model_type,
-            duration=primary_duration,
-            credits=base_credits,
-            quality=VideoQuality(model_data.get("quality", 4)),
-            speed=VideoSpeed(model_data.get("speed", "medium")),
-            badge=model_data.get("badge"),
-            description=model_data.get("description"),
-            capabilities=model_data.get("capabilities", {}),
-            video_caps=v_caps,
-            base_name=model_data.get("base_name") or _extract_base_name(model_data.get("name", model_id)),
-            version_name=model_data.get("version_name") or _extract_version_name(model_data.get("name", model_id)),
-            durations=duration_options,
-            resolutions=resolutions,
-            slider_duration=bool(model_data.get("slider_duration", False))
-        ))
+        logger.error(f"Error in get_video_models: {e}", exc_info=True)
+        return []
 
-    
-    # Sort by quality (descending) then credits (ascending)
-    models.sort(key=lambda x: (-x.quality.value, x.credits))
-    
-    return models
+
+@router.get("/debug-models")
+async def debug_video_models(db = Depends(get_db)):
+    """Debug endpoint to see raw registry state"""
+    from core.unified_model_registry import model_registry
+    models = await model_registry.get_models(db, category="video", active_only=False)
+    return {
+        "count": len(models),
+        "models": models
+    }
 
 
 @router.get("/effects", response_model=List[VideoEffectInfo])

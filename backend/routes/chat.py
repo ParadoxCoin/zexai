@@ -24,6 +24,40 @@ from services.model_service import model_service
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
+DEFAULT_CHAT_MODELS = [
+    {
+        "id": "llama-3.3-70b",
+        "name": "Llama 3.3 70B",
+        "description": "Fast general-purpose assistant via Groq",
+        "cost_usd": 0,
+        "cost_multiplier": 1,
+        "provider_id": "groq",
+        "model_id": "llama-3.3-70b-versatile",
+        "parameters": {"max_tokens": 8192},
+    },
+    {
+        "id": "llama-3.1-8b",
+        "name": "Llama 3.1 8B",
+        "description": "Low-latency assistant via Groq",
+        "cost_usd": 0,
+        "cost_multiplier": 1,
+        "provider_id": "groq",
+        "model_id": "llama-3.1-8b-instant",
+        "parameters": {"max_tokens": 8192},
+    },
+]
+
+
+def _default_chat_model(model_id: str) -> Dict[str, Any]:
+    return next((m for m in DEFAULT_CHAT_MODELS if m["id"] == model_id), DEFAULT_CHAT_MODELS[0])
+
+
+def _default_groq_config() -> Optional[Dict[str, str]]:
+    api_key = os.getenv("GROQ_API_KEY", "")
+    if not api_key:
+        return None
+    return {"api_key": api_key, "base_url": "https://api.groq.com/openai/v1"}
+
 # Default system prompt for ZexAi
 DEFAULT_SYSTEM_PROMPT = """Sen ZexAi platformunun yapay zeka asistanısın.
 - Bugünün tarihi: 23 Şubat 2026, Pazartesi.
@@ -315,6 +349,9 @@ async def chat_completion(
     start_time = time.time()
     
     try:
+        existing_conv = None
+        existing_messages = []
+
         # 1. Fetch Model Details
         model = await model_service.get_model_by_id(db, request.model)
         if not model:
@@ -322,11 +359,16 @@ async def chat_completion(
             if all_chat_models:
                 model = all_chat_models[0]
             else:
-                raise HTTPException(status_code=404, detail="Chat model not found")
+                model = _default_chat_model(request.model)
 
         # 2. Fetch Provider Config
         provider_id = model.get("provider_id")
-        provider_config = await model_service.get_provider_config(db, provider_id)
+        if provider_id == "groq":
+            provider_config = _default_groq_config()
+            if not provider_config:
+                raise HTTPException(status_code=500, detail="GROQ_API_KEY is not configured")
+        else:
+            provider_config = await model_service.get_provider_config(db, provider_id)
         
         # 3. Load conversation history for context
         if request.history and len(request.history) > 0:
@@ -750,6 +792,8 @@ async def list_chat_models(
     """
     try:
         models_data = await model_service.get_models(db, type="chat")
+        if not models_data:
+            models_data = DEFAULT_CHAT_MODELS
         
         models = []
         for m in models_data:

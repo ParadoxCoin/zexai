@@ -46,28 +46,38 @@ async def get_models(type: Optional[ImageType] = None, db = Depends(get_db)):
         
         models = []
         for m in registry_models:
-            # Calculate credits from cost and multiplier
-            cost_usd = float(m.get("cost_usd", 0))
-            multiplier = float(m.get("cost_multiplier", 2.0))
-            credits = max(1, int(cost_usd * multiplier * 100))
+            # Use kie_credits directly if available, otherwise calculate
+            credits = m.get("kie_credits") or m.get("credits")
+            if not credits:
+                cost_usd = float(m.get("cost_usd", 0) or 0)
+                multiplier = float(m.get("cost_multiplier", 2.0) or 2.0)
+                credits = max(1, int(cost_usd * multiplier * 100))
+            credits = int(credits)
             
-            # Hide 'kie' provider label
-            provider_display = m.get("provider", "unknown")
+            # Hide 'kie' provider label - guard against None
+            provider_display = m.get("provider") or "unknown"
             if provider_display.lower() in ["kie", "kie.ai"]:
                 provider_display = "Premium"
             
+            # Guard speed against None values
+            raw_speed = m.get("speed") or "medium"
+            try:
+                speed_val = ImageSpeed(raw_speed)
+            except Exception:
+                speed_val = ImageSpeed("medium")
+
             models.append(ImageModelInfo(
                 id=m["id"],
                 provider=provider_display,
                 name=m.get("name", m["id"]),
-                type=m.get("type", "text_to_image"),
+                type=m.get("type") or "text_to_image",
                 credits=credits,
-                quality=ImageQuality(m.get("quality", 4)),
-                speed=ImageSpeed(m.get("speed", "medium")),
+                quality=ImageQuality(m.get("quality") or 4),
+                speed=speed_val,
                 badge=m.get("badge"),
                 example_url=f"https://cdn.example.com/{m['id']}.jpg",
-                description=m.get("description", ""),
-                capabilities=m.get("capabilities", {})
+                description=m.get("description") or "",
+                capabilities=m.get("capabilities") or {}
             ))
             
         return sorted(models, key=lambda x: (-x.quality.value, x.credits))
@@ -87,7 +97,7 @@ async def get_models(type: Optional[ImageType] = None, db = Depends(get_db)):
                 provider=provider_display, 
                 name=m.get("name", mid), 
                 type=m.get("type", "text_to_image"),
-                credits=10, 
+                credits=int(m.get("kie_credits", 10)), 
                 quality=ImageQuality(m.get("quality", 4)),
                 speed=ImageSpeed(m.get("speed", "medium")), 
                 badge=m.get("badge"),

@@ -228,26 +228,46 @@ async def upload_file(
             storage_path = f"{current_user.id}/{file_id}{file_ext}"
             
             try:
-                # Upload to Supabase storage (media bucket)
-                storage_result = db.storage.from_('media').upload(
-                    storage_path,
-                    content,
-                    file_options={"content-type": file.content_type or "application/octet-stream"}
-                )
+                # SUPER DIAGNOSTIC LOGGING
+                storage_path = storage_path.lstrip("/")
+                logger.info(f"🔍 Attempting Supabase upload: bucket='media', path='{storage_path}'")
                 
-                # Get public URL from media bucket
+                # Try Version 1: Standard dictionary options
+                try:
+                    storage_result = db.storage.from_('media').upload(
+                        path=storage_path,
+                        file=content,
+                        file_options={"content-type": file.content_type or "image/jpeg", "upsert": True}
+                    )
+                except Exception as e1:
+                    logger.warning(f"⚠️ V1 Upload failed, trying V2: {e1}")
+                    # Try Version 2: Positional arguments with string upsert
+                    storage_result = db.storage.from_('media').upload(
+                        storage_path,
+                        content,
+                        {"content-type": file.content_type or "image/jpeg", "upsert": "true"}
+                    )
+                
+                # Verify if upload actually worked by getting public URL
                 public_url = db.storage.from_('media').get_public_url(storage_path)
                 
-                logger.info(f"File uploaded to Supabase storage (media): {storage_path}")
+                if public_url and "supabase.co" in public_url:
+                    logger.info(f"✅ SUPABASE UPLOAD SUCCESS: {public_url}")
+                else:
+                    raise Exception(f"Invalid public URL generated: {public_url}")
                 
             except Exception as storage_error:
-                logger.warning(f"Supabase storage failed, using local: {storage_error}")
+                # CRITICAL: Print the exact error to backend console
+                logger.error(f"❌ SUPABASE FATAL ERROR: {str(storage_error)}")
                 
-                # Fallback: Save locally
+                # Fallback to local storage
                 async with aiofiles.open(file_path, 'wb') as f:
                     await f.write(content)
                 os.chmod(file_path, 0o640)
-                public_url = f"/api/v1/files/download/{file_id}"
+                
+                base_url = str(request.base_url).rstrip('/')
+                public_url = f"{base_url}/api/v1/files/download/{file_id}"
+                logger.warning(f"⚠️ Falling back to Local URL (External APIs will likely fail): {public_url}")
             
         except Exception as e:
             logger.error(f"Failed to save file: {e}")

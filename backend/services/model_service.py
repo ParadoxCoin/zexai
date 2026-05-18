@@ -91,6 +91,7 @@ class ModelService:
                     "fireworks": ("FIREWORKS_API_KEY", "https://api.fireworks.ai/inference/v1"),
                     "openrouter": ("OPENROUTER_API_KEY", "https://openrouter.ai/api/v1"),
                     "gemini": ("GEMINI_API_KEY", "https://generativelanguage.googleapis.com/v1beta"),
+                    "groq": ("GROQ_API_KEY", "https://api.groq.com/openai/v1"),
                     # Audio providers
                     "elevenlabs": ("ELEVENLABS_API_KEY", "https://api.elevenlabs.io/v1"),
                     "manus": ("MANUS_API_KEY", "https://api.manus.ai/v1"),

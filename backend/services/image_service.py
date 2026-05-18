@@ -284,20 +284,30 @@ class ImageService:
             
             async with httpx.AsyncClient() as client:
                 for i, img_url in enumerate(image_urls):
-                    # Download image
-                    img_response = await client.get(img_url)
-                    img_data = img_response.content
-                    
-                    # Upload to storage
-                    object_name = hybrid_storage_service.generate_object_name(
-                        "image", user_id, task_id, i, "png"
-                    )
-                    stored_url = await hybrid_storage_service.upload_file(
-                        img_data, object_name, "image/png", user_id
-                    )
-                    
-                    if stored_url:
-                        stored_urls.append(stored_url)
+                    try:
+                        # Download image
+                        img_response = await client.get(img_url, timeout=30.0)
+                        img_data = img_response.content
+                        
+                        # Upload to storage
+                        object_name = hybrid_storage_service.generate_object_name(
+                            "image", user_id, task_id, i, "png"
+                        )
+                        stored_url = await hybrid_storage_service.upload_file(
+                            img_data, object_name, "image/png", user_id
+                        )
+                        
+                        if stored_url:
+                            stored_urls.append(stored_url)
+                        else:
+                            logger.warning(f"⚠️ Storage upload returned None for {img_url}, using direct provider URL")
+                            stored_urls.append(img_url)
+                    except Exception as dl_err:
+                        logger.warning(f"⚠️ Failed to download/upload {img_url}: {dl_err}. Falling back to direct URL")
+                        stored_urls.append(img_url)
+            
+            if not stored_urls and image_urls:
+                stored_urls = image_urls
             
             # 3. Update task status
             db.table("generations").update({

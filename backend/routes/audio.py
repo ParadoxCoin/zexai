@@ -15,6 +15,7 @@ from core.config import settings
 from services.model_service import model_service
 from core.notification_service import notify_generation_complete
 from core.unified_model_registry import model_registry
+from core.kie_models import KIE_MUSIC_MODELS, KIE_TTS_MODELS
 
 router = APIRouter(prefix="/audio", tags=["Audio Generation"])
 
@@ -53,15 +54,14 @@ async def get_audio_models(type: Optional[str] = None, db = Depends(get_db)):
         
         result = []
         for m in registry_models:
-            # Calculate credits from cost and multiplier
-            cost_usd = float(m.get("cost_usd", 0))
-            multiplier = float(m.get("cost_multiplier", 2.0))
-            credits = int(cost_usd * multiplier * 100)
+            # Use predefined credits if available (Source of Truth)
+            credits = m.get("kie_credits") or m.get("credits")
+            if credits is None:
+                cost_usd = float(m.get("cost_usd", 0))
+                multiplier = float(m.get("cost_multiplier", 2.0))
+                credits = int(cost_usd * multiplier * 100)
             
-            # Hide 'kie' provider label
             provider_display = m.get("provider", "unknown")
-            if provider_display.lower() in ["kie", "kie.ai"]:
-                provider_display = "Premium"
             
             result.append(AudioModelInfo(
                 id=m["id"],
@@ -76,8 +76,33 @@ async def get_audio_models(type: Optional[str] = None, db = Depends(get_db)):
             ))
         return result
     except Exception as e:
-        print(f"[AudioRoutes] Failed to fetch models: {e}")
-        return []
+        # Registry can fail if DB is temporarily unavailable or overrides are malformed.
+        # For audio we always have a reliable Kie.ai catalog fallback.
+        print(f"[AudioRoutes] Failed to fetch models from registry, falling back to Kie catalog: {e}")
+        fallback = {**KIE_MUSIC_MODELS, **KIE_TTS_MODELS}
+
+        result = []
+        for mid, m in fallback.items():
+            if type and (m.get("type") or "").lower() != type.lower():
+                continue
+            credits = m.get("kie_credits") or m.get("credits")
+            if credits is None:
+                cost_usd = float(m.get("cost_usd", 0))
+                multiplier = float(m.get("cost_multiplier", 2.0))
+                credits = int(cost_usd * multiplier * 100)
+            result.append(AudioModelInfo(
+                id=mid,
+                provider="kie.ai",
+                name=m.get("name", mid),
+                type=m.get("type", "audio"),
+                credits=int(max(float(credits), 5)),
+                quality=int(m.get("quality", 4)),
+                speed=str(m.get("speed", "medium")),
+                badge=m.get("badge"),
+                description=m.get("description")
+            ))
+
+        return result
 
 @router.get("/models/tts")
 async def get_tts_models(db = Depends(get_db)):
@@ -87,15 +112,14 @@ async def get_tts_models(db = Depends(get_db)):
         
         result = []
         for m in registry_models:
-            # Calculate credits from cost and multiplier
-            cost_usd = float(m.get("cost_usd", 0))
-            multiplier = float(m.get("cost_multiplier", 2.0))
-            credits = int(cost_usd * multiplier * 100)
+            # Use predefined credits if available (Source of Truth)
+            credits = m.get("kie_credits") or m.get("credits")
+            if credits is None:
+                cost_usd = float(m.get("cost_usd", 0))
+                multiplier = float(m.get("cost_multiplier", 2.0))
+                credits = int(cost_usd * multiplier * 100)
             
-            # Hide 'kie' provider label
             provider_display = m.get("provider", "unknown")
-            if provider_display.lower() in ["kie", "kie.ai"]:
-                provider_display = "Premium"
             
             result.append(AudioModelInfo(
                 id=m["id"],
@@ -110,8 +134,26 @@ async def get_tts_models(db = Depends(get_db)):
             ))
         return result
     except Exception as e:
-        print(f"[AudioRoutes] Failed to fetch TTS models: {e}")
-        return []
+        print(f"[AudioRoutes] Failed to fetch TTS models from registry, falling back to Kie catalog: {e}")
+        result = []
+        for mid, m in KIE_TTS_MODELS.items():
+            credits = m.get("kie_credits") or m.get("credits")
+            if credits is None:
+                cost_usd = float(m.get("cost_usd", 0))
+                multiplier = float(m.get("cost_multiplier", 2.0))
+                credits = int(cost_usd * multiplier * 100)
+            result.append(AudioModelInfo(
+                id=mid,
+                provider="kie.ai",
+                name=m.get("name", mid),
+                type="text_to_speech",
+                credits=int(max(float(credits), 5)),
+                quality=int(m.get("quality", 4)),
+                speed=str(m.get("speed", "medium")),
+                badge=m.get("badge"),
+                description=m.get("description")
+            ))
+        return result
 
 @router.post("/tts")
 async def text_to_speech(req: TTSRequest, user = Depends(get_current_user), db = Depends(get_db)):
@@ -434,4 +476,3 @@ async def get_my_audio(limit: int = 20, user = Depends(get_current_user), db = D
         gen["file_url"] = gen.get("output_url", "")
         
     return {"outputs": generations}
-

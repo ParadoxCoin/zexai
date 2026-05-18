@@ -97,7 +97,18 @@ class UnifiedVideoService:
         }
         key_name = env_map.get(provider_id)
         if key_name:
-            return getattr(settings, key_name, None)
+            key_value = getattr(settings, key_name, None)
+            if key_value:
+                print(f"[VideoService] Successfully loaded {key_name} from settings")
+                return key_value
+        
+        # Last resort: Try direct os.environ if settings is stale
+        import os
+        if provider_id == "kie":
+            direct_key = os.getenv("KIE_API_KEY")
+            if direct_key:
+                print("[VideoService] Loaded KIE_API_KEY directly from ENV")
+                return direct_key
         
         return None
     
@@ -140,10 +151,20 @@ class UnifiedVideoService:
         if not model:
             raise HTTPException(status_code=404, detail=f"Model {request.model_id} not found")
         
-        # 2. Get provider
-        provider_id = model.get("provider_id")
+        # 2. Get provider - registry uses 'provider', service expects 'provider_id'
+        # We check both to be safe and normalize 'kie.ai' to 'kie'
+        provider_id = model.get("provider_id") or model.get("provider")
+        
+        if provider_id:
+            provider_id = provider_id.lower().replace(".ai", "").strip()
+        
+        # Fallback for kie models if still missing
+        if not provider_id and request.model_id.startswith("kie_"):
+            provider_id = "kie"
+            
         provider = await self.get_provider(db, provider_id)
         if not provider:
+            print(f"[VideoService] Provider lookup failed for: {provider_id} (Model: {request.model_id})")
             raise HTTPException(status_code=500, detail=f"Provider {provider_id} not configured")
         
         # 3. Get credits cost from unified CreditManager (respects DB overrides)
@@ -222,37 +243,46 @@ class UnifiedVideoService:
             
             # Check Kie.ai specific response format
             if provider_id == "kie":
-                if data.get("code") != 200 and response.status_code != 200:
-                    error_detail = data.get("msg", response.text[:200] if response.text else "Unknown error")
+                if response.status_code != 200:
+                    error_detail = data.get("msg") or data.get("error") or response.text[:200]
                     raise HTTPException(
-                        status_code=500,
-                        detail=f"{provider_id} API error: {error_detail}"
+                        status_code=response.status_code,
+                        detail=f"Kie.ai API Error ({response.status_code}): {error_detail}"
                     )
+                
                 # Safely get taskId from nested data
                 inner_data = data.get("data") or {}
-                provider_task_id = inner_data.get("taskId") or data.get("taskId") or ""
-                print(f"[UnifiedVideoService] Extracted taskId: {provider_task_id}")
+                provider_task_id = inner_data.get("taskId") or data.get("taskId")
                 
-                # If Kie.ai returned error code, throw exception
-                if data.get("code") not in (200, None) or not provider_task_id:
-                    error_msg = data.get("msg", "Video generation failed")
-                    raise HTTPException(status_code=400, detail=f"Kie.ai error: {error_msg}")
+                # If Kie.ai returned error code in JSON, throw exception
+                # Some Kie.ai responses return 200 OK but with code != 200 in body
+                if data.get("code") not in (200, 20000, None) or not provider_task_id:
+                    error_msg = data.get("msg") or data.get("message") or "Video generation failed"
+                    print(f"[UnifiedVideoService] Kie.ai Logic Error: {error_msg}")
+                    raise HTTPException(status_code=400, detail=f"Kie.ai Logic Error: {error_msg}")
+                    
+                print(f"[UnifiedVideoService] Extracted taskId: {provider_task_id}")
             else:
                 if response.status_code not in (200, 201):
-                    error_detail = response.text[:200] if response.text else "Unknown error"
+                    error_detail = data.get("error") or response.text[:200] or "Unknown error"
                     raise HTTPException(
-                        status_code=500,
+                        status_code=response.status_code,
                         detail=f"{provider_id} API error ({response.status_code}): {error_detail}"
                     )
                 provider_task_id = data.get("taskId") or data.get("task_id") or data.get("id") or ""
             
         except httpx.TimeoutException:
+            logger.error(f"[UnifiedVideoService] Timeout calling {provider_id}")
             raise HTTPException(status_code=504, detail=f"{provider_id} API timeout")
         except httpx.RequestError as e:
+            logger.error(f"[UnifiedVideoService] Connection error: {str(e)}")
             raise HTTPException(status_code=502, detail=f"{provider_id} connection error: {str(e)}")
         except HTTPException:
             raise
         except Exception as e:
+            logger.error(f"[UnifiedVideoService] Unexpected error: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
             raise HTTPException(status_code=500, detail=f"Generation error: {str(e)}")
         
         # 8. Deduct credits

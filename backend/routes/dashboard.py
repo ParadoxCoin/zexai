@@ -75,10 +75,10 @@ async def get_dashboard_stats(
     """
     Get user dashboard statistics using optimized usage_logs
     """
+    credits_balance = 0.0  # Initialize outside try-block so exception handler can access it
     try:
         # Get credit balance from user_credits with fallback
         credit_response = db.table("user_credits").select("credits_balance").eq("user_id", current_user.id).execute()
-        credits_balance = 0.0
         if credit_response.data and len(credit_response.data) > 0:
             credits_balance = float(credit_response.data[0].get("credits_balance", 0.0))
         
@@ -100,8 +100,11 @@ async def get_dashboard_stats(
             
         # If STILL empty, try image_generations as fallback
         if total_generations == 0:
-            img_total = db.table("image_generations").select("id", count="exact").eq("user_id", current_user.id).execute()
-            total_generations = img_total.count or 0
+            try:
+                img_total = db.table("image_generations").select("id", count="exact").eq("user_id", current_user.id).execute()
+                total_generations = img_total.count or 0
+            except Exception as e:
+                logger.warning(f"image_generations table fallback failed: {e}")
             
         # 2. Credits Spent (Month/Week/Today)
         month_resp = db.table("usage_logs").select("cost").eq("user_id", current_user.id).gte("created_at", month_start).execute()
@@ -132,8 +135,11 @@ async def get_dashboard_stats(
                         gen_counts[s_type] += 1
             else:
                 # Fallback 2: image_generations table
-                img_c = db.table("image_generations").select("id", count="exact").eq("user_id", current_user.id).execute()
-                gen_counts["image"] = img_c.count or 0
+                try:
+                    img_c = db.table("image_generations").select("id", count="exact").eq("user_id", current_user.id).execute()
+                    gen_counts["image"] = img_c.count or 0
+                except Exception as e:
+                    logger.warning(f"image_generations table fallback failed: {e}")
             
         # 4. Favorite Model
         favorite_model = "Flux.1"
@@ -156,9 +162,10 @@ async def get_dashboard_stats(
     
     except Exception as e:
         logger.error(f"Error fetching dashboard stats: {str(e)}")
-        # Return empty stats instead of crashing the whole dashboard
+        # credits_balance is initialized outside the try block, so it will have the
+        # correct value even if an exception occurred after fetching it from DB
         return DashboardStats(
-            credits_balance=0.0,
+            credits_balance=credits_balance,
             credits_spent_today=0.0,
             credits_spent_week=0.0,
             credits_spent_month=0.0,

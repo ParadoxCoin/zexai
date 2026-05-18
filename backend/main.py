@@ -184,6 +184,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://localhost:3001",
+        "http://localhost:5173",
         "https://zexai.vercel.app",
         "https://app.zexai.io",
         "https://zexai-production.up.railway.app"
@@ -304,6 +305,9 @@ app.include_router(packages_router, prefix=API_V1_PREFIX)  # Effect Packages
 app.include_router(comparison_router, prefix=API_V1_PREFIX)  # Model Comparison
 app.include_router(staking_router, prefix=API_V1_PREFIX)  # Web3 Staking Claims
 app.include_router(nft_router, prefix=API_V1_PREFIX)  # NFT Minting
+
+from routes.contact import router as contact_router
+app.include_router(contact_router, prefix=API_V1_PREFIX)  # Contact form
 app.include_router(collections_router, prefix=API_V1_PREFIX) # AI NFT Collections
 
 # WebSocket endpoints
@@ -356,3 +360,5 @@ if __name__ == "__main__":
         port=8000,
         reload=True
     )
+
+# Trigger reload

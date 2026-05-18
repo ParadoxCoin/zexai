@@ -76,7 +76,7 @@ async def get_current_user_profile(
                 full_name=current_user.full_name,
                 role=current_user.role,
                 package="free",
-                created_at=current_user.created_at
+                created_at=getattr(current_user, "created_at", datetime.utcnow().isoformat())
             )
             
         profile = response.data[0]

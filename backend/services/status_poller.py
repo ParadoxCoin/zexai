@@ -68,13 +68,27 @@ class StatusPollerService:
             if not pending_result.data:
                 return
                 
-            # Get Kie.ai API key
-            key_result = db.table("provider_keys").select("api_key").eq("provider_id", "kie").eq("is_active", True).limit(1).execute()
-            api_key = key_result.data[0]["api_key"] if key_result.data else None
+            # Get Kie.ai API key - try DB first, then settings/env
+            api_key = None
+            try:
+                key_result = db.table("provider_keys").select("api_key").eq("provider_id", "kie").eq("is_active", True).limit(1).execute()
+                api_key = key_result.data[0]["api_key"] if key_result.data else None
+            except:
+                pass
+            
+            if not api_key:
+                # Fallback to settings or environment
+                from core.config import settings
+                import os
+                api_key = getattr(settings, "KIE_API_KEY", None) or os.getenv("KIE_API_KEY")
             
             if not api_key:
                 logger.warning("[StatusPoller] No Kie.ai API key found")
                 return
+            
+            # Print masked key for debug
+            masked_key = f"{api_key[:6]}...{api_key[-4:]}" if api_key else "None"
+            print(f"[StatusPoller] Using API key: {masked_key}")
             
             logger.info(f"[StatusPoller] Checking {len(pending_result.data)} pending videos")
             

@@ -75,15 +75,22 @@ class Settings(BaseSettings):
     REPLICATE_API_KEY: str = ""  # Image/Video için
     
     # Payment Providers
-    # Credit/Debit Card
+    # Credit/Debit Card — LemonSqueezy
     LEMONSQUEEZY_API_KEY: str = ""
+    LEMONSQUEEZY_STORE_ID: str = ""          # Store ID (e.g. "227752")
+    LEMONSQUEEZY_VARIANT_ID: str = ""        # Product Variant ID for custom_price checkouts
+    LEMONSQUEEZY_BASIC_VARIANT_ID: str = ""
+    LEMONSQUEEZY_PRO_VARIANT_ID: str = ""
+    LEMONSQUEEZY_ENTERPRISE_VARIANT_ID: str = ""
+    LEMONSQUEEZY_WEBHOOK_SECRET: str = ""    # Webhook signing secret
     TWOCHECKOUT_API_KEY: str = ""
     
-    # Crypto Payments
+    # Crypto Payments — NowPayments
     NOWPAYMENTS_API_KEY: str = ""
     NOWPAYMENTS_IPN_SECRET: str = ""
     BINANCE_API_KEY: str = ""
     BINANCE_SECRET: str = ""
+
     
     # MetaMask (Your own token with 15% discount)
     METAMASK_CONTRACT_ADDRESS: str = ""
@@ -103,7 +110,8 @@ class Settings(BaseSettings):
     # PiAPI & GoAPI & Kie.ai (Video)
     PIAPI_API_KEY: str = ""
     GOAPI_API_KEY: str = ""
-    KIE_API_KEY: str = ""  # kie.ai - ~30% cheaper than other providers
+    KIE_API_KEY: str = ""   # kie.ai - primary key
+    KIE_API_KEY_2: str = ""  # kie.ai - secondary/backup key (round-robin failover)
     
     # Chat/LLM Provider API Keys
     ANTHROPIC_API_KEY: str = ""  # Claude models

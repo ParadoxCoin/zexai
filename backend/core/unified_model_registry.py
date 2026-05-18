@@ -6,7 +6,7 @@ from core.image_models import FAL_IMAGE_MODELS, REPLICATE_IMAGE_MODELS, POLLO_IM
 # POLLO_VIDEO_MODELS removed from here as it's not in video_models.py
 from core.video_models import FAL_VIDEO_MODELS, REPLICATE_VIDEO_MODELS, PIAPI_VIDEO_MODELS, GOAPI_VIDEO_MODELS
 from core.pollo_models import POLLO_VIDEO_MODELS 
-from core.kie_models import KIE_IMAGE_MODELS, KIE_VIDEO_MODELS, KIE_MUSIC_MODELS
+from core.kie_models import KIE_IMAGE_MODELS, KIE_VIDEO_MODELS, KIE_MUSIC_MODELS, KIE_TTS_MODELS
 
 # Define Model Categories
 class ModelCategory(str, Enum):
@@ -37,6 +37,7 @@ class UnifiedModelRegistry:
             "provider_model_id": m.get("model_id") or m.get("provider_model_id"),
             "cost_usd": float(m.get("cost_usd", 0) or m.get("pollo_cost_usd", 0)),
             "cost_multiplier": float(m.get("cost_multiplier", 2.0)),
+            "kie_credits": m.get("kie_credits"),
             "quality": m.get("quality", 4),
             "speed": m.get("speed", "medium"),
             "duration": m.get("duration"),
@@ -71,6 +72,7 @@ class UnifiedModelRegistry:
         add_models(KIE_IMAGE_MODELS, ModelCategory.IMAGE, "kie.ai")  # Premium image models
         
         add_models(KIE_MUSIC_MODELS, ModelCategory.AUDIO, "kie.ai")  # Music generation
+        add_models(KIE_TTS_MODELS, ModelCategory.AUDIO, "kie.ai")    # TTS models
 
     async def get_models(
         self, 
@@ -85,10 +87,21 @@ class UnifiedModelRegistry:
         result = {}
         
         # 1. Base models
-        for model_id, model in self._base_models.items():
-            if category and model.get("category") != category: continue
-            if type and model.get("type") != type: continue
-            result[model_id] = model.copy()
+        print(f"DEBUG: get_models called for category={category}, type={type}, active_only={active_only}")
+        print(f"DEBUG: _base_models count = {len(self._base_models)}")
+        
+        # 3. Filter by category and type
+        if category:
+            cat_lower = category.lower()
+            result = {k: v for k, v in self._base_models.items() if (v.get("category") or "").lower() == cat_lower}
+        else:
+            result = self._base_models.copy()
+            
+        if type:
+            type_lower = type.lower()
+            result = {k: v for k, v in result.items() if (v.get("type") or "").lower() == type_lower}
+            
+        print(f"DEBUG: result count after base = {len(result)}")
 
         # 2. Apply DB Overrides from ai_models
         try:
@@ -138,9 +151,9 @@ class UnifiedModelRegistry:
                             "category": db_m.get("category") or "other",
                             "type": db_m.get("type") or "text_to_image",
                             "provider": db_m.get("provider") or "unknown",
-                            "cost_usd": float(db_m.get("cost_usd", 0)),
-                            "cost_multiplier": float(db_m.get("cost_multiplier", 1.0)),
-                            "credits": int(db_m.get("credits")) if db_m.get("credits") is not None else int(float(db_m.get("cost_usd", 0)) * float(db_m.get("cost_multiplier", 1.2)) * 100) or 100,
+                            "cost_usd": float(db_m.get("cost_usd") or 0),
+                            "cost_multiplier": float(db_m.get("cost_multiplier") or 1.0),
+                            "credits": int(db_m.get("credits") or 0) if db_m.get("credits") is not None else int(float(db_m.get("cost_usd") or 0) * float(db_m.get("cost_multiplier") or 1.2) * 100) or 100,
                             "is_active": db_m.get("is_active", True),
                             "source": "database"
                         }
@@ -151,7 +164,7 @@ class UnifiedModelRegistry:
                         standardized["video_caps"] = video_caps
                         result[mid] = standardized
         except Exception as e:
-            logger.warning(f"Failed to load ai_models: {e}")
+            logger.error(f"Error in get_video_models: {e}", exc_info=True)
             
         # 3. Apply Video-Specific Advanced Parameters
         try:
@@ -185,8 +198,8 @@ class UnifiedModelRegistry:
                             "category": "video",
                             "type": vm.get("model_type") or "text_to_video",
                             "provider": vm.get("provider_id", "unknown"),
-                            "cost_usd": float(vm.get("cost_usd", 0)),
-                            "cost_multiplier": float(vm.get("cost_multiplier", 2.0)),
+                            "cost_usd": float(vm.get("cost_usd") or 0),
+                            "cost_multiplier": float(vm.get("cost_multiplier") or 2.0),
                             "credits": vm.get("credits"),
                             "quality": vm.get("quality_rating", 4),
                             "speed": ["slow", "slow", "medium", "fast", "very_fast"][min(vm.get("speed_rating") or 3, 4)],
@@ -201,12 +214,165 @@ class UnifiedModelRegistry:
         except Exception as e:
             logger.warning(f"Error loading video_models: {e}")
 
-        # 4. Filter active status and convert to list
+        # 3.5 Force Consistency for Kie.ai models (Prevent "karışmış" issues)
+        # Create a mapping of model_id -> kie_base for faster lookup
+        kie_lookup = {}
+        # Include ALL Kie catalogs in lookup
+        for catalog in [KIE_VIDEO_MODELS, KIE_IMAGE_MODELS, KIE_MUSIC_MODELS, KIE_TTS_MODELS]:
+            for k, v in catalog.items():
+                kie_lookup[k] = v
+                if v.get("model_id"):
+                    kie_lookup[v.get("model_id")] = v
+
+        for mid, m in result.items():
+            # Check if model provider is kie.ai or if it matches a known KIE model ID
+            is_kie = (m.get("provider") or "").lower() in ("kie.ai", "kie")
+            kie_base = kie_lookup.get(mid) or (kie_lookup.get(m.get("provider_model_id")) if is_kie else None)
+            
+            if kie_base:
+                # Force provider to kie.ai for consistency
+                m["provider"] = "kie.ai"
+                
+                # Ensure credits and status match code base (Source of truth)
+                m["credits"] = kie_base.get("kie_credits", m.get("credits"))
+                m["kie_credits"] = kie_base.get("kie_credits", m.get("kie_credits"))
+                m["cost_usd"] = kie_base.get("cost_usd", m.get("cost_usd"))
+                m["is_active"] = True # ALWAYS ACTIVE FOR KIE
+                
+                # Force metadata from code
+                if "type" in kie_base: m["type"] = kie_base["type"]
+                if "version_name" in kie_base: m["version_name"] = kie_base["version_name"]
+                if "durations" in kie_base: m["durations"] = kie_base["durations"]
+                if "resolutions" in kie_base: m["resolutions"] = kie_base["resolutions"]
+                if "badge" in kie_base: m["badge"] = kie_base["badge"]
+                if "description" in kie_base: m["description"] = kie_base["description"]
+                if "quality" in kie_base: m["quality"] = kie_base["quality"]
+                if "speed" in kie_base: m["speed"] = kie_base["speed"]
+                
+                # Ensure video_caps.pricing is correctly populated only for models with durations
+                if m.get("durations"):
+                    # Resolution multipliers for professional pricing tiers
+                    RES_MULTIPLIER = {"720p": 0.8, "1080p": 1.0, "2K": 1.4, "4K": 1.8}
+                    
+                    PER_SECOND_MAP = {
+                        # Google Veo
+                        "veo-3-quality": 110,
+                        "veo-3-fast": 69,
+                        "veo-3.1-quality": 129,
+                        "veo-3.1-fast": 64,
+                        "veo-3.1-lite": 35,
+                        # Kling 3.0
+                        "kling-3.0-audio": 104,
+                        "kling-3.0-standard": 70,
+                        "kling-o3-audio": 136,
+                        # Kling 2.6
+                        "kling-2.6-audio": 74,
+                        "kling-2.6-10s": 46,
+                        "kling-2.6-audio-5s": 52,
+                        "kling-2.6-5s": 35,
+                        # OpenAI Sora
+                        "openai/sora-2-10s": 48,
+                        "openai/sora-2-15s": 37,
+                        # Wan 2.6
+                        "wan-2.6-1080p-15s": 87,
+                        "wan-2.6-1080p-10s": 69,
+                        "wan-2.6-1080p-5s": 59,
+                        "wan-2.6-720p-10s": 46,
+                        "wan-2.6-720p-5s": 41,
+                        # Others
+                        "hailuo/2.3-video": 8,
+                        "grok-imagine/video": 13,
+                        "runway/gen3": 5,
+                    }
+                    
+                    model_id_slug = kie_base.get("model_id")
+                    per_second = PER_SECOND_MAP.get(model_id_slug)
+                    
+                    pricing = {}
+                    for d in m["durations"]:
+                        if per_second:
+                            pricing[str(d)] = {}
+                            for res in m.get("resolutions", []):
+                                mult = RES_MULTIPLIER.get(res, 1.0)
+                                pricing[str(d)][res] = int(d * per_second * mult)
+                        else:
+                            pricing[str(d)] = {res: int(m["credits"] * (d / 5)) for res in m.get("resolutions", [])}
+                    
+                    m["video_caps"] = {
+                        "durations": m["durations"],
+                        "resolutions": m.get("resolutions", []),
+                        "pricing": pricing,
+                        "base_duration": m["durations"][0] if m["durations"] else 5,
+                        "per_second_pricing": bool(per_second)
+                    }
+
+        # 4. Deduplicate: Remove DB models that duplicate kie_ models
+        # kie_ models have correct hardcoded pricing, DB models often have stale 100 ZEX
+        import re
+        
+        def extract_base(name: str) -> str:
+            """Extract base model name: 'Veo 3.1 (Quality)' -> 'veo 3.1'"""
+            clean = re.split(r'\s*[\(\[\{]', name)[0].strip()
+            # Remove trailing variant words
+            for suffix in ['Fast', 'Lite', 'Quality', 'Standard', 'Audio', 'Pro', 'Turbo', 'Master', 'Alpha']:
+                clean = re.sub(rf'\s+{suffix}$', '', clean, flags=re.IGNORECASE)
+            return clean.lower().strip()
+        
+        kie_base_names = set()
+        for mid, m in result.items():
+            if mid.startswith("kie_"):
+                bn = extract_base(m.get("name") or "")
+                if bn:
+                    kie_base_names.add(bn)
+        
+        def has_kie_equivalent(model_name: str) -> bool:
+            """Check if a DB model's name matches any kie_ model base name"""
+            db_bn = extract_base(model_name)
+            if not db_bn:
+                return False
+            for kie_bn in kie_base_names:
+                if db_bn == kie_bn or db_bn in kie_bn or kie_bn in db_bn:
+                    return True
+            return False
+        
+        # 5. Deprecated/outdated models to remove entirely
+        DEPRECATED_MODELS = {
+            "fal_pika_2", "replicate_svd", "fal_luma_dream",
+            "kling21_master_text", "kling25_turbo_text", "kling25_turbo_image",
+            "luma_dream_text", "sora_turbo_text",
+        }
+        
+        # 6. Filter active status, remove duplicates & deprecated, convert to list
         final_list = []
-        for m in result.values():
-            if active_only and not m.get("is_active", True):
+        for mid, m in result.items():
+            # Skip deprecated models
+            if mid in DEPRECATED_MODELS:
                 continue
+            
+            is_act = m.get("is_active", True)
+            if active_only and not is_act:
+                continue
+            
+            # Skip non-kie models if a kie_ version exists for a similar base_name
+            if not mid.startswith("kie_"):
+                model_name = m.get("name") or ""
+                if model_name and has_kie_equivalent(model_name):
+                    continue  # Skip DB duplicate
+            
             final_list.append(m)
+            
+        # 7. Sort models to prioritize Audio-enabled models, then by quality
+        def model_sort_key(m):
+            name = (m.get("name") or "").lower()
+            # Score 1: Has Audio? (True=1, False=0)
+            has_audio = 1 if "audio" in name or "sonic" in name or m.get("capabilities", {}).get("synchronized_audio") else 0
+            # Score 2: Quality score (default 4)
+            quality = m.get("quality", 4)
+            # We want highest audio first, then highest quality.
+            # We negate so that descending sort works naturally in sorted()
+            return (-has_audio, -quality, name)
+            
+        final_list.sort(key=model_sort_key)
             
         return final_list
 

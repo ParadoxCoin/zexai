@@ -23,40 +23,79 @@ def sync_metadata():
 
     supabase: Client = create_client(supabase_url, supabase_key)
     
+    # Mapping for per-second pricing models
+    PER_SECOND_MAP = {
+        "veo-3-quality": 110,
+        "veo-3-fast": 69,
+        "veo-3.1-quality": 129,
+        "veo-3.1-fast": 64,
+        "veo-3.1-lite": 35,
+        "kling-2.6-audio": 74,
+        "kling-2.6-10s": 46
+    }
+
     count = 0
     for key, model in KIE_VIDEO_MODELS.items():
         model_id = model["model_id"]
         print(f"Syncing {model_id}...")
         
+        # Calculate pricing map if applicable
+        durations = model.get("durations", [model.get("duration", 5)])
+        resolutions = model.get("resolutions", ["1080p"])
+        per_second = PER_SECOND_MAP.get(model_id)
+        
+        pricing = {}
+        if per_second:
+            for d in durations:
+                pricing[str(d)] = {res: int(d * per_second) for res in resolutions}
+        else:
+            # Fixed pricing
+            base_credits = model.get("kie_credits", 100)
+            for d in durations:
+                pricing[str(d)] = {res: base_credits for res in resolutions}
+
+        video_caps = {
+            "durations": durations,
+            "resolutions": resolutions,
+            "pricing": pricing,
+            "base_duration": durations[0] if durations else 5,
+            "per_second_pricing": bool(per_second)
+        }
+        
         update_data = {
             "base_name": model.get("base_name"),
             "version_name": model.get("version_name"),
-            "durations": model.get("durations"),
-            "resolutions": model.get("resolutions"),
-            "slider_duration": model.get("slider_duration", False),
             "credits": model.get("kie_credits", 0),
-            "quality": model.get("quality"),
-            "speed": model.get("speed"),
-            "capabilities": model.get("capabilities", {}),
+            "quality_rating": model.get("quality", 4),
+            "duration_options": durations,
+            "resolutions": resolutions,
+            "video_caps": video_caps,
             "display_name": model.get("name"),
-            "is_active": True
+            "is_active": True,
+            "provider_id": "kie",
+            "model_type": "text_to_video"
         }
         
-        # Update in 'video_models' table
         try:
-            # First try update
-            response = supabase.table("video_models").update(update_data).eq("id", model_id).execute()
+            # Upsert into video_models
+            response = supabase.table("video_models").upsert({**update_data, "id": model_id}).execute()
             if response.data:
-                print(f"Updated {model_id}")
+                print(f"Synced {model_id} (credits: {update_data['credits']})")
                 count += 1
-            else:
-                # If update failed (no match), try upsert or log
-                print(f"Model {model_id} not found in database. Attempting to insert...")
-                insert_data = {**update_data, "id": model_id, "provider_id": "kie", "model_type": "text_to_video"}
-                ins_resp = supabase.table("video_models").insert(insert_data).execute()
-                if ins_resp.data:
-                    print(f"Inserted NEW model {model_id}")
-                    count += 1
+                
+                # Also sync to ai_models (basic info)
+                ai_model_data = {
+                    "id": model_id,
+                    "name": model.get("name"),
+                    "category": "video",
+                    "type": "text_to_video",
+                    "provider": "kie.ai",
+                    "cost_usd": float(model.get("cost_usd", 0)),
+                    "cost_multiplier": 1.0,
+                    "is_active": True,
+                    "capabilities": {"video_params": video_caps}
+                }
+                supabase.table("ai_models").upsert(ai_model_data).execute()
         except Exception as e:
             print(f"Error syncing {model_id}: {e}")
 

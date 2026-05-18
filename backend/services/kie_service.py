@@ -16,62 +16,134 @@ from core.logger import app_logger as logger
 # Base URL for kie.ai API
 KIE_API_BASE = "https://api.kie.ai/v1"
 
+# HTTP status codes that trigger key rotation
+_ROTATE_ON_STATUS = {401, 403, 429}
+
 
 class KieAIService:
     """
     Service class for kie.ai API interactions.
-    Supports: Image generation, Video generation, Music generation.
+    Supports multiple API keys with round-robin rotation + automatic failover.
+
+    Key rotation strategy:
+    - Requests cycle through available keys in order (round-robin).
+    - On 401/403 (invalid/expired) or 429 (rate-limited), the current key is
+      temporarily marked as failed and the next key is tried immediately.
+    - If ALL keys fail, the original error is raised.
     """
-    
+
     def __init__(self):
-        raw_key = settings.KIE_API_KEY
-        if isinstance(raw_key, bytes):
-            raw_key = raw_key.decode('utf-8')
-        self.api_key = str(raw_key).strip() if raw_key else ""
+        # Build the key pool from KIE_API_KEY + KIE_API_KEY_2 (+ more if added)
+        raw_keys = [
+            settings.KIE_API_KEY,
+            getattr(settings, "KIE_API_KEY_2", ""),
+        ]
+        self._keys: list[str] = []
+        for k in raw_keys:
+            if isinstance(k, bytes):
+                k = k.decode("utf-8")
+            k = str(k).strip() if k else ""
+            if k:
+                self._keys.append(k)
+
+        # Round-robin cursor — advances on each request
+        self._cursor: int = 0
         self.base_url = KIE_API_BASE
-        self.timeout = 120  # 2 minutes timeout for generation
-        
-    def _get_headers(self) -> Dict[str, str]:
-        """Get auth headers for API requests"""
-        if not self.api_key:
-            raise Exception("KIE_API_KEY is not configured")
-        key = str(self.api_key).strip()
+        self.timeout = 120
+
+    # ── Key management ─────────────────────────────────────────────────────
+
+    def _next_key(self) -> str:
+        """Return the next API key in round-robin order."""
+        if not self._keys:
+            raise Exception(
+                "No KIE_API_KEY configured. "
+                "Set KIE_API_KEY (and optionally KIE_API_KEY_2) in .env"
+            )
+        key = self._keys[self._cursor % len(self._keys)]
+        self._cursor = (self._cursor + 1) % len(self._keys)
+        return key
+
+    def _headers_for(self, key: str) -> Dict[str, str]:
         return {
             "Authorization": f"Bearer {key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
-    
+
+    def get_active_key_info(self) -> Dict[str, Any]:
+        """Admin helper – returns how many keys are configured (never exposes raw keys)."""
+        return {
+            "key_count": len(self._keys),
+            "keys": [f"...{k[-6:]}" for k in self._keys],  # last 6 chars only
+            "current_cursor": self._cursor,
+        }
+
+    # ── HTTP request with automatic key failover ────────────────────────────
+
     async def _make_request(
-        self, 
-        method: str, 
-        endpoint: str, 
+        self,
+        method: str,
+        endpoint: str,
         data: Optional[Dict] = None,
-        timeout: Optional[int] = None
+        timeout: Optional[int] = None,
     ) -> Dict[str, Any]:
-        """Make async HTTP request to kie.ai API"""
+        """
+        Make async HTTP request to kie.ai API.
+        On 401/403/429 errors the next available key is tried automatically.
+        """
         url = f"{self.base_url}/{endpoint}"
-        
-        async with httpx.AsyncClient(timeout=timeout or self.timeout) as client:
-            try:
-                if method.upper() == "POST":
-                    response = await client.post(url, json=data, headers=self._get_headers())
-                elif method.upper() == "GET":
-                    response = await client.get(url, params=data, headers=self._get_headers())
-                else:
-                    raise ValueError(f"Unsupported HTTP method: {method}")
-                
-                response.raise_for_status()
-                return response.json()
-                
-            except httpx.HTTPStatusError as e:
-                logger.error(f"Kie.ai API HTTP error: {e.response.status_code} - {e.response.text}")
-                raise Exception(f"Kie.ai API error: {e.response.status_code}")
-            except httpx.TimeoutException:
-                logger.error("Kie.ai API timeout")
-                raise Exception("Kie.ai API timeout - generation taking too long")
-            except Exception as e:
-                logger.error(f"Kie.ai API error: {str(e)}")
-                raise
+        total_keys = len(self._keys) if self._keys else 0
+        last_exc: Exception = Exception("No API keys configured")
+
+        # Try every key at most once
+        for attempt in range(max(total_keys, 1)):
+            key = self._next_key()
+            headers = self._headers_for(key)
+
+            async with httpx.AsyncClient(timeout=timeout or self.timeout) as client:
+                try:
+                    if method.upper() == "POST":
+                        response = await client.post(url, json=data, headers=headers)
+                    elif method.upper() == "GET":
+                        response = await client.get(url, params=data, headers=headers)
+                    else:
+                        raise ValueError(f"Unsupported HTTP method: {method}")
+
+                    if response.status_code in _ROTATE_ON_STATUS:
+                        logger.warning(
+                            f"[KieAI] Key ...{key[-6:]} returned {response.status_code} "
+                            f"– rotating to next key (attempt {attempt + 1}/{total_keys})"
+                        )
+                        last_exc = Exception(
+                            f"Kie.ai API error: {response.status_code} (key rotated)"
+                        )
+                        continue  # Try next key
+
+                    response.raise_for_status()
+                    if attempt > 0:
+                        logger.info(f"[KieAI] Recovered on attempt {attempt + 1} using key ...{key[-6:]}")
+                    return response.json()
+
+                except httpx.HTTPStatusError as e:
+                    code = e.response.status_code
+                    if code in _ROTATE_ON_STATUS and attempt < total_keys - 1:
+                        logger.warning(
+                            f"[KieAI] HTTPStatusError {code} on key ...{key[-6:]} – rotating"
+                        )
+                        last_exc = Exception(f"Kie.ai API error: {code}")
+                        continue
+                    logger.error(f"Kie.ai API HTTP error: {code} - {e.response.text}")
+                    raise Exception(f"Kie.ai API error: {code}")
+
+                except httpx.TimeoutException:
+                    logger.error("Kie.ai API timeout")
+                    raise Exception("Kie.ai API timeout – generation taking too long")
+
+                except Exception as e:
+                    logger.error(f"Kie.ai API error: {e}")
+                    raise
+
+        raise last_exc
 
     # ============================================
     # IMAGE GENERATION

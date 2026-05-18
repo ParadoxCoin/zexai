@@ -1,6 +1,6 @@
 """
 Billing and subscription routes with multi-payment support
-Supports: LemonSqueezy, 2Checkout, NowPayments, Binance Pay, MetaMask
+Supports: LemonSqueezy, NowPayments, Binance Pay, MetaMask
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
 from pydantic import BaseModel, Field
@@ -23,15 +23,25 @@ from schemas.billing import (
     WebhookPaymentData
 )
 from core.security import get_current_user
-from core.database import get_database
+from core.database import get_database, get_db
 from core.credits import CreditManager
 from core.config import settings
 from core.payment_security import (
-    WebhookVerifier, BlockchainVerifier, PaymentIdempotency, 
+    WebhookVerifier, BlockchainVerifier, PaymentIdempotency,
     PaymentProviderClient, InvoiceGenerator
 )
 import json
 from services.referral_service import referral_service
+from services.payment_service import (
+    create_lemonsqueezy_checkout,
+    create_lemonsqueezy_subscription_checkout,
+    create_nowpayments_invoice,
+    verify_lemonsqueezy_signature,
+    verify_nowpayments_signature,
+    process_payment_supabase,
+    create_pending_payment,
+    get_pending_payment,
+)
 
 
 router = APIRouter(prefix="/billing", tags=["Billing & Subscriptions"])
@@ -42,43 +52,42 @@ SUBSCRIPTION_PLANS = {
     "basic": {
         "id": "basic",
         "name": "Basic",
-        "monthly_price": 25.0,
-        "monthly_credits": 2500,
+        "monthly_price": 9.0,
+        "monthly_credits": 1000,
         "description": "Perfect for individuals and small projects",
         "features": [
-            "2,500 credits per month",
-            "All AI services (Chat, Image, Video)",
-            "Basic Synapse agent access",
-            "Email support"
+            "1.000 Kredi/Ay (Kişisel Yaratıcı Yakıt)",
+            "Yaratıcı Stüdyo Erişimi (Chat, Görsel & Video)",
+            "Ultra Hızlı FLUX Pro & Veo Modelleri",
+            "Standart Email Desteği"
         ]
     },
     "pro": {
         "id": "pro",
         "name": "Pro",
-        "monthly_price": 75.0,
-        "monthly_credits": 8000,
+        "monthly_price": 29.0,
+        "monthly_credits": 3300,
         "description": "For professionals and growing businesses",
         "features": [
-            "8,000 credits per month",
-            "All AI services (Chat, Image, Video)",
-            "Full Synapse agent access",
-            "Priority support",
-            "Advanced analytics"
+            "3.300 Kredi/Ay (Yoğun Yaratım Gücü)",
+            "Öncelikli Render Sırası (Sıfır Bekleme)",
+            "Synapse Otonom Yapay Zeka Ajanları",
+            "Gelişmiş Model Analitiği & Raporlama",
+            "7/24 VIP Destek Hattı"
         ]
     },
     "enterprise": {
         "id": "enterprise",
         "name": "Enterprise",
-        "monthly_price": 250.0,
-        "monthly_credits": 30000,
+        "monthly_price": 99.0,
+        "monthly_credits": 11750,
         "description": "For large teams and high-volume usage",
         "features": [
-            "30,000 credits per month",
-            "All AI services (Chat, Image, Video)",
-            "Unlimited Synapse agent access",
-            "Dedicated support",
-            "Custom integrations",
-            "SLA guarantee"
+            "11.750 Kredi/Ay (Sınırsız Üretim Gücü)",
+            "Özel API Rotasyon Altyapısı (Maksimum Hız)",
+            "Ultra Yüksek Çözünürlük (8K Çıktı Desteği)",
+            "Kurumsal SLA Garantisi & Özel Temsilci",
+            "Birebir Çözüm Ortağı & Entegrasyon Desteği"
         ]
     }
 }
@@ -308,29 +317,33 @@ async def get_special_packages(db = Depends(get_database)):
 @router.get("/subscription/status", response_model=SubscriptionStatus)
 async def get_subscription_status(
     current_user = Depends(get_current_user),
-    db = Depends(get_database)
+    db = Depends(get_db)
 ):
     """Get current user's subscription status"""
-    subscription = await db.user_subscriptions.find_one({
-        "user_id": current_user.id,
-        "status": {"$in": ["active", "trialing", "past_due"]}
-    })
-    
-    if not subscription:
+    try:
+        response = db.table("user_subscriptions").select("*").eq("user_id", str(current_user.id)).in_("status", ["active", "trialing", "past_due"]).execute()
+        if not response.data:
+            return SubscriptionStatus(has_subscription=False)
+        
+        subscription = response.data[0]
+        plan_id = subscription.get("plan_id")
+        
+        # Get subscription plan details
+        plan_resp = db.table("subscription_plans").select("*").eq("id", plan_id).execute()
+        plan_data = plan_resp.data[0] if plan_resp.data else SUBSCRIPTION_PLANS.get(plan_id, {})
+        
+        return SubscriptionStatus(
+            has_subscription=True,
+            plan_name=plan_data.get("display_name") or plan_data.get("name") or plan_id,
+            status=subscription["status"],
+            current_period_end=subscription.get("current_period_end"),
+            cancel_at_period_end=subscription.get("cancel_at_period_end", False),
+            monthly_credits=plan_data.get("monthly_credits"),
+            next_billing_date=subscription.get("current_period_end")
+        )
+    except Exception as e:
+        logger.error(f"Error checking subscription status: {e}")
         return SubscriptionStatus(has_subscription=False)
-    
-    plan_id = subscription.get("plan_id")
-    plan_data = SUBSCRIPTION_PLANS.get(plan_id, {})
-    
-    return SubscriptionStatus(
-        has_subscription=True,
-        plan_name=plan_data.get("name", plan_id),
-        status=subscription["status"],
-        current_period_end=subscription.get("current_period_end"),
-        cancel_at_period_end=subscription.get("cancel_at_period_end", False),
-        monthly_credits=plan_data.get("monthly_credits"),
-        next_billing_date=subscription.get("current_period_end")
-    )
 
 
 @router.post("/checkout/create", response_model=CheckoutResponse)
@@ -338,7 +351,7 @@ async def create_checkout(
     request: CreateCheckoutRequest,
     http_request: Request,
     current_user = Depends(get_current_user),
-    db = Depends(get_database)
+    db = Depends(get_db)
 ):
     """
     Create a checkout session for subscription or top-up
@@ -346,22 +359,56 @@ async def create_checkout(
     """
     # Get item details
     if request.item_type == "subscription":
-        if request.item_id not in SUBSCRIPTION_PLANS:
-            raise HTTPException(status_code=400, detail="Invalid plan ID")
-        
-        item_data = SUBSCRIPTION_PLANS[request.item_id]
-        item_price = item_data["monthly_price"]
-        item_name = f"{item_data['name']} Subscription"
-        credits = item_data["monthly_credits"]
+        # Check plan in database (id is a string slug like 'basic', 'pro', 'enterprise')
+        plan_resp = db.table("subscription_plans").select("*").eq("id", request.item_id).execute()
+        plan_data = plan_resp.data[0] if plan_resp.data else None
+
+        if plan_data:
+            item_price = float(plan_data.get("monthly_price", 0))
+            item_name = f"{plan_data.get('display_name') or plan_data.get('name')} Subscription"
+            credits = int(plan_data.get("monthly_credits", 0))
+        else:
+            if request.item_id not in SUBSCRIPTION_PLANS:
+                raise HTTPException(status_code=400, detail="Invalid plan ID")
+            item_data = SUBSCRIPTION_PLANS[request.item_id]
+            item_price = item_data["monthly_price"]
+            item_name = f"{item_data["name"]} Subscription"
+            credits = item_data["monthly_credits"]
         
     elif request.item_type == "top_up":
-        package = await db.pricing_packages.find_one({"id": request.item_id, "active": True})
-        if not package:
-            raise HTTPException(status_code=404, detail="Package not found")
-        
-        item_price = package["usd_price"]
-        item_name = f"{package['name']} Credit Package"
-        credits = package["credit_amount"]
+        # Check package in database
+        is_uuid = False
+        try:
+            uuid.UUID(str(request.item_id))
+            is_uuid = True
+        except ValueError:
+            pass
+
+        package = None
+        if is_uuid:
+            pkg_resp = db.table("special_packages").select("*").eq("id", request.item_id).eq("is_active", True).execute()
+            if pkg_resp.data:
+                package = pkg_resp.data[0]
+
+        if package:
+            item_price = float(package.get("price", package.get("discounted_price", 0)))
+            item_name = f"{package.get('name')} Credit Package"
+            credits = int(package.get("credits", 0))
+        else:
+            # Fallback to hardcoded packages
+            default_packages = {
+                "starter": (4.99, 500, "Starter"),
+                "basic": (12.99, 1500, "Basic"),
+                "popular": (39.99, 5000, "Popular"),
+                "pro": (89.99, 12000, "Pro"),
+                "enterprise": (199.99, 30000, "Enterprise"),
+            }
+            if request.item_id not in default_packages:
+                raise HTTPException(status_code=404, detail="Package not found")
+            price, crd, name = default_packages[request.item_id]
+            item_price = price
+            item_name = f"{name} Credit Package"
+            credits = crd
         
     else:
         raise HTTPException(status_code=400, detail="Invalid item type")
@@ -372,21 +419,20 @@ async def create_checkout(
     # Create payment session ID
     session_id = str(uuid.uuid4())
     
-    # Store pending payment
+    # Store pending payment (schema-friendly column mapping)
     payment_record = {
         "session_id": session_id,
-        "user_id": current_user.id,
+        "user_id": str(current_user.id),
         "item_type": request.item_type,
         "item_id": request.item_id,
         "payment_method": request.payment_method.value,
-        "original_price": item_price,
-        "final_price": price_breakdown.final_price,
-        "credits": credits,
+        "amount_usd": float(price_breakdown.final_price),
+        "credits": int(credits),
         "status": "pending",
-        "created_at": datetime.utcnow()
+        "created_at": datetime.utcnow().isoformat()
     }
     
-    await db.pending_payments.insert_one(payment_record)
+    db.table("pending_payments").insert(payment_record).execute()
     
     # Build callback URLs
     origin = http_request.headers.get('origin') or settings.FRONTEND_URL
@@ -396,10 +442,32 @@ async def create_checkout(
     # Route to appropriate payment provider
     try:
         if request.payment_method == PaymentMethod.LEMONSQUEEZY:
-            checkout_url = await create_lemonsqueezy_checkout(
-                session_id, item_name, price_breakdown.final_price, 
-                current_user.email, success_url, cancel_url
-            )
+            if request.item_type == "subscription":
+                # Match plans to their custom variant IDs
+                variant_id = None
+                if request.item_id == "basic":
+                    variant_id = settings.LEMONSQUEEZY_BASIC_VARIANT_ID or settings.LEMONSQUEEZY_VARIANT_ID
+                elif request.item_id == "pro":
+                    variant_id = settings.LEMONSQUEEZY_PRO_VARIANT_ID or settings.LEMONSQUEEZY_VARIANT_ID
+                elif request.item_id == "enterprise":
+                    variant_id = settings.LEMONSQUEEZY_ENTERPRISE_VARIANT_ID or settings.LEMONSQUEEZY_VARIANT_ID
+                
+                if not variant_id:
+                    # Fallback to primary variant
+                    variant_id = settings.LEMONSQUEEZY_VARIANT_ID
+                
+                checkout_url = await create_lemonsqueezy_subscription_checkout(
+                    session_id=session_id,
+                    variant_id=variant_id,
+                    email=current_user.email,
+                    success_url=success_url,
+                    cancel_url=cancel_url
+                )
+            else:
+                checkout_url = await create_lemonsqueezy_checkout(
+                    session_id, item_name, price_breakdown.final_price, 
+                    current_user.email, success_url, cancel_url
+                )
             
             return CheckoutResponse(
                 success=True,
@@ -477,92 +545,14 @@ async def create_checkout(
 
 # Payment provider helper functions
 
-async def create_lemonsqueezy_checkout(session_id: str, item_name: str, price: float, email: str, success_url: str, cancel_url: str) -> str:
-    """Create LemonSqueezy checkout session"""
-    if not settings.LEMONSQUEEZY_API_KEY:
-        raise ValueError("LemonSqueezy API key not configured")
-    
-    # LemonSqueezy API implementation
-    # https://docs.lemonsqueezy.com/api/checkouts
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            "https://api.lemonsqueezy.com/v1/checkouts",
-            headers={
-                "Authorization": f"Bearer {settings.LEMONSQUEEZY_API_KEY}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "data": {
-                    "type": "checkouts",
-                    "attributes": {
-                        "custom_price": int(price * 100),  # Convert to cents
-                        "product_options": {
-                            "name": item_name,
-                            "description": f"Session: {session_id}"
-                        },
-                        "checkout_data": {
-                            "email": email,
-                            "custom": {"session_id": session_id}
-                        },
-                        "checkout_options": {
-                            "button_color": "#7C3AED"
-                        },
-                        "redirect_url": success_url
-                    }
-                }
-            },
-            timeout=20.0
-        )
-        
-        if response.status_code not in (200, 201):
-            raise ValueError(f"LemonSqueezy error: {response.status_code}")
-        
-        data = response.json()
-        return data["data"]["attributes"]["url"]
-
+# create_lemonsqueezy_checkout and create_nowpayments_invoice are now
+# imported from services.payment_service — see top of file.
 
 async def create_2checkout_session(session_id: str, item_name: str, price: float, email: str, success_url: str, cancel_url: str) -> str:
-    """Create 2Checkout session"""
+    """Create 2Checkout session (placeholder)"""
     if not settings.TWOCHECKOUT_API_KEY:
         raise ValueError("2Checkout API key not configured")
-    
-    # 2Checkout API implementation
-    # https://knowledgecenter.2checkout.com/API-Integration
-    # Placeholder - implement based on 2Checkout docs
     return f"https://secure.2checkout.com/checkout/buy?session={session_id}"
-
-
-async def create_nowpayments_invoice(session_id: str, item_name: str, price: float, success_url: str, cancel_url: str) -> str:
-    """Create NowPayments invoice"""
-    if not settings.NOWPAYMENTS_API_KEY:
-        raise ValueError("NowPayments API key not configured")
-    
-    # NowPayments API implementation
-    # https://documenter.getpostman.com/view/7907941/S1a32n38
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            "https://api.nowpayments.io/v1/invoice",
-            headers={
-                "x-api-key": settings.NOWPAYMENTS_API_KEY,
-                "Content-Type": "application/json"
-            },
-            json={
-                "price_amount": price,
-                "price_currency": "usd",
-                "order_id": session_id,
-                "order_description": item_name,
-                "ipn_callback_url": f"{settings.MANUS_CALLBACK_BASE_URL}/api/v1/billing/webhooks/nowpayments",
-                "success_url": success_url,
-                "cancel_url": cancel_url
-            },
-            timeout=20.0
-        )
-        
-        if response.status_code not in (200, 201):
-            raise ValueError(f"NowPayments error: {response.status_code}")
-        
-        data = response.json()
-        return data["invoice_url"]
 
 
 async def create_binance_payment(session_id: str, item_name: str, price: float) -> str:
@@ -625,56 +615,99 @@ async def create_binance_payment(session_id: str, item_name: str, price: float) 
 
 
 @router.post("/webhooks/lemonsqueezy")
-async def lemonsqueezy_webhook(request: Request, db = Depends(get_database)):
-    """Webhook for LemonSqueezy payment events"""
+async def lemonsqueezy_webhook(request: Request, db = Depends(get_db)):
+    """
+    Webhook for LemonSqueezy payment events (order_created).
+    Uses Supabase for all DB operations.
+    """
+    from core.logger import app_logger as logger
+    payload_bytes = await request.body()
+
+    # ── Signature check ──────────────────────────────────────────
+    received_sig = request.headers.get("X-Signature", "")
+    if not verify_lemonsqueezy_signature(payload_bytes, received_sig):
+        logger.warning("[LemonSqueezy webhook] Invalid signature — rejected")
+        raise HTTPException(status_code=401, detail="Invalid webhook signature")
+
     try:
-        payload = await request.json()
-        
-        # Extract session_id from custom data
-        custom_data = payload.get("meta", {}).get("custom_data", {})
-        session_id = custom_data.get("session_id")
-        
-        if not session_id:
-            return {"status": "error", "message": "Missing session_id"}
-        
-        # Find pending payment
-        payment = await db.pending_payments.find_one({"session_id": session_id})
-        
-        if not payment:
-            return {"status": "error", "message": "Payment not found"}
-        
-        # Mark as completed and add credits
-        await process_successful_payment(db, payment)
-        
+        payload = json.loads(payload_bytes)
+        event_name = payload.get("meta", {}).get("event_name", "")
+        logger.info(f"[LemonSqueezy webhook] event={event_name}")
+
+        if event_name in ("order_created", "subscription_created"):
+            custom_data = payload.get("meta", {}).get("custom_data", {})
+            session_id = custom_data.get("session_id")
+
+            if not session_id:
+                logger.warning(f"[LemonSqueezy webhook] Missing session_id in custom_data for event={event_name}")
+                return {"status": "ok", "note": "no session_id"}
+
+            payment = get_pending_payment(db, session_id)
+            if not payment:
+                logger.warning(f"[LemonSqueezy webhook] Payment not found: {session_id}")
+                return {"status": "ok", "note": "payment not found"}
+
+            if payment.get("status") == "completed":
+                return {"status": "ok", "note": "already processed"}
+
+            ls_order_id = payload.get("data", {}).get("id", "")
+            await process_payment_supabase(db, payment, extra={
+                "lemonsqueezy_order_id": str(ls_order_id)
+            })
+
         return {"status": "ok"}
-        
+
     except Exception as e:
+        logger.error(f"[LemonSqueezy webhook] Error: {e}", exc_info=True)
+        # Return 200 to prevent LemonSqueezy from retrying on a bug
         return {"status": "error", "message": str(e)}
 
 
 @router.post("/webhooks/nowpayments")
-async def nowpayments_webhook(request: Request, db = Depends(get_database)):
-    """Webhook for NowPayments IPN"""
+async def nowpayments_webhook(request: Request, db = Depends(get_db)):
+    """
+    Webhook for NowPayments IPN callbacks.
+    Uses Supabase for all DB operations.
+    """
+    from core.logger import app_logger as logger
+    payload_bytes = await request.body()
+
+    # ── Signature check ──────────────────────────────────────────
+    received_sig = request.headers.get("x-nowpayments-sig", "")
+    if not verify_nowpayments_signature(payload_bytes, received_sig):
+        logger.warning("[NowPayments webhook] Invalid IPN signature — rejected")
+        raise HTTPException(status_code=403, detail="Invalid IPN signature")
+
     try:
-        payload = await request.json()
-        
-        # Verify IPN signature
-        if settings.NOWPAYMENTS_IPN_SECRET:
-            signature = request.headers.get("x-nowpayments-sig")
-            # Verify signature logic here
-        
-        order_id = payload.get("order_id")
-        payment_status = payload.get("payment_status")
-        
-        if payment_status == "finished":
-            payment = await db.pending_payments.find_one({"session_id": order_id})
-            
-            if payment:
-                await process_successful_payment(db, payment)
-        
+        payload = json.loads(payload_bytes)
+        payment_status = payload.get("payment_status", "")
+        order_id = payload.get("order_id", "")  # This is our session_id
+        payment_id = payload.get("payment_id", "")
+
+        logger.info(
+            f"[NowPayments webhook] status={payment_status} "
+            f"order={order_id} payment_id={payment_id}"
+        )
+
+        if payment_status in ("finished", "confirmed"):
+            payment = get_pending_payment(db, order_id)
+            if not payment:
+                logger.warning(f"[NowPayments webhook] Payment not found: {order_id}")
+                return {"status": "ok", "note": "payment not found"}
+
+            if payment.get("status") == "completed":
+                return {"status": "ok", "note": "already processed"}
+
+            await process_payment_supabase(db, payment, extra={
+                "nowpayments_payment_id": str(payment_id),
+                "paid_currency": payload.get("pay_currency", ""),
+                "paid_amount": payload.get("actually_paid") or payload.get("pay_amount"),
+            })
+
         return {"status": "ok"}
-        
+
     except Exception as e:
+        logger.error(f"[NowPayments webhook] Error: {e}", exc_info=True)
         return {"status": "error", "message": str(e)}
 
 
@@ -853,36 +886,36 @@ async def process_successful_payment(db, payment: dict, tx_hash: str = None, pay
 async def cancel_subscription(
     immediate: bool = False,
     current_user = Depends(get_current_user),
-    db = Depends(get_database)
+    db = Depends(get_db)
 ):
     """Cancel user's subscription"""
-    subscription = await db.user_subscriptions.find_one({
-        "user_id": current_user.id,
-        "status": {"$in": ["active", "trialing"]}
-    })
-    
-    if not subscription:
-        raise HTTPException(status_code=404, detail="No active subscription found")
-    
-    update_data = {"updated_at": datetime.utcnow()}
-    
-    if immediate:
-        update_data["status"] = "canceled"
-        update_data["canceled_at"] = datetime.utcnow()
-    else:
-        update_data["cancel_at_period_end"] = True
-    
-    await db.user_subscriptions.update_one(
-        {"id": subscription["id"]},
-        {"$set": update_data}
-    )
-    
-    return {
-        "success": True,
-        "message": "Subscription canceled successfully",
-        "immediate": immediate,
-        "active_until": subscription.get("current_period_end") if not immediate else None
-    }
+    try:
+        response = db.table("user_subscriptions").select("*").eq("user_id", str(current_user.id)).in_("status", ["active", "trialing"]).execute()
+        if not response.data:
+            raise HTTPException(status_code=404, detail="No active subscription found")
+        
+        subscription = response.data[0]
+        update_data = {"updated_at": datetime.utcnow().isoformat()}
+        
+        if immediate:
+            update_data["status"] = "canceled"
+            update_data["canceled_at"] = datetime.utcnow().isoformat()
+        else:
+            update_data["cancel_at_period_end"] = True
+            
+        db.table("user_subscriptions").update(update_data).eq("id", subscription["id"]).execute()
+        
+        return {
+            "success": True,
+            "message": "Subscription canceled successfully",
+            "immediate": immediate,
+            "active_until": subscription.get("current_period_end") if not immediate else None
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error canceling subscription: {e}")
+        raise HTTPException(status_code=500, detail="Failed to cancel subscription")
 
 
 
@@ -970,24 +1003,45 @@ async def get_billing_transactions(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     current_user = Depends(get_current_user),
-    db = Depends(get_database)
+    db = Depends(get_db)
 ):
     """
     Get user's billing transaction history
     """
     try:
-        query = {"user_id": current_user.id}
-        
-        # Get total count
-        total = await db.billing_transactions.count_documents(query)
-        
-        # Get paginated transactions
+        user_uuid = str(current_user.id)
         skip = (page - 1) * page_size
-        cursor = db.billing_transactions.find(query).sort("created_at", -1).skip(skip).limit(page_size)
-        transactions = await cursor.to_list(length=page_size)
         
-        # Convert to response model
-        transaction_list = [BillingTransaction(**txn) for txn in transactions]
+        # Get count
+        count_resp = db.table("billing_transactions").select("id", count="exact").eq("user_id", user_uuid).execute()
+        total = count_resp.count or 0
+        
+        # Get records
+        records_resp = db.table("billing_transactions").select("*").eq("user_id", user_uuid).order("created_at", desc=True).range(skip, skip + page_size - 1).execute()
+        transactions = records_resp.data or []
+        
+        transaction_list = []
+        for txn in transactions:
+            created_at_val = txn.get("created_at")
+            if isinstance(created_at_val, str):
+                try:
+                    created_at_val = datetime.fromisoformat(created_at_val.replace("Z", "+00:00"))
+                except ValueError:
+                    created_at_val = datetime.utcnow()
+            else:
+                created_at_val = datetime.utcnow()
+                
+            transaction_list.append(BillingTransaction(
+                id=str(txn.get("id")),
+                user_id=str(txn.get("user_id")),
+                type=str(txn.get("type", "purchase")),
+                amount_usd=float(txn.get("amount_usd", 0)),
+                credits_added=float(txn.get("credits_added", 0)),
+                payment_method=str(txn.get("payment_method", "unknown")),
+                status=str(txn.get("status", "completed")),
+                transaction_id=str(txn.get("session_id", "")) or None,
+                created_at=created_at_val
+            ))
         
         return BillingTransactionListResponse(
             transactions=transaction_list,
@@ -1016,31 +1070,57 @@ async def get_invoices(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     current_user = Depends(get_current_user),
-    db = Depends(get_database)
+    db = Depends(get_db)
 ):
     """
-    Get user's invoices
+    Get user's invoices (dynamically generated from billing_transactions)
     """
     try:
-        query = {"user_id": current_user.id}
-        
-        # Get total count
-        total = await db.invoices.count_documents(query)
-        
-        # Get paginated invoices
+        user_uuid = str(current_user.id)
         skip = (page - 1) * page_size
-        cursor = db.invoices.find(query).sort("issued_at", -1).skip(skip).limit(page_size)
-        invoices = await cursor.to_list(length=page_size)
         
-        # Convert to response model
-        invoice_list = [Invoice(**inv) for inv in invoices]
+        # Get count from completed transactions
+        count_resp = db.table("billing_transactions").select("id", count="exact").eq("user_id", user_uuid).eq("status", "completed").execute()
+        total = count_resp.count or 0
         
+        # Get records
+        records_resp = db.table("billing_transactions").select("*").eq("user_id", user_uuid).eq("status", "completed").order("created_at", desc=True).range(skip, skip + page_size - 1).execute()
+        transactions = records_resp.data or []
+        
+        invoice_list = []
+        for txn in transactions:
+            created_at_val = txn.get("created_at")
+            if isinstance(created_at_val, str):
+                try:
+                    created_at_val = datetime.fromisoformat(created_at_val.replace("Z", "+00:00"))
+                except ValueError:
+                    created_at_val = datetime.utcnow()
+            else:
+                created_at_val = datetime.utcnow()
+                
+            date_str = created_at_val.strftime("%Y%m%d")
+            short_id = str(txn.get("id"))[:8].upper()
+            invoice_num = f"INV-{date_str}-{short_id}"
+            
+            invoice_list.append(Invoice(
+                id=str(txn.get("id")),
+                user_id=str(txn.get("user_id")),
+                invoice_number=invoice_num,
+                amount_usd=float(txn.get("amount_usd", 0)),
+                credits_purchased=float(txn.get("credits_added", 0)),
+                payment_method=str(txn.get("payment_method", "unknown")),
+                status="paid",
+                issued_at=created_at_val,
+                paid_at=created_at_val,
+                download_url=f"/api/v1/billing/invoices/{txn.get('id')}/download"
+            ))
+            
         return InvoiceListResponse(
             invoices=invoice_list,
             total=total,
             page=page,
             page_size=page_size,
-            has_more=skip + len(invoices) < total
+            has_more=skip + len(transactions) < total
         )
     
     except Exception as e:
@@ -1057,24 +1137,46 @@ async def get_invoice_detail(
     request: Request,
     invoice_id: str,
     current_user = Depends(get_current_user),
-    db = Depends(get_database)
+    db = Depends(get_db)
 ):
     """
     Get invoice details
     """
     try:
-        invoice = await db.invoices.find_one({
-            "id": invoice_id,
-            "user_id": current_user.id
-        })
-        
-        if not invoice:
+        user_uuid = str(current_user.id)
+        resp = db.table("billing_transactions").select("*").eq("id", invoice_id).eq("user_id", user_uuid).execute()
+        if not resp.data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Invoice not found"
             )
+            
+        txn = resp.data[0]
+        created_at_val = txn.get("created_at")
+        if isinstance(created_at_val, str):
+            try:
+                created_at_val = datetime.fromisoformat(created_at_val.replace("Z", "+00:00"))
+            except ValueError:
+                created_at_val = datetime.utcnow()
+        else:
+            created_at_val = datetime.utcnow()
+            
+        date_str = created_at_val.strftime("%Y%m%d")
+        short_id = str(txn.get("id"))[:8].upper()
+        invoice_num = f"INV-{date_str}-{short_id}"
         
-        return Invoice(**invoice)
+        return Invoice(
+            id=str(txn.get("id")),
+            user_id=str(txn.get("user_id")),
+            invoice_number=invoice_num,
+            amount_usd=float(txn.get("amount_usd", 0)),
+            credits_purchased=float(txn.get("credits_added", 0)),
+            payment_method=str(txn.get("payment_method", "unknown")),
+            status="paid",
+            issued_at=created_at_val,
+            paid_at=created_at_val,
+            download_url=f"/api/v1/billing/invoices/{txn.get('id')}/download"
+        )
     
     except HTTPException:
         raise
@@ -1092,34 +1194,53 @@ async def download_invoice(
     request: Request,
     invoice_id: str,
     current_user = Depends(get_current_user),
-    db = Depends(get_database)
+    db = Depends(get_db)
 ):
     """
     Download invoice as PDF
     """
     try:
-        invoice = await db.invoices.find_one({
-            "id": invoice_id,
-            "user_id": current_user.id
-        })
-        
-        if not invoice:
+        user_uuid = str(current_user.id)
+        resp = db.table("billing_transactions").select("*").eq("id", invoice_id).eq("user_id", user_uuid).execute()
+        if not resp.data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Invoice not found"
             )
+            
+        txn = resp.data[0]
+        created_at_val = txn.get("created_at")
+        if isinstance(created_at_val, str):
+            try:
+                created_at_val = datetime.fromisoformat(created_at_val.replace("Z", "+00:00"))
+            except ValueError:
+                created_at_val = datetime.utcnow()
+        else:
+            created_at_val = datetime.utcnow()
+            
+        date_str = created_at_val.strftime("%Y%m%d")
+        short_id = str(txn.get("id"))[:8].upper()
+        invoice_num = f"INV-{date_str}-{short_id}"
+        
+        invoice_data = {
+            "id": str(txn.get("id")),
+            "invoice_number": invoice_num,
+            "amount_usd": float(txn.get("amount_usd", 0)),
+            "credits_purchased": float(txn.get("credits_added", 0)),
+            "payment_method": str(txn.get("payment_method", "unknown")),
+            "status": "paid",
+            "issued_at": created_at_val,
+            "paid_at": created_at_val
+        }
         
         # Generate and return PDF invoice
         try:
-            # Generate PDF invoice
-            pdf_data = await InvoiceGenerator.generate_invoice_pdf(invoice)
+            pdf_data = await InvoiceGenerator.generate_invoice_pdf(invoice_data)
             
-            # Return PDF file
             from fastapi.responses import FileResponse
             import tempfile
             import os
             
-            # Create temporary file
             with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
                 tmp_file.write(pdf_data)
                 tmp_path = tmp_file.name
@@ -1127,19 +1248,18 @@ async def download_invoice(
             return FileResponse(
                 tmp_path,
                 media_type="application/pdf",
-                filename=f"invoice_{invoice['invoice_number']}.pdf",
-                background=lambda: os.unlink(tmp_path)  # Clean up temp file
+                filename=f"invoice_{invoice_num}.pdf",
+                background=lambda: os.unlink(tmp_path)
             )
             
         except Exception as e:
             logger.error(f"Failed to generate invoice PDF: {e}")
-            # Fallback to JSON response
             return {
                 "message": "PDF generation temporarily unavailable",
                 "invoice_id": invoice_id,
-                "invoice_number": invoice.get("invoice_number"),
-                "amount_usd": invoice.get("amount_usd"),
-                "status": invoice.get("status")
+                "invoice_number": invoice_num,
+                "amount_usd": invoice_data.get("amount_usd"),
+                "status": "paid"
             }
     
     except HTTPException:
@@ -1162,50 +1282,35 @@ async def request_refund(
     request: Request,
     refund_request: RefundRequest,
     current_user = Depends(get_current_user),
-    db = Depends(get_database)
+    db = Depends(get_db)
 ):
     """
     Request a refund for a transaction
     """
     try:
-        # Find transaction
-        transaction = await db.billing_transactions.find_one({
-            "id": refund_request.transaction_id,
-            "user_id": current_user.id
-        })
-        
-        if not transaction:
+        user_uuid = str(current_user.id)
+        resp = db.table("billing_transactions").select("*").eq("id", refund_request.transaction_id).eq("user_id", user_uuid).execute()
+        if not resp.data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Transaction not found"
             )
-        
+            
+        transaction = resp.data[0]
         if transaction.get("status") == "refunded":
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Transaction already refunded"
             )
-        
-        # Create refund record
-        refund_id = str(uuid.uuid4())
-        refund_record = {
-            "id": refund_id,
-            "user_id": current_user.id,
-            "transaction_id": refund_request.transaction_id,
-            "amount_usd": transaction.get("amount_usd", 0),
-            "credits_to_deduct": transaction.get("credits_added", 0),
-            "reason": refund_request.reason,
-            "status": "pending",  # pending, approved, rejected
-            "created_at": datetime.utcnow()
-        }
-        
-        await db.refunds.insert_one(refund_record)
+            
+        # Update transaction status
+        db.table("billing_transactions").update({"status": "refund_requested"}).eq("id", refund_request.transaction_id).execute()
         
         logger.info(f"User {current_user.id} requested refund for transaction {refund_request.transaction_id}")
         
         return {
             "message": "Refund request submitted successfully",
-            "refund_id": refund_id,
+            "refund_id": str(transaction.get("id")),
             "status": "pending",
             "note": "Your refund request will be reviewed within 3-5 business days"
         }
@@ -1229,60 +1334,35 @@ async def request_refund(
 async def get_usage_stats(
     request: Request,
     current_user = Depends(get_current_user),
-    db = Depends(get_database)
+    db = Depends(get_db)
 ):
     """
     Get billing period usage statistics
     """
     try:
-        # Get current billing period (simplified - last 30 days)
+        user_uuid = str(current_user.id)
         period_end = datetime.utcnow()
         period_start = period_end - timedelta(days=30)
         
-        # Get credits purchased in period
-        purchase_pipeline = [
-            {
-                "$match": {
-                    "user_id": current_user.id,
-                    "created_at": {"$gte": period_start, "$lte": period_end},
-                    "status": "completed"
-                }
-            },
-            {"$group": {"_id": None, "total": {"$sum": "$credits_added"}}}
-        ]
-        purchase_result = await db.billing_transactions.aggregate(purchase_pipeline).to_list(length=1)
-        credits_purchased = purchase_result[0]["total"] if purchase_result else 0
+        # 1. Get credits purchased in period
+        purchases_resp = db.table("billing_transactions").select("credits_added").eq("user_id", user_uuid).eq("status", "completed").gte("created_at", period_start.isoformat()).lte("created_at", period_end.isoformat()).execute()
+        credits_purchased = sum(float(x.get("credits_added", 0)) for x in purchases_resp.data) if purchases_resp.data else 0
         
-        # Get credits spent in period
-        spent_pipeline = [
-            {
-                "$match": {
-                    "user_id": current_user.id,
-                    "created_at": {"$gte": period_start, "$lte": period_end}
-                }
-            },
-            {"$group": {"_id": None, "total": {"$sum": "$credits_charged"}}}
-        ]
-        spent_result = await db.usage_logs.aggregate(spent_pipeline).to_list(length=1)
-        credits_spent = spent_result[0]["total"] if spent_result else 0
+        # 2. Get credits spent in period
+        spent_resp = db.table("usage_logs").select("cost").eq("user_id", user_uuid).gte("created_at", period_start.isoformat()).lte("created_at", period_end.isoformat()).execute()
+        credits_spent = sum(float(x.get("cost", 0)) for x in spent_resp.data) if spent_resp.data else 0
         
-        # Get current balance
-        credit_record = await db.user_credits.find_one({"user_id": current_user.id})
-        credits_remaining = credit_record.get("credits_balance", 0) if credit_record else 0
+        # 3. Get current balance
+        credits_resp = db.table("user_credits").select("credits_balance").eq("user_id", user_uuid).execute()
+        credits_remaining = float(credits_resp.data[0].get("credits_balance", 0)) if credits_resp.data else 0
         
-        # Get spending by service
-        service_pipeline = [
-            {
-                "$match": {
-                    "user_id": current_user.id,
-                    "created_at": {"$gte": period_start, "$lte": period_end}
-                }
-            },
-            {"$group": {"_id": "$service_type", "total": {"$sum": "$credits_charged"}}}
-        ]
-        service_result = await db.usage_logs.aggregate(service_pipeline).to_list(length=100)
-        spending_by_service = {item["_id"]: item["total"] for item in service_result}
-        
+        # 4. Get spending by service
+        spending_by_service = {}
+        if spent_resp.data:
+            for log in spent_resp.data:
+                svc = log.get("service_type", "unknown")
+                spending_by_service[svc] = spending_by_service.get(svc, 0.0) + float(log.get("cost", 0))
+                
         return UsageStatsResponse(
             current_period_start=period_start,
             current_period_end=period_end,
@@ -1390,8 +1470,101 @@ async def validate_promo_code(
 
 class FlexibleCreditRequest(BaseModel):
     amount_usd: float = Field(..., ge=5, le=500)
-    payment_method: PaymentMethod
+    payment_method: str  # 'lemonsqueezy', 'nowpayments', 'metamask', 'binance'
     promo_code: Optional[str] = None
+
+
+@router.post("/checkout/flexible-credit")
+async def flexible_credit_checkout(
+    data: FlexibleCreditRequest,
+    http_request: Request,
+    current_user = Depends(get_current_user),
+    db = Depends(get_db)
+):
+    """
+    Create a checkout session for flexible credit purchase.
+    Routes to LemonSqueezy (card) or NowPayments (crypto) based on payment_method.
+    """
+    from core.logger import app_logger as logger
+
+    session_id = str(uuid.uuid4())
+    origin = http_request.headers.get("origin") or settings.FRONTEND_URL
+    success_url = f"{origin}/billing?success=1&session={session_id}"
+    cancel_url  = f"{origin}/billing?canceled=1"
+
+    # Kredi hesapla (1 USD = 100 kredi varsayılan)
+    credits_per_usd = 100
+    try:
+        cfg = db.table("credit_config").select("credits_per_usd").limit(1).execute()
+        if cfg.data:
+            credits_per_usd = int(cfg.data[0].get("credits_per_usd", 100))
+    except Exception:
+        pass
+
+    credits = int(data.amount_usd * credits_per_usd)
+    item_name = f"ZexAI Credits — ${data.amount_usd:.0f}"
+    user_email = getattr(current_user, "email", "") or ""
+
+    # ── Pending payment kaydet ────────────────────────────────────
+    create_pending_payment(
+        db=db,
+        session_id=session_id,
+        user_id=str(current_user.id),
+        item_type="flexible_credits",
+        payment_method=data.payment_method,
+        amount_usd=data.amount_usd,
+        credits=credits,
+    )
+
+    # ── Route to payment provider ─────────────────────────────────
+    try:
+        if data.payment_method == "lemonsqueezy":
+            checkout_url = await create_lemonsqueezy_checkout(
+                session_id=session_id,
+                item_name=item_name,
+                price_usd=data.amount_usd,
+                email=user_email,
+                success_url=success_url,
+                cancel_url=cancel_url,
+            )
+            return {"success": True, "checkout_url": checkout_url, "session_id": session_id}
+
+        elif data.payment_method == "nowpayments":
+            checkout_url = await create_nowpayments_invoice(
+                session_id=session_id,
+                item_name=item_name,
+                price_usd=data.amount_usd,
+                success_url=success_url,
+                cancel_url=cancel_url,
+            )
+            return {"success": True, "checkout_url": checkout_url, "session_id": session_id}
+
+        elif data.payment_method == "metamask":
+            # Web3 frontend handles the tx — return payment data
+            return {
+                "success": True,
+                "payment_method": "metamask",
+                "session_id": session_id,
+                "payment_data": {
+                    "contract_address": settings.METAMASK_CONTRACT_ADDRESS,
+                    "recipient_address": settings.COMPANY_WALLET_ADDRESS,
+                    "amount_usd": data.amount_usd,
+                    "session_id": session_id,
+                    "discount_applied": settings.METAMASK_DISCOUNT_PERCENT,
+                },
+            }
+
+        else:
+            raise HTTPException(status_code=400, detail=f"Unsupported payment method: {data.payment_method}")
+
+    except HTTPException:
+        raise
+    except ValueError as ve:
+        logger.error(f"[checkout/flexible-credit] Config error: {ve}")
+        raise HTTPException(status_code=503, detail=str(ve))
+    except Exception as e:
+        logger.error(f"[checkout/flexible-credit] Error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Checkout session creation failed")
 
 
 @router.get("/credit-config")
@@ -1533,3 +1706,34 @@ async def get_subscription_durations(db = Depends(get_db)):
             {"id": "6_months", "months": 6, "discount_percent": 10, "label": "6 Ay (%10 İndirim)"},
             {"id": "12_months", "months": 12, "discount_percent": 20, "label": "Yıllık (%20 İndirim)"}
         ]}
+
+
+@router.get("/plans")
+async def get_subscription_plans(db = Depends(get_db)):
+    """Get active subscription plans (Frontend tab placeholder)"""
+    try:
+        response = db.table("subscription_plans").select("*").eq("is_active", True).execute()
+        return {"plans": response.data or []}
+    except Exception:
+        return {"plans": []}
+
+
+@router.get("/packages")
+async def get_billing_packages(db = Depends(get_db)):
+    """Get billing packages for BillingPage"""
+    try:
+        response = db.table("special_packages").select("*").eq("is_active", True).execute()
+        packages = []
+        for pkg in response.data or []:
+            packages.append({
+                "id": str(pkg.get("id")),
+                "name": pkg.get("name", "Standard Package"),
+                "credits": pkg.get("credits", 1000),
+                "price": float(pkg.get("price", 10.0)),
+                "discount": float(pkg.get("discount", 0.0)),
+                "popular": pkg.get("is_popular", False)
+            })
+        return {"success": True, "data": packages}
+    except Exception:
+        return {"success": True, "data": []}
+
