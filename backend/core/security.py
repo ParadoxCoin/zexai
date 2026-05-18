@@ -16,7 +16,7 @@ async def get_current_user(
     """
     # For local development, we skip token verification and return a mock admin
     # For local development, we use the real admin user ID from production to satisfy FKs
-    mock_id = "5c8cd695-942b-407d-b59f-71d29b06cdfd"
+    mock_id = "5c0cd695-942b-407d-b59f-71d29b06cdfd"
     
     # Auto-create mock user in auth.users AND public.users if it doesn't exist
     try:
