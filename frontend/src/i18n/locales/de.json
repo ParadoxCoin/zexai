@@ -167,7 +167,9 @@
       "prompt3": "Ein einsamer Astronaut auf der Oberfläche eines fernen Planeten",
       "prompt4": "Ein friedlicher japanischer Garten bei Sonnenuntergang",
       "prompt5": "Eine Stadt mit futuristischen fliegenden Autos"
-    }
+    },
+    "convertToVideoBanner": "🎬 Wandle dieses Bild in ein Video um!",
+    "convertToVideoBtn": "Umwandeln"
   },
   "videoGen": {
     "badge": "AI Video Studio",

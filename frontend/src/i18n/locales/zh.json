@@ -167,7 +167,9 @@
       "prompt3": "远方星球表面孤独的宇航员",
       "prompt4": "日落时宁静的日本花园",
       "prompt5": "拥有未来飞行汽车的城市"
-    }
+    },
+    "convertToVideoBanner": "🎬 将此图像转换为视频！",
+    "convertToVideoBtn": "转换"
   },
   "videoGen": {
     "badge": "AI Video Studio",

@@ -184,7 +184,9 @@
     "invalidResponse": "استجابة غير صالحة من الخادم",
     "generationError": "حدث خطأ أثناء توليد الصورة",
     "errorLabel": "خطأ",
-    "starting": "بدء التشغيل..."
+    "starting": "بدء التشغيل...",
+    "convertToVideoBanner": "🎬 تحويل هذه الصورة إلى فيديو!",
+    "convertToVideoBtn": "تحويل"
   },
   "videoGen": {
     "badge": "استوديو الفيديو بالذكاء الاصطناعي",

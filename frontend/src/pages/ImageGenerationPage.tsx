@@ -1017,7 +1017,7 @@ const ImageGenerationPage = () => {
                             {/* text */}
                             <div className="flex-1 min-w-0">
                               <p className="text-[11px] font-black text-white uppercase tracking-[0.15em] leading-tight">
-                                🎬 Bu görseli videoya dönüştür!
+                                {t('imageGen.convertToVideoBanner', '🎬 Convert this image to video!')}
                               </p>
                               <p className="text-[9px] text-cyan-300/70 font-bold uppercase tracking-wider mt-1">
                                 Image → Video • AI Animate
@@ -1040,13 +1040,13 @@ const ImageGenerationPage = () => {
                                 className="flex items-center gap-2 px-4 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-lg shadow-cyan-500/30 border-t border-white/20"
                               >
                                 <Video className="w-3.5 h-3.5" />
-                                Dönüştür
+                                {t('imageGen.convertToVideoBtn', 'Convert')}
                                 <ArrowRight className="w-3 h-3" />
                               </button>
                               <button
                                 onClick={() => setShowVideoConvertBanner(false)}
                                 className="p-2 text-slate-500 hover:text-slate-300 rounded-xl hover:bg-white/5 transition-all"
-                                title="Kapat"
+                                title={t('common.close', 'Close')}
                               >
                                 <X className="w-4 h-4" />
                               </button>

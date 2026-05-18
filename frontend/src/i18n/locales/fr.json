@@ -167,7 +167,9 @@
       "prompt3": "Un astronaute solitaire sur la surface d'une planète lointaine",
       "prompt4": "Un paisible jardin japonais au coucher du soleil",
       "prompt5": "Une ville avec des voitures volantes futuristes"
-    }
+    },
+    "convertToVideoBanner": "🎬 Convertir cette image en vidéo !",
+    "convertToVideoBtn": "Convertir"
   },
   "videoGen": {
     "badge": "AI Video Studio",

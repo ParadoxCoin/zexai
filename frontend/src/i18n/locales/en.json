@@ -184,7 +184,9 @@
     "invalidResponse": "Invalid server response",
     "generationError": "An error occurred while generating the image",
     "errorLabel": "Error",
-    "starting": "Starting..."
+    "starting": "Starting...",
+    "convertToVideoBanner": "🎬 Convert this image to video!",
+    "convertToVideoBtn": "Convert"
   },
   "videoGen": {
     "badge": "AI Video Studio",
@@ -202,7 +204,7 @@
     "i2vDesc": "Animate image",
     "v2vDesc": "Transform video",
     "compareDescModels": "Compare models",
-    "effectsDesc": "Video effects",
+    "effectsDesc": "Apply magic effects to your video",
     "packagesDesc": "Effect packages",
     "galleryDesc": "My videos",
     "modelsListT2V": "Text → Video Models",
@@ -254,7 +256,6 @@
     "requiresTwoImages": "2 Images Required",
     "motionBrush": "Motion Brush",
     "effectsHighlight": "Effects",
-    "effectsDesc": "Apply magic effects to your video",
     "upload1stImage": "1st Image",
     "upload2ndImage": "2nd Image",
     "uploadImage": "Upload Image",
@@ -857,78 +858,6 @@
     "minting": "Minting..."
   },
   "audio": {
-    "tabTTS": "Text → Voice",
-    "tabMusic": "Music Generation",
-    "tabVoice": "Voice Cloning",
-    "tabPackages": "Packages",
-    "tabLibrary": "My Audio",
-    "badge": "AI Audio Studio",
-    "title": "Audio ",
-    "titleHighlight": "Wizard",
-    "desc": "From text-to-speech, music generation to voice cloning - create professional audio",
-    "ttsTitle": "Convert Text to Voice",
-    "ttsPlaceholder": "Type the text you want to convert to voice...",
-    "voiceCharacter": "Voice Character",
-    "speed": "Speed",
-    "model": "Model",
-    "selectModel": "Select a model",
-    "generateBtn": "Generate Audio",
-    "generating": "Generating...",
-    "popModelsTitle": "Popular Models",
-    "musicTitle": "AI Music Generation",
-    "musicSelectGenre": "Select Genre",
-    "musicMood": "Mood",
-    "musicPlaceholder": "Describe your music... (e.g., energetic, motivating electronic music for a morning run)",
-    "musicGenerateBtn": "Generate Music",
-    "cloneTitle": "Voice Cloning",
-    "cloneVoiceNameLabel": "Voice Name",
-    "cloneVoiceNamePlaceholder": "e.g., My Voice",
-    "cloneAudioFileLabel": "Audio File",
-    "cloneUploadChange": "Click to change",
-    "cloneUploadClick": "Upload voice sample",
-    "cloneUploadReqs": "MP3, WAV • Min. 30 seconds",
-    "cloneTipsTitle": "💡 Tips:",
-    "cloneTip1": "• Use clean, high-quality audio",
-    "cloneTip2": "• Avoid background noise",
-    "cloneTip3": "• Min. 30 seconds, ideally 1-2 minutes",
-    "cloneBtn": "Clone Voice",
-    "cloning": "Cloning...",
-    "clonedVoicesTitle": "My Cloned Voices",
-    "noClonedVoices": "You don't have any cloned voices yet",
-    "statusReady": "✅ Ready",
-    "statusProcessing": "⏳ Processing",
-    "statusFailed": "❌ Failed",
-    "packagesTitle": "Audio Packages",
-    "discountBadge": "Up to 30% discount",
-    "buyPackageBtn": "Buy Package",
-    "libraryTitle": "My Audio",
-    "noAudio": "No audio yet",
-    "createFirstAudio": "Create your first audio!",
-    "statusReady2": "Ready",
-    "statusProcessing2": "Processing",
-    "musicGenres": {
-      "electronic": "Electronic",
-      "rock": "Rock",
-      "jazz": "Jazz",
-      "classical": "Classical",
-      "hiphop": "Hip-Hop",
-      "ambient": "Ambient"
-    },
-    "musicMoods": {
-      "happy": "Happy",
-      "sad": "Sad",
-      "epic": "Epic",
-      "calm": "Calm",
-      "energetic": "Energetic",
-      "romantic": "Romantic"
-    }
-  },
-  "web3": {
-    "addPolygon": "Please add Polygon Mainnet to MetaMask.",
-    "selectPolygon": "Please select Polygon Mainnet from your wallet.",
-    "noWallet": "Wallet connection not found or network not supported."
-  },
-  "audio": {
     "badge": "AI Audio Studio",
     "title": "Audio ",
     "titleHighlight": "Wizard",
@@ -1027,6 +956,11 @@
       }
     }
   },
+  "web3": {
+    "addPolygon": "Please add Polygon Mainnet to MetaMask.",
+    "selectPolygon": "Please select Polygon Mainnet from your wallet.",
+    "noWallet": "Wallet connection not found or network not supported."
+  },
   "apiKeys": {
     "title": "API Keys",
     "subtitle": "Manage your API keys for programmatic access",
@@ -1093,11 +1027,6 @@
     "member": "Member",
     "days": "days",
     "weeklyPrize": "Weekly #1 wins 500 Credits + ZEX Prize"
-  },
-  "web3": {
-    "addPolygon": "Please add Polygon Mainnet to MetaMask.",
-    "selectPolygon": "Please select Polygon Mainnet from your wallet.",
-    "noWallet": "Wallet connection not found or network not supported."
   },
   "share": {
     "title": "Share",

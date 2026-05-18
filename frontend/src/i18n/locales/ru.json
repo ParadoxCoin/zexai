@@ -184,7 +184,9 @@
     "invalidResponse": "Неверный ответ сервера",
     "generationError": "Произошла ошибка при генерации изображения",
     "errorLabel": "Ошибка",
-    "starting": "Запуск..."
+    "starting": "Запуск...",
+    "convertToVideoBanner": "🎬 Превратить это изображение в видео!",
+    "convertToVideoBtn": "Конвертировать"
   },
   "videoGen": {
     "badge": "ИИ Видеостудия",
