@@ -12,9 +12,65 @@ import {
 import { ComparisonChatPage } from "./ComparisonChatPage";
 import CodeBlock from "@/components/CodeBlock";
 import { useTranslation } from 'react-i18next';
+import { motion, AnimatePresence } from "framer-motion";
 
-// Available AI Models - Free (Groq + OpenRouter Free) + Premium (OpenRouter Paid)
-// Models will be fetched from API
+interface UiChatModel {
+  id: string;
+  name: string;
+  icon: string;
+  tier: "free" | "premium";
+  desc: string;
+  cost: string;
+}
+
+const fallbackChatModels: UiChatModel[] = [
+  {
+    id: "llama-3.3-70b",
+    name: "Llama 3.3 70B",
+    icon: "LL",
+    tier: "free",
+    desc: "Fast general assistant",
+    cost: "0"
+  },
+  {
+    id: "llama-3.1-8b",
+    name: "Llama 3.1 8B",
+    icon: "L8",
+    tier: "free",
+    desc: "Low-latency assistant",
+    cost: "0"
+  }
+];
+
+const getApiBaseUrl = () => (import.meta.env.VITE_API_URL || "/api/v1").replace(/\/$/, "");
+
+const getModelIcon = (id: string, name: string) => {
+  const value = `${id} ${name}`.toLowerCase();
+  if (value.includes("gpt") || value.includes("openai")) return "AI";
+  if (value.includes("claude") || value.includes("anthropic")) return "CL";
+  if (value.includes("gemini")) return "GM";
+  if (value.includes("llama")) return "LL";
+  if (value.includes("mistral")) return "MI";
+  return "AI";
+};
+
+const normalizeChatModel = (model: any): UiChatModel | null => {
+  const id = String(model?.id || model?.model_id || model?.provider_model_id || "").trim();
+  if (!id) return null;
+
+  const rawCost = Number(model?.cost_per_1k_tokens ?? model?.cost ?? 0);
+  const safeCost = Number.isFinite(rawCost) ? rawCost : 0;
+  const name = String(model?.name || id.replace(/[-_]/g, " "));
+
+  return {
+    id,
+    name,
+    icon: getModelIcon(id, name),
+    tier: safeCost > 0 ? "premium" : "free",
+    desc: String(model?.description || model?.desc || "Production-ready chat model"),
+    cost: safeCost >= 1 ? Math.round(safeCost).toString() : safeCost.toFixed(2)
+  };
+};
 
 
 // Suggested Prompts
@@ -128,35 +184,45 @@ const ChatPage = () => {
     }
   });
 
-  const { data: modelsData, isLoading: isLoadingModels } = useQuery({
+  const { data: modelsData, isLoading: isLoadingModels, isError: isModelsError } = useQuery({
     queryKey: ["chatModels"],
     queryFn: async () => {
       const res = await apiService.get("/chat/models");
       // Map API models to UI format
-      const models = (res as any)?.data || res || [];
+      const payload = (res as any)?.data || res || [];
+      const models = Array.isArray((payload as any)?.models) ? (payload as any).models : payload;
+      if (!Array.isArray(models)) return [];
       return models.map((m: any) => {
-        const rawCost = m.cost_per_1k_tokens;
-        const displayCost = rawCost >= 1 ? Math.round(rawCost).toString() : rawCost.toFixed(2);
+        const normalized = normalizeChatModel(m);
+        if (normalized) return normalized;
+
+        const modelId = String(m?.id || m?.model_id || m?.provider_model_id || "llama-3.3-70b");
+        const modelName = String(m?.name || modelId.replace(/[-_]/g, " "));
+        const rawCost = Number(m?.cost_per_1k_tokens ?? m?.cost ?? 0);
+        const safeCost = Number.isFinite(rawCost) ? rawCost : 0;
+        const displayCost = safeCost >= 1 ? Math.round(safeCost).toString() : safeCost.toFixed(2);
+        m = { ...(typeof m === "object" && m ? m : {}), id: modelId, name: modelName, cost_per_1k_tokens: safeCost };
         
         return {
-          id: m.id,
-          name: m.name,
+          id: modelId,
+          name: modelName,
           icon: m.id.includes('llama') ? '🦙' : m.id.includes('gpt') ? '🧠' : m.id.includes('claude') ? '👑' : m.id.includes('gemini') ? '✨' : '🤖',
-          tier: m.cost_per_1k_tokens > 0 ? 'premium' : 'free',
-          desc: m.description || 'AI Model',
+          tier: safeCost > 0 ? 'premium' : 'free',
+          desc: m?.description || 'Production-ready chat model',
           cost: displayCost
-        };
+        } as UiChatModel;
       });
 
     }
   });
 
-  const availableModels = modelsData || [];
-
+  const availableModels: UiChatModel[] = modelsData?.length ? modelsData : fallbackChatModels;
 
   useEffect(() => {
-    console.log("[DEBUG] conversations state:", conversations);
-  }, [conversations]);
+    if (availableModels.length && !availableModels.some(model => model.id === selectedModel)) {
+      setSelectedModel(availableModels[0].id);
+    }
+  }, [availableModels, selectedModel]);
 
   const { mutate: sendMessageFn } = useMutation({
     mutationFn: (data: any) => apiService.post("/chat", data),
@@ -165,7 +231,17 @@ const ChatPage = () => {
       const resData = response?.data || response;
       if (currentConversation) {
         const newMessage: Message = { role: "assistant", content: resData.response, timestamp: new Date().toISOString() };
-        setCurrentConversation(prev => prev ? { ...prev, id: resData.conversation_id || prev.id, messages: [...prev.messages, newMessage] } : null);
+        setCurrentConversation(prev => {
+          if (!prev) return null;
+          const messages = [...prev.messages];
+          const lastMessage = messages[messages.length - 1];
+          if (lastMessage?.role === "assistant" && !lastMessage.content) {
+            messages[messages.length - 1] = newMessage;
+          } else {
+            messages.push(newMessage);
+          }
+          return { ...prev, id: resData.conversation_id || prev.id, messages };
+        });
       }
       if (resData.conversation_id) setServerConversationId(resData.conversation_id);
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
@@ -256,7 +332,7 @@ const ChatPage = () => {
       if (!token) token = localStorage.getItem('auth_token');
       if (!token || token === 'null' || token === 'undefined') throw new Error('No auth token');
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/chat/stream`, {
+      const response = await fetch(`${getApiBaseUrl()}/chat/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({
@@ -357,7 +433,6 @@ const ChatPage = () => {
     (Array.isArray(rawConv?.data) ? rawConv.data : []) ||  // Array: {data: [...]}
     (Array.isArray(rawConv) ? rawConv : []);                // Direct array: [...]
 
-  console.log("[DEBUG] conversationsList length:", conversationsList.length);
   const currentModel = (availableModels && availableModels.length > 0)
     ? (availableModels.find((m: any) => m.id === selectedModel) || availableModels[0])
     : { id: "loading", name: "Yükleniyor...", icon: "⏳", tier: "free", desc: "", cost: 0 };
@@ -389,7 +464,7 @@ const ChatPage = () => {
             <div className="p-4 border-b border-white/5">
               <button onClick={startNewConversation}
                 className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-lg shadow-emerald-600/20 transition-all active:scale-[0.98] border-t border-white/10">
-                <Plus className="w-4 h-4" /> {t('chat.newChat', 'INITIALIZE NEURAL CHAT')}
+                <Plus className="w-4 h-4" /> {t('chat.newChat', 'New Chat')}
               </button>
             </div>
 
@@ -398,11 +473,21 @@ const ChatPage = () => {
               {/* Search */}
               <div className="relative mb-4">
                 <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                <input type="text" placeholder={t('chat.searchModel', 'FILTER ENGINES...')} value={modelSearch} onChange={e => setModelSearch(e.target.value)}
+                <input type="text" placeholder={t('chat.searchModel', 'Search models...')} value={modelSearch} onChange={e => setModelSearch(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 text-[10px] bg-black/40 border border-white/5 rounded-xl text-slate-300 placeholder-slate-700 font-black uppercase tracking-widest focus:outline-none focus:ring-1 focus:ring-emerald-500/50" />
               </div>
 
               <div className="overflow-y-auto space-y-1.5 flex-1 scrollbar-hide">
+                {isLoadingModels && (
+                  <div className="p-4 rounded-2xl border border-white/5 bg-white/[0.02] text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                    Loading model catalog...
+                  </div>
+                )}
+                {isModelsError && (
+                  <div className="p-4 rounded-2xl border border-amber-500/20 bg-amber-500/10 text-[10px] font-black text-amber-300 uppercase tracking-widest">
+                    Using local fallback models
+                  </div>
+                )}
                 {/* 🆓 Free Section */}
                 {freeModels.length > 0 && (
                   <>
@@ -455,7 +540,7 @@ const ChatPage = () => {
 
             {/* History Header */}
             <div className="px-4 pt-6 pb-2 flex items-center justify-between">
-              <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{t('chat.pastChats', 'TERMINAL LOGS')}</p>
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{t('chat.pastChats', 'Conversations')}</p>
               <span className="text-[9px] font-black text-slate-600 bg-white/5 px-2 py-0.5 rounded-full border border-white/5">{conversationsList.length}</span>
             </div>
 
@@ -467,7 +552,7 @@ const ChatPage = () => {
                 ) : conversationsList.length === 0 ? (
                   <div className="text-center py-12">
                     <History className="w-10 h-10 text-slate-800 mx-auto mb-4" />
-                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('chat.noChats', 'NO NEURAL LOGS FOUND')}</p>
+                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('chat.noChats', 'No conversations yet')}</p>
                   </div>
                 ) : conversationsList.map((conv: any) => (
                   <div key={conv.id} onClick={() => loadConversation(conv.id)}
@@ -505,7 +590,7 @@ const ChatPage = () => {
             <div className="p-4 border-t border-white/5">
               <button onClick={() => setActiveTab("compare")}
                 className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white/5 hover:bg-white/10 text-slate-300 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all border border-white/10 group">
-                <Zap className="w-4 h-4 text-emerald-500 group-hover:scale-110 transition-transform" /> {t('chat.compare', 'DIAGNOSTIC COMPARISON')}
+                <Zap className="w-4 h-4 text-emerald-500 group-hover:scale-110 transition-transform" /> {t('chat.compare', 'Compare Models')}
               </button>
             </div>
           </div>
@@ -535,7 +620,7 @@ const ChatPage = () => {
                     </div>
                     <div className="flex flex-col">
                       <h3 className="text-[13px] font-black text-white uppercase tracking-[0.2em] leading-tight drop-shadow-sm">
-                        {currentConversation?.title || t('chat.newChat', "NEURAL SESSION")}
+                        {currentConversation?.title || t('chat.newChat', "ZexAi Chat")}
                       </h3>
                       <div className="flex items-center gap-2 mt-1.5">
                         <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
@@ -543,7 +628,7 @@ const ChatPage = () => {
                         </span>
                         <div className="w-1 h-1 bg-slate-700 rounded-full" />
                         <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
-                          {currentModel.tier === 'free' ? 'STANDARD CORE' : 'PREMIUM CORE'}
+                          {currentModel.tier === 'free' ? 'STANDARD MODEL' : 'PREMIUM MODEL'}
                         </span>
                       </div>
                     </div>
@@ -565,7 +650,7 @@ const ChatPage = () => {
                           <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                           <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                         </div>
-                        <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">{t('chat.typing', 'SYNTHESIZING...')}</span>
+                        <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">{t('chat.typing', 'Generating...')}</span>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -593,13 +678,13 @@ const ChatPage = () => {
                       </div>
                     </div>
                     <h2 className="text-4xl font-black text-white mb-4 text-center uppercase tracking-tighter italic">
-                      {t('chat.emptyTitle', 'SYSTEM ')}
+                      {t('chat.emptyTitle', 'Ask ')}
                       <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-500">
-                        {t('chat.emptyTitleHighlight', 'READY')}
+                        {t('chat.emptyTitleHighlight', 'ZexAi')}
                       </span>
                     </h2>
                     <p className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] mb-12 max-w-md text-center leading-relaxed">
-                      {t('chat.emptyDesc', 'INITIALIZE NEURAL INTERACTION. ASK QUESTIONS, GENERATE CODE, OR EXECUTE COMPLEX ANALYSES.')}
+                      {t('chat.emptyDesc', 'Use a focused assistant for analysis, writing, code, planning, and operational decisions.')}
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-3xl">
                       {suggestedPrompts.map((item, idx) => (
@@ -682,7 +767,7 @@ const ChatPage = () => {
                 <div className="flex items-end gap-3 bg-black/60 backdrop-blur-3xl rounded-[2rem] p-3 border border-white/5 focus-within:border-emerald-500/50 focus-within:ring-4 focus-within:ring-emerald-500/5 transition-all shadow-2xl relative z-10">
                   <textarea
                     ref={textareaRef}
-                    placeholder={t('chat.typeMsg', "ENTER NEURAL COMMAND...")}
+                    placeholder={t('chat.typeMsg', "Ask anything...")}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     rows={1}
@@ -702,7 +787,7 @@ const ChatPage = () => {
                   </p>
                   <div className="w-1 h-1 bg-slate-800 rounded-full" />
                   <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.2em]">
-                    SHIFT+ENTER FOR MULTILINE COMMAND
+                    Shift+Enter for a new line
                   </p>
                 </div>
               </form>

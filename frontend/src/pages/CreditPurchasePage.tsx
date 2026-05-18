@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
     CreditCard, DollarSign, Zap, CheckCircle, Tag,
-    Wallet, RefreshCw, Sparkles, Package, Gift
+    Wallet, RefreshCw, Sparkles, Package, Gift, X, Star, Shield, ArrowRight
 } from 'lucide-react';
 import axios from 'axios';
 import { useToast } from '@/components/ui/toast';
 import { useTranslation } from 'react-i18next';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const api = axios.create({
     baseURL: (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000/api/v1',
@@ -93,9 +94,9 @@ export const CreditPurchasePage: React.FC = () => {
         setLoading(true);
         try {
             const [configRes, packagesRes, plansRes] = await Promise.all([
-                api.get('/billing/credit-config'),
-                api.get('/billing/special-packages'),
-                api.get('/billing/plans')
+                api.get('/billing/credit-config').catch(() => ({ data: { min_purchase_usd: 5, max_purchase_usd: 500, credits_per_usd: 100, bulk_discounts: { "50": 5, "100": 10, "200": 15, "500": 25 } } })),
+                api.get('/billing/special-packages').catch(() => ({ data: { packages: [] } })),
+                api.get('/billing/plans').catch(() => ({ data: { plans: [] } }))
             ]);
             setConfig(configRes.data);
             setSpecialPackages(packagesRes.data?.packages || []);
@@ -180,16 +181,33 @@ export const CreditPurchasePage: React.FC = () => {
     };
 
     const handlePurchase = async () => {
-        if (!calculation) return;
         setPurchasing(true);
         try {
-            const response = await api.post('/billing/checkout/flexible-credit', {
-                amount_usd: amount,
-                promo_code: promoDetails?.code || null,
-                payment_method: selectedPayment
-            });
+            let response;
+            if (purchaseType === 'flexible') {
+                if (!calculation) return;
+                response = await api.post('/billing/checkout/flexible-credit', {
+                    amount_usd: amount,
+                    promo_code: promoDetails?.code || null,
+                    payment_method: selectedPayment
+                });
+            } else if (purchaseType === 'subscription') {
+                if (!selectedPlan) return;
+                response = await api.post('/billing/checkout/create', {
+                    item_type: 'subscription',
+                    item_id: selectedPlan.id,
+                    payment_method: selectedPayment
+                });
+            } else if (purchaseType === 'package') {
+                if (!selectedPackage) return;
+                response = await api.post('/billing/checkout/create', {
+                    item_type: 'top_up',
+                    item_id: selectedPackage.id,
+                    payment_method: selectedPayment
+                });
+            }
 
-            if (response.data.checkout_url) {
+            if (response && response.data.checkout_url) {
                 window.location.href = response.data.checkout_url;
             } else {
                 toast.success(t('billing.purchaseSuccess'), t('billing.purchaseCompleted'));
@@ -209,52 +227,71 @@ export const CreditPurchasePage: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-64">
-                <RefreshCw className="h-8 w-8 animate-spin text-purple-600" />
+            <div className="min-h-screen bg-[#030712] flex items-center justify-center">
+                <div className="text-center">
+                    <RefreshCw className="h-12 w-12 animate-spin text-purple-500 mx-auto mb-4" />
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{t('billing.loading', 'INITIALIZING BILLING CORE...')}</p>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="max-w-6xl mx-auto px-4 py-8">
-            {/* Header */}
-            <div className="text-center mb-10">
-                <h1 className="text-3xl font-bold text-gray-900 flex items-center justify-center">
-                    <Wallet className="h-8 w-8 mr-3 text-purple-600" />
-                    {t('billing.title')}
-                </h1>
-                <p className="mt-2 text-gray-600">
-                    {t('billing.subtitle')}
-                </p>
+        <div className="min-h-screen bg-[#030712] text-white selection:bg-purple-500/30 overflow-x-hidden relative">
+            {/* Ambient Background Effects */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+                <div className="absolute top-[-10%] left-[-10%] w-[45%] h-[45%] bg-purple-900/10 rounded-full blur-[140px] animate-pulse" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[45%] h-[45%] bg-blue-900/10 rounded-full blur-[140px] animate-pulse" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.02] brightness-120 contrast-150" />
             </div>
 
-            {/* No Expiry Banner */}
-            <div className="mb-8 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 rounded-2xl p-6 text-white shadow-lg">
-                <div className="flex items-center justify-center gap-4">
-                    <div className="flex-shrink-0">
-                        <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
-                            <span className="text-3xl">♾️</span>
+            {/* Content Container */}
+            <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                {/* Hero Header */}
+                <div className="text-center mb-12 max-w-3xl mx-auto">
+                    <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 w-fit mb-4">
+                        <Wallet className="w-4 h-4 text-purple-400" />
+                        <span className="text-[10px] font-black text-purple-300 uppercase tracking-[0.2em]">
+                            ZEX FINANCIAL CORE
+                        </span>
+                    </div>
+                    <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white uppercase italic leading-none drop-shadow-2xl">
+                        {t('billing.title', 'RECHARGE ')}
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">
+                            {t('billing.titleHighlight', 'ZEX CREDITS')}
+                        </span>
+                    </h1>
+                    <p className="text-slate-400 text-xs font-black uppercase tracking-[0.2em] mt-3 opacity-80 leading-relaxed">
+                        {t('billing.subtitle', 'ACQUIRE NEURAL POWER FOR GENERATING HIGH-FIDELITY AI ASSETS.')}
+                    </p>
+                </div>
+
+                {/* High-Tech No Expiry Banner */}
+                <div className="mb-12 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-cyan-500/10 border border-emerald-500/20 backdrop-blur-xl rounded-[2rem] p-6 text-white shadow-2xl relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                    <div className="flex flex-col sm:flex-row items-center gap-6 relative z-10 text-center sm:text-left">
+                        <div className="flex-shrink-0 w-14 h-14 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 flex items-center justify-center shadow-lg">
+                            <span className="text-2xl animate-pulse">♾️</span>
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-black uppercase tracking-wider text-emerald-400">{t('billing.noExpiryTitle', 'Your Credits Never Expire!')}</h3>
+                            <p className="text-slate-400 text-xs mt-1 leading-relaxed max-w-2xl font-medium uppercase tracking-wider opacity-85">
+                                {t('billing.noExpiryDesc', 'Purchased credits stay in your account indefinitely. They do not reset at the end of the month, so you can use them whenever you need!')}
+                            </p>
                         </div>
                     </div>
-                    <div>
-                        <h3 className="text-xl font-bold">{t('billing.noExpiryTitle')}</h3>
-                        <p className="text-white/90 mt-1">
-                            {t('billing.noExpiryDesc')}
-                        </p>
-                    </div>
                 </div>
-            </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Left: Amount Selection */}
-                <div className="lg:col-span-2 space-y-6">
-                    {/* Purchase Type Tabs */}
-                    <div className="bg-white rounded-2xl shadow-lg p-2 border border-gray-100">
-                        <div className="flex space-x-1">
+                {/* Main Content Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    {/* Left Panel: Package Selector */}
+                    <div className="lg:col-span-8 space-y-8">
+                        {/* Tab Switcher */}
+                        <div className="bg-black/60 backdrop-blur-xl border border-white/5 p-1.5 rounded-[1.5rem] w-full flex shadow-2xl">
                             {[
-                                { id: 'flexible', label: t('billing.tabFlexible'), icon: DollarSign },
-                                { id: 'subscription', label: t('billing.tabSubscription'), icon: CreditCard },
-                                { id: 'package', label: t('billing.tabPackages'), icon: Gift }
+                                { id: 'flexible', label: t('billing.tabFlexible', 'FLEXIBLE CREDIT'), icon: DollarSign, color: 'bg-purple-600 shadow-purple-600/30' },
+                                { id: 'subscription', label: t('billing.tabSubscription', 'SUBSCRIPTION'), icon: CreditCard, color: 'bg-blue-600 shadow-blue-600/30' },
+                                { id: 'package', label: t('billing.tabPackages', 'SPECIAL PACKAGES'), icon: Gift, color: 'bg-orange-600 shadow-orange-600/30' }
                             ].map((tab) => (
                                 <button
                                     key={tab.id}
@@ -263,368 +300,435 @@ export const CreditPurchasePage: React.FC = () => {
                                         setSelectedPlan(null);
                                         setSelectedPackage(null);
                                     }}
-                                    className={`flex-1 flex items-center justify-center py-3 px-4 rounded-xl text-sm font-medium transition-all ${purchaseType === tab.id
-                                        ? 'bg-purple-600 text-white shadow-lg'
-                                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                                    className={`flex-1 flex items-center justify-center py-4 px-4 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all relative overflow-hidden ${purchaseType === tab.id
+                                        ? `${tab.color} text-white shadow-xl scale-[1.02] border-t border-white/10`
+                                        : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
                                         }`}
                                 >
-                                    <tab.icon className="h-4 w-4 mr-2" />
+                                    <tab.icon className="h-4 w-4 mr-2.5 shrink-0" />
                                     {tab.label}
                                 </button>
                             ))}
                         </div>
-                    </div>
 
-                    {/* Flexible Credit Card - Only show when flexible is selected */}
-                    {purchaseType === 'flexible' && (
-                        <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-                            <h2 className="text-xl font-semibold mb-4 flex items-center">
-                                <DollarSign className="h-5 w-5 mr-2 text-green-600" />
-                                {t('billing.selectAmount')}
-                            </h2>
-
-                            {/* Amount Slider */}
-                            <div className="mb-6">
-                                <div className="flex justify-between text-sm text-gray-600 mb-2">
-                                    <span>Min: ${config?.min_purchase_usd || 5}</span>
-                                    <span className="text-2xl font-bold text-purple-600">${amount}</span>
-                                    <span>Max: ${config?.max_purchase_usd || 500}</span>
-                                </div>
-                                <input
-                                    type="range"
-                                    min={config?.min_purchase_usd || 5}
-                                    max={config?.max_purchase_usd || 500}
-                                    value={amount}
-                                    onChange={(e) => setAmount(parseInt(e.target.value))}
-                                    className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
-                                />
-                            </div>
-
-                            {/* Quick Amount Buttons */}
-                            <div className="grid grid-cols-5 gap-2 mb-6">
-                                {[25, 50, 100, 250, 500].map((val) => (
-                                    <button
-                                        key={val}
-                                        onClick={() => setAmount(val)}
-                                        className={`py-2 rounded-lg text-sm font-medium transition-all ${amount === val
-                                            ? 'bg-purple-600 text-white'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                            }`}
-                                    >
-                                        ${val}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Bulk Discounts */}
-                            <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 mb-6">
-                                <h3 className="text-sm font-semibold text-purple-700 mb-2 flex items-center">
-                                    <Zap className="h-4 w-4 mr-1" />
-                                    {t('billing.bulkDiscounts')}
-                                </h3>
-                                <div className="flex flex-wrap gap-2">
-                                    {bulkDiscountTiers.map((tier, i) => (
-                                        <span
-                                            key={i}
-                                            className={`px-3 py-1 rounded-full text-xs font-medium ${amount >= tier.threshold
-                                                ? 'bg-green-100 text-green-700 ring-2 ring-green-300'
-                                                : 'bg-gray-100 text-gray-600'
-                                                }`}
-                                        >
-                                            {t('billing.bulkDiscountRow', { threshold: tier.threshold, discount: tier.discount })}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Promo Code */}
-                            <div className="flex space-x-2">
-                                <div className="relative flex-1">
-                                    <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                    <input
-                                        type="text"
-                                        placeholder={t('billing.promoPlaceholder')}
-                                        value={promoCode}
-                                        onChange={(e) => {
-                                            setPromoCode(e.target.value.toUpperCase());
-                                            setPromoValid(null);
-                                        }}
-                                        className={`w-full pl-10 pr-4 py-3 border-2 rounded-lg ${promoValid === true ? 'border-green-500 bg-green-50' :
-                                            promoValid === false ? 'border-red-500 bg-red-50' :
-                                                'border-gray-200'
-                                            }`}
-                                    />
-                                </div>
-                                <button
-                                    onClick={validatePromo}
-                                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium"
+                        {/* Switchable Interactive Panels */}
+                        <AnimatePresence mode="wait">
+                            {/* 1. Flexible Credit Slider */}
+                            {purchaseType === 'flexible' && (
+                                <motion.div
+                                    key="flexible"
+                                    initial={{ opacity: 0, y: 15 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -15 }}
+                                    className="bg-black/40 backdrop-blur-xl rounded-[2.5rem] border border-white/5 p-8 shadow-2xl relative overflow-hidden"
                                 >
-                                    {t('billing.apply')}
-                                </button>
-                            </div>
-                            {promoValid && promoDetails && (
-                                <div className="mt-2 text-sm text-green-600 flex items-center">
-                                    <CheckCircle className="h-4 w-4 mr-1" />
-                                    {promoDetails.discount?.description || t('billing.promoApplied')}
-                                </div>
-                            )}
-                        </div>
-                    )}
+                                    <div className="absolute inset-0 bg-gradient-to-b from-white/[0.01] to-transparent pointer-events-none" />
+                                    
+                                    <h2 className="text-xs font-black text-slate-500 uppercase tracking-[0.25em] mb-8 flex items-center gap-3">
+                                        <DollarSign className="w-4.5 h-4.5 text-purple-400" />
+                                        {t('billing.selectAmount', 'CHOOSE RECHARGE AMOUNT')}
+                                    </h2>
 
-                    {/* Subscription Plans - Only show when subscription is selected */}
-                    {purchaseType === 'subscription' && (
-                        <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-                            <h2 className="text-xl font-semibold mb-4 flex items-center">
-                                <CreditCard className="h-5 w-5 mr-2 text-blue-600" />
-                                {t('billing.subscriptionPlans')}
-                            </h2>
-                            <p className="text-sm text-gray-600 mb-4">
-                                {t('billing.subscriptionDesc')}
-                            </p>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                {subscriptionPlans.map((plan: any) => (
-                                    <div
-                                        key={plan.id}
-                                        onClick={() => {}}
-                                        className={`p-4 rounded-xl border-2 transition-all opacity-75 grayscale cursor-not-allowed relative overflow-hidden ${selectedPlan?.id === plan.id
-                                            ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-300'
-                                            : plan.is_popular
-                                                ? 'border-purple-400 bg-purple-50'
-                                                : 'border-gray-200'
-                                            }`}
-                                    >
-                                        <div className="absolute top-2 right-[-30px] bg-red-500 text-white text-[10px] font-bold py-1 px-8 transform rotate-45 z-10">
-                                            COMING SOON
+                                    {/* Big Amount and Slider */}
+                                    <div className="mb-8 space-y-6">
+                                        <div className="flex items-end justify-between border-b border-white/5 pb-4">
+                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">MIN: ${config?.min_purchase_usd || 5}</span>
+                                            <span className="text-4xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 tracking-tighter">
+                                                ${amount}
+                                            </span>
+                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">MAX: ${config?.max_purchase_usd || 500}</span>
                                         </div>
-                                        {plan.is_popular && (
-                                            <div className="text-center mb-2">
-                                                <span className="px-3 py-1 bg-purple-600 text-white text-xs font-bold rounded-full">{t('billing.popularBadge')}</span>
-                                            </div>
-                                        )}
-                                        <div className="text-center mb-3">
-                                            <span className="inline-block px-3 py-1 bg-gray-100 text-gray-700 text-xs font-semibold rounded-full">{plan.name?.toUpperCase()}</span>
-                                        </div>
-                                        <div className="text-center mb-3">
-                                            <span className="text-3xl font-bold text-gray-900">${plan.monthly_price}</span>
-                                            <span className="text-gray-500">/ay</span>
-                                        </div>
-                                        <div className="text-center text-sm text-purple-600 font-medium mb-3">
-                                            {t('billing.creditsPerMonth', { count: plan.monthly_credits?.toLocaleString() })}
-                                        </div>
-                                        <ul className="space-y-2 text-sm text-gray-600">
-                                            {(plan.features || []).slice(0, 4).map((feature: string, i: number) => (
-                                                <li key={i} className="flex items-center">
-                                                    <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
-                                                    {feature}
-                                                </li>
-                                            ))}
-                                        </ul>
+                                        
+                                        <input
+                                            type="range"
+                                            min={config?.min_purchase_usd || 5}
+                                            max={config?.max_purchase_usd || 500}
+                                            value={amount}
+                                            onChange={(e) => setAmount(parseInt(e.target.value))}
+                                            className="w-full h-1.5 bg-white/5 rounded-full appearance-none cursor-pointer accent-purple-500"
+                                        />
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
 
-                    {/* Special Packages - Only show when package is selected */}
-                    {purchaseType === 'package' && specialPackages.length > 0 && (
-                        <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-                            <h2 className="text-xl font-semibold mb-4 flex items-center">
-                                <Sparkles className="h-5 w-5 mr-2 text-yellow-500" />
-                                {t('billing.specialPackages')}
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {specialPackages.map((pkg) => (
-                                    <div
-                                        key={pkg.id}
-                                        onClick={() => {}}
-                                        className={`p-4 rounded-xl border-2 transition-all opacity-75 grayscale cursor-not-allowed relative overflow-hidden ${selectedPackage?.id === pkg.id
-                                            ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-300'
-                                            : pkg.is_featured
-                                                ? 'border-yellow-400 bg-yellow-50'
-                                                : 'border-gray-200'
-                                            }`}
-                                    >
-                                        <div className="absolute top-2 right-[-30px] bg-red-500 text-white text-[10px] font-bold py-1 px-8 transform rotate-45 z-10">
-                                            COMING SOON
-                                        </div>
-                                        <div className="flex justify-between items-start mb-2">
-                                            <div>
-                                                <h3 className="font-semibold">{pkg.name}</h3>
-                                                <p className="text-sm text-gray-600">{pkg.description}</p>
-                                            </div>
-                                            {pkg.badge && (
-                                                <span className="px-2 py-1 bg-yellow-400 text-yellow-900 text-xs font-bold rounded">
-                                                    {pkg.badge}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="flex items-baseline">
-                                            <span className="text-2xl font-bold text-purple-600">${pkg.discounted_price}</span>
-                                            {pkg.original_price > pkg.discounted_price && (
-                                                <span className="ml-2 text-sm text-gray-400 line-through">${pkg.original_price}</span>
-                                            )}
-                                        </div>
-                                        <div className="mt-1 text-sm text-green-600">
-                                            {(pkg.credits + pkg.bonus_credits).toLocaleString()} kredi
-                                            {pkg.bonus_credits > 0 && ` (+${pkg.bonus_credits.toLocaleString()} bonus)`}
+                                    {/* Quick Amount Buttons */}
+                                    <div className="grid grid-cols-5 gap-3 mb-8">
+                                        {[25, 50, 100, 250, 500].map((val) => (
+                                            <button
+                                                key={val}
+                                                onClick={() => setAmount(val)}
+                                                className={`py-3.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${amount === val
+                                                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20 scale-105 border-t border-white/10'
+                                                    : 'bg-white/5 text-slate-400 border border-white/5 hover:border-white/10 hover:bg-white/10 hover:text-white'
+                                                    }`}
+                                            >
+                                                ${val}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {/* High-Tech Bulk Discounts */}
+                                    <div className="bg-purple-500/5 rounded-2xl p-6 border border-purple-500/10 mb-8">
+                                        <h3 className="text-[9px] font-black text-purple-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                                            <Zap className="h-4 w-4" />
+                                            {t('billing.bulkDiscounts', 'BULK PURCHASE DISCOUNTS')}
+                                        </h3>
+                                        <div className="flex flex-wrap gap-2.5">
+                                            {bulkDiscountTiers.map((tier, i) => {
+                                                const isActive = amount >= tier.threshold;
+                                                return (
+                                                    <span
+                                                        key={i}
+                                                        className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${isActive
+                                                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-md shadow-emerald-500/5'
+                                                            : 'bg-black/40 border-white/5 text-slate-500'
+                                                            }`}
+                                                    >
+                                                        {t('billing.bulkDiscountRow', { threshold: tier.threshold, discount: tier.discount })}
+                                                    </span>
+                                                );
+                                            })}
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
 
-                {/* Right: Summary & Checkout */}
-                <div className="lg:col-span-1">
-                    <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl shadow-xl p-6 text-white sticky top-4">
-                        <h2 className="text-xl font-semibold mb-4 flex items-center">
-                            <Package className="h-5 w-5 mr-2" />
-                            {t('billing.orderSummary')}
-                        </h2>
-
-                        {/* Dynamic Order Summary based on purchase type */}
-                        {purchaseType === 'flexible' && calculation && (
-                            <div className="space-y-3 mb-6">
-                                <div className="flex justify-between text-purple-200">
-                                    <span>{t('billing.amount')}</span>
-                                    <span>${calculation.amount_usd}</span>
-                                </div>
-                                <div className="flex justify-between text-purple-200">
-                                    <span>{t('billing.baseCredits')}</span>
-                                    <span>{calculation.base_credits.toLocaleString()}</span>
-                                </div>
-                                {calculation.bonus_credits > 0 && (
-                                    <div className="flex justify-between text-green-300">
-                                        <span>{t('billing.bonusCredits', { percent: calculation.discount_percent })}</span>
-                                        <span>+{calculation.bonus_credits.toLocaleString()}</span>
+                                    {/* Promo Code Input */}
+                                    <div className="flex gap-3">
+                                        <div className="relative flex-1">
+                                            <Tag className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500" />
+                                            <input
+                                                type="text"
+                                                placeholder={t('billing.promoPlaceholder', 'ENTER PROMO CODE')}
+                                                value={promoCode}
+                                                onChange={(e) => {
+                                                    setPromoCode(e.target.value.toUpperCase());
+                                                    setPromoValid(null);
+                                                }}
+                                                className={`w-full pl-12 pr-4 py-4 bg-black/60 border rounded-2xl outline-none transition-all text-xs font-black uppercase tracking-widest text-slate-200 placeholder-slate-700 ${promoValid === true ? 'border-green-500/50 bg-green-500/5' :
+                                                    promoValid === false ? 'border-red-500/50 bg-red-500/5' :
+                                                        'border-white/5 focus:border-purple-500/40'
+                                                    }`}
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={validatePromo}
+                                            className="px-8 py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xl shadow-purple-600/20 active:scale-95 border-t border-white/20"
+                                        >
+                                            {t('billing.apply', 'APPLY')}
+                                        </button>
                                     </div>
-                                )}
-                                {calculation.promo_applied && (
-                                    <div className="flex justify-between text-yellow-300">
-                                        <span>{t('billing.promoDiscount')}</span>
-                                        <span>-${calculation.promo_discount}</span>
-                                    </div>
-                                )}
-                                <div className="border-t border-purple-400 pt-3">
-                                    <div className="flex justify-between text-xl font-bold">
-                                        <span>{t('billing.totalCredits')}</span>
-                                        <span>{calculation.total_credits.toLocaleString()}</span>
-                                    </div>
-                                    <div className="flex justify-between text-2xl font-bold mt-2">
-                                        <span>{t('billing.totalPayment')}</span>
-                                        <span>${calculation.final_price}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {purchaseType === 'subscription' && selectedPlan && (
-                            <div className="space-y-3 mb-6">
-                                <div className="p-3 bg-purple-500/30 rounded-lg">
-                                    <div className="font-semibold text-lg">{selectedPlan.name || selectedPlan.display_name}</div>
-                                    <div className="text-sm text-purple-200">{t('billing.monthlySubscription')}</div>
-                                </div>
-                                <div className="flex justify-between text-purple-200">
-                                    <span>{t('billing.monthlyCredits')}</span>
-                                    <span>{(selectedPlan.monthly_credits || 0).toLocaleString()}</span>
-                                </div>
-                                <div className="border-t border-purple-400 pt-3">
-                                    <div className="flex justify-between text-2xl font-bold">
-                                        <span>{t('billing.monthlyPayment')}</span>
-                                        <span>${selectedPlan.monthly_price || 0}/ay</span>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {purchaseType === 'package' && selectedPackage && (
-                            <div className="space-y-3 mb-6">
-                                <div className="p-3 bg-purple-500/30 rounded-lg">
-                                    <div className="font-semibold text-lg">{selectedPackage.name}</div>
-                                    {selectedPackage.badge && <span className="text-xs bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded">{selectedPackage.badge}</span>}
-                                </div>
-                                <div className="flex justify-between text-purple-200">
-                                    <span>{t('billing.baseCredits')}</span>
-                                    <span>{selectedPackage.credits.toLocaleString()}</span>
-                                </div>
-                                {selectedPackage.bonus_credits > 0 && (
-                                    <div className="flex justify-between text-green-300">
-                                        <span>{t('billing.bonusCredits')}</span>
-                                        <span>+{selectedPackage.bonus_credits.toLocaleString()}</span>
-                                    </div>
-                                )}
-                                <div className="border-t border-purple-400 pt-3">
-                                    <div className="flex justify-between text-xl font-bold">
-                                        <span>{t('billing.totalCredits')}</span>
-                                        <span>{(selectedPackage.credits + selectedPackage.bonus_credits).toLocaleString()}</span>
-                                    </div>
-                                    <div className="flex justify-between text-2xl font-bold mt-2">
-                                        <span>{t('billing.totalPayment')}</span>
-                                        <span>${selectedPackage.discounted_price}</span>
-                                    </div>
-                                    {selectedPackage.original_price > selectedPackage.discounted_price && (
-                                        <div className="text-right text-sm text-green-300 mt-1">
-                                            <span className="line-through text-gray-400">${selectedPackage.original_price}</span>
-                                            <span className="ml-2">{t('billing.discountLabel', { percent: Math.round((1 - selectedPackage.discounted_price / selectedPackage.original_price) * 100) })}</span>
+                                    {promoValid && promoDetails && (
+                                        <div className="mt-3 text-[10px] font-black text-green-400 flex items-center gap-1.5 uppercase tracking-widest animate-pulse">
+                                            <CheckCircle className="h-3.5 w-3.5" />
+                                            {promoDetails.discount?.description || t('billing.promoApplied', 'PROMO CODE APPLIED')}
                                         </div>
                                     )}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Empty state - nothing selected */}
-                        {((purchaseType === 'subscription' && !selectedPlan) ||
-                            (purchaseType === 'package' && !selectedPackage) ||
-                            (purchaseType === 'flexible' && !calculation)) && (
-                                <div className="text-center py-6 text-purple-200">
-                                    <p>{t('billing.makeSelection')}</p>
-                                </div>
+                                </motion.div>
                             )}
 
-                        {/* Payment Methods */}
-                        <div className="mb-6">
-                            <p className="text-sm text-purple-200 mb-2">{t('billing.paymentMethod')}</p>
-                            <div className="grid grid-cols-2 gap-2">
-                                {[
-                                    { id: 'lemonsqueezy', label: t('billing.methodCard'), discount: 0 },
-                                    { id: 'nowpayments', label: t('billing.methodCrypto'), discount: 5 },
-                                    { id: 'binance', label: t('billing.methodBinance'), discount: 5 },
-                                    { id: 'metamask', label: t('billing.methodMetamask'), discount: 15 }
-                                ].map((method) => (
-                                    <button
-                                        key={method.id}
-                                        onClick={() => setSelectedPayment(method.id)}
-                                        className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${selectedPayment === method.id
-                                            ? 'bg-white text-purple-700'
-                                            : 'bg-purple-500/30 text-white hover:bg-purple-500/50'
-                                            }`}
-                                    >
-                                        {method.label}
-                                        {method.discount > 0 && (
-                                            <span className="text-xs text-green-400 block">+%{method.discount}</span>
+                            {/* 2. Subscription Plans */}
+                            {purchaseType === 'subscription' && (
+                                <motion.div
+                                    key="subscription"
+                                    initial={{ opacity: 0, y: 15 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -15 }}
+                                    className="bg-black/40 backdrop-blur-xl rounded-[2.5rem] border border-white/5 p-8 shadow-2xl relative overflow-hidden"
+                                >
+                                    <div className="absolute inset-0 bg-gradient-to-b from-white/[0.01] to-transparent pointer-events-none" />
+                                    
+                                    <h2 className="text-xs font-black text-slate-500 uppercase tracking-[0.25em] mb-2 flex items-center gap-3">
+                                        <CreditCard className="w-4.5 h-4.5 text-blue-400" />
+                                        {t('billing.subscriptionPlans', 'MEMBERSHIP TIERS')}
+                                    </h2>
+                                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-wider mb-8 leading-relaxed">
+                                        {t('billing.subscriptionDesc', 'UNLOCK FULL RECURRING AI POWER WITH PRIORITY RENDERING.')}
+                                    </p>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        {subscriptionPlans.map((plan: any) => {
+                                            const isSelected = selectedPlan?.id === plan.id;
+                                            return (
+                                                <div
+                                                    key={plan.id}
+                                                    onClick={() => setSelectedPlan(plan)}
+                                                    className={`p-6 rounded-[2rem] border-2 transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between group ${isSelected
+                                                        ? 'border-purple-600 bg-purple-600/10 shadow-2xl scale-[1.03]'
+                                                        : plan.is_popular
+                                                            ? 'border-purple-500/20 bg-black/40 hover:border-purple-500/40'
+                                                            : 'border-white/5 bg-black/40 hover:border-white/15'
+                                                        }`}
+                                                >
+                                                    {plan.is_popular && (
+                                                        <div className="absolute top-3 right-3">
+                                                            <span className="px-2.5 py-1 bg-purple-600 text-white text-[7px] font-black uppercase tracking-[0.2em] rounded-full border-t border-white/10 shadow-md">
+                                                                {t('billing.popularBadge', 'MOST POPULAR')}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    
+                                                    <div>
+                                                        <div className="mb-4">
+                                                            <span className="inline-block px-3 py-1 bg-white/5 border border-white/5 text-slate-300 text-[8px] font-black uppercase tracking-[0.2em] rounded-lg">
+                                                                {plan.name?.toUpperCase()}
+                                                            </span>
+                                                        </div>
+                                                        <div className="mb-4">
+                                                            <span className="text-3xl font-black italic text-white">${plan.monthly_price}</span>
+                                                            <span className="text-slate-500 text-[9px] font-black uppercase tracking-widest ml-1">/mo</span>
+                                                        </div>
+                                                        <div className="text-[10px] font-black text-purple-400 uppercase tracking-widest mb-6">
+                                                            {t('billing.creditsPerMonth', { count: plan.monthly_credits?.toLocaleString() })} Kredi
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <ul className="space-y-3.5 border-t border-white/5 pt-5 text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+                                                        {(plan.features || []).slice(0, 4).map((feature: string, i: number) => (
+                                                            <li key={i} className="flex items-start gap-2.5 leading-relaxed">
+                                                                <CheckCircle className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                                                                <span>{feature}</span>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {/* 3. Special Packages */}
+                            {purchaseType === 'package' && specialPackages.length > 0 && (
+                                <motion.div
+                                    key="package"
+                                    initial={{ opacity: 0, y: 15 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -15 }}
+                                    className="bg-black/40 backdrop-blur-xl rounded-[2.5rem] border border-white/5 p-8 shadow-2xl relative overflow-hidden"
+                                >
+                                    <div className="absolute inset-0 bg-gradient-to-b from-white/[0.01] to-transparent pointer-events-none" />
+                                    
+                                    <h2 className="text-xs font-black text-slate-500 uppercase tracking-[0.25em] mb-8 flex items-center gap-3">
+                                        <Sparkles className="w-4.5 h-4.5 text-yellow-500 animate-pulse" />
+                                        {t('billing.specialPackages', 'PRE-COMPILED POWER PACKS')}
+                                    </h2>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {specialPackages.map((pkg) => {
+                                            const isSelected = selectedPackage?.id === pkg.id;
+                                            return (
+                                                <div
+                                                    key={pkg.id}
+                                                    onClick={() => setSelectedPackage(pkg)}
+                                                    className={`p-6 rounded-[2rem] border-2 transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between group ${isSelected
+                                                        ? 'border-purple-600 bg-purple-600/10 shadow-2xl scale-[1.02]'
+                                                        : pkg.is_featured
+                                                            ? 'border-yellow-500/20 bg-black/40 hover:border-yellow-500/40'
+                                                            : 'border-white/5 bg-black/40 hover:border-white/15'
+                                                        }`}
+                                                >
+                                                    <div className="flex justify-between items-start mb-4">
+                                                        <div>
+                                                            <h3 className="font-black text-sm text-white uppercase tracking-widest">{pkg.name}</h3>
+                                                            <p className="text-[9px] text-slate-500 mt-1 uppercase font-bold tracking-tight">{pkg.description}</p>
+                                                        </div>
+                                                        {pkg.badge && (
+                                                            <span className="px-2.5 py-1 bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-[8px] font-black uppercase tracking-widest rounded-lg">
+                                                                {pkg.badge}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    
+                                                    <div className="flex items-baseline mb-3">
+                                                        <span className="text-3xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">${pkg.discounted_price}</span>
+                                                        {pkg.original_price > pkg.discounted_price && (
+                                                            <span className="ml-2 text-xs text-slate-600 line-through font-bold">${pkg.original_price}</span>
+                                                        )}
+                                                    </div>
+                                                    
+                                                    <div className="text-[10px] font-black text-emerald-400 uppercase tracking-widest border-t border-white/5 pt-4 mt-2">
+                                                        {(pkg.credits + pkg.bonus_credits).toLocaleString()} Kredi
+                                                        {pkg.bonus_credits > 0 && (
+                                                            <span className="text-slate-500 ml-1 text-[9px] font-bold">
+                                                                (+{pkg.bonus_credits.toLocaleString()} Bonus)
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+
+                    {/* Right Panel: High-Tech Order Summary Sidebar */}
+                    <div className="lg:col-span-4">
+                        <div className="bg-gradient-to-br from-indigo-950/60 to-purple-950/60 backdrop-blur-2xl border border-purple-500/20 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden sticky top-8">
+                            {/* Futuristic Grid Overlay */}
+                            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjAuNSIgZmlsbD0id2hpdGUiIGZpbGwtb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')] pointer-events-none" />
+                            
+                            <h2 className="text-xs font-black text-slate-400 uppercase tracking-[0.25em] mb-6 flex items-center gap-3 relative z-10">
+                                <Package className="h-4.5 w-4.5 text-purple-400" />
+                                {t('billing.orderSummary', 'ORDER SUMMARY')}
+                            </h2>
+
+                            {/* Dynamic Details Area */}
+                            <div className="relative z-10 mb-8 border-b border-white/5 pb-6">
+                                {purchaseType === 'flexible' && calculation && (
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                            <span>{t('billing.amount', 'USD AMOUNT')}</span>
+                                            <span className="text-white">${calculation.amount_usd}</span>
+                                        </div>
+                                        <div className="flex justify-between text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                            <span>{t('billing.baseCredits', 'BASE POWER')}</span>
+                                            <span className="text-white">{calculation.base_credits.toLocaleString()}</span>
+                                        </div>
+                                        {calculation.bonus_credits > 0 && (
+                                            <div className="flex justify-between text-[10px] font-black text-emerald-400 uppercase tracking-widest">
+                                                <span>{t('billing.bonusCredits', { percent: calculation.discount_percent })} BONUS</span>
+                                                <span className="font-bold">+{calculation.bonus_credits.toLocaleString()}</span>
+                                            </div>
                                         )}
-                                    </button>
-                                ))}
+                                        {calculation.promo_applied && (
+                                            <div className="flex justify-between text-[10px] font-black text-yellow-400 uppercase tracking-widest">
+                                                <span>{t('billing.promoDiscount', 'PROMO DISCOUNT')}</span>
+                                                <span className="font-bold">-${calculation.promo_discount}</span>
+                                            </div>
+                                        )}
+                                        
+                                        <div className="border-t border-white/5 pt-5 space-y-4">
+                                            <div className="flex justify-between items-baseline">
+                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('billing.totalCredits', 'TOTAL QUANTITY')}</span>
+                                                <span className="text-xl font-black text-white italic">{calculation.total_credits.toLocaleString()} <span className="text-purple-400 text-xs">ZEX</span></span>
+                                            </div>
+                                            <div className="flex justify-between items-baseline">
+                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('billing.totalPayment', 'TOTAL PAYMENT')}</span>
+                                                <span className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 italic">${calculation.final_price}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {purchaseType === 'subscription' && selectedPlan && (
+                                    <div className="space-y-4">
+                                        <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                                            <div className="font-black text-xs text-white uppercase tracking-widest">{selectedPlan.name || selectedPlan.display_name}</div>
+                                            <div className="text-[8px] text-purple-400 font-bold uppercase tracking-widest mt-1">{t('billing.monthlySubscription', 'MONTHLY SUBSCRIBER')}</div>
+                                        </div>
+                                        <div className="flex justify-between text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                            <span>{t('billing.monthlyCredits', 'MONTHLY CREDITS')}</span>
+                                            <span className="text-white">{(selectedPlan.monthly_credits || 0).toLocaleString()}</span>
+                                        </div>
+                                        <div className="border-t border-white/5 pt-5">
+                                            <div className="flex justify-between items-baseline">
+                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('billing.monthlyPayment', 'MONTHLY COST')}</span>
+                                                <span className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 italic">${selectedPlan.monthly_price || 0}/ay</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {purchaseType === 'package' && selectedPackage && (
+                                    <div className="space-y-4">
+                                        <div className="p-4 bg-white/5 rounded-2xl border border-white/5 flex justify-between items-center">
+                                            <div>
+                                                <div className="font-black text-xs text-white uppercase tracking-widest">{selectedPackage.name}</div>
+                                                <div className="text-[8px] text-purple-400 font-bold uppercase tracking-widest mt-1">SPECIAL COMBO PACK</div>
+                                            </div>
+                                            {selectedPackage.badge && <span className="text-[7px] bg-yellow-400 text-yellow-950 px-2 py-0.5 rounded font-black tracking-widest uppercase">{selectedPackage.badge}</span>}
+                                        </div>
+                                        <div className="flex justify-between text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                            <span>{t('billing.baseCredits', 'BASE POWER')}</span>
+                                            <span className="text-white">{selectedPackage.credits.toLocaleString()}</span>
+                                        </div>
+                                        {selectedPackage.bonus_credits > 0 && (
+                                            <div className="flex justify-between text-[10px] font-black text-emerald-400 uppercase tracking-widest">
+                                                <span>{t('billing.bonusCredits', 'BONUS CREDITS')}</span>
+                                                <span className="font-bold">+{selectedPackage.bonus_credits.toLocaleString()}</span>
+                                            </div>
+                                        )}
+                                        <div className="border-t border-white/5 pt-5 space-y-4">
+                                            <div className="flex justify-between items-baseline">
+                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('billing.totalCredits', 'TOTAL QUANTITY')}</span>
+                                                <span className="text-xl font-black text-white italic">{(selectedPackage.credits + selectedPackage.bonus_credits).toLocaleString()} <span className="text-purple-400 text-xs">ZEX</span></span>
+                                            </div>
+                                            <div className="flex justify-between items-baseline">
+                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('billing.totalPayment', 'TOTAL PAYMENT')}</span>
+                                                <span className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 italic">${selectedPackage.discounted_price}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Empty Selection State */}
+                                {((purchaseType === 'subscription' && !selectedPlan) ||
+                                    (purchaseType === 'package' && !selectedPackage) ||
+                                    (purchaseType === 'flexible' && !calculation)) && (
+                                        <div className="text-center py-8 text-slate-500 uppercase font-black text-[9px] tracking-widest flex flex-col items-center gap-3">
+                                            <Star className="w-8 h-8 opacity-20 animate-pulse text-purple-400" />
+                                            <p>{t('billing.makeSelection', 'AWAITING ITEM SELECTION')}</p>
+                                        </div>
+                                    )}
                             </div>
+
+                            {/* High-Tech Payment Method Grid */}
+                            <div className="relative z-10 mb-8">
+                                <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-3">{t('billing.paymentMethod', 'SELECT PROTOCOL')}</p>
+                                <div className="grid grid-cols-1 gap-2">
+                                    {[
+                                        { id: 'lemonsqueezy', label: t('billing.methodCard', 'CREDIT CARD'), discount: 0, icon: <CreditCard className="w-3.5 h-3.5" /> },
+                                        { id: 'nowpayments', label: t('billing.methodCrypto', 'B CRYPTO'), discount: 5, icon: <Wallet className="w-3.5 h-3.5 text-cyan-400" /> },
+                                        { id: 'metamask', label: t('billing.methodMetamask', 'ZEX TOKEN'), discount: 15, icon: <Sparkles className="w-3.5 h-3.5 text-amber-400" /> }
+                                    ].map((method) => {
+                                        const isSelected = selectedPayment === method.id;
+                                        return (
+                                            <button
+                                                key={method.id}
+                                                onClick={() => setSelectedPayment(method.id)}
+                                                className={`py-3.5 px-4 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-between border ${isSelected
+                                                    ? 'bg-purple-600 border-purple-500/50 text-white shadow-lg shadow-purple-600/20'
+                                                    : 'bg-black/40 border-white/5 text-slate-400 hover:border-white/10 hover:bg-white/5 hover:text-white'
+                                                    }`}
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    {method.icon}
+                                                    <span>{method.label}</span>
+                                                </div>
+                                                {method.discount > 0 && (
+                                                    <span className="text-[8px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-md font-black tracking-tighter border border-emerald-500/25">
+                                                        +{method.discount}%
+                                                    </span>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Glowing Action Button */}
+                            <button
+                                onClick={handlePurchase}
+                                disabled={
+                                    purchasing || 
+                                    (purchaseType === 'flexible' && !calculation) ||
+                                    (purchaseType === 'subscription' && !selectedPlan) ||
+                                    (purchaseType === 'package' && !selectedPackage)
+                                }
+                                className="w-full py-5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:from-slate-900 disabled:to-slate-950 text-white font-black text-xs uppercase tracking-[0.35em] rounded-2xl shadow-xl shadow-purple-500/25 active:scale-95 transition-all flex items-center justify-center gap-3 relative overflow-hidden group/btn border-t border-white/20 border-r border-white/5"
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none" />
+                                {purchasing ? (
+                                    <RefreshCw className="h-4.5 w-4.5 animate-spin" />
+                                ) : (
+                                    <Shield className="h-4.5 w-4.5" />
+                                )}
+                                {purchasing ? t('billing.processing', 'PROCESSING...') : t('billing.buyNow', 'BUY NOW')}
+                            </button>
+
+                            <p className="text-[8px] text-slate-600 font-bold uppercase tracking-wider mt-4 text-center">
+                                {t('billing.secureNote', 'SECURE ENCRYPTED GATEWAY. POWERED BY SMART-ROUTE PROTOCOL.')}
+                            </p>
                         </div>
-
-                        <button
-                            onClick={handlePurchase}
-                            disabled={purchasing || !calculation || purchaseType !== 'flexible'}
-                            className="w-full py-4 bg-white text-purple-700 rounded-xl font-bold text-lg hover:bg-purple-50 disabled:opacity-50 flex items-center justify-center relative overflow-hidden"
-                        >
-                            {purchasing ? (
-                                <RefreshCw className="h-5 w-5 animate-spin mr-2" />
-                            ) : (
-                                <CreditCard className="h-5 w-5 mr-2" />
-                            )}
-                            {purchaseType !== 'flexible' ? "Coming Soon" : (purchasing ? t('billing.processing') : t('billing.buyNow'))}
-                        </button>
-
-                        <p className="text-xs text-purple-200 mt-4 text-center">
-                            {t('billing.secureNote')}
-                        </p>
                     </div>
                 </div>
             </div>

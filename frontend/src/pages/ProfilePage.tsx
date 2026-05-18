@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -6,6 +7,8 @@ import { useAuthStore } from '@/store/authStore';
 import { User, Lock, Save, CreditCard, Package, Check, Users, Copy, Link as LinkIcon } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
 import axios from 'axios';
+import { apiService } from '@/services/api';
+import { referralService } from '@/services/referralService';
 import { useTranslation } from 'react-i18next';
 
 const api = axios.create({
@@ -45,6 +48,15 @@ export const ProfilePage: React.FC = () => {
   const [loadingPackages, setLoadingPackages] = useState(false);
   const [purchaseLoading, setPurchaseLoading] = useState<string | null>(null);
 
+  // Live credit balance from dashboard stats
+  const { data: creditStats } = useQuery({
+    queryKey: ['dashboardStats', 'profilePageCredits'],
+    queryFn: () => apiService.get<any>('/dashboard/stats'),
+    refetchInterval: 15000,
+    staleTime: 10000,
+  });
+  const liveCredits = Math.round((creditStats as any)?.credits_balance ?? (creditStats as any)?.data?.credits_balance ?? user?.credits ?? 0);
+
   useEffect(() => {
     fetchPackages();
   }, []);
@@ -59,6 +71,41 @@ export const ProfilePage: React.FC = () => {
       setPackages([]);
     } finally {
       setLoadingPackages(false);
+    }
+  };
+
+  const [referralStats, setReferralStats] = useState<any>(null);
+  const [loadingReferral, setLoadingReferral] = useState(true);
+  const [isGeneratingReferral, setIsGeneratingReferral] = useState(false);
+
+  useEffect(() => {
+    fetchReferralStats();
+  }, []);
+
+  const fetchReferralStats = async () => {
+    try {
+      const response = await referralService.getStats();
+      if (response.data) {
+        setReferralStats(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch referral stats:', error);
+    } finally {
+      setLoadingReferral(false);
+    }
+  };
+
+  const handleActivateReferral = async () => {
+    if (isGeneratingReferral) return;
+    setIsGeneratingReferral(true);
+    try {
+      await referralService.createCode();
+      await fetchReferralStats();
+      toast.success(t('common.success', 'Success'), 'Your referral identity has been activated!');
+    } catch (error: any) {
+      toast.error(t('common.error', 'Error'), error.response?.data?.detail || 'Failed to activate referral code.');
+    } finally {
+      setIsGeneratingReferral(false);
     }
   };
 
@@ -112,303 +159,358 @@ export const ProfilePage: React.FC = () => {
     }
   };
 
+  const referralCode = user?.username || user?.email?.split('@')[0] || user?.id?.substring(0, 8) || 'user';
+
   return (
-    <div className="px-4 sm:px-6 lg:px-8">
-      <div className="sm:flex sm:items-center">
-        <div className="sm:flex-auto">
-          <h1 className="text-2xl font-semibold text-gray-900">{t('profile.title', 'Profile Settings')}</h1>
-          <p className="mt-2 text-sm text-gray-700">
+    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 pb-16">
+      {/* Page Header */}
+      <div className="flex items-center space-x-4 pb-6 border-b border-white/5">
+        <div className="p-3.5 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl shadow-xl shadow-purple-500/20 flex items-center justify-center">
+          <User className="h-6 w-6 text-white" />
+        </div>
+        <div>
+          <h1 className="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-slate-400 uppercase tracking-tight">
+            {t('profile.title', 'Profile Settings')}
+          </h1>
+          <p className="text-slate-400 text-xs font-semibold mt-1">
             {t('profile.desc', 'Manage your account information and security settings.')}
           </p>
         </div>
       </div>
 
       {/* Billing & Credits Section */}
-      <div className="mt-8">
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center">
-                <CreditCard className="h-5 w-5 text-gray-400 mr-2" />
-                <h3 className="text-lg font-medium text-gray-900">{t('profile.billingTitle', 'Kredi & Abonelik')}</h3>
+      <div>
+        <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-2xl">
+          <div className="absolute -top-24 -right-24 w-48 h-48 bg-purple-500/10 rounded-full blur-[100px] pointer-events-none" />
+          
+          <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/5">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-purple-500/10 rounded-xl flex items-center justify-center border border-purple-500/20">
+                <CreditCard className="h-4.5 w-4.5 text-purple-400" />
               </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-500">{t('profile.currentCredits', 'Mevcut Krediniz')}</p>
-                <p className="text-2xl font-bold text-primary-600">{user?.credits || 0}</p>
-              </div>
+              <h3 className="text-sm font-black text-white uppercase tracking-[0.15em]">{t('profile.billingTitle', 'Kredi & Abonelik')}</h3>
             </div>
+            <div className="text-right">
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('profile.currentCredits', 'Mevcut Krediniz')}</p>
+              <p className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 tracking-tight mt-0.5">{liveCredits}</p>
+            </div>
+          </div>
 
-            {loadingPackages ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {packages.map((pkg) => (
-                  <div
-                    key={pkg.id}
-                    className={`relative border-2 rounded-lg p-6 ${pkg.popular
-                        ? 'border-primary-500 shadow-lg'
-                        : 'border-gray-200'
-                      }`}
-                  >
-                    {pkg.popular && (
-                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                        <span className="bg-primary-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                          {t('profile.mostPopular', 'En Popüler')}
-                        </span>
+          {loadingPackages ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto"></div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {packages.map((pkg) => (
+                <div
+                  key={pkg.id}
+                  className={`relative border rounded-3xl p-6 transition-all duration-500 group overflow-hidden ${
+                    pkg.popular
+                      ? 'border-purple-500/40 bg-purple-500/[0.02] shadow-[0_0_30px_rgba(147,51,234,0.05)]'
+                      : 'border-white/5 bg-white/[0.01] hover:border-white/10'
+                  }`}
+                >
+                  <div className="absolute -top-12 -right-12 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-500 pointer-events-none" />
+                  
+                  {pkg.popular && (
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                      <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg shadow-purple-500/20">
+                        {t('profile.mostPopular', 'En Popüler')}
+                      </span>
+                    </div>
+                  )}
+                  
+                  <div className="text-center relative z-10 flex flex-col h-full justify-between">
+                    <div>
+                      <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                        <Package className="h-5 w-5 text-purple-400" />
                       </div>
-                    )}
-                    <div className="text-center">
-                      <Package className="h-8 w-8 mx-auto text-primary-600 mb-2" />
-                      <h4 className="text-lg font-semibold text-gray-900">{pkg.name}</h4>
-                      <div className="mt-4">
-                        <span className="text-3xl font-bold text-gray-900">${pkg.price}</span>
+                      <h4 className="text-base font-black text-white uppercase tracking-wider">{pkg.name}</h4>
+                      
+                      <div className="mt-4 flex items-baseline justify-center gap-1">
+                        <span className="text-3xl font-black text-white italic">${pkg.price}</span>
                       </div>
-                      <div className="mt-2">
-                        <span className="text-2xl font-semibold text-primary-600">
+                      
+                      <div className="mt-3 flex items-center justify-center gap-1.5">
+                        <span className="text-2xl font-black text-purple-400 tracking-tight">
                           {pkg.credits.toLocaleString()}
                         </span>
-                        <span className="text-sm text-gray-500 ml-1">{t('profile.credits', 'kredi')}</span>
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('profile.credits', 'kredi')}</span>
                       </div>
+                      
                       {pkg.discount > 0 && (
-                        <div className="mt-2">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <div className="mt-3">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-black bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 uppercase tracking-wider">
                             %{pkg.discount} {t('profile.discount', 'İndirim')}
                           </span>
                         </div>
                       )}
-                      <button
-                        onClick={() => handlePurchase(pkg.id)}
-                        disabled={purchaseLoading === pkg.id}
-                        className={`mt-6 w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white ${pkg.popular
-                            ? 'bg-primary-600 hover:bg-primary-700'
-                            : 'bg-gray-600 hover:bg-gray-700'
-                          } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50`}
-                      >
-                        {purchaseLoading === pkg.id ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            {t('profile.processing', 'İşleniyor...')}
-                          </>
-                        ) : (
-                          <>
-                            <Check className="h-4 w-4 mr-2" />
-                            {t('profile.buy', 'Satın Al')}
-                          </>
-                        )}
-                      </button>
                     </div>
+                    
+                    <button
+                      onClick={() => handlePurchase(pkg.id)}
+                      disabled={purchaseLoading === pkg.id}
+                      className={`mt-6 w-full inline-flex justify-center items-center px-4 py-3 border border-transparent text-xs font-black uppercase tracking-widest rounded-2xl text-white transition-all duration-300 cursor-pointer ${
+                        pkg.popular
+                          ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-md shadow-purple-500/10'
+                          : 'bg-white/5 hover:bg-white/10 border border-white/5'
+                      } disabled:opacity-50`}
+                    >
+                      {purchaseLoading === pkg.id ? (
+                        <>
+                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                          {t('profile.processing', 'İşleniyor...')}
+                        </>
+                      ) : (
+                        <>
+                          <Check className="h-3.5 w-3.5 mr-2" />
+                          {t('profile.buy', 'Satın Al')}
+                        </>
+                      )}
+                    </button>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Referral System */}
-      <div className="mt-8">
-        <div className="bg-gradient-to-br from-primary-600/10 to-purple-600/10 border border-primary-500/20 shadow-lg rounded-xl overflow-hidden relative">
-          <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary-500/20 blur-[50px] rounded-full" />
-          <div className="px-4 py-5 sm:p-6 relative z-10">
+      <div>
+        <div className="bg-gradient-to-br from-purple-950/20 via-slate-950/40 to-indigo-950/20 border border-purple-500/10 shadow-2xl rounded-3xl overflow-hidden relative p-6 sm:p-8">
+          <div className="absolute -top-12 -right-12 w-36 h-36 bg-purple-500/10 blur-[60px] rounded-full pointer-events-none" />
+          
+          <div className="relative z-10">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-primary-500/20 rounded-xl">
-                <Users className="h-6 w-6 text-primary-600 dark:text-primary-400" />
+              <div className="p-2.5 bg-purple-500/15 border border-purple-500/20 rounded-xl">
+                <Users className="h-5 w-5 text-purple-400" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Refer & Earn %5</h3>
+              <h3 className="text-lg font-black text-white uppercase tracking-wider">Refer & Earn %5</h3>
             </div>
             
-            <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
-              Invite your friends and earn <strong className="text-primary-600 dark:text-primary-400">5% commission</strong> in ZEX tokens for every purchase they make!
+            <p className="text-xs font-semibold text-slate-400 mb-6 max-w-2xl leading-relaxed">
+              Invite your friends and earn <strong className="text-purple-400 font-bold">5% commission</strong> in ZEX tokens for every purchase they make!
             </p>
 
             <div className="space-y-3 max-w-xl">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Your Unique Referral Link</label>
-              <div className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-2 rounded-xl shadow-sm">
-                <div className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-900 rounded-lg text-sm text-gray-700 dark:text-gray-300 font-mono truncate select-all">
-                  https://app.zexai.io/register?ref={user?.id?.substring(0, 8) || 'user'}
+              <label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Your Unique Referral Link</label>
+              {loadingReferral ? (
+                <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 animate-pulse">
+                  <div className="w-4 h-4 border-2 border-purple-500/20 border-t-purple-500 rounded-full animate-spin"></div>
+                  Loading your referral link...
                 </div>
-                <button 
-                  onClick={() => {
-                      navigator.clipboard.writeText(`https://app.zexai.io/register?ref=${user?.id}`);
-                      toast.success(t('common.success', 'Success'), 'Referral link copied to clipboard!');
-                  }}
-                  className="p-3 bg-primary-50 dark:bg-primary-500/20 hover:bg-primary-100 dark:hover:bg-primary-500/30 text-primary-600 dark:text-primary-400 rounded-lg transition-colors border border-primary-200 dark:border-primary-500/30"
-                  title="Copy Link"
-                >
-                  <Copy className="w-4 h-4" />
-                </button>
-              </div>
+              ) : !referralStats?.code ? (
+                <div className="bg-purple-500/5 border border-purple-500/10 rounded-2xl p-6 text-center space-y-4">
+                  <p className="text-slate-400 text-xs font-semibold">Your unique referral identity is not active yet.</p>
+                  <button 
+                    onClick={handleActivateReferral} 
+                    disabled={isGeneratingReferral}
+                    type="button"
+                    className="inline-flex items-center justify-center px-6 py-2.5 text-xs font-black uppercase tracking-wider rounded-xl text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 disabled:opacity-50 cursor-pointer"
+                  >
+                    {isGeneratingReferral ? (
+                      <>
+                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                        Activating...
+                      </>
+                    ) : (
+                      'Activate My Referral Link'
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 bg-black/40 border border-white/5 p-2 rounded-2xl shadow-inner">
+                  <div className="flex-1 px-4 py-2.5 bg-black/20 rounded-xl text-xs text-purple-300 font-mono truncate select-all">
+                    {`https://app.zexai.io/ref/${referralStats.code.replace('MANUS-', 'ZEXAI-')}`}
+                  </div>
+                  <button 
+                    onClick={() => {
+                        navigator.clipboard.writeText(`https://app.zexai.io/ref/${referralStats.code.replace('MANUS-', 'ZEXAI-')}`);
+                        toast.success(t('common.success', 'Success'), 'Referral link copied to clipboard!');
+                    }}
+                    type="button"
+                    className="p-3 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/20 hover:border-purple-500/30 rounded-xl transition-all duration-300 cursor-pointer"
+                    title="Copy Link"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         {/* Profile Information */}
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <div className="flex items-center mb-4">
-              <User className="h-5 w-5 text-gray-400 mr-2" />
-              <h3 className="text-lg font-medium text-gray-900">{t('profile.infoTitle', 'Profile Information')}</h3>
+        <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+          <div className="absolute -bottom-16 -right-16 w-32 h-32 bg-purple-500/5 rounded-full blur-xl pointer-events-none" />
+          
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 bg-purple-500/10 rounded-lg flex items-center justify-center border border-purple-500/20">
+              <User className="h-4 w-4 text-purple-400" />
+            </div>
+            <h3 className="text-sm font-black text-white uppercase tracking-[0.15em]">{t('profile.infoTitle', 'Profile Information')}</h3>
+          </div>
+
+          {profileSuccess && (
+            <div className="mb-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-4">
+              <div className="text-xs font-bold text-emerald-400">{profileSuccess}</div>
+            </div>
+          )}
+
+          {profileError && (
+            <div className="mb-6 rounded-2xl bg-red-500/10 border border-red-500/20 p-4">
+              <div className="text-xs font-bold text-red-400">{profileError}</div>
+            </div>
+          )}
+
+          <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-5">
+            <div>
+              <label htmlFor="full_name" className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">
+                {t('profile.fullName', 'Full Name')}
+              </label>
+              <input
+                {...profileForm.register('full_name')}
+                type="text"
+                className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-2xl text-xs font-semibold text-white focus:outline-none focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all duration-300 placeholder:text-slate-700 shadow-inner"
+              />
+              {profileForm.formState.errors.full_name && (
+                <p className="mt-1.5 text-xs font-bold text-red-400">
+                  {profileForm.formState.errors.full_name.message}
+                </p>
+              )}
             </div>
 
-            {profileSuccess && (
-              <div className="mb-4 rounded-md bg-green-50 p-4">
-                <div className="text-sm text-green-700">{profileSuccess}</div>
-              </div>
-            )}
+            <div>
+              <label htmlFor="email" className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">
+                {t('profile.email', 'Email Address')}
+              </label>
+              <input
+                {...profileForm.register('email')}
+                type="email"
+                className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-2xl text-xs font-semibold text-white focus:outline-none focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all duration-300 placeholder:text-slate-700 shadow-inner"
+              />
+              {profileForm.formState.errors.email && (
+                <p className="mt-1.5 text-xs font-bold text-red-400">
+                  {profileForm.formState.errors.email.message}
+                </p>
+              )}
+            </div>
 
-            {profileError && (
-              <div className="mb-4 rounded-md bg-red-50 p-4">
-                <div className="text-sm text-red-700">{profileError}</div>
+            <div className="flex items-center gap-6 pt-2">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('profile.role', 'Role:')}</span>
+                <span className="inline-flex items-center px-3 py-0.5 rounded-full text-[9px] font-black uppercase bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  {user?.role}
+                </span>
               </div>
-            )}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('profile.package', 'Package:')}</span>
+                <span className="inline-flex items-center px-3 py-0.5 rounded-full text-[9px] font-black uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  {user?.package}
+                </span>
+              </div>
+            </div>
 
-            <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
-              <div>
-                <label htmlFor="full_name" className="block text-sm font-medium text-gray-700">
-                  {t('profile.fullName', 'Full Name')}
-                </label>
-                <input
-                  {...profileForm.register('full_name')}
-                  type="text"
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                />
-                {profileForm.formState.errors.full_name && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {profileForm.formState.errors.full_name.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                  {t('profile.email', 'Email Address')}
-                </label>
-                <input
-                  {...profileForm.register('email')}
-                  type="email"
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                />
-                {profileForm.formState.errors.email && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {profileForm.formState.errors.email.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex items-center space-x-4">
-                <div>
-                  <span className="text-sm font-medium text-gray-700">{t('profile.role', 'Role:')}</span>
-                  <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 capitalize">
-                    {user?.role}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-gray-700">{t('profile.package', 'Package:')}</span>
-                  <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 capitalize">
-                    {user?.package}
-                  </span>
-                </div>
-              </div>
-
-              <div className="pt-4">
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  {isLoading ? t('profile.saving', 'Saving...') : t('profile.save', 'Save Changes')}
-                </button>
-              </div>
-            </form>
-          </div>
+            <div className="pt-4">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-xs font-black uppercase tracking-wider rounded-2xl shadow-lg shadow-purple-600/10 text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 transition-all duration-300 cursor-pointer"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {isLoading ? t('profile.saving', 'Saving...') : t('profile.save', 'Save Changes')}
+              </button>
+            </div>
+          </form>
         </div>
 
         {/* Change Password */}
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <div className="flex items-center mb-4">
-              <Lock className="h-5 w-5 text-gray-400 mr-2" />
-              <h3 className="text-lg font-medium text-gray-900">{t('profile.changePassword', 'Change Password')}</h3>
+        <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+          <div className="absolute -bottom-16 -right-16 w-32 h-32 bg-purple-500/5 rounded-full blur-xl pointer-events-none" />
+          
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 bg-purple-500/10 rounded-lg flex items-center justify-center border border-purple-500/20">
+              <Lock className="h-4 w-4 text-purple-400" />
+            </div>
+            <h3 className="text-sm font-black text-white uppercase tracking-[0.15em]">{t('profile.changePassword', 'Change Password')}</h3>
+          </div>
+
+          {passwordSuccess && (
+            <div className="mb-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-4">
+              <div className="text-xs font-bold text-emerald-400">{passwordSuccess}</div>
+            </div>
+          )}
+
+          {passwordError && (
+            <div className="mb-6 rounded-2xl bg-red-500/10 border border-red-500/20 p-4">
+              <div className="text-xs font-bold text-red-400">{passwordError}</div>
+            </div>
+          )}
+
+          <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-5">
+            <div>
+              <label htmlFor="current_password" className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">
+                {t('profile.currentPassword', 'Current Password')}
+              </label>
+              <input
+                {...passwordForm.register('current_password')}
+                type="password"
+                className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-2xl text-xs font-semibold text-white focus:outline-none focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all duration-300 placeholder:text-slate-700 shadow-inner"
+              />
+              {passwordForm.formState.errors.current_password && (
+                <p className="mt-1.5 text-xs font-bold text-red-400">
+                  {passwordForm.formState.errors.current_password.message}
+                </p>
+              )}
             </div>
 
-            {passwordSuccess && (
-              <div className="mb-4 rounded-md bg-green-50 p-4">
-                <div className="text-sm text-green-700">{passwordSuccess}</div>
-              </div>
-            )}
+            <div>
+              <label htmlFor="new_password" className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">
+                {t('profile.newPassword', 'New Password')}
+              </label>
+              <input
+                {...passwordForm.register('new_password')}
+                type="password"
+                className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-2xl text-xs font-semibold text-white focus:outline-none focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all duration-300 placeholder:text-slate-700 shadow-inner"
+              />
+              {passwordForm.formState.errors.new_password && (
+                <p className="mt-1.5 text-xs font-bold text-red-400">
+                  {passwordForm.formState.errors.new_password.message}
+                </p>
+              )}
+            </div>
 
-            {passwordError && (
-              <div className="mb-4 rounded-md bg-red-50 p-4">
-                <div className="text-sm text-red-700">{passwordError}</div>
-              </div>
-            )}
+            <div>
+              <label htmlFor="confirm_password" className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">
+                {t('profile.confirmPassword', 'Confirm New Password')}
+              </label>
+              <input
+                {...passwordForm.register('confirm_password')}
+                type="password"
+                className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-2xl text-xs font-semibold text-white focus:outline-none focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all duration-300 placeholder:text-slate-700 shadow-inner"
+              />
+              {passwordForm.formState.errors.confirm_password && (
+                <p className="mt-1.5 text-xs font-bold text-red-400">
+                  {passwordForm.formState.errors.confirm_password.message}
+                </p>
+              )}
+            </div>
 
-            <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
-              <div>
-                <label htmlFor="current_password" className="block text-sm font-medium text-gray-700">
-                  {t('profile.currentPassword', 'Current Password')}
-                </label>
-                <input
-                  {...passwordForm.register('current_password')}
-                  type="password"
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                />
-                {passwordForm.formState.errors.current_password && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {passwordForm.formState.errors.current_password.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label htmlFor="new_password" className="block text-sm font-medium text-gray-700">
-                  {t('profile.newPassword', 'New Password')}
-                </label>
-                <input
-                  {...passwordForm.register('new_password')}
-                  type="password"
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                />
-                {passwordForm.formState.errors.new_password && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {passwordForm.formState.errors.new_password.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label htmlFor="confirm_password" className="block text-sm font-medium text-gray-700">
-                  {t('profile.confirmPassword', 'Confirm New Password')}
-                </label>
-                <input
-                  {...passwordForm.register('confirm_password')}
-                  type="password"
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                />
-                {passwordForm.formState.errors.confirm_password && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {passwordForm.formState.errors.confirm_password.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="pt-4">
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
-                >
-                  <Lock className="h-4 w-4 mr-2" />
-                  {isLoading ? t('profile.changing', 'Changing...') : t('profile.changePassword', 'Change Password')}
-                </button>
-              </div>
-            </form>
-          </div>
+            <div className="pt-4">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-xs font-black uppercase tracking-wider rounded-2xl shadow-lg shadow-purple-600/10 text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 transition-all duration-300 cursor-pointer"
+              >
+                <Lock className="h-4 w-4 mr-2" />
+                {isLoading ? t('profile.changing', 'Changing...') : t('profile.changePassword', 'Change Password')}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useLocation } from "react-router-dom";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiService } from "@/services/api";
 import { useAuthStore } from "@/store/authStore";
@@ -8,7 +8,8 @@ import {
   Maximize2, Settings2, Layers, Check,
   ChevronRight, Zap, Image as ImageIcon, RefreshCw, GitCompare,
   Upload, X, SlidersHorizontal, Camera, Type, ImagePlus,
-  Clock, CreditCard, Eye, ChevronDown, Loader2, CheckCircle
+  Clock, CreditCard, Eye, ChevronDown, Loader2, CheckCircle, Star,
+  Video, Play, ArrowRight
 } from "lucide-react";
 import PromptEnhancer from "@/components/PromptEnhancer";
 import { useTranslation } from "react-i18next";
@@ -17,6 +18,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import SocialButtons from "@/components/SocialButtons";
 import NFTMintModal from "@/components/NFTMintModal";
 import { addWatermark } from "@/utils/watermark";
+import { InsufficientCreditsModal } from "@/components/InsufficientCreditsModal";
 import playHapticFeedback from "@/utils/haptics";
 
 const aspectRatios = [
@@ -30,6 +32,7 @@ const aspectRatios = [
 
 // ---- Helper: Poll a task until completed ----
 const pollTask = (taskId: string, onProgress: (status: string) => void): Promise<string[]> => {
+  console.log("[pollTask] Started polling for taskId:", taskId);
   return new Promise((resolve, reject) => {
     let attempts = 0;
     const maxAttempts = 100; // 100 * 3s = 300s (matches backend 300s limit)
@@ -38,17 +41,21 @@ const pollTask = (taskId: string, onProgress: (status: string) => void): Promise
       try {
         const statusRes = await apiService.get(`/image/tasks/${taskId}`);
         const taskData = (statusRes?.data || statusRes) as any;
+        console.log(`[pollTask] Attempt ${attempts} status:`, taskData?.status, taskData);
 
         if (taskData?.status === "completed") {
           clearInterval(interval);
+          console.log("[pollTask] Task completed successfully! URLs:", taskData.image_urls);
           resolve(taskData.image_urls || []);
         } else if (taskData?.status === "failed") {
           clearInterval(interval);
+          console.error("[pollTask] Task failed! Error:", taskData.error_message);
           reject(new Error(taskData.error_message || "Generation failed"));
         } else {
           onProgress(`Processing... (${Math.min(95, Math.round((attempts / maxAttempts) * 100))}%)`);
         }
       } catch (err) {
+        console.error(`[pollTask] Polling request error on attempt ${attempts}:`, err);
         if (attempts >= maxAttempts) {
           clearInterval(interval);
           reject(new Error("Timeout"));
@@ -60,7 +67,59 @@ const pollTask = (taskId: string, onProgress: (status: string) => void): Promise
   });
 };
 
+
+const getBaseName = (name: string) => {
+  const n = name.toUpperCase();
+  // All Seedream versions → single "SEEDREAM" group (versions shown as chips)
+  if (n.includes("SEEDREAM")) return "SEEDREAM";
+  if (n.includes("VEO")) return "VEO";
+  if (n.includes("WAN")) return "WAN";
+  if (n.includes("QWEN")) return "QWEN";
+  if (n.includes("FLUX")) return "FLUX";
+  if (n.includes("IDEOGRAM")) return "IDEOGRAM";
+  if (n.includes("RECRAFT")) return "RECRAFT";
+  if (n.includes("KLING")) return "KLING AI";
+  if (n.includes("LUMA")) return "LUMA AI";
+  if (n.includes("GROK")) return "GROK IMAGINE";
+  if (n.includes("Z-IMAGE") || n.includes("Z IMAGE")) return "Z-IMAGE";
+  // All Google models (Imagen 4, Imagen 4 Ultra, Imagen 4 Fast, Nano Banana series) → single group
+  if (n.includes("IMAGEN") || n.includes("GOOGLE") || n.includes("NANO") || n.includes("BANANA")) return "GOOGLE IMAGEN";
+  if (n.includes("DALL") || n.includes("OPENAI") || n.includes("GPT")) return "DALL-E";
+  if (n.includes("MIDJOURNEY")) return "MIDJOURNEY";
+  
+  let base = name.split(' (')[0].trim();
+  const suffixes = [
+    'Pro', 'Max', 'Lite', 'Quality', 'Standard', 'Stable', 'Edit', 'Turbo', 
+    'V3', 'V6.1', 'O3', 'O1', 'Flash', 'V1', 'V2', 'Ultra', 'Fast', 'HD', 'Kontext'
+  ];
+  suffixes.forEach(s => {
+    const regex = new RegExp(`\\s+${s}$`, 'i');
+    base = base.replace(regex, '');
+  });
+  return base.replace(/\[.*?\]/g, '').trim();
+};
+
+const getBrand = (name: string): { name: string; icon: string } => {
+  const n = name.toLowerCase();
+  if (n.includes("flux")) return { name: "Black Forest", icon: "💎" };
+  if (n.includes("ideogram")) return { name: "Ideogram", icon: "📝" };
+  // All Google-family models in one brand bucket
+  if (n.includes("google") || n.includes("nano") || n.includes("banana") || n.includes("imagen") || n.includes("gemini")) return { name: "Google AI", icon: "🎨" };
+  if (n.includes("gpt") || n.includes("openai") || n.includes("dalle") || n.includes("gpt image") || n.includes("gpt-image")) return { name: "OpenAI", icon: "🤖" };
+  if (n.includes("recraft")) return { name: "Recraft", icon: "✂️" };
+  if (n.includes("kling")) return { name: "Kling AI", icon: "🎬" };
+  if (n.includes("luma")) return { name: "Luma AI", icon: "✨" };
+  if (n.includes("midjourney")) return { name: "Midjourney", icon: "🎨" };
+  // ByteDance family
+  if (n.includes("seedream") || n.includes("wan")) return { name: "ByteDance", icon: "🌱" };
+  if (n.includes("qwen")) return { name: "Alibaba", icon: "⚡" };
+  if (n.includes("grok")) return { name: "xAI", icon: "𝕏" };
+  if (n.includes("z-image") || n.includes("z image")) return { name: "Z-Image", icon: "💰" };
+  return { name: "Premium Engine", icon: "⚡" };
+};
+
 const ImageGenerationPage = () => {
+
   const { t } = useTranslation();
 
   const inspirationPrompts = [
@@ -72,6 +131,7 @@ const ImageGenerationPage = () => {
   ];
 
   const location = useLocation();
+  const navigate = useNavigate();
   const getPromptFromQuery = () => {
     const params = new URLSearchParams(location.search);
     return params.get('prompt') || "";
@@ -83,6 +143,7 @@ const ImageGenerationPage = () => {
   const [generatedTaskIds, setGeneratedTaskIds] = useState<string[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<'generate' | 'gallery' | 'compare'>('generate');
+  const [showVideoConvertBanner, setShowVideoConvertBanner] = useState(false);
 
   const tabs: ('generate' | 'gallery' | 'compare')[] = ['generate', 'gallery', 'compare'];
 
@@ -108,6 +169,7 @@ const ImageGenerationPage = () => {
   // -- NFT State --
   const [nftModalOpen, setNftModalOpen] = useState(false);
   const [selectedImageForNft, setSelectedImageForNft] = useState<any>(null);
+  const [showCreditsModal, setShowCreditsModal] = useState(false);
 
   // ---- Mode: text2img or img2img ----
   const [generationMode, setGenerationMode] = useState<'text2img' | 'img2img'>('text2img');
@@ -125,6 +187,15 @@ const ImageGenerationPage = () => {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
 
+  // Live credit balance from dashboard stats
+  const { data: creditStats } = useQuery({
+    queryKey: ['dashboardStats', 'imagePageCredits'],
+    queryFn: () => apiService.get<any>('/dashboard/stats'),
+    refetchInterval: 15000,
+    staleTime: 10000,
+  });
+  const liveCredits = Math.round((creditStats as any)?.credits_balance ?? (creditStats as any)?.data?.credits_balance ?? user?.credits ?? 0);
+
   // Inspiration rotation
   const [currentInspiration, setCurrentInspiration] = useState(0);
   useEffect(() => {
@@ -135,10 +206,108 @@ const ImageGenerationPage = () => {
   }, []);
 
   // ---- Models query ----
-  const { data: modelsData, isLoading: isLoadingModels } = useQuery({
-    queryKey: ["imageModels"],
+    const { data: allModelsRes, isLoading: isLoadingModels } = useQuery({
+    queryKey: ["imageModels", "all"],
     queryFn: () => apiService.get("/image/models")
   });
+  
+  const rawModels = allModelsRes?.data || allModelsRes || [];
+  
+  // Grouping logic for Sidebar
+  const { brands } = useMemo(() => {
+    if (!Array.isArray(rawModels)) return { brands: [] };
+    
+    // Filter models based on active tab and generation mode
+    const filtered = rawModels.filter(m => {
+       if (activeTab === 'generate') {
+         if (generationMode === 'img2img') {
+           return m.type === 'image_to_image' || (m.type === 'text_to_image' && m.capabilities?.image_editing === true);
+         }
+         return m.type === 'text_to_image';
+       }
+       return true;
+    });
+
+    const grouped: Record<string, any> = {};
+
+    filtered.forEach(m => {
+      const brandInfo = getBrand(m.name);
+      const bName = brandInfo.name;
+      const baseName = m.base_name || getBaseName(m.name);
+
+      if (!grouped[bName]) {
+        grouped[bName] = { 
+          id: bName, 
+          name: bName, 
+          icon: brandInfo.icon, 
+          baseModelsMap: {} 
+        };
+      }
+
+      if (!grouped[bName].baseModelsMap[baseName]) {
+        grouped[bName].baseModelsMap[baseName] = {
+          id: baseName, 
+          baseName: baseName,
+          brand: bName,
+          variants: [],
+          representative: m
+        };
+      } else {
+        const current = grouped[bName].baseModelsMap[baseName];
+        // Kie models are priority for selection
+        if (m.id.startsWith('kie_') && !current.representative.id.startsWith('kie_')) {
+          current.representative = m;
+        }
+      }
+      
+      grouped[bName].baseModelsMap[baseName].variants.push(m);
+    });
+
+    const brandList = Object.values(grouped).map((b: any) => ({
+      ...b,
+      baseModels: Object.values(b.baseModelsMap),
+      count: Object.values(b.baseModelsMap).length
+    }));
+    
+    return { brands: brandList };
+  }, [rawModels, activeTab, generationMode]);
+
+  const showSidebar = false; // We are moving to horizontal strip
+  const [selectedBaseModelId, setSelectedBaseModelId] = useState(""); 
+  
+  // Auto-select first engine if none selected
+  useEffect(() => {
+    if (!selectedBaseModelId && brands.length > 0) {
+      const firstEngine = brands[0].baseModels[0];
+      if (firstEngine) {
+        setSelectedBaseModelId(firstEngine.id);
+        setModelId(firstEngine.representative.id);
+      }
+    }
+  }, [brands, selectedBaseModelId]);
+
+  // Derived selected model
+  const selectedModel = useMemo(() => {
+     return rawModels.find(m => m.id === modelId) || null;
+  }, [rawModels, modelId]);
+
+  const availableVersions = useMemo(() => {
+     if (!selectedBaseModelId) return [];
+     for (const brand of brands) {
+       const bm = brand.baseModels.find((b: any) => b.id === selectedBaseModelId);
+       if (bm) return bm.variants;
+     }
+     return [];
+  }, [selectedBaseModelId, brands]);
+
+  const getModelTrait = (name: string) => {
+    const n = name.toLowerCase();
+    if (n.includes('turbo') || n.includes('fast') || n.includes('flash')) return { label: 'TURBO', icon: <Zap className="w-3 h-3" />, color: 'text-amber-400' };
+    if (n.includes('pro') || n.includes('max') || n.includes('ultra') || n.includes('hd')) return { label: 'ELITE', icon: <Star className="w-3 h-3" />, color: 'text-purple-400' };
+    if (n.includes('edit')) return { label: 'EDIT', icon: <Wand2 className="w-3 h-3" />, color: 'text-blue-400' };
+    return { label: 'STABLE', icon: <Check className="w-3 h-3" />, color: 'text-emerald-400' };
+  };
+
 
   // Helper to format model name (remove kie_ prefix)
   const formatModelName = (name: string) => {
@@ -150,7 +319,7 @@ const ImageGenerationPage = () => {
   };
 
   // ---- Filtered models based on generation mode ----
-  const allModels: any[] = (modelsData as any) || [];
+  const allModels: any[] = (rawModels as any) || [];
   const txt2imgModels = allModels.filter((m: any) => m.type === 'text_to_image');
   const img2imgModels = allModels.filter((m: any) =>
     m.type === 'image_to_image' ||
@@ -160,7 +329,10 @@ const ImageGenerationPage = () => {
   const compareModels = txt2imgModels;
 
   // Reset model selection when mode changes
-  useEffect(() => { setModelId(''); }, [generationMode]);
+  useEffect(() => { 
+    setModelId(''); 
+    setSelectedBaseModelId('');
+  }, [generationMode]);
 
   // ---- Gallery query (persistent, from backend) ----
   const { data: galleryData, isLoading: isLoadingGallery, refetch: refetchGallery } = useQuery({
@@ -175,7 +347,17 @@ const ImageGenerationPage = () => {
   // ---- Image generation handler (unified) ----
   const handleGenerate = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!prompt || !modelId) return;
+    console.log("[handleGenerate] Triggered. Prompt:", prompt, "ModelId:", modelId, "Mode:", generationMode);
+    if (!prompt || !modelId) {
+      console.warn("[handleGenerate] Aborted: Missing prompt or modelId.");
+      return;
+    }
+
+    const cost = selectedModel?.credits || 0;
+    if (liveCredits < cost) {
+      setShowCreditsModal(true);
+      return;
+    }
 
     setIsGenerating(true);
     setGenerationError(null);
@@ -183,6 +365,7 @@ const ImageGenerationPage = () => {
     try {
       // For img2img mode, upload ref image first then call img2img endpoint
       if (generationMode === 'img2img' && referenceImage) {
+        console.log("[handleGenerate] Image-to-Image mode with reference image.");
         const formData = new FormData();
         formData.append('file', referenceImage);
         formData.append('prompt', prompt);
@@ -191,6 +374,7 @@ const ImageGenerationPage = () => {
 
         try {
           const result = await apiService.upload('/image/img2img', formData);
+          console.log("[handleGenerate] img2img upload result:", result);
 
           // Check for async task_id (Kie) or sync image_url (Legacy)
           const taskId = result?.task_id || result?.data?.task_id;
@@ -211,6 +395,7 @@ const ImageGenerationPage = () => {
             }
           }
         } catch (imgErr: any) {
+          console.warn("[handleGenerate] img2img upload failed, falling back to generate endpoint:", imgErr);
           // Fallback: use generate endpoint with prompt only
           const res = await apiService.post("/image/generate", {
             prompt: `${prompt}, inspired by reference image`,
@@ -230,15 +415,18 @@ const ImageGenerationPage = () => {
         }
       } else {
         // Text-to-image: use standard generate
+        console.log("[handleGenerate] Calling /image/generate endpoint. Payload:", { prompt, model_id: modelId, aspect_ratio: aspectRatio });
         const res = await apiService.post("/image/generate", {
           prompt,
           model_id: modelId,
           num_images: 1,
           aspect_ratio: aspectRatio,
         });
+        console.log("[handleGenerate] /image/generate Response received:", res);
 
         const taskId = res?.data?.task_id || res?.task_id;
         if (!taskId) {
+          console.error("[handleGenerate] Error: Missing taskId in response.");
           setGenerationError(t('imageGen.invalidResponse', 'Invalid server response'));
           return;
         }
@@ -248,14 +436,19 @@ const ImageGenerationPage = () => {
           setGeneratedImages(prev => [...urls, ...prev]);
           setGeneratedTaskIds(prev => [...urls.map((_, i) => `${taskId}_${i}`), ...prev]);
           setSelectedImageIndex(0);
+          // Show video conversion banner after successful generation
+          setShowVideoConvertBanner(true);
         }
       }
 
       queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
       queryClient.invalidateQueries({ queryKey: ["myImageGallery"] });
     } catch (err: any) {
-      setGenerationError(err?.message || t('imageGen.generationError', 'An error occurred while generating the image'));
+      console.error("[handleGenerate] Caught error during generation flow:", err, err?.response?.data);
+      const errMsg = err?.response?.data?.detail || err?.response?.data?.message || err?.message || t('imageGen.generationError', 'An error occurred while generating the image');
+      setGenerationError(errMsg);
     } finally {
+      console.log("[handleGenerate] Setting isGenerating to false.");
       setIsGenerating(false);
     }
   };
@@ -368,10 +561,10 @@ const ImageGenerationPage = () => {
           <div className="flex items-center gap-6 bg-black/60 p-2.5 rounded-[2rem] border border-white/10 backdrop-blur-3xl shadow-2xl">
             <div className="flex flex-col items-end px-5">
               <span className="text-[9px] text-slate-600 font-black uppercase tracking-widest mb-1">AVAILABLE SYNTHESIS POWER</span>
-              <span className="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 tracking-tighter italic">{user?.credits || 0} Kredi</span>
+              <span className="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 tracking-tighter italic">{liveCredits} Kredi</span>
             </div>
             <button
-              onClick={() => window.location.href = '/billing'}
+              onClick={() => window.location.href = '/credits'}
               className="px-6 py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-purple-600/30 border-t border-white/10 active:scale-95"
             >
               INITIALIZE RECHARGE
@@ -418,7 +611,10 @@ const ImageGenerationPage = () => {
         </div>
       </div>
 
-      <AnimatePresence mode="wait">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className="lg:col-span-12 space-y-8">
+            <AnimatePresence mode="wait">
       {activeTab === 'generate' && (
         <motion.div
            key="generate"
@@ -426,7 +622,7 @@ const ImageGenerationPage = () => {
            animate={{ opacity: 1, scale: 1 }}
            exit={{ opacity: 0, scale: 0.98 }}
            transition={{ duration: 0.3 }}
-           className="max-w-7xl mx-auto px-8 py-10"
+           className="space-y-8"
         >
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
 
@@ -533,107 +729,129 @@ const ImageGenerationPage = () => {
                   </div>
                 )}
 
-                {/* ── Prompt Card ── */}
-                <div className="p-8">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.25em] flex items-center gap-3">
-                      <Wand2 className="w-4 h-4 text-purple-400" />
-                      {generationMode === 'img2img' ? t('imageGen.promptTitleI2I', 'EVOLUTION COMMAND') : t('imageGen.promptTitleT2I', 'SEMANTIC COMMAND')}
-                    </h2>
-                    <button
-                      onClick={useInspiration}
-                      className="flex items-center gap-2 text-[10px] font-black text-purple-500 uppercase tracking-widest hover:text-purple-400 transition-all group"
-                    >
-                      <Zap className="w-3.5 h-3.5 group-hover:scale-125 transition-transform" />
-                      {t('imageGen.getInspiration', 'INJECT CREATIVITY')}
-                    </button>
+                {/* ── Engine & Version Controls ── */}
+                <div className="p-6 space-y-6 relative z-10 border-b border-white/5">
+                  {/* Horizontal Engine Strip */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                        <Zap className="w-3.5 h-3.5 text-purple-400" />
+                        {t('imageGen.selectEngine', 'NEURAL ENGINES')}
+                      </label>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                      {brands.map((brand: any) => 
+                        brand.baseModels.map((bm: any) => {
+                          const isSelected = selectedBaseModelId === bm.id;
+                          return (
+                            <button
+                              key={bm.id}
+                              onClick={() => {
+                                setSelectedBaseModelId(bm.id);
+                                setModelId(bm.representative.id);
+                                setGenerationError(null);
+                                playHapticFeedback('light');
+                              }}
+                              className={`px-3 py-2.5 rounded-xl border transition-all flex items-center justify-center gap-2 group text-center
+                                ${isSelected 
+                                  ? 'bg-purple-600 border-purple-500/50 text-white shadow-lg shadow-purple-600/20' 
+                                  : 'bg-white/5 border-white/5 text-slate-400 hover:border-white/10 hover:bg-white/10'}`}
+                            >
+                              <span className="text-[10px] font-black uppercase tracking-widest truncate">{bm.baseName}</span>
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
                   </div>
 
-                  {/* Inspiration Banner */}
-                  <div
-                    onClick={useInspiration}
-                    className="mb-6 p-5 bg-purple-500/5 border border-purple-500/10 rounded-2xl cursor-pointer hover:bg-purple-500/10 transition-all group relative overflow-hidden"
-                  >
-                    <div className="absolute top-0 left-0 w-1 h-full bg-purple-500/30" />
-                    <p className="text-[13px] text-purple-200 italic opacity-80 group-hover:opacity-100 transition-opacity leading-relaxed font-medium">
-                      "{inspirationPrompts[currentInspiration]}"
-                    </p>
-                    <p className="text-[9px] font-black text-purple-600 mt-3 uppercase tracking-[0.2em] group-hover:text-purple-400 transition-colors">
-                      {t('imageGen.clickToUse', 'EXECUTE PROTOCOL →')}
-                    </p>
-                  </div>
-
-                  <div className="relative group">
-                    <textarea
-                      value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
-                      placeholder={generationMode === 'img2img'
-                        ? t('imageGen.promptPlaceholderI2I', "How should we transform this image? Describe your vision...")
-                        : t('imageGen.promptPlaceholderT2I', "Describe the masterpiece you want to create in detail...")
-                      }
-                      rows={5}
-                      disabled={isGenerating}
-                      className="w-full px-6 py-6 bg-black/60 border border-white/5 rounded-3xl resize-none focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all text-slate-200 text-[14px] font-medium placeholder-slate-800 leading-relaxed shadow-inner"
-                    />
-                    <div className="absolute right-4 top-4">
-                      <PromptEnhancer
-                        contentType="image"
-                        currentPrompt={prompt}
-                        onSelectPrompt={(p) => setPrompt(p)}
-                      />
+                  {/* Horizontal Version Chips */}
+                  <div className="space-y-3">
+                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                      <Layers className="w-3.5 h-3.5 text-purple-400" />
+                      {t('imageGen.selectVersion', 'VERSION')}
+                    </label>
+                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                      {availableVersions.map((v: any) => {
+                        const isSelected = modelId === v.id;
+                        const trait = getModelTrait(v.name);
+                        return (
+                          <button
+                            key={v.id}
+                            onClick={() => {
+                              setModelId(v.id);
+                              setGenerationError(null);
+                              playHapticFeedback('medium');
+                            }}
+                            className={`flex-shrink-0 px-4 py-3 rounded-xl border transition-all text-left relative group min-w-[140px]
+                              ${isSelected 
+                                ? 'bg-purple-600/10 border-purple-500/50' 
+                                : 'bg-black/40 border-white/5 hover:bg-white/5'}`}
+                          >
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className={`text-[8px] font-black tracking-tighter ${trait.color}`}>{trait.label}</span>
+                              {isSelected && <Check className="w-2.5 h-2.5 text-purple-400" />}
+                            </div>
+                            <p className={`text-[9px] font-black uppercase tracking-widest truncate ${isSelected ? 'text-white' : 'text-slate-400'}`}>
+                              {v.version_name || formatModelName(v.name)}
+                            </p>
+                            <p className="text-[8px] font-bold text-slate-600 uppercase mt-0.5">
+                              {v.credits} {t('common.credits', 'Credits')}
+                            </p>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
 
-                {/* ── Model & Aspect Ratio ── */}
-                <div className="px-8 pb-8 border-t border-white/5 pt-8 bg-white/[0.01]">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div>
-                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 block flex items-center gap-3">
-                        <Layers className="w-4 h-4 text-purple-400" />
-                        {t('imageGen.modelTitle', 'NEURAL ENGINE')}
-                      </label>
-                      <div className="relative group">
-                        <select
-                          value={modelId}
-                          onChange={(e) => setModelId(e.target.value)}
-                          disabled={isLoadingModels || isGenerating}
-                          className="w-full px-5 py-4 bg-black/60 border border-white/5 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] text-slate-300 focus:ring-1 focus:ring-purple-500/50 outline-none appearance-none cursor-pointer transition-all hover:bg-white/5 shadow-inner"
-                        >
-                          <option value="" className="bg-slate-900">{t('imageGen.selectModel', 'SELECT ENGINE')}</option>
-                          {generateModels.map((model: any) => (
-                            <option key={model.id} value={model.id} className="bg-slate-900">
-                              {formatModelName(model.name).toUpperCase()} [{model.credits} Kredi]
-                            </option>
-                          ))}
-                        </select>
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-600 group-hover:text-purple-400 transition-colors">
-                          <ChevronDown className="w-5 h-5" />
-                        </div>
+                {/* ── Prompt & Aspect Ratio ── */}
+                <div className="p-6 space-y-6">
+                  <div className="space-y-3">
+                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                      <Wand2 className="w-3.5 h-3.5 text-purple-400" />
+                      {t('imageGen.promptTitle', 'COMMAND')}
+                    </label>
+                    <div className="relative group">
+                      <textarea
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        placeholder={t('imageGen.placeholder', "Describe your vision...")}
+                        rows={3}
+                        disabled={isGenerating}
+                        className="w-full px-5 py-4 bg-black/60 border border-white/5 rounded-2xl resize-none focus:ring-1 focus:ring-purple-500/50 outline-none transition-all text-slate-200 text-[13px] font-medium placeholder-slate-800 leading-relaxed shadow-inner"
+                      />
+                      <div className="absolute right-3 top-3">
+                        <PromptEnhancer
+                          contentType="image"
+                          currentPrompt={prompt}
+                          onSelectPrompt={(p) => setPrompt(p)}
+                        />
                       </div>
                     </div>
+                  </div>
 
-                    <div>
-                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 block flex items-center gap-3">
-                        <Maximize2 className="w-4 h-4 text-purple-400" />
-                        {t('imageGen.sizeTitle', 'CANVAS RATIO')}
-                      </label>
-                      <div className="grid grid-cols-4 gap-3">
-                        {aspectRatios.map((ratio) => (
-                          <button
-                            key={ratio.id}
-                            onClick={() => setAspectRatio(ratio.id)}
-                            className={`py-4 rounded-2xl transition-all border flex flex-col items-center justify-center gap-2 group
-                              ${aspectRatio === ratio.id
-                                ? 'bg-purple-600 border-purple-500/50 text-white shadow-xl shadow-purple-600/30 scale-[1.05] z-10'
-                                : 'bg-black/60 border-white/5 text-slate-600 hover:text-slate-400 hover:bg-white/5'
-                              }`}
-                          >
-                            <span className={`text-lg transition-transform ${aspectRatio === ratio.id ? 'scale-110' : 'group-hover:scale-110 opacity-60 group-hover:opacity-100'}`}>{ratio.icon}</span>
-                            <span className="text-[9px] font-black uppercase tracking-widest">{ratio.id}</span>
-                          </button>
-                        ))}
-                      </div>
+                  <div className="space-y-3">
+                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                      <Maximize2 className="w-3.5 h-3.5 text-purple-400" />
+                      {t('imageGen.sizeTitle', 'RATIO')}
+                    </label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {aspectRatios.map((ratio) => (
+                        <button
+                          key={ratio.id}
+                          onClick={() => setAspectRatio(ratio.id)}
+                          className={`py-3 rounded-xl transition-all border flex flex-col items-center justify-center gap-1 group
+                            ${aspectRatio === ratio.id
+                              ? 'bg-purple-600 border-purple-500/50 text-white shadow-lg'
+                              : 'bg-black/60 border-white/5 text-slate-600 hover:text-slate-400'
+                            }`}
+                        >
+                          <span className="text-sm">{ratio.icon}</span>
+                          <span className="text-[8px] font-black uppercase">{ratio.id}</span>
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -767,6 +985,75 @@ const ImageGenerationPage = () => {
                           ))}
                         </div>
                       )}
+
+                      {/* ── VIDEO CONVERSION BANNER ── */}
+                      {showVideoConvertBanner && generatedImages[selectedImageIndex] && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 16, scale: 0.97 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                          transition={{ duration: 0.45, ease: 'easeOut' }}
+                          className="mt-5 relative rounded-2xl overflow-hidden border border-cyan-500/30 bg-gradient-to-r from-cyan-950/80 via-indigo-950/80 to-purple-950/80 backdrop-blur-xl shadow-2xl shadow-cyan-500/10"
+                        >
+                          {/* animated shimmer */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-500/5 to-transparent animate-[shimmer_2.5s_infinite] pointer-events-none" />
+
+                          <div className="flex items-center gap-4 p-4">
+                            {/* thumbnail */}
+                            <div className="relative flex-shrink-0">
+                              <img
+                                src={generatedImages[selectedImageIndex]}
+                                alt="preview"
+                                className="w-16 h-16 rounded-xl object-cover border border-white/10 shadow-lg"
+                              />
+                              {/* play overlay */}
+                              <div className="absolute inset-0 rounded-xl bg-black/40 flex items-center justify-center">
+                                <div className="w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center shadow-lg shadow-cyan-500/50 animate-pulse">
+                                  <Play className="w-3 h-3 text-white fill-white" />
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* text */}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[11px] font-black text-white uppercase tracking-[0.15em] leading-tight">
+                                🎬 Bu görseli videoya dönüştür!
+                              </p>
+                              <p className="text-[9px] text-cyan-300/70 font-bold uppercase tracking-wider mt-1">
+                                Image → Video • AI Animate
+                              </p>
+                            </div>
+
+                            {/* action buttons */}
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <button
+                                onClick={() => {
+                                  playHapticFeedback('medium');
+                                  navigate('/videos', {
+                                    state: {
+                                      imageUrl: generatedImages[selectedImageIndex],
+                                      prompt: prompt,
+                                      autoTab: 'image-to-video'
+                                    }
+                                  });
+                                }}
+                                className="flex items-center gap-2 px-4 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-lg shadow-cyan-500/30 border-t border-white/20"
+                              >
+                                <Video className="w-3.5 h-3.5" />
+                                Dönüştür
+                                <ArrowRight className="w-3 h-3" />
+                              </button>
+                              <button
+                                onClick={() => setShowVideoConvertBanner(false)}
+                                className="p-2 text-slate-500 hover:text-slate-300 rounded-xl hover:bg-white/5 transition-all"
+                                title="Kapat"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
                     </div>
                   ) : (
                     <div className="h-full flex flex-col items-center justify-center text-center py-20 relative z-10">
@@ -809,7 +1096,7 @@ const ImageGenerationPage = () => {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.4 }}
-          className="max-w-7xl mx-auto px-8 py-10"
+          className="space-y-8"
         >
           <div className="bg-black/40 backdrop-blur-xl rounded-[2.5rem] border border-white/5 p-10 shadow-2xl relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/[0.02] to-transparent pointer-events-none" />
@@ -1042,7 +1329,7 @@ const ImageGenerationPage = () => {
            animate={{ opacity: 1, scale: 1 }}
            exit={{ opacity: 0, scale: 0.98 }}
            transition={{ duration: 0.4 }}
-           className="max-w-7xl mx-auto px-8 py-10"
+           className="space-y-8"
         >
           <div className="bg-black/40 backdrop-blur-xl rounded-[2.5rem] border border-white/5 p-10 shadow-2xl relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-b from-orange-500/[0.02] to-transparent pointer-events-none" />
@@ -1190,7 +1477,10 @@ const ImageGenerationPage = () => {
           </div>
         </motion.div>
       )}
-      </AnimatePresence>
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
 
       {/* Lightbox Modal */}
       {generateLightboxImage && (
@@ -1223,6 +1513,14 @@ const ImageGenerationPage = () => {
           setSelectedImageForNft(null);
         }}
         image={selectedImageForNft}
+      />
+
+      {/* Insufficient Credits Modal */}
+      <InsufficientCreditsModal
+        isOpen={showCreditsModal}
+        onClose={() => setShowCreditsModal(false)}
+        requiredCredits={selectedModel?.credits || 0}
+        currentCredits={liveCredits}
       />
     </div>
   );

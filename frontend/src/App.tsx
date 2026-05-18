@@ -25,9 +25,13 @@ import { AdminDashboardEnhanced } from '@/pages/AdminDashboardEnhanced';
 import { ApiKeysPage } from '@/pages/ApiKeysPage';
 import ReferralPage from '@/pages/ReferralPage';
 import MarketplacePage from '@/pages/MarketplacePage';
-import StakingPage from '@/pages/StakingPage'; // Added StakingPage import
+import StakingPage from '@/pages/StakingPage';
 import MyCollectionsPage from '@/pages/MyCollectionsPage';
 import CollectionBuilderPage from '@/pages/CollectionBuilderPage';
+import TermsPage from '@/pages/TermsPage';
+import PrivacyPage from '@/pages/PrivacyPage';
+import RefundPolicyPage from '@/pages/RefundPolicyPage';
+import ContactPage from '@/pages/ContactPage';
 import { useAuthStore } from '@/store/authStore';
 import { ToastProvider } from './components/ui/toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -86,6 +90,11 @@ function AppContent() {
           <Route path="/login" element={<PublicRoute><PageTransition><LoginPage /></PageTransition></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><PageTransition><RegisterPage /></PageTransition></PublicRoute>} />
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
+          {/* Legal Pages - Public, no auth required */}
+          <Route path="/terms" element={<PageTransition><TermsPage /></PageTransition>} />
+          <Route path="/privacy" element={<PageTransition><PrivacyPage /></PageTransition>} />
+          <Route path="/refund-policy" element={<PageTransition><RefundPolicyPage /></PageTransition>} />
+          <Route path="/contact" element={<PageTransition><ContactPage /></PageTransition>} />
 
           {/* Protected routes */}
           <Route path="/dashboard" element={<ProtectedRoute><PageTransition><DashboardPage /></PageTransition></ProtectedRoute>} />
@@ -106,7 +115,7 @@ function AppContent() {
           <Route path="/collections/create" element={<ProtectedRoute><PageTransition><CollectionBuilderPage /></PageTransition></ProtectedRoute>} />
           <Route path="/collections/builder/:id" element={<ProtectedRoute><PageTransition><CollectionBuilderPage /></PageTransition></ProtectedRoute>} />
           <Route path="/compare" element={<ProtectedRoute><PageTransition><ComparisonChatPage /></PageTransition></ProtectedRoute>} />
-          <Route path="/billing" element={<ProtectedRoute><PageTransition><BillingPage /></PageTransition></ProtectedRoute>} />
+          <Route path="/billing" element={<ProtectedRoute><PageTransition><CreditPurchasePage /></PageTransition></ProtectedRoute>} />
           <Route path="/marketplace" element={<ProtectedRoute><PageTransition><MarketplacePage /></PageTransition></ProtectedRoute>} />
           <Route path="/credits" element={<ProtectedRoute><PageTransition><CreditPurchasePage /></PageTransition></ProtectedRoute>} />
 

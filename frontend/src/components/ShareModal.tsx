@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { apiService } from '@/services/api';
 import {
     X, Heart, Share2, Award, Copy, Check, ExternalLink,
@@ -87,13 +88,16 @@ export const ShareModal = ({
     contentType,
     contentId,
     contentUrl = window.location.href,
-    contentTitle = 'ZexAi ile oluşturdum!',
+    contentTitle,
     onLikeChange
 }: ShareModalProps) => {
+    const { t } = useTranslation();
     const [isLiked, setIsLiked] = useState(false);
     const [inShowcase, setInShowcase] = useState(false);
     const [copied, setCopied] = useState(false);
     const queryClient = useQueryClient();
+
+    const finalDefaultTitle = contentTitle || t('share.defaultTitle', 'I created this with ZexAI!');
 
     // Like mutation
     const likeMutation = useMutation({
@@ -128,7 +132,7 @@ export const ShareModal = ({
             const data = response?.data || response;
             if (data?.reward_granted) {
                 queryClient.invalidateQueries({ queryKey: ["userCredits"] });
-                alert("🎉 Harika! X (Twitter) paylaşımınız için hesabınıza 5 AI Kredisi eklendi!");
+                alert(t('share.twitterRewardSuccess', '🎉 Awesome! 5 AI Credits have been added to your account for your X (Twitter) share!'));
             }
         }
     });
@@ -137,14 +141,17 @@ export const ShareModal = ({
         // Record share
         shareMutation.mutate(platform.id);
 
-        let finalTitle = contentTitle;
+        let titleToShare = finalDefaultTitle;
         if (contentType === 'referral') {
-            finalTitle = `🚀 ZexAi ile tanışın! Benim referans kodumu kullanarak siz de harika AI içerikler oluşturun. Kayıt olun: ${contentUrl}`;
+            titleToShare = t('share.referralMessageWithUrl', {
+                defaultValue: `🚀 Meet ZexAI! Create amazing AI content using my referral code. Register here: ${contentUrl}`,
+                url: contentUrl
+            });
         }
 
         // Open share URL or copy
         if (platform.getUrl) {
-            window.open(platform.getUrl(finalTitle, contentUrl), '_blank', 'width=600,height=400');
+            window.open(platform.getUrl(titleToShare, contentUrl), '_blank', 'width=600,height=400');
         } else {
             // For platforms without direct share, copy URL
             handleCopy();
@@ -152,13 +159,13 @@ export const ShareModal = ({
     };
 
     const handleCopy = async () => {
-        let finalTitle = contentTitle;
+        let titleToShare = finalDefaultTitle;
         if (contentType === 'referral') {
-            finalTitle = `🚀 ZexAi ile tanışın! Benim referans kodumu kullanarak siz de harika AI içerikler oluşturun.`;
+            titleToShare = t('share.referralMessage', '🚀 Meet ZexAI! Create amazing AI content using my referral code.');
         }
         
         try {
-            await navigator.clipboard.writeText(`${finalTitle}\n${contentUrl}`);
+            await navigator.clipboard.writeText(`${titleToShare}\n${contentUrl}`);
             setCopied(true);
             shareMutation.mutate('copy');
             setTimeout(() => setCopied(false), 2000);
@@ -179,8 +186,8 @@ export const ShareModal = ({
                             <Share2 className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-semibold text-white">Paylaş</h3>
-                            <p className="text-sm text-gray-400">İçeriğini dünyayla paylaş</p>
+                            <h3 className="text-lg font-semibold text-white">{t('share.title', 'Share')}</h3>
+                            <p className="text-sm text-gray-400">{t('share.subtitle', 'Share your content with the world')}</p>
                         </div>
                     </div>
                     <button
@@ -205,7 +212,7 @@ export const ShareModal = ({
                                 }`}
                         >
                             <Heart className={`w-5 h-5 ${isLiked ? 'fill-red-500' : ''}`} />
-                            {isLiked ? 'Beğenildi' : 'Beğen'}
+                            {isLiked ? t('share.liked', 'Liked') : t('share.like', 'Like')}
                         </button>
 
                         {/* Showcase Button */}
@@ -218,16 +225,16 @@ export const ShareModal = ({
                                 }`}
                         >
                             <Award className={`w-5 h-5 ${inShowcase ? 'fill-yellow-500' : ''}`} />
-                            {inShowcase ? 'Showcase\'de' : 'Showcase\'e Ekle'}
+                            {inShowcase ? t('share.inShowcase', 'In Showcase') : t('share.addToShowcase', 'Add to Showcase')}
                         </button>
                     </div>
 
                     {/* Share Platforms */}
                     <div className="mb-6">
                         <div className="flex items-center justify-between mb-3">
-                            <h4 className="text-sm font-medium text-gray-400">Platformda Paylaş</h4>
+                            <h4 className="text-sm font-medium text-gray-400">{t('share.shareOnPlatform', 'Share on Platform')}</h4>
                             <span className="text-xs font-bold bg-yellow-500/20 text-yellow-400 px-2.5 py-1 rounded-full border border-yellow-500/30 animate-pulse">
-                                +5 Kredi Kazan!
+                                {t('share.earnCredits', '+5 Credits!')}
                             </span>
                         </div>
                         <div className="grid grid-cols-4 gap-2">
@@ -236,7 +243,7 @@ export const ShareModal = ({
                                     key={platform.id}
                                     onClick={() => handleShare(platform)}
                                     className={`flex flex-col items-center gap-1 p-3 rounded-xl text-white transition-all ${platform.color}`}
-                                    title={platform.id === 'twitter' ? "Hemen paylaş ve kredisini kap!" : ""}
+                                    title={platform.id === 'twitter' ? t('share.twitterShareTooltip', 'Share now and earn credits!') : ""}
                                 >
                                     {platform.icon}
                                     <span className="text-xs">{platform.name}</span>
@@ -247,7 +254,7 @@ export const ShareModal = ({
 
                     {/* Copy Link */}
                     <div>
-                        <h4 className="text-sm font-medium text-gray-400 mb-2">veya Linki Kopyala</h4>
+                        <h4 className="text-sm font-medium text-gray-400 mb-2">{t('share.orCopyLink', 'or Copy Link')}</h4>
                         <div className="flex gap-2">
                             <input
                                 type="text"
@@ -263,7 +270,7 @@ export const ShareModal = ({
                                     }`}
                             >
                                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                                {copied ? 'Kopyalandı!' : 'Kopyala'}
+                                {copied ? t('common.copied', 'Copied!') : t('common.copy', 'Copy')}
                             </button>
                         </div>
                     </div>

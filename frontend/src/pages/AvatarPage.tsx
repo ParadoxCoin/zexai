@@ -336,7 +336,7 @@ export const AvatarPage = () => {
                             <span className="text-sm font-black text-cyan-400">{1000} ZEX</span>
                         </div>
                         <button
-                            onClick={() => window.location.href = '/billing'}
+                            onClick={() => window.location.href = '/credits'}
                             className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-cyan-500/20"
                         >
                             Top Up

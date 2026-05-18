@@ -50,7 +50,8 @@
     "horizontal": "Horizontal",
     "vertical": "Vertical",
     "square": "Square",
-    "discount": "DISCOUNT"
+    "discount": "DISCOUNT",
+    "credits": "Credits"
   },
   "settings": {
     "title": "Account Preferences",
@@ -1097,5 +1098,30 @@
     "addPolygon": "Please add Polygon Mainnet to MetaMask.",
     "selectPolygon": "Please select Polygon Mainnet from your wallet.",
     "noWallet": "Wallet connection not found or network not supported."
+  },
+  "share": {
+    "title": "Share",
+    "subtitle": "Share your content with the world",
+    "defaultTitle": "I created this with ZexAI!",
+    "liked": "Liked",
+    "like": "Like",
+    "inShowcase": "In Showcase",
+    "addToShowcase": "Add to Showcase",
+    "shareOnPlatform": "Share on Platform",
+    "earnCredits": "+5 Credits!",
+    "twitterShareTooltip": "Share now and earn credits!",
+    "orCopyLink": "or Copy Link",
+    "twitterRewardSuccess": "🎉 Awesome! 5 AI Credits have been added to your account for your X (Twitter) share!",
+    "facebookRewardSuccess": "🎉 Awesome! 5 AI Credits have been added to your account for your Facebook share!",
+    "twitterText": "Check out the amazing video I created with ZexAI! 🚀",
+    "referralMessage": "🚀 Meet ZexAI! Create amazing AI content using my referral code.",
+    "referralMessageWithUrl": "🚀 Meet ZexAI! Create amazing AI content using my referral code. Register here: {{url}}"
+  },
+  "credits": {
+    "insufficientTitle": "Insufficient Credits",
+    "insufficientSubtitle": "INSUFFICIENT BALANCE",
+    "requiredCost": "Required Credits",
+    "availableBalance": "Available Credits",
+    "rechargeNowBtn": "Recharge Now"
   }
 }

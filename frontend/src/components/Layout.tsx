@@ -46,8 +46,6 @@ const Layout: React.FC = () => {
     { name: t('nav.audio', 'Audio'), href: '/audio', icon: Volume2, color: 'from-rose-500 to-pink-500' },
     { name: t('nav.chat', 'Chat'), href: '/chat', icon: MessageCircle, color: 'from-emerald-500 to-teal-500' },
     { name: t('nav.synapse', 'Synapse'), href: '/synapse', icon: Bot, color: 'from-amber-500 to-orange-500' },
-    { name: t('nav.collections', 'NFT Collection'), href: '/collections/my', icon: Layers, color: 'from-blue-500 to-indigo-500' },
-    { name: t('nav.staking', 'Staking'), href: '/staking', icon: Diamond, color: 'from-indigo-500 to-purple-500' },
   ];
 
   const adminNavigation = [
@@ -118,8 +116,8 @@ const Layout: React.FC = () => {
                 <w3m-button />
               </div>
 
-              {/* Dynamic Credits Display - Hidden for now */}
-              {/* <div className="flex items-center gap-1.5">
+              {/* Dynamic Credits Display */}
+              <div className="flex items-center gap-1.5">
                 <Link
                   to="/credits"
                   className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-r from-amber-500/10 to-orange-500/10 hover:from-amber-500/20 hover:to-orange-500/20 border border-amber-500/20 rounded-xl transition-all"
@@ -135,7 +133,7 @@ const Layout: React.FC = () => {
                     {t('layout.noExpiration', 'NO EXPIRY')}
                   </span>
                 </div>
-              </div> */}
+              </div>
 
               {/* Theme Toggle */}
               <button
@@ -173,92 +171,129 @@ const Layout: React.FC = () => {
                 </button>
 
                 {isUserMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50">
-                    {/* User Info Header */}
-                    <div className="p-4 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-white text-lg font-bold">
+                  <div className="absolute right-0 mt-3 w-72 bg-white/95 dark:bg-gray-900/95 backdrop-blur-2xl rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)] border border-gray-100 dark:border-white/5 overflow-hidden z-50 transition-all duration-300 transform scale-100 origin-top-right animate-in fade-in slide-in-from-top-3">
+                    {/* User Info Mesh Header */}
+                    <div className="p-5 bg-gradient-to-br from-indigo-950 via-slate-900 to-purple-950 border-b border-gray-100/10 dark:border-white/5 relative overflow-hidden">
+                      <div className="absolute -top-12 -right-12 w-24 h-24 bg-purple-500/20 rounded-full blur-2xl pointer-events-none" />
+                      <div className="absolute -bottom-8 -left-8 w-20 h-20 bg-indigo-500/20 rounded-full blur-xl pointer-events-none" />
+                      
+                      <div className="flex items-center gap-3.5 relative z-10">
+                        <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white text-lg font-black tracking-tighter border border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)]">
                           {user?.email?.[0]?.toUpperCase() || 'U'}
                         </div>
-                        <div className="text-white">
-                          <p className="font-semibold line-clamp-1">{user?.email}</p>
-                          <p className="text-xs text-white/80">{isAdminUser ? '🛡️ Admin' : '👤 User'}</p>
+                        <div className="text-left min-w-0">
+                          <p className="font-bold text-white text-sm truncate leading-snug">{user?.email}</p>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 mt-1.5 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-full text-[8px] font-black tracking-widest uppercase shadow-md shadow-purple-500/20">
+                            {isAdminUser ? '🛡️ Admin' : '💎 Premium'}
+                          </span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="p-2">
-                      <Link
-                        to="/profile"
-                        onClick={() => setIsUserMenuOpen(false)}
-                        className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl"
-                      >
-                        <User className="h-4 w-4" />{t('layout.profile', 'Profil')}
-                      </Link>
-                      <Link
-                        to="/api-keys"
-                        onClick={() => setIsUserMenuOpen(false)}
-                        className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl"
-                      >
-                        <Key className="h-4 w-4" />{t('layout.apiKeys', 'API Anahtarları')}
-                      </Link>
-                      <Link
-                        to="/settings"
-                        onClick={() => setIsUserMenuOpen(false)}
-                        className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl"
-                      >
-                        <Settings className="h-4 w-4" />{t('layout.settings', 'Ayarlar')}
-                      </Link>
+                    <div className="p-2.5 space-y-3.5 max-h-[480px] overflow-y-auto scrollbar-hide">
+                      {/* Section: Identity */}
+                      <div>
+                        <div className="px-3.5 pt-1 pb-1.5 text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em]">{t('layout.accountSection', 'ACCOUNT')}</div>
+                        <div className="space-y-0.5">
+                          <Link
+                            to="/profile"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="group flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold text-slate-700 dark:text-gray-200 hover:text-purple-600 dark:hover:text-purple-400 rounded-2xl hover:bg-purple-50 dark:hover:bg-purple-950/20 transition-all duration-300 transform hover:translate-x-1"
+                          >
+                            <User className="h-4 w-4 text-slate-400 dark:text-slate-500 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors transform group-hover:scale-110 duration-300" />
+                            <span>{t('layout.profile', 'Profil')}</span>
+                          </Link>
+                          <Link
+                            to="/settings"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="group flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold text-slate-700 dark:text-gray-200 hover:text-purple-600 dark:hover:text-purple-400 rounded-2xl hover:bg-purple-50 dark:hover:bg-purple-950/20 transition-all duration-300 transform hover:translate-x-1"
+                          >
+                            <Settings className="h-4 w-4 text-slate-400 dark:text-slate-500 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors transform group-hover:scale-110 duration-300" />
+                            <span>{t('layout.settings', 'Ayarlar')}</span>
+                          </Link>
+                        </div>
+                      </div>
 
-                      <div className="my-2 border-t border-gray-100 dark:border-gray-700" />
-                      <p className="px-3 py-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{t('layout.exploreSection', 'Keşfet')}</p>
+                      {/* Section: Passive Earn & Staking */}
+                      <div>
+                        <div className="px-3.5 pt-1 pb-1.5 text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em]">{t('layout.earnSection', 'EARNINGS')}</div>
+                        <div className="space-y-0.5">
+                          <Link
+                            to="/staking"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="group flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold text-slate-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl hover:bg-indigo-50 dark:hover:bg-indigo-950/20 transition-all duration-300 transform hover:translate-x-1"
+                          >
+                            <Diamond className="h-4 w-4 text-slate-400 dark:text-slate-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors transform group-hover:scale-110 duration-300" />
+                            <span>{t('layout.staking', 'ZEX Staking')}</span>
+                            <span className="ml-auto text-[8px] font-black bg-indigo-500/20 text-indigo-500 dark:text-indigo-400 border border-indigo-500/20 dark:border-indigo-500/30 px-2 py-0.5 rounded-full">% APY</span>
+                          </Link>
+                          <Link
+                            to="/referral"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="group flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold text-slate-700 dark:text-gray-200 hover:text-pink-600 dark:hover:text-pink-400 rounded-2xl hover:bg-pink-50 dark:hover:bg-pink-950/20 transition-all duration-300 transform hover:translate-x-1"
+                          >
+                            <Gift className="h-4 w-4 text-slate-400 dark:text-slate-500 group-hover:text-pink-500 dark:group-hover:text-pink-400 transition-colors transform group-hover:scale-110 duration-300" />
+                            <span>{t('layout.invite', 'Davet Et')}</span>
+                            <span className="ml-auto text-[8px] font-black bg-pink-500/20 text-pink-500 dark:text-pink-400 border border-pink-500/20 dark:border-pink-500/30 px-2 py-0.5 rounded-full">%5 EARN</span>
+                          </Link>
+                        </div>
+                      </div>
 
-                      {/* <Link
-                        to="/credits"
-                        onClick={() => setIsUserMenuOpen(false)}
-                        className="flex items-center gap-3 px-3 py-2.5 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl"
-                      >
-                        <Wallet className="h-4 w-4" />
-                        {t('layout.creditsSub', 'Kredi & Abonelik')}
-                        <span className="ml-auto text-[10px] bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded-full">{t('layout.proBadge', 'Pro')}</span>
-                      </Link> */}
-                      <Link
-                        to="/marketplace"
-                        onClick={() => setIsUserMenuOpen(false)}
-                        className="flex items-center gap-3 px-3 py-2.5 text-sm text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl"
-                      >
-                        <Star className="h-4 w-4" />
-                        {t('layout.marketplace', 'Marketplace')}
-                        <span className="ml-auto text-[10px] bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full">40+</span>
-                      </Link>
-                      <Link
-                        to="/referral"
-                        onClick={() => setIsUserMenuOpen(false)}
-                        className="flex items-center gap-3 px-3 py-2.5 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl"
-                      >
-                        <Gift className="h-4 w-4" />
-                        {t('layout.invite', 'Davet Et')}
-                        <span className="ml-auto text-[10px] bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full">%5</span>
-                      </Link>
+                      {/* Section: Exploration */}
+                      <div>
+                        <div className="px-3.5 pt-1 pb-1.5 text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em]">{t('layout.exploreSection', 'EXPLORE')}</div>
+                        <div className="space-y-0.5">
+                          <Link
+                            to="/credits"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="group flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold text-slate-700 dark:text-gray-200 hover:text-purple-600 dark:hover:text-purple-400 rounded-2xl hover:bg-purple-50 dark:hover:bg-purple-950/20 transition-all duration-300 transform hover:translate-x-1"
+                          >
+                            <Wallet className="h-4 w-4 text-slate-400 dark:text-slate-500 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors transform group-hover:scale-110 duration-300" />
+                            <span>{t('layout.creditsSub', 'Kredi & Abonelik')}</span>
+                            <span className="ml-auto text-[8px] font-black bg-purple-500/20 text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded-full">{Math.round(currentCredits)}</span>
+                          </Link>
+                          <Link
+                            to="/marketplace"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="group flex items-center gap-3 px-3.5 py-2.5 text-xs font-semibold text-slate-700 dark:text-gray-200 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-2xl hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all duration-300 transform hover:translate-x-1"
+                          >
+                            <Star className="h-4 w-4 text-slate-400 dark:text-slate-500 group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors transform group-hover:scale-110 duration-300" />
+                            <span>{t('layout.marketplace', 'Marketplace')}</span>
+                            <span className="ml-auto text-[8px] font-black bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full">40+</span>
+                          </Link>
+                        </div>
+                      </div>
 
-                      <div className="my-2 border-t border-gray-100 dark:border-gray-700" />
-                      <p className="px-3 py-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{t('layout.preferencesSection', 'Tercihler')}</p>
-                      <button
-                        onClick={() => { toggleTheme(); }}
-                        className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl"
-                      >
-                        {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-                        {t('layout.theme', 'Tema')}: {theme === 'light' ? t('layout.themeLight', '☀️ Açık') : t('layout.themeDark', '🌙 Koyu')}
-                      </button>
+                      {/* Section: Customizations & Actions */}
+                      <div>
+                        <div className="px-3.5 pt-1 pb-1.5 text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em]">{t('layout.preferencesSection', 'PREFERENCES')}</div>
+                        <div className="space-y-0.5">
+                          <button
+                            onClick={() => { toggleTheme(); }}
+                            className="group flex items-center gap-3 w-full px-3.5 py-2.5 text-xs font-semibold text-slate-700 dark:text-gray-200 hover:text-orange-600 dark:hover:text-orange-400 rounded-2xl hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-all duration-300 transform hover:translate-x-1"
+                          >
+                            {theme === 'light' ? (
+                              <Moon className="h-4 w-4 text-slate-400 dark:text-slate-500 group-hover:text-orange-500 dark:group-hover:text-orange-400 transition-colors transform group-hover:rotate-45 duration-300" />
+                            ) : (
+                              <Sun className="h-4 w-4 text-slate-400 dark:text-slate-500 group-hover:text-orange-500 dark:group-hover:text-orange-400 transition-colors transform group-hover:rotate-45 duration-300" />
+                            )}
+                            <span className="text-left">{t('layout.theme', 'Tema')}</span>
+                            <span className="ml-auto text-[8px] font-black bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/20 dark:border-orange-500/30 px-2 py-0.5 rounded-full uppercase">
+                              {theme === 'light' ? t('layout.themeLight', 'Açık') : t('layout.themeDark', 'Koyu')}
+                            </span>
+                          </button>
 
-                      <div className="my-2 border-t border-gray-100 dark:border-gray-700" />
+                          <div className="h-px bg-gray-100 dark:bg-white/5 my-2" />
 
-                      <button
-                        onClick={() => { setIsUserMenuOpen(false); handleLogout(); }}
-                        className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl"
-                      >
-                        <LogOut className="h-4 w-4" />{t('layout.logout', 'Çıkış Yap')}
-                      </button>
+                          <button
+                            onClick={() => { setIsUserMenuOpen(false); handleLogout(); }}
+                            className="group flex items-center gap-3 w-full px-3.5 py-2.5 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-2xl transition-all duration-300 transform hover:translate-x-1"
+                          >
+                            <LogOut className="h-4 w-4 text-red-400 dark:text-red-500 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors transform group-hover:scale-110 duration-300" />
+                            <span>{t('layout.logout', 'Çıkış Yap')}</span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}

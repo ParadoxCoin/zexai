@@ -64,12 +64,11 @@ const CollectionBuilderPage: React.FC = () => {
         setLoading(true);
         try {
             const req = { image_url: imageUrl, attributes: currentTraits };
-            const res = await apiService.post(`/collections/${collectionId}/items`, req);
-            setItems([...items, res]);
+            const res = await apiService.post(`/collections/${collectionId}/items`, req);            setItems([...items, res]);
             setImageUrl('');
             setCurrentTraits([]);
         } catch (e: any) {
-            alert(e.response?.data?.detail || "Item eklenemedi");
+            alert(e.response?.data?.detail || t('collections.itemAddFailed'));
         } finally {
             setLoading(false);
         }
@@ -115,7 +114,7 @@ const CollectionBuilderPage: React.FC = () => {
             setStep(5); // Success!
         } catch (e: any) {
             console.error(e);
-            const errorMsg = e.response?.data?.detail || e.message || "Bilinmeyen hata";
+            const errorMsg = e.response?.data?.detail || e.message || t('common.error');
             alert(t('collections.publishFailed') + errorMsg);
         } finally {
             setLoading(false);
@@ -154,11 +153,11 @@ const CollectionBuilderPage: React.FC = () => {
                         <div className="grid grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('collections.collectionName')}</label>
-                                <input type="text" value={name} onChange={e=>setName(e.target.value)} placeholder="Örn: CyberPunks" className="w-full bg-gray-50 dark:bg-[#0f1115] border border-gray-200 dark:border-gray-700 p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white" />
+                                <input type="text" value={name} onChange={e=>setName(e.target.value)} placeholder={t('collections.collectionNamePlaceholder', 'e.g., CyberPunks')} className="w-full bg-gray-50 dark:bg-[#0f1115] border border-gray-200 dark:border-gray-700 p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white" />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Sembol</label>
-                                <input type="text" value={symbol} onChange={e=>setSymbol(e.target.value)} placeholder="Örn: CPUNK" className="w-full bg-gray-50 dark:bg-[#0f1115] border border-gray-200 dark:border-gray-700 p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white" />
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('collections.symbol', 'Symbol')}</label>
+                                <input type="text" value={symbol} onChange={e=>setSymbol(e.target.value)} placeholder={t('collections.symbolPlaceholder', 'e.g., CPUNK')} className="w-full bg-gray-50 dark:bg-[#0f1115] border border-gray-200 dark:border-gray-700 p-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white" />
                             </div>
                         </div>
                         <div className="space-y-2">
@@ -168,11 +167,11 @@ const CollectionBuilderPage: React.FC = () => {
                         
                         <div className="grid grid-cols-3 gap-6 pt-4 border-t border-gray-100 dark:border-gray-800">
                             <div>
-                                <label className="text-sm font-medium text-gray-500">Maksimum Supply</label>
+                                <label className="text-sm font-medium text-gray-500">{t('collections.maxSupply', 'Maximum Supply')}</label>
                                 <select value={maxSupply} onChange={e=>setMaxSupply(Number(e.target.value))} className="w-full mt-2 bg-gray-50 dark:bg-[#0f1115] border border-gray-200 dark:border-gray-700 p-3 rounded-xl dark:text-white">
-                                    <option value={10}>10 Adet</option>
-                                    <option value={100}>100 Adet</option>
-                                    <option value={1000}>1,000 Adet</option>
+                                    <option value={10}>10 {t('collections.piecesCount', 'Pieces')}</option>
+                                    <option value={100}>100 {t('collections.piecesCount', 'Pieces')}</option>
+                                    <option value={1000}>1,000 {t('collections.piecesCount', 'Pieces')}</option>
                                 </select>
                             </div>
                             <div>
@@ -180,7 +179,7 @@ const CollectionBuilderPage: React.FC = () => {
                                 <input type="number" step="0.1" value={mintPrice} onChange={e=>setMintPrice(Number(e.target.value))} className="w-full mt-2 bg-gray-50 dark:bg-[#0f1115] border border-gray-200 dark:border-gray-700 p-3 rounded-xl dark:text-white" />
                             </div>
                             <div>
-                                <label className="text-sm font-medium text-gray-500">Royalty (Komisyon %)</label>
+                                <label className="text-sm font-medium text-gray-500">{t('collections.royalty', 'Royalty')}</label>
                                 <select value={royaltyBps} onChange={e=>setRoyaltyBps(Number(e.target.value))} className="w-full mt-2 bg-gray-50 dark:bg-[#0f1115] border border-gray-200 dark:border-gray-700 p-3 rounded-xl dark:text-white">
                                     <option value={250}>%2.5</option>
                                     <option value={500}>%5.0 ({t('collections.recommended')})</option>
@@ -193,7 +192,7 @@ const CollectionBuilderPage: React.FC = () => {
                         <div className="bg-indigo-50 dark:bg-indigo-500/10 p-4 rounded-xl flex items-center justify-between mt-6">
                             <div>
                                 <p className="text-sm text-indigo-600 dark:text-indigo-400 font-medium">{t('collections.factoryFee')}</p>
-                                <p className="text-xs text-gray-500">{250} Taban Fiyat + ({maxSupply} x 25) Kapasite</p>
+                                <p className="text-xs text-gray-500">{250} {t('collections.basePrice', 'Base Price')} + ({maxSupply} x 25) {t('collections.capacity', 'Capacity')}</p>
                             </div>
                             <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{totalZexCost} ZEX</p>
                         </div>
@@ -214,8 +213,8 @@ const CollectionBuilderPage: React.FC = () => {
                             <input type="text" value={imageUrl} onChange={e=>setImageUrl(e.target.value)} placeholder="https://app.zexai.io/images/...png" className="w-full bg-white dark:bg-[#1a1c23] border border-gray-200 dark:border-gray-700 p-3 rounded-xl outline-none dark:text-white mb-4" />
                             
                             <div className="flex gap-2 mb-4">
-                                <input type="text" value={traitValue} onChange={e=>setTraitValue(e.target.value)} placeholder="Value (Örn: Red)" className="flex-1 bg-white dark:bg-[#1a1c23] border border-gray-200 dark:border-gray-700 p-3 rounded-xl outline-none dark:text-white" />
-                                <button onClick={handleAddTrait} className="px-4 bg-gray-200 dark:bg-gray-700 rounded-xl font-medium dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600">Ekle</button>
+                                <input type="text" value={traitValue} onChange={e=>setTraitValue(e.target.value)} placeholder={t('collections.valuePlaceholder', 'e.g., Red')} className="flex-1 bg-white dark:bg-[#1a1c23] border border-gray-200 dark:border-gray-700 p-3 rounded-xl outline-none dark:text-white" />
+                                <button onClick={handleAddTrait} className="px-4 bg-gray-200 dark:bg-gray-700 rounded-xl font-medium dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600">{t('collections.addTrait', 'Add')}</button>
                             </div>
                             
                             {currentTraits.length > 0 && (
@@ -229,12 +228,12 @@ const CollectionBuilderPage: React.FC = () => {
                             )}
 
                             <button onClick={handleAddItem} disabled={loading} className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition flex items-center justify-center gap-2">
-                                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Plus className="w-5 h-5"/> Koleksiyona Kaydet</>}
+                                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Plus className="w-5 h-5"/> {t('collections.saveToCollection')}</>}
                             </button>
                         </div>
 
                         <div className="mt-8 border-t border-gray-100 dark:border-gray-800 pt-6">
-                            <h3 className="font-bold text-lg dark:text-white mb-4">Eklenenler ({items.length} / {maxSupply})</h3>
+                            <h3 className="font-bold text-lg dark:text-white mb-4">{t('collections.added', 'Added')} ({items.length} / {maxSupply})</h3>
                             <div className="grid grid-cols-4 gap-4">
                                 {items.map((it, i) => (
                                     <div key={i} className="aspect-square rounded-xl bg-gray-100 dark:bg-gray-800 overflow-hidden relative group">
@@ -256,7 +255,7 @@ const CollectionBuilderPage: React.FC = () => {
                                     ? 'bg-gray-300 dark:bg-gray-800 text-gray-500 cursor-not-allowed' 
                                     : 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:opacity-90'
                                 }`}>
-                                Devam Et <ArrowRight className="w-5 h-5" />
+                                {t('collections.continue', 'Continue')} <ArrowRight className="w-5 h-5" />
                             </button>
                         </div>
                     </div>
@@ -268,13 +267,12 @@ const CollectionBuilderPage: React.FC = () => {
                         <Sparkles className="w-16 h-16 text-yellow-500 mx-auto mb-6" />
                         <h2 className="text-2xl font-bold dark:text-white">{t('collections.rarityAlgorithm')}</h2>
                         <p className="text-gray-500 max-w-md mx-auto">
-                            ZexAI'nin Rarity Motoru, koleksiyonunuzdaki tüm özellikleri analiz ederek 
-                            nadir rastlanan parçalara otomatik olarak yüksek skorlar ve <b>Legendary/Epic</b> gibi tier'ler atar.
+                            {t('collections.rarityDesc')}
                         </p>
                         
                         <div className="bg-gray-50 dark:bg-[#0f1115] p-6 rounded-2xl border border-gray-200 dark:border-gray-800 text-left my-8 max-w-lg mx-auto">
                             <ul className="space-y-3">
-                                <li className="flex items-center gap-3"><div className="w-3 h-3 rounded-full bg-yellow-400"></div> <span className="text-gray-300">Legendary</span> <span className="ml-auto text-gray-500">&lt; %1 İhtimal</span></li>
+                                <li className="flex items-center gap-3"><div className="w-3 h-3 rounded-full bg-yellow-400"></div> <span className="text-gray-300">Legendary</span> <span className="ml-auto text-gray-500">{t('collections.legendaryChance')}</span></li>
                                 <li className="flex items-center gap-3"><div className="w-3 h-3 rounded-full bg-purple-500"></div> <span className="text-gray-300">Epic</span> <span className="ml-auto text-gray-500">%1 - %5</span></li>
                                 <li className="flex items-center gap-3"><div className="w-3 h-3 rounded-full bg-blue-500"></div> <span className="text-gray-300">Rare</span> <span className="ml-auto text-gray-500">%5 - %20</span></li>
                             </ul>
@@ -293,13 +291,13 @@ const CollectionBuilderPage: React.FC = () => {
                         <div className="bg-green-50 dark:bg-green-500/10 p-6 rounded-2xl border border-green-200 dark:border-green-500/20">
                             <h3 className="text-green-800 dark:text-green-400 font-bold text-lg mb-2">{t('collections.readyToPublish')}</h3>
                             <p className="text-green-700 dark:text-green-300/80 mb-6">
-                                Rarity skorları atandı ve kontrat şablonunuz oluşturuldu. Yayınla butonuna bastığınızda:
+                                {t('collections.publishDesc')}
                             </p>
                             <ul className="space-y-3 text-sm text-green-800 dark:text-green-200">
-                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4"/> <b>{totalZexCost} ZEX</b> cüzdanınızdan tahsil edilecek.</li>
-                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4"/> Tamamen size ait bir <b>ERC721A</b> akıllı kontratı Polygon ağına yüklenecek.</li>
-                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4"/> Tüm görseller + metadata <b>IPFS</b> ağına kalıcı olarak yüklenecek.</li>
-                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4"/> İkincil piyasa gelirleri doğrudan sizin cüzdanınıza bağlanacak (%{royaltyBps/100}).</li>
+                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4"/> <b>{totalZexCost} ZEX</b> {t('collections.publishStep1')}</li>
+                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4"/> {t('collections.publishStep2')}</li>
+                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4"/> {t('collections.publishStep3')}</li>
+                                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4"/> {t('collections.publishStep4')}</li>
                             </ul>
                         </div>
 
@@ -318,12 +316,12 @@ const CollectionBuilderPage: React.FC = () => {
                         </div>
                         <h2 className="text-3xl font-bold dark:text-white">{t('collections.collectionLive')}</h2>
                         <p className="text-gray-500 text-lg max-w-md mx-auto mb-8">
-                            Akıllı kontratınız ve tüm dosyalarınız başarıyla Polygon ağına yüklendi. Artık NFT'lerinizi satmaya başlayabilirsiniz!
+                            {t('collections.collectionLiveDesc')}
                         </p>
                         
                         <div className="flex flex-col gap-3 max-w-sm mx-auto">
                             <button onClick={()=>navigate('/collections/my')} className="w-full py-3 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition">
-                                Kontrol Paneline Git
+                                {t('collections.goToPanel')}
                             </button>
                         </div>
                     </div>

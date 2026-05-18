@@ -1,6 +1,6 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { apiService } from "@/services/api";
 import {
   Video, Sparkles, Package, FolderOpen, Play, Upload,
@@ -13,6 +13,7 @@ import {
 import PromptEnhancer from "@/components/PromptEnhancer";
 import MotionBrushEditor from "@/components/video/MotionBrushEditor";
 import NFTMintModal from "@/components/NFTMintModal";
+import { InsufficientCreditsModal } from "@/components/InsufficientCreditsModal";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -51,6 +52,7 @@ const getBaseName = (name: string) => {
 const VideoPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState("text-to-video");
 
   // Content type tabs with translations
@@ -82,6 +84,34 @@ const VideoPage = () => {
   const [modelId, setModelId] = useState("");
   const [selectedStyle, setSelectedStyle] = useState("");
   const [aspectRatio, setAspectRatio] = useState("16:9");
+
+  // Auto-load from ImageGenerationPage navigation state
+  useEffect(() => {
+    const state = location.state as any;
+    if (state?.autoTab) {
+      setActiveTab(state.autoTab);
+    }
+    if (state?.prompt) {
+      setPrompt(state.prompt);
+    }
+    if (state?.imageUrl) {
+      // Pre-load the image for image-to-video
+      setImagePreview(state.imageUrl);
+      // Also fetch as File for upload flow
+      fetch(state.imageUrl)
+        .then(r => r.blob())
+        .then(blob => {
+          const ext = blob.type.split('/')[1] || 'jpg';
+          const file = new File([blob], `from-image-gen.${ext}`, { type: blob.type });
+          setImageFile(file);
+        })
+        .catch(() => { /* if CORS fails, just use URL directly */ });
+    }
+    // Clear state after reading to avoid re-triggering on back navigation
+    if (state?.autoTab || state?.imageUrl) {
+      window.history.replaceState({}, '');
+    }
+  }, []);
   
   // New dynamic parameter states
   const [selectedVersionName, setSelectedVersionName] = useState<string | null>(null);
@@ -112,6 +142,22 @@ const VideoPage = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageFile2, setImageFile2] = useState<File | null>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+
+  // File input refs
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+
+  // Image select handler
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onload = (ev) => setImagePreview(ev.target?.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Compare tab states
   const [selectedCompareModels, setSelectedCompareModels] = useState<string[]>([]);
@@ -152,6 +198,16 @@ const VideoPage = () => {
   useEffect(() => {
     queryClient.invalidateQueries({ queryKey: ["userCredits"] });
   }, []);
+
+  // Live credit balance from dashboard stats
+  const { data: creditStats } = useQuery({
+    queryKey: ['dashboardStats', 'videoPageCredits'],
+    queryFn: () => apiService.get<any>('/dashboard/stats'),
+    refetchInterval: 15000,
+    staleTime: 10000,
+  });
+  const liveCredits = Math.round((creditStats as any)?.credits_balance ?? (creditStats as any)?.data?.credits_balance ?? 0);
+  const [showCreditsModal, setShowCreditsModal] = useState(false);
 
   const { mutate: generateVideo, isPending: isGenerating } = useMutation({
     mutationFn: (data: any) => apiService.post("/video/generate", data),
@@ -195,7 +251,7 @@ const VideoPage = () => {
 
   const handlePurchasePackage = async (pkgId: string, pkgName: string, credits: number) => {
     // Redirect to billing/pricing page for purchase
-    navigate('/billing');
+    navigate('/credits');
   };
 
   // Upload image to get URL, then apply effect
@@ -448,14 +504,19 @@ const VideoPage = () => {
       const mid = (m.id || "").toLowerCase();
 
       if (activeTab === 'image-to-video') {
-         // STRICT FILTER: Only allow known KIE I2V models or models explicitly marked as I2V in DB
-         const isKieI2V = mid.startsWith('kie_') && (mid.includes('i2v') || mid.includes('image-to-video'));
-         const isExplicitI2V = m.type === 'image_to_video' || m.model_type === 'image_to_video';
-         
-         isSupported = isKieI2V || isExplicitI2V;
+         // STRICT FILTER: Only allow active KIE I2V models
+         isSupported = mid.startsWith('kie_') && (m.type === 'image_to_video' || m.model_type === 'image_to_video' || mid.includes('i2v'));
       } else if (activeTab === 'video-to-video') {
-         isSupported = mid.startsWith('kie_') && (mid.includes('v2v') || mid.includes('video-to-video') || n.includes('runway') || n.includes('kling'));
+         isSupported = mid.startsWith('kie_') && (m.type === 'video_to_video' || mid.includes('v2v') || mid.includes('video-to-video'));
+      } else if (activeTab === 'text-to-video') {
+         isSupported = m.type === 'text_to_video' || !m.type || m.type === 'unknown';
       }
+      
+      // EXTREME STRICT FILTER: Enforce kie.ai dominance across ALL generation tabs
+      if (isSupported && !mid.startsWith('kie_') && ['image-to-video', 'video-to-video', 'text-to-video'].includes(activeTab)) {
+          isSupported = false;
+      }
+      
       return { ...m, isSupported };
     });
 
@@ -472,7 +533,7 @@ const VideoPage = () => {
           uniqueModelsMap.set(key, m);
        }
     });
-    const baseModelsList = Array.from(uniqueModelsMap.values());
+    const baseModelsList = Array.from(uniqueModelsMap.values()).filter((m: any) => m.isSupported);
 
     const getBrand = (name: string): { name: string; icon: string } => {
       const n = name.toLowerCase();
@@ -510,18 +571,26 @@ const VideoPage = () => {
 
       if (!grouped[bName].baseModels[baseName]) {
         grouped[bName].baseModels[baseName] = {
-          id: m.id, // Representative ID
+          id: m.id,
           baseName: baseName,
           brand: bName,
           variants: [],
           representative: m
         };
+      } else {
+        // Always prefer kie_ models as representative (they have correct pricing)
+        const current = grouped[bName].baseModels[baseName];
+        if (m.id.startsWith('kie_') && !current.representative.id.startsWith('kie_')) {
+          current.representative = m;
+          current.id = m.id;
+        }
       }
       
       grouped[bName].baseModels[baseName].variants.push(m);
       localVariantsMap[baseName] = grouped[bName].baseModels[baseName].variants;
     });
 
+    // Derived brand list for sidebar
     const brandList = Object.values(grouped).map((b: any) => ({
       ...b,
       baseModels: Object.values(b.baseModels),
@@ -536,14 +605,7 @@ const VideoPage = () => {
       return b.count - a.count;
     });
 
-    // Reset selected brand if needed
-    if (selectedProvider && !grouped[selectedProvider] && !searchQuery) {
-      setSelectedProvider(brandList[0]?.id || null);
-    } else if (!selectedProvider && brandList.length > 0) {
-      setSelectedProvider(brandList[0].id);
-    }
-
-    // Filter base models for display
+    // Filter base models for display based on selected provider or search
     let displayBaseModels: any[] = [];
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -553,7 +615,11 @@ const VideoPage = () => {
         });
       });
     } else if (selectedProvider) {
-      displayBaseModels = grouped[selectedProvider]?.baseModels ? Object.values(grouped[selectedProvider].baseModels) : [];
+      // Look for the provider in our grouped object
+      const providerData = grouped[selectedProvider];
+      if (providerData) {
+        displayBaseModels = Object.values(providerData.baseModels);
+      }
     }
 
     const allAvailableModelsList: any[] = [];
@@ -583,6 +649,15 @@ const VideoPage = () => {
     };
   }, [rawModels, activeTab, searchQuery, selectedProvider]);
 
+  // Handle default provider selection in a safe side-effect
+  useEffect(() => {
+    if (brands.length > 0) {
+      if (!selectedProvider || !brands.find(b => b.id === selectedProvider)) {
+        setSelectedProvider(brands[0].id);
+      }
+    }
+  }, [brands, selectedProvider]);
+
   const models = filteredModels;
   // allAvailableModels is now properly grouped from useMemo destruct
   const allAvailableModelsSorted = useMemo(() => {
@@ -595,9 +670,20 @@ const VideoPage = () => {
     
     // 1. Try to find the exact model by ID
     const found = rawModels.find(m => m.id === modelId);
-    if (found) return found;
+    if (found) {
+      console.log('[VideoPage] selectedModel found:', found.id, 'credits:', found.credits, 'video_caps:', !!found.video_caps);
+      return found;
+    }
 
-    // 2. If not found (maybe ID changed), find any model from the same brand
+    // 2. Try kie_ prefixed version
+    const kieVersion = rawModels.find(m => m.id === `kie_${modelId}` || m.id.startsWith('kie_') && m.id.includes(modelId.replace('kie_', '')));
+    if (kieVersion) {
+      console.log('[VideoPage] selectedModel via kie_ match:', kieVersion.id);
+      return kieVersion;
+    }
+
+    // 3. Fallback to first model
+    console.warn('[VideoPage] Model not found for ID:', modelId, '- using fallback');
     return rawModels[0] || null;
   }, [rawModels, modelId]);
 
@@ -605,10 +691,31 @@ const VideoPage = () => {
   useEffect(() => {
     if (selectedModel) {
       setSelectedVersionName(selectedModel.version_name || "Standard");
-      setSelectedDuration(selectedModel.duration);
-      setSelectedResolution(selectedModel.resolution);
+      
+      // Use video_caps as the source of truth for durations/resolutions
+      const caps = selectedModel.video_caps;
+      if (caps) {
+        // Set duration from caps (model's actual supported durations)
+        const supportedDurations = caps.durations || selectedModel.durations || [5];
+        if (!supportedDurations.includes(selectedDuration)) {
+          setSelectedDuration(supportedDurations[0]);
+        }
+        // Set resolution from caps
+        const supportedResolutions = caps.resolutions || selectedModel.resolutions || ["720p", "1080p"];
+        if (!supportedResolutions.includes(selectedResolution)) {
+          setSelectedResolution(supportedResolutions[0]);
+        }
+      } else {
+        // Fallback for models without video_caps
+        const modelDurations = selectedModel.durations || [selectedModel.duration || 5];
+        if (!modelDurations.includes(selectedDuration)) {
+          setSelectedDuration(modelDurations[0]);
+        }
+        setSelectedResolution(selectedModel.resolution || "720p");
+      }
     }
   }, [selectedModel?.id]); // Only sync when the actual model identity changes
+
 
   // 2. Deterministic Pricing Logic
   const currentPrice = useMemo(() => {
@@ -616,39 +723,25 @@ const VideoPage = () => {
     const caps = selectedModel.video_caps;
     
     if (caps && caps.pricing) {
+        // Use selectedDuration if available, otherwise first supported duration
         const d = String(selectedDuration || (caps.durations?.[0] || 5));
         const r = selectedResolution || (caps.resolutions?.[0] || "720p");
         
+        // Try exact match first, then fallback to 720p for that duration
         const price = caps.pricing[d]?.[r] || caps.pricing[d]?.["720p"];
         if (price) return price;
+        
+        // If duration not found in pricing, try the first available duration
+        const firstDuration = Object.keys(caps.pricing)[0];
+        if (firstDuration) {
+          const fallbackPrice = caps.pricing[firstDuration]?.[r] || caps.pricing[firstDuration]?.["720p"];
+          if (fallbackPrice) return fallbackPrice;
+        }
     }
     
-    // Fallback to legacy calculation
-    const baseCredits = selectedModel.credits || 100;
-    const duration = selectedDuration || 5;
-    const resolution = (selectedResolution || "720p").toLowerCase();
-    const multipliers = { "720p": 1.0, "1080p": 1.5, "4k": 2.5 };
-    return Math.round(baseCredits * (duration/5) * (multipliers[resolution] || 1.0));
+    // Fallback to model credits directly (not hardcoded 100)
+    return selectedModel.credits || 0;
   }, [selectedModel, selectedDuration, selectedResolution]);
-
-  // 3. Deterministic Selection Reset
-  useEffect(() => {
-    if (selectedModel) {
-      const caps = selectedModel.video_caps;
-      if (caps) {
-        if (caps.durations && !caps.durations.includes(selectedDuration)) {
-          setSelectedDuration(caps.durations[0]);
-        }
-        if (caps.resolutions && !caps.resolutions.includes(selectedResolution)) {
-          setSelectedResolution(caps.resolutions[0]);
-        }
-      } else {
-        setSelectedDuration(selectedModel.duration || 5);
-        setSelectedResolution(selectedModel.resolution || "720p");
-      }
-    }
-  }, [selectedModel?.id]);
-
 
   // Calculate total credits for selected compare models
 
@@ -697,6 +790,11 @@ const VideoPage = () => {
   const handleGenerate = async () => {
     if (!prompt || !modelId) return;
 
+    if (liveCredits < currentPrice) {
+      setShowCreditsModal(true);
+      return;
+    }
+
     const enhancedPrompt = selectedStyle ? `${prompt}, ${selectedStyle} style` : prompt;
 
     // For I2V models, upload image first and get URL
@@ -733,11 +831,16 @@ const VideoPage = () => {
           return;
         }
 
-        // Validate URL is external (not local path)
+        // Validate URL is external (not relative path)
         if (imageUrl.startsWith('/api/') || imageUrl.startsWith('/files/')) {
-          console.error('[I2V] URL is local path, not public:', imageUrl);
-          alert(t('videoGen.localPathError'));
+          console.error('[I2V] URL is relative path, not public:', imageUrl);
+          alert("Lokal depolama algılandı. AI servislerinin görsele erişebilmesi için Supabase Storage (media bucket) yapılandırılmalıdır.");
           return;
+        }
+        
+        // Warning for localhost URLs
+        if (imageUrl.includes('localhost') || imageUrl.includes('127.0.0.1')) {
+          console.warn('[I2V] URL is on localhost. Generation may fail if server is not public via ngrok.', imageUrl);
         }
       } catch (error: any) {
         console.error('[I2V] Image upload failed:', error);
@@ -765,11 +868,16 @@ const VideoPage = () => {
           return;
         }
 
-        // Validate URL is external (not local path)
+        // Validate URL is external (not relative path)
         if (videoUrl.startsWith('/api/') || videoUrl.startsWith('/files/')) {
-          console.error('[V2V] URL is local path, not public:', videoUrl);
-          alert(t('videoGen.localPathError'));
+          console.error('[V2V] URL is relative path, not public:', videoUrl);
+          alert("Lokal depolama algılandı. AI servislerinin videoya erişebilmesi için Supabase Storage (media bucket) yapılandırılmalıdır.");
           return;
+        }
+        
+        // Warning for localhost URLs
+        if (videoUrl.includes('localhost') || videoUrl.includes('127.0.0.1')) {
+          console.warn('[V2V] URL is on localhost. Generation may fail if server is not public via ngrok.', videoUrl);
         }
       } catch (error: any) {
         console.error('[V2V] Video upload failed:', error);
@@ -816,24 +924,24 @@ const VideoPage = () => {
             <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white uppercase italic">
               {t('videoGen.title', 'Video ')}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-500">
-                {t('videoGen.highlight', 'Sentezleyici')}
+                {t('videoGen.titleHighlight', 'Sentezleyici')}
               </span>
             </h1>
             <p className="text-slate-400 text-sm max-w-xl font-medium uppercase tracking-wider opacity-80">
-              {t('videoGen.subtitle', 'Üst düzey yapay zeka modelleri ile metin ve görsellerinizi sinematik videolara dönüştürün.')}
+              {t('videoGen.desc', 'Üst düzey yapay zeka modelleri ile metin ve görsellerinizi sinematik videolara dönüştürün.')}
             </p>
           </div>
 
-          <div className="flex items-center gap-4 bg-black/40 p-1.5 rounded-2xl border border-white/5 backdrop-blur-xl">
-            <div className="flex flex-col items-end px-3">
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">System Credits</span>
-              <span className="text-sm font-black text-cyan-400">AVAILABLE</span>
+          <div className="flex items-center gap-6 bg-black/60 p-2.5 rounded-[2rem] border border-white/10 backdrop-blur-3xl shadow-2xl">
+            <div className="flex flex-col items-end px-5">
+              <span className="text-[9px] text-slate-600 font-black uppercase tracking-widest mb-1">AVAILABLE SYNTHESIS POWER</span>
+              <span className="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-500 tracking-tighter italic">{liveCredits} {t('common.credits', 'Credits')}</span>
             </div>
             <button
-              onClick={() => navigate('/billing')}
-              className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-cyan-500/20"
+              onClick={() => navigate('/credits')}
+              className="px-6 py-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-cyan-600/30 border-t border-white/10 active:scale-95"
             >
-              Top Up
+              INITIALIZE RECHARGE
             </button>
           </div>
         </div>
@@ -883,11 +991,11 @@ const VideoPage = () => {
              dragElastic={0.2}
              dragDirectionLock
              onDragEnd={handleDragEnd}
-             className="grid grid-cols-1 lg:grid-cols-3 gap-6 touch-pan-y"
+             className="grid grid-cols-1 lg:grid-cols-12 gap-6 touch-pan-y"
           >
 
             {/* Left Panel - Model Selection */}
-            <div className="lg:col-span-1 space-y-6">
+            <div className="lg:col-span-3 space-y-6">
               <div className="bg-black/40 backdrop-blur-xl rounded-3xl border border-white/5 p-6 shadow-2xl">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
@@ -950,7 +1058,7 @@ const VideoPage = () => {
                       return (
                         <div
                           key={model.id}
-                          onClick={() => isSupported && setModelId(model.id)}
+                          onClick={() => isSupported && setModelId(model.representative.id)}
                           className={`relative p-4 rounded-2xl transition-all border-2 group cursor-pointer overflow-hidden ${
                             !isSupported ? 'opacity-30 grayscale cursor-not-allowed border-white/5' :
                             isSelected ? 'border-cyan-500 bg-cyan-500/10 shadow-[0_0_20px_rgba(6,182,212,0.1)]' :
@@ -962,7 +1070,19 @@ const VideoPage = () => {
                               {model.baseName}
                             </h4>
                             <span className="text-[10px] font-black text-cyan-400 uppercase tracking-widest">
-                              {model.representative.credits} ZEX
+                              {(() => {
+                                // Get price from video_caps.pricing (most reliable)
+                                const caps = model.representative.video_caps;
+                                if (caps?.pricing) {
+                                  const firstDur = Object.keys(caps.pricing)[0];
+                                  if (firstDur) {
+                                    const firstRes = Object.keys(caps.pricing[firstDur])[0];
+                                    if (firstRes) return caps.pricing[firstDur][firstRes];
+                                  }
+                                }
+                                // Fallback to credits
+                                return model.representative.credits || 0;
+                              })()} {t('common.credits', 'Credits')}
                             </span>
                           </div>
 
@@ -993,328 +1113,223 @@ const VideoPage = () => {
               </div>
             </div>
 
+            {/* Right Panel - Creation & Parameters (9/12) */}
+            <div className="lg:col-span-9 grid grid-cols-1 xl:grid-cols-5 gap-6">
 
-            {/* Right Panel - Creation */}
-            <div className="lg:col-span-2 space-y-6">
-
-              {/* Selected Model Info */}
-              {selectedModel && (
-                <div className="bg-black/40 backdrop-blur-xl rounded-3xl p-6 border border-white/5 relative overflow-hidden group shadow-2xl">
-                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-3">
-                        <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter">{selectedModel.name}</h3>
-                        <span className="px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/20 rounded-md text-[9px] font-black text-cyan-400 uppercase tracking-widest">
-                          {selectedModel.provider || 'AI ENGINE'}
-                        </span>
-                      </div>
-                      <p className="text-slate-400 text-xs font-medium uppercase tracking-wider opacity-60 line-clamp-1">{selectedModel.description}</p>
-                    </div>
-                    <div className="flex items-center gap-6">
-                      <div className="text-right">
-                        <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">TOTAL COST</div>
-                        <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-500 leading-none">{currentPrice} ZEX</div>
-                      </div>
-                      <div className="h-10 w-px bg-white/5" />
-                      <div className="text-right">
-                        <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">DYNAMICS</div>
-                        <div className="text-xs font-black text-white uppercase tracking-widest">{selectedDuration || selectedModel.duration}S / {selectedResolution || selectedModel.resolution}</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Input Section - Changes based on content type */}
-              <div className="bg-black/40 backdrop-blur-xl rounded-3xl border border-white/5 overflow-hidden shadow-2xl">
-
-                {/* Image Upload for Image-to-Video */}
-                {activeTab === "image-to-video" && (
-                  <div className="p-6 border-b border-white/5">
-                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                      <Image className="w-3.5 h-3.5 text-blue-400" />
-                      02. {t('videoGen.startImage', 'INITIAL SOURCE IMAGE')}
-                    </h3>
-                    <div
-                      onClick={() => imageInputRef.current?.click()}
-                      className={`relative aspect-video rounded-2xl border-2 border-dashed transition-all cursor-pointer group flex flex-col items-center justify-center overflow-hidden
-                        ${imagePreview ? 'border-cyan-500 bg-cyan-500/5' : 'border-white/10 hover:border-cyan-500/50 hover:bg-cyan-500/5'}`}
-                    >
-                      {imagePreview ? (
-                        <>
-                          <img src={imagePreview} className="absolute inset-0 w-full h-full object-cover" alt="Preview" />
-                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center backdrop-blur-[2px]">
-                            <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-white text-[10px] font-black tracking-widest border border-white/20">
-                              <RefreshCw className="w-3 h-3" /> {t('videoGen.changeImage', 'REPLACE')}
-                            </div>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="text-center">
-                          <div className="w-12 h-12 bg-cyan-500/10 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform border border-cyan-500/20">
-                            <Upload className="w-6 h-6 text-cyan-400" />
-                          </div>
-                          <p className="text-white font-black text-[10px] uppercase tracking-widest">{t('videoGen.uploadImage', 'UPLOAD SOURCE')}</p>
-                          <p className="text-[9px] text-slate-500 mt-2 uppercase tracking-tighter">{t('videoGen.uploadImageDesc', 'JPG, PNG OR WEBP')}</p>
-                        </div>
-                      )}
-                      <input type="file" ref={imageInputRef} onChange={handleImageSelect} accept="image/*" className="hidden" />
-                    </div>
-                  </div>
-                )}
-
-                {/* Video Upload for Video-to-Video */}
-                {activeTab === "video-to-video" && (
-                  <div className="p-6 border-b border-white/5">
-                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                      <Film className="w-3.5 h-3.5 text-purple-400" />
-                      02. {t('videoGen.startVideo', 'INITIAL SOURCE VIDEO')}
-                    </h3>
-                    <div
-                      onClick={() => videoInputRef.current?.click()}
-                      className={`relative aspect-video rounded-2xl border-2 border-dashed transition-all cursor-pointer group flex flex-col items-center justify-center overflow-hidden
-                        ${videoFile ? 'border-purple-500 bg-purple-500/5' : 'border-white/10 hover:border-purple-500/50 hover:bg-purple-500/5'}`}
-                    >
-                      <input
-                        type="file"
-                        ref={videoInputRef}
-                        accept="video/*"
-                        className="hidden"
-                        onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
-                      />
-                      {videoFile ? (
-                        <div className="flex flex-col items-center">
-                          <Check className="w-10 h-10 text-purple-500 mb-2" />
-                          <p className="text-white font-black text-[10px] uppercase tracking-widest">{videoFile.name}</p>
-                          <p className="text-[9px] text-slate-500 mt-1 uppercase tracking-widest">{t('videoGen.uploadChangeImage', 'CLICK TO REPLACE')}</p>
-                        </div>
-                      ) : (
-                        <div className="text-center">
-                          <div className="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform border border-purple-500/20">
-                            <Upload className="w-6 h-6 text-purple-400" />
-                          </div>
-                          <p className="text-white font-black text-[10px] uppercase tracking-widest">{t('videoGen.uploadVideo', 'UPLOAD SOURCE')}</p>
-                          <p className="text-[9px] text-slate-500 mt-2 uppercase tracking-tighter">MP4, MOV, WEBM</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Parameters Section */}
+              {/* Parameter Deck (3/5 of right side) */}
+              <div className="xl:col-span-3 space-y-6">
+                {/* Selected Model Info */}
                 {selectedModel && (
-                  <div className="bg-black/20 p-8 space-y-10">
-                    {/* Generation Parameters */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                      {/* Model Version & Duration */}
-                      <div className="space-y-8">
-                        <div className="space-y-4">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                            <Crown className="w-3.5 h-3.5 text-cyan-400" />
-                            SYSTEM VERSION
-                          </label>
-                          <div className="flex flex-wrap gap-2">
-                            {(selectedModel.variants || []).map((v: any) => (
-                              <button
-                                key={v.id}
-                                onClick={() => setModelId(v.id)}
-                                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border
-                                  ${modelId === v.id
-                                    ? 'bg-cyan-600 border-cyan-500 text-white shadow-lg shadow-cyan-600/20'
-                                    : 'bg-black/40 border-white/5 text-slate-500 hover:text-slate-300'}`}
-                              >
-                                {v.version_name || 'STANDARD'}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="space-y-4">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                            <Clock className="w-3.5 h-3.5 text-blue-400" />
-                            TEMPORAL DURATION
-                          </label>
-                          <div className="flex flex-wrap gap-2">
-                            {(selectedModel.video_caps?.durations || selectedModel.durations || [5, 10, 15]).map((d: number) => (
-                              <button
-                                key={d}
-                                onClick={() => setSelectedDuration(d)}
-                                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border
-                                  ${selectedDuration === d
-                                    ? 'bg-cyan-600 border-cyan-500 text-white shadow-lg shadow-cyan-600/20'
-                                    : 'bg-black/40 border-white/5 text-slate-500 hover:text-slate-300'}`}
-                              >
-                                {d} SECONDS
-                              </button>
-                            ))}
-                          </div>
+                  <div className="bg-black/40 backdrop-blur-xl rounded-3xl p-6 border border-white/5 relative overflow-hidden group shadow-2xl">
+                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="flex items-center justify-between relative">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-3">
+                          <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">{selectedModel.name}</h3>
+                          <span className="px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/20 rounded-md text-[8px] font-black text-cyan-400 uppercase tracking-widest">
+                            {(() => {
+                              const p = (selectedModel.provider || '').toLowerCase();
+                              if (p.includes('kie')) return 'ZexAi Premium';
+                              if (p.includes('replicate')) return 'ZexAi Neural';
+                              if (p.includes('pollo')) return 'ZexAi Creative';
+                              return selectedModel.provider || 'ZexAi';
+                            })()}
+                          </span>
                         </div>
                       </div>
-
-                      {/* Resolution & Aspect */}
-                      <div className="space-y-8">
-                        <div className="space-y-4">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                            <Maximize className="w-3.5 h-3.5 text-purple-400" />
-                            PRODUCTION FIDELITY
-                          </label>
-                          <div className="flex flex-wrap gap-2">
-                            {(selectedModel.video_caps?.resolutions || selectedModel.resolutions || ["720p", "1080p", "4K"]).map((r: string) => (
-                              <button
-                                key={r}
-                                onClick={() => setSelectedResolution(r)}
-                                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border
-                                  ${selectedResolution === r
-                                    ? 'bg-cyan-600 border-cyan-500 text-white shadow-lg shadow-cyan-600/20'
-                                    : 'bg-black/40 border-white/5 text-slate-500 hover:text-slate-300'}`}
-                                >
-                                {r}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="space-y-4">
-                          <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                            <Layout className="w-3.5 h-3.5 text-indigo-400" />
-                            ASPECT RATIO
-                          </label>
-                          <div className="flex flex-wrap gap-2">
-                            {["16:9", "9:16", "1:1", "21:9"].map((a) => (
-                              <button
-                                key={a}
-                                onClick={() => setAspectRatio(a)}
-                                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border
-                                  ${aspectRatio === a
-                                    ? 'bg-cyan-600 border-cyan-500 text-white shadow-lg shadow-cyan-600/20'
-                                    : 'bg-black/40 border-white/5 text-slate-500 hover:text-slate-300'}`}
-                              >
-                                {a}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-500 leading-none">{currentPrice} {t('common.credits', 'Credits')}</div>
                       </div>
-                    </div>
-
-                    {/* Prompt Section */}
-                    <div className="space-y-6 pt-6 border-t border-white/5">
-                      <div className="flex items-center justify-between">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                          <Zap className="w-3.5 h-3.5 text-cyan-400" />
-                          SYNTHESIS COMMAND (PROMPT)
-                        </label>
-                        <PromptEnhancer onEnhanced={(newPrompt) => setPrompt(newPrompt)} contentType="video" currentPrompt={prompt} />
-                      </div>
-                      <div className="relative group">
-                        <textarea
-                          value={prompt}
-                          onChange={(e) => setPrompt(e.target.value)}
-                          placeholder={t('videoGen.promptPlaceholder', 'Enter synthesis instructions...')}
-                          className="w-full h-40 p-6 bg-black/40 border border-white/5 rounded-3xl text-slate-200 placeholder-slate-600 focus:ring-1 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all resize-none text-sm leading-relaxed"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Generate Button */}
-                    <div className="pt-6 border-t border-white/5 flex gap-4">
-                      <button
-                        onClick={() => {
-                          setPrompt("");
-                          setImageFile(null);
-                          setVideoFile(null);
-                          setImagePreview("");
-                        }}
-                        className="px-6 bg-white/5 border border-white/5 text-slate-500 rounded-2xl hover:text-white transition-all"
-                        title="RESET"
-                      >
-                        <RotateCcw className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={handleGenerate}
-                        disabled={isGenerating || !prompt || !modelId ||
-                          (activeTab === "image-to-video" && !imageFile) ||
-                          (activeTab === "video-to-video" && !videoFile)
-                        }
-                        className="flex-1 py-5 bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-black text-xs rounded-2xl shadow-xl shadow-cyan-500/20 transition-all flex items-center justify-center gap-3 uppercase tracking-[0.3em] border-t border-white/10"
-                      >
-                        {isGenerating ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            {t('videoGen.generating', 'INITIALIZING SYNTHESIS...')}
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="w-4 h-4" />
-                            {activeTab === "text-to-video" && t('videoGen.generateBtnT2V', "EXECUTE PRODUCTION")}
-                            {activeTab === "image-to-video" && t('videoGen.generateBtnI2V', "ANIMATE SOURCE")}
-                            {activeTab === "video-to-video" && t('videoGen.generateBtnV2V', "TRANSFORM SIGNAL")}
-                          </>
-                        )}
-                      </button>
                     </div>
                   </div>
                 )}
-              </div>
-            </div>
 
-            {/* Inline Video Preview - Shows generated video on same screen */}
-            {currentTask && (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
-                <div className="p-4 border-b border-gray-100 dark:border-gray-700">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                      <Video className="w-5 h-5 text-purple-500" />
-                      {t('videoGen.previewTitle', 'Üretilen Video')}
-                    </h3>
-                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${currentTask.status === 'completed' ? 'bg-green-100 text-green-700' :
-                      currentTask.status === 'processing' ? 'bg-yellow-100 text-yellow-700' :
-                        currentTask.status === 'failed' ? 'bg-red-100 text-red-700' :
-                          'bg-purple-100 text-purple-700'
-                      }`}>
-                      {currentTask.status === 'completed' ? t('videoGen.statusCompleted', '✓ Hazır') :
-                        currentTask.status === 'processing' ? t('videoGen.statusProcessing', '⏳ İşleniyor') :
-                          currentTask.status === 'failed' ? t('videoGen.statusFailed', '✗ Hata') :
-                            t('videoGen.statusPending', '⏳ Bekliyor')}
-                    </div>
-                  </div>
-                </div>
-                <div className="aspect-video bg-gray-900 relative">
-                  {currentTask.videoUrl ? (
-                    <video
-                      src={currentTask.videoUrl}
-                      className="w-full h-full object-contain"
-                      controls
-                      autoPlay
-                    />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-white">
-                      <Loader2 className="w-12 h-12 animate-spin text-purple-500 mb-4" />
-                      <p className="text-sm text-gray-400">{t('videoGen.previewGenerating', 'Video üretiliyor...')}</p>
-                      <p className="text-xs text-gray-500 mt-2 max-w-md text-center px-4">{currentTask.prompt || t('videoGen.previewWait', 'Oluşturuluyor...')}</p>
+                {/* Input Area */}
+                <div className="bg-black/40 backdrop-blur-xl rounded-3xl border border-white/5 overflow-hidden shadow-2xl">
+                  {/* Source Asset Canvas (Visible in I2V or V2V) */}
+                  {(activeTab === "image-to-video" || activeTab === "video-to-video") && (
+                    <div className="p-6 border-b border-white/5 bg-gradient-to-b from-cyan-500/5 to-transparent">
+                      {activeTab === "image-to-video" ? (
+                        <div
+                          onClick={() => imageInputRef.current?.click()}
+                          className={`relative aspect-video rounded-2xl border-2 border-dashed transition-all cursor-pointer group flex flex-col items-center justify-center overflow-hidden
+                            ${imagePreview ? 'border-cyan-500 bg-cyan-500/5' : 'border-white/10 hover:border-cyan-500/50 hover:bg-cyan-500/5'}`}
+                        >
+                          {imagePreview ? (
+                            <>
+                              <img src={imagePreview} className="absolute inset-0 w-full h-full object-cover" alt="Preview" />
+                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center backdrop-blur-[2px]">
+                                <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-white text-[10px] font-black tracking-widest border border-white/20 uppercase">
+                                  <RefreshCw className="w-3 h-3" /> Change Signal
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="text-center">
+                              <Upload className="w-8 h-8 text-cyan-400 mx-auto mb-3" />
+                              <p className="text-white font-black text-[10px] uppercase tracking-widest">Upload Source Image</p>
+                            </div>
+                          )}
+                          <input type="file" ref={imageInputRef} onChange={handleImageSelect} accept="image/*" className="hidden" />
+                        </div>
+                      ) : (
+                        <div
+                          onClick={() => videoInputRef.current?.click()}
+                          className={`relative aspect-video rounded-2xl border-2 border-dashed transition-all cursor-pointer group flex flex-col items-center justify-center overflow-hidden
+                            ${videoFile ? 'border-purple-500 bg-purple-500/5' : 'border-white/10 hover:border-purple-500/50 hover:bg-purple-500/5'}`}
+                        >
+                          {videoFile ? (
+                            <div className="text-center">
+                              <Check className="w-8 h-8 text-purple-500 mx-auto mb-3" />
+                              <p className="text-white font-black text-[10px] uppercase tracking-widest truncate max-w-[200px]">{videoFile.name}</p>
+                            </div>
+                          ) : (
+                            <div className="text-center">
+                              <Upload className="w-8 h-8 text-purple-400 mx-auto mb-3" />
+                              <p className="text-white font-black text-[10px] uppercase tracking-widest">Upload Source Video</p>
+                            </div>
+                          )}
+                          <input type="file" ref={videoInputRef} onChange={(e) => setVideoFile(e.target.files?.[0] || null)} accept="video/*" className="hidden" />
+                        </div>
+                      )}
                     </div>
                   )}
-                </div>
-                {currentTask.videoUrl && (
-                  <div className="p-4 flex gap-2">
-                    <a
-                      href={currentTask.videoUrl}
-                      download
-                      className="flex-1 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center justify-center gap-2 text-sm font-medium"
-                    >
-                      <Download className="w-4 h-4" /> {t('videoGen.download', 'İndir')}
-                    </a>
+
+                  {/* Settings Tray */}
+                  <div className="p-6 space-y-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-3">
+                        <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                          <Clock className="w-3 h-3 text-blue-400" /> Duration
+                        </label>
+                        <div className="flex gap-1.5">
+                          {(selectedModel?.video_caps?.durations || [5, 10]).map((d: number) => (
+                            <button
+                              key={d}
+                              onClick={() => setSelectedDuration(d)}
+                              className={`flex-1 py-2 rounded-xl text-[10px] font-black transition-all border ${selectedDuration === d ? 'bg-cyan-600 border-cyan-500 text-white shadow-lg shadow-cyan-600/20' : 'bg-black/40 border-white/5 text-slate-500 hover:bg-white/5'}`}
+                            >
+                              {d}S
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                          <Layout className="w-3 h-3 text-indigo-400" /> Ratio
+                        </label>
+                        <div className="flex gap-1.5">
+                          {["16:9", "9:16", "1:1"].map(a => (
+                            <button
+                              key={a}
+                              onClick={() => setAspectRatio(a)}
+                              className={`flex-1 py-2 rounded-xl text-[10px] font-black transition-all border ${aspectRatio === a ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-600/20' : 'bg-black/40 border-white/5 text-slate-500 hover:bg-white/5'}`}
+                            >
+                              {a}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 pt-4 border-t border-white/5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                          <Zap className="w-3 h-3 text-yellow-400" /> Command
+                        </label>
+                        <PromptEnhancer onSelectPrompt={(newPrompt) => setPrompt(newPrompt)} contentType="video" currentPrompt={prompt} />
+                      </div>
+                      <textarea
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        placeholder="ENTER PRODUCTION INSTRUCTIONS..."
+                        className="w-full h-32 p-5 bg-black/40 border border-white/10 rounded-2xl text-slate-200 placeholder-slate-700 text-xs font-medium leading-relaxed resize-none focus:border-cyan-500/50 outline-none transition-all scrollbar-hide"
+                      />
+                    </div>
+
                     <button
-                      onClick={() => setCurrentTask(null)}
-                      className="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg text-sm font-medium"
+                      onClick={handleGenerate}
+                      disabled={isGenerating || !prompt || !modelId}
+                      className="w-full py-4 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 disabled:from-slate-800 disabled:to-slate-900 disabled:text-slate-600 text-white font-black text-[10px] rounded-xl shadow-xl shadow-cyan-500/10 transition-all flex items-center justify-center gap-3 uppercase tracking-[0.3em] border-t border-white/10"
                     >
-                      {t('videoGen.close', 'Kapat')}
+                      {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                      {isGenerating ? 'Synthesizing...' : 'Execute Production'}
                     </button>
                   </div>
-                )}
+                </div>
               </div>
-            )}
+
+              {/* Studio Monitor (2/5 of right side) */}
+              <div className="xl:col-span-2">
+                <div className="bg-black/60 backdrop-blur-2xl rounded-3xl border border-white/10 overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] h-full min-h-[500px] flex flex-col relative group/monitor">
+                  {/* Monitor Header */}
+                  <div className="p-4 border-b border-white/5 flex items-center justify-between bg-white/[0.02] relative z-10">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full animate-pulse ${currentTask ? 'bg-red-500' : 'bg-slate-700'}`} />
+                      <span className="text-[9px] font-black text-white uppercase tracking-[0.2em]">Live Output Monitor</span>
+                    </div>
+                  </div>
+
+                  {/* Monitor Display */}
+                  <div className="flex-1 relative flex items-center justify-center bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-900 via-black to-black overflow-hidden">
+                    <AnimatePresence mode="wait">
+                      {currentTask ? (
+                        <motion.div 
+                          key="studio-result"
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="w-full h-full flex flex-col z-10"
+                        >
+                          <div className="flex-1 relative flex items-center justify-center p-4">
+                            {currentTask.videoUrl ? (
+                              <div className="relative w-full h-full rounded-xl overflow-hidden border border-white/5 shadow-2xl">
+                                <video 
+                                  src={currentTask.videoUrl} 
+                                  className="w-full h-full object-contain" 
+                                  controls 
+                                  autoPlay 
+                                  loop
+                                />
+                              </div>
+                            ) : (
+                              <div className="flex flex-col items-center justify-center p-8 text-center">
+                                <Loader2 className="w-12 h-12 text-cyan-500 animate-spin mb-4" />
+                                <h4 className="text-white font-black text-xs uppercase tracking-widest mb-2">Synthesizing</h4>
+                                <p className="text-slate-500 text-[9px] uppercase tracking-tighter">Neural engine is constructing frames...</p>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {currentTask.videoUrl && (
+                            <div className="p-4 bg-white/[0.03] border-t border-white/5 flex items-center gap-2">
+                              <button 
+                                onClick={async () => {
+                                  window.open(currentTask.videoUrl, '_blank');
+                                }}
+                                className="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl text-[9px] font-black uppercase tracking-widest border border-white/10 transition-all flex items-center justify-center gap-2"
+                              >
+                                <Download className="w-3 h-3" /> Export MP4
+                              </button>
+                              <button 
+                                onClick={() => setCurrentTask(null)}
+                                className="p-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl border border-red-500/20"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          )}
+                        </motion.div>
+                      ) : (
+                        <div className="text-center opacity-10">
+                          <Film className="w-20 h-20 text-slate-500 mx-auto mb-4" />
+                          <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em]">Monitor Offline</p>
+                        </div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              </div>
+            </div>
           </motion.div>
         )}
 
@@ -1382,7 +1397,7 @@ const VideoPage = () => {
                           </div>
                         </div>
                         <div className="text-[10px] font-black text-orange-400 uppercase tracking-widest">
-                          {model.representative.credits} ZEX
+                          {model.representative.credits} {t('common.credits', 'Credits')}
                         </div>
                       </div>
                     </button>
@@ -1397,7 +1412,7 @@ const VideoPage = () => {
                         {selectedCompareModels.length} NODES SELECTED
                       </span>
                       <span className="text-sm font-black text-white">
-                        {totalCompareCredits} ZEX
+                        {totalCompareCredits} {t('common.credits', 'Credits')}
                       </span>
                     </div>
                   </div>
@@ -2107,16 +2122,16 @@ const VideoPage = () => {
                             <Download className="w-3.5 h-3.5" />
                           </button>
 
-                          {/* Share to Earn - Twitter */}
+                           {/* Share to Earn - Twitter */}
                           <button
                             onClick={(e) => {
-                              window.open(`https://twitter.com/intent/tweet?text=ZexAI ile ürettiğim muhteşem videoya göz atın! 🚀&url=${encodeURIComponent(video.url || video.file_url)}`, '_blank');
+                              window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(t('share.twitterText', 'Check out the amazing video I created with ZexAI! 🚀'))}&url=${encodeURIComponent(video.url || video.file_url)}`, '_blank');
                               apiService.post('/social/share', { content_type: 'video', content_id: video.id, platform: 'twitter' })
                                 .then((response) => {
                                   const data = response?.data || response;
                                   if (data?.reward_granted) {
                                     queryClient.invalidateQueries({ queryKey: ["userCredits"] });
-                                    alert('🎉 Harika! X (Twitter) paylaşımınız için hesabınıza 5 AI Kredisi eklendi!');
+                                    alert(t('share.twitterRewardSuccess', '🎉 Awesome! 5 AI Credits have been added to your account for your X (Twitter) share!'));
                                   }
                                 })
                                 .catch((err) => { console.log('Reward already claimed or error', err); });
@@ -2125,7 +2140,7 @@ const VideoPage = () => {
                             title="X (TWITTER) SHARE"
                           >
                             <span className="text-white">𝕏</span>
-                            <span className="text-cyan-400">+5 ZEX</span>
+                            <span className="text-cyan-400">+5 {t('common.credits', 'Credits')}</span>
                           </button>
 
                           {/* Share to Earn - Facebook */}
@@ -2137,7 +2152,7 @@ const VideoPage = () => {
                                   const data = response?.data || response;
                                   if (data?.reward_granted) {
                                     queryClient.invalidateQueries({ queryKey: ["userCredits"] });
-                                    alert('Facebook üzerinden paylaştığınız için 5 kredi kazandınız!');
+                                    alert(t('share.facebookRewardSuccess', '🎉 Awesome! 5 AI Credits have been added to your account for your Facebook share!'));
                                   }
                                 })
                                 .catch((err) => { console.log('Reward already claimed or error', err); });
@@ -2146,7 +2161,7 @@ const VideoPage = () => {
                             title="FACEBOOK SHARE"
                           >
                             <span className="text-blue-500 font-bold">f</span>
-                            <span className="text-blue-400">+15 ZEX</span>
+                            <span className="text-blue-400">+15 {t('common.credits', 'Credits')}</span>
                           </button>
                           <div className="flex items-center gap-3 ml-auto">
                             <button
@@ -2213,6 +2228,14 @@ const VideoPage = () => {
           setSelectedVideoForNft(null);
         }}
         image={selectedVideoForNft}
+      />
+
+      {/* Insufficient Credits Modal */}
+      <InsufficientCreditsModal
+        isOpen={showCreditsModal}
+        onClose={() => setShowCreditsModal(false)}
+        requiredCredits={currentPrice}
+        currentCredits={liveCredits}
       />
     </div>
   );

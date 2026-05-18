@@ -9,6 +9,8 @@ const languages = [
     { code: 'es', name: 'Español' },
     { code: 'zh', name: '中文' },
     { code: 'tr', name: 'Türkçe' },
+    { code: 'ru', name: 'Русский' },
+    { code: 'ar', name: 'العربية' },
     { code: 'su', name: '𒅴𒂠 (Sumerian)' },
 ];
 

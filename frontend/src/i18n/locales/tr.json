@@ -50,7 +50,8 @@
     "horizontal": "Yatay",
     "vertical": "Dikey",
     "square": "Kare",
-    "discount": "İNDİRİM"
+    "discount": "İNDİRİM",
+    "credits": "Kredi"
   },
   "settings": {
     "title": "Hesap Tercihleri",
@@ -739,7 +740,7 @@
     "errorOccurred": "Oluşturma hatası",
     "generationComplete": "Üretim tamamlandı",
     "effectsTitle": "AI Efekt Kütüphanesi",
-    "effectsDesc": "Viral Pollo AI efektleri ile videonuzu dönüştürün",
+    "effectsDesc": "Viral ZexAi efektleri ile videonuzu dönüştürün",
     "examplePreview": "Örnek Önizleme",
     "viralBadge": "Viral",
     "magicBadge": "Sihirli",
@@ -1116,5 +1117,12 @@
     "addPolygon": "Lütfen MetaMask'a Polygon Mainnet ağını ekleyin.",
     "selectPolygon": "Lütfen cüzdanınızdan Polygon Mainnet ağını seçin.",
     "noWallet": "Cüzdan bağlantısı bulunamadı veya ağ desteklenmiyor."
+  },
+  "credits": {
+    "insufficientTitle": "Yetersiz Bakiye",
+    "insufficientSubtitle": "YETERSİZ BAKİYE",
+    "requiredCost": "Gerekli Kredi",
+    "availableBalance": "Mevcut Kredi",
+    "rechargeNowBtn": "Kredi Yükle"
   }
 }

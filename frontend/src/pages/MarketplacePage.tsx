@@ -76,6 +76,15 @@ const SORT_OPTIONS = [
     { value: 'price_high', label: '💎 Pahalıdan Ucuza' },
 ];
 
+const formatProviderName = (name: string | null) => {
+    if (!name) return 'ZexAi';
+    const lowercase = name.toLowerCase();
+    if (lowercase.includes('kie.ai') || lowercase.includes('kie')) return 'ZexAi Premium';
+    if (lowercase.includes('replicate')) return 'ZexAi Neural';
+    if (lowercase.includes('pollo.ai') || lowercase.includes('pollo')) return 'ZexAi Creative';
+    return name;
+};
+
 const MarketplacePage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [models, setModels] = useState<MarketplaceModel[]>([]);
@@ -222,7 +231,7 @@ const MarketplacePage: React.FC = () => {
                 <div className="text-white">
                     <span className="text-2xl">{CATEGORY_ICONS[model.category] || '✨'}</span>
                     <h3 className="text-lg font-bold mt-2 truncate">{model.name}</h3>
-                    <p className="text-purple-200 text-sm">{model.provider_name || 'Unknown'}</p>
+                    <p className="text-purple-200 text-sm">{formatProviderName(model.provider_name)}</p>
                 </div>
             </div>
 
@@ -307,7 +316,7 @@ const MarketplacePage: React.FC = () => {
                         </button>
                         <span className="text-4xl">{CATEGORY_ICONS[selectedModel.category] || '✨'}</span>
                         <h2 className="text-2xl font-bold mt-3">{selectedModel.name}</h2>
-                        <p className="text-purple-200">{selectedModel.provider_name}</p>
+                        <p className="text-purple-200">{formatProviderName(selectedModel.provider_name)}</p>
                     </div>
 
                     {/* Content */}
