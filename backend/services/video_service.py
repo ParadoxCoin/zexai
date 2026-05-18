@@ -223,7 +223,7 @@ class VideoService:
             # Create generation record
             generation_record = {
                 "id": task_id,
-                "user_id": current_user.id,
+                "user_id": str(current_user.id),
                 "type": "video",
                 "prompt": request.prompt,
                 "model_id": request.model_id,
