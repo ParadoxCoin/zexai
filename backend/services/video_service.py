@@ -100,8 +100,9 @@ class VideoService:
         Get provider for model.
         First checks database for admin override, then uses default mapping.
         """
-        # TODO: Check database for admin-set provider
-        # This allows admin panel to change provider for a model
+        # Automatically map all kie_ models to "kie" provider
+        if model_id.startswith("kie_"):
+            return self.MODEL_PROVIDER_MAP.get(model_id, "kie")
         return self.MODEL_PROVIDER_MAP.get(model_id, "fal")
     
     async def _get_api_key_async(self, provider: str) -> str:
@@ -229,7 +230,7 @@ class VideoService:
                 "status": "pending",
                 "provider": provider,
                 "provider_task_id": result.task_id,
-                "credits_used": credits_required,
+                "credits_cost": credits_required,
                 "created_at": datetime.utcnow().isoformat(),
                 "metadata": {
                     "duration": request.duration,

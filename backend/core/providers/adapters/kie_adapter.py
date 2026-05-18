@@ -67,6 +67,13 @@ class KieAIAdapter(BaseVideoAdapter):
         
         # Image to video
         "kie_kling26_i2v": {"model": "kling-2.6/image-to-video", "endpoint": "jobs"},
+        "kie_runway_i2v": {"model": "runway/aleph-image-to-video", "endpoint": "jobs"},
+        "kie_luma_ray_i2v": {"model": "luma/ray-image-to-video", "endpoint": "jobs"},
+        "kie_hailuo_i2v": {"model": "hailuo/02-image-to-video", "endpoint": "jobs"},
+        
+        # Video to video
+        "kie_kling26_v2v": {"model": "kling-2.6/video-to-video", "endpoint": "jobs"},
+        "kie_runway_v2v": {"model": "runway/aleph-video-to-video", "endpoint": "jobs"},
     }
     
     # Aspect ratio mappings
@@ -103,24 +110,22 @@ class KieAIAdapter(BaseVideoAdapter):
             raise ValueError(f"Model {model_id} not supported by Kie.ai adapter")
         return config
     
-    async def generate_video(self, params: VideoGenerationParams) -> VideoGenerationResult:
-        """Start video generation via Kie.ai"""
+    def transform_params(self, params: VideoGenerationParams) -> Dict[str, Any]:
+        """
+        Transform standardized params to provider-specific format.
+        (Implemented to satisfy abstract base class requirement)
+        """
         config = self._get_model_config(params.model_id)
         model_name = config["model"]
         endpoint_type = config["endpoint"]
         
-        # Build request based on endpoint type
         if endpoint_type == "veo":
-            # Veo uses flat structure at /veo/generate
-            url = f"{self.base_url}/veo/generate"
             request_data = {
                 "prompt": params.prompt,
                 "model": model_name,
                 "aspectRatio": self.ASPECT_RATIOS.get(params.aspect_ratio, "16:9"),
             }
         else:
-            # Jobs endpoint uses /jobs/createTask with input wrapper
-            url = f"{self.base_url}/jobs/createTask"
             request_data = {
                 "model": model_name,
                 "input": {
@@ -130,15 +135,43 @@ class KieAIAdapter(BaseVideoAdapter):
                 }
             }
             
-            # Add sound for audio models
             if "audio" in params.model_id:
                 request_data["input"]["sound"] = True
             else:
                 request_data["input"]["sound"] = False
             
-            # Add image for i2v
             if params.image_url:
-                request_data["input"]["imageUrl"] = params.image_url
+                if "kling" in params.model_id.lower() and "i2v" in params.model_id.lower():
+                    request_data["input"]["image_urls"] = [params.image_url]
+                elif "hailuo" in params.model_id.lower() and "i2v" in params.model_id.lower():
+                    request_data["input"]["image_url"] = params.image_url
+                elif "runway" in params.model_id.lower() and "i2v" in params.model_id.lower():
+                    request_data["input"]["image_url"] = params.image_url
+                elif "luma" in params.model_id.lower() and "i2v" in params.model_id.lower():
+                    request_data["input"]["image_url"] = params.image_url
+                else:
+                    request_data["input"]["imageUrl"] = params.image_url
+                    
+            if getattr(params, 'video_url', None):
+                if "kling" in params.model_id.lower() and "v2v" in params.model_id.lower():
+                    request_data["input"]["video_url"] = params.video_url
+                else:
+                    request_data["input"]["video_url"] = params.video_url
+                    
+        return request_data
+        
+    async def generate_video(self, params: VideoGenerationParams) -> VideoGenerationResult:
+        """Start video generation via Kie.ai"""
+        config = self._get_model_config(params.model_id)
+        endpoint_type = config["endpoint"]
+        
+        # Build request based on endpoint type
+        if endpoint_type == "veo":
+            url = f"{self.base_url}/veo/generate"
+        else:
+            url = f"{self.base_url}/jobs/createTask"
+            
+        request_data = self.transform_params(params)
         
         # Debug logging
         print(f"[KieAdapter] Full URL: {url}")
