@@ -372,7 +372,7 @@ async def create_checkout(
                 raise HTTPException(status_code=400, detail="Invalid plan ID")
             item_data = SUBSCRIPTION_PLANS[request.item_id]
             item_price = item_data["monthly_price"]
-            item_name = f"{item_data["name"]} Subscription"
+            item_name = f"{item_data['name']} Subscription"
             credits = item_data["monthly_credits"]
         
     elif request.item_type == "top_up":
