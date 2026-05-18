@@ -100,6 +100,18 @@ class KieAIAdapter(BaseVideoAdapter):
         """Get model config from our model ID"""
         config = self.MODEL_CONFIG.get(model_id)
         if not config:
+            # Try to get it from core/kie_models.py dynamically!
+            try:
+                from core.kie_models import get_kie_model_by_id
+                model_info = get_kie_model_by_id(model_id)
+                if model_info and model_info.get("model_id"):
+                    model_name = model_info.get("model_id")
+                    # Veo models use endpoint 'veo', others use 'jobs'
+                    endpoint = "veo" if "veo" in model_id.lower() else "jobs"
+                    return {"model": model_name, "endpoint": endpoint}
+            except Exception as e:
+                print(f"[KieAdapter] Failed to load model dynamically: {e}")
+
             # Default fallback - try as kling
             if "kling" in model_id.lower():
                 return {"model": "kling-2.6/text-to-video", "endpoint": "jobs"}
