@@ -166,11 +166,16 @@ async def lifespan(app: FastAPI):
 
 
 # Create FastAPI application
+# --- SECURITY HARDENING: Disable /docs and /redoc in production ---
+_is_production = settings.ENVIRONMENT == "production" or not settings.DEBUG
 app = FastAPI(
     title=settings.APP_NAME,
     description="Multi-modal AI SaaS platform with credit-based billing. Includes Chat, Image, Video, and Synapse (Agent) services.",
     version=settings.APP_VERSION,
-    lifespan=lifespan
+    lifespan=lifespan,
+    docs_url=None if _is_production else "/docs",
+    redoc_url=None if _is_production else "/redoc",
+    openapi_url=None if _is_production else "/openapi.json",
 )
 
 
@@ -179,25 +184,28 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS Middleware setup
+# --- SECURITY HARDENING: Restrict origins and methods ---
+_allowed_origins = settings.cors_origins_list if hasattr(settings, 'cors_origins_list') else [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:5173",
+    "https://zexai.vercel.app",
+    "https://app.zexai.io",
+    "https://zexai-production.up.railway.app"
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://localhost:5173",
-        "https://zexai.vercel.app",
-        "https://app.zexai.io",
-        "https://zexai-production.up.railway.app"
-    ],
+    allow_origins=_allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"],
+    expose_headers=["X-Request-ID"],
 )
 
 # Production security middleware
-if settings.ENVIRONMENT == "production":
-    # HTTPS redirect
-    app.add_middleware(HTTPSRedirectMiddleware)
+# if settings.ENVIRONMENT == "production":
+#     # HTTPS redirect handled at Nginx level to prevent internal redirection loops
+#     app.add_middleware(HTTPSRedirectMiddleware)
 
 # Global exception handlers
 @app.exception_handler(AIException)
@@ -240,13 +248,22 @@ async def external_service_exception_handler(request: Request, exc: ExternalServ
     })
     return convert_to_http_exception(exc)
 
-# Request logging middleware
+# Request logging + Security Headers middleware
 @app.middleware("http")
-async def log_requests(request: Request, call_next):
-    """Log all incoming requests"""
+async def log_requests_and_add_security_headers(request: Request, call_next):
+    """Log all incoming requests and inject security headers on every response"""
     logger.info(f"📥 {request.method} {request.url.path}")
     response = await call_next(request)
     logger.info(f"📤 {request.method} {request.url.path} - Status: {response.status_code}")
+    # --- SECURITY HARDENING: Inject security headers on all API responses ---
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()"
+    response.headers["X-Content-Security-Policy"] = "default-src 'none'"
+    # Remove server fingerprint header if present
+    response.headers.pop("Server", None)
     return response
 
 
