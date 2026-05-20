@@ -25,6 +25,7 @@ from core.database import get_db
 from core.credits import CreditManager
 from services.synapse_service import synapse_service
 from core.config import settings
+from core.logger import app_logger as logger
 
 
 router = APIRouter(prefix="/synapse", tags=["Synapse Agent"])
@@ -109,6 +110,16 @@ async def manus_webhook(
     Receives task status updates, logs, and completion notifications
     """
     # 1. Secure signature verification
+    if not settings.SYNAPSE_WEBHOOK_SECRET or settings.SYNAPSE_WEBHOOK_SECRET == "super_secure_synapse_webhook_secret_2026":
+        if not settings.DEBUG:
+            logger.error("SYNAPSE_WEBHOOK_SECRET is not configured or is using the default insecure value in production")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Webhook authentication is misconfigured"
+            )
+        else:
+            logger.warning("SYNAPSE_WEBHOOK_SECRET is using default insecure value in DEBUG mode")
+
     signature = request.headers.get("X-Synapse-Signature")
     if not signature:
         raise HTTPException(
