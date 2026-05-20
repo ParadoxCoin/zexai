@@ -262,8 +262,10 @@ async def log_requests_and_add_security_headers(request: Request, call_next):
     response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()"
     response.headers["X-Content-Security-Policy"] = "default-src 'none'"
-    # Remove server fingerprint header if present
-    response.headers.pop("Server", None)
+    # Remove server fingerprint header if present. Starlette's MutableHeaders
+    # does not implement dict.pop(), so use deletion guarded by membership.
+    if "Server" in response.headers:
+        del response.headers["Server"]
     return response
 
 
