@@ -37,8 +37,8 @@ export class AuthService {
   static async logout(): Promise<void> {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_data');
+    sessionStorage.removeItem('auth_token');
+    sessionStorage.removeItem('user_data');
   }
 
   static async getCurrentUser(): Promise<User> {
@@ -88,16 +88,16 @@ export class AuthService {
 
   static getStoredToken(): string | null {
     // Check auth_token first (kept in sync by api.ts)
-    const authToken = localStorage.getItem('auth_token');
+    const authToken = sessionStorage.getItem('auth_token');
     if (authToken && authToken !== 'null' && authToken !== 'undefined') {
       return authToken;
     }
     // Check Supabase internal key patterns
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
       if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
         try {
-          const data = JSON.parse(localStorage.getItem(key) || '');
+          const data = JSON.parse(sessionStorage.getItem(key) || '');
           if (data?.access_token) return data.access_token;
         } catch { /* skip */ }
       }
@@ -109,7 +109,7 @@ export class AuthService {
     try {
       const { data } = await supabase.auth.getSession();
       if (data?.session?.access_token) {
-        localStorage.setItem('auth_token', data.session.access_token);
+        sessionStorage.setItem('auth_token', data.session.access_token);
         return data.session.access_token;
       }
     } catch (e) {
@@ -119,7 +119,7 @@ export class AuthService {
   }
 
   static getStoredUser(): AuthResponse | null {
-    const userData = localStorage.getItem('user_data');
+    const userData = sessionStorage.getItem('user_data');
     return userData ? JSON.parse(userData) : null;
   }
 
@@ -159,10 +159,10 @@ export class AuthService {
       ...user
     };
 
-    // Update local storage
+    // Update session storage
     if (token) {
-      localStorage.setItem('auth_token', token);
-      localStorage.setItem('user_data', JSON.stringify(response));
+      sessionStorage.setItem('auth_token', token);
+      sessionStorage.setItem('user_data', JSON.stringify(response));
     }
 
     return response;

@@ -3,7 +3,7 @@ Configuration settings for the AI SaaS Platform
 All sensitive data is loaded from environment variables
 """
 from pydantic_settings import BaseSettings
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from typing import List, Any
 from pathlib import Path
 
@@ -201,6 +201,16 @@ class Settings(BaseSettings):
     # Logging
     LOG_LEVEL: str = "INFO"
     LOG_FILE: str = "logs/app.log"
+    
+    @model_validator(mode="after")
+    def validate_synapse_webhook_secret(self) -> "Settings":
+        """
+        Ensure SYNAPSE_WEBHOOK_SECRET is configured with a secure value in production
+        """
+        if not self.DEBUG:
+            if not self.SYNAPSE_WEBHOOK_SECRET or self.SYNAPSE_WEBHOOK_SECRET == "super_secure_synapse_webhook_secret_2026":
+                raise ValueError("SYNAPSE_WEBHOOK_SECRET must be set to a secure custom value in production (DEBUG=False)")
+        return self
     
     class Config:
         # Find .env file in backend directory

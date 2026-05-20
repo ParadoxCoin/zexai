@@ -336,7 +336,7 @@ const ChatPage = () => {
     try {
       let token: string | null = null;
       try { const { data } = await supabase.auth.getSession(); token = data?.session?.access_token || null; } catch { }
-      if (!token) token = localStorage.getItem('auth_token');
+      if (!token) token = sessionStorage.getItem('auth_token');
       if (!token || token === 'null' || token === 'undefined') throw new Error('No auth token');
 
       const response = await fetch(`${getApiBaseUrl()}/chat/stream`, {

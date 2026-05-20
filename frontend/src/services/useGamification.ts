@@ -60,8 +60,8 @@ export function useLeaderboard(period: string = 'weekly', limit: number = 25) {
     return useQuery({
         queryKey: ['gamificationLeaderboard', period, limit],
         queryFn: async () => {
-            const response = await apiService.get<{ data: LeaderboardUser[] }>(`/gamification/leaderboard?period=${period}&limit=${limit}`);
-            return response.data;
+            const response = await apiService.get<LeaderboardUser[]>(`/gamification/leaderboard?period=${period}&limit=${limit}`);
+            return response.data || [];
         },
         staleTime: 10 * 60 * 1000,
     });

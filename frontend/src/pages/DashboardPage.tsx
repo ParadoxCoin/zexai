@@ -671,7 +671,9 @@ const ModelMarquee: React.FC<{ t: any }> = ({ t }) => {
         Marketplace
       </div>
 
-      <marquee className="py-3 flex-1 flex items-center" scrollamount="6">
+      {React.createElement(
+        'marquee',
+        { className: 'py-3 flex-1 flex items-center', scrollamount: '6' } as any,
         <div className="flex items-center">
           {models.map((model, idx) => (
             <span key={idx} className="mx-6 text-sm font-medium text-gray-300 flex items-center gap-2">
@@ -689,7 +691,7 @@ const ModelMarquee: React.FC<{ t: any }> = ({ t }) => {
             </span>
           ))}
         </div>
-      </marquee>
+      )}
     </div>
   );
 };

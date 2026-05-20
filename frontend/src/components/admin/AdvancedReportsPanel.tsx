@@ -13,7 +13,33 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const api = axios.create({
+    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1',
+});
+
+api.interceptors.request.use((config) => {
+    let token = sessionStorage.getItem('auth_token') ||
+        sessionStorage.getItem('sb-access-token');
+
+    if (!token) {
+        const supabaseKey = Object.keys(sessionStorage).find(
+            (key) => key.startsWith('sb-') && key.endsWith('-auth-token')
+        );
+        if (supabaseKey) {
+            try {
+                const session = JSON.parse(sessionStorage.getItem(supabaseKey) || '{}');
+                if (session.access_token) {
+                    token = session.access_token;
+                }
+            } catch { /* skip invalid session JSON */ }
+        }
+    }
+
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
 
 interface ModelPerformance {
     model_id: string;
@@ -56,18 +82,15 @@ const AdvancedReportsPanel: React.FC = () => {
 
     const fetchReports = async () => {
         setLoading(true);
-        const token = localStorage.getItem('token');
 
         try {
             const [modelsRes, comparisonRes] = await Promise.all([
-                axios.get(`${API_URL}/admin/reports/models`, {
+                api.get('/admin/reports/models', {
                     params: { period, category: category || undefined, sort_by: sortBy },
-                    headers: { Authorization: `Bearer ${token}` }
                 }),
-                axios.get(`${API_URL}/admin/reports/comparison`, {
+                api.get('/admin/reports/comparison', {
                     params: { period_type: period === 'week' ? 'week' : 'month' },
-                    headers: { Authorization: `Bearer ${token}` }
-                })
+                }),
             ]);
 
             setModelPerformance(modelsRes.data.models || []);
@@ -84,13 +107,10 @@ const AdvancedReportsPanel: React.FC = () => {
     }, [period, category, sortBy]);
 
     const handleExport = async (format: 'csv' | 'json') => {
-        const token = localStorage.getItem('token');
-
         try {
-            const response = await axios.get(`${API_URL}/admin/reports/export`, {
+            const response = await api.get('/admin/reports/export', {
                 params: { report_type: 'models', period, format },
-                headers: { Authorization: `Bearer ${token}` },
-                responseType: format === 'csv' ? 'blob' : 'json'
+                responseType: format === 'csv' ? 'blob' : 'json',
             });
 
             if (format === 'csv') {

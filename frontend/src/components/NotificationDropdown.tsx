@@ -63,7 +63,7 @@ const NotificationDropdown: React.FC = () => {
             console.warn('Failed to get session for notifications:', e);
         }
         // Fallback
-        const token = localStorage.getItem('auth_token');
+        const token = sessionStorage.getItem('auth_token');
         if (token && token !== 'null' && token !== 'undefined') {
             return { Authorization: `Bearer ${token}` };
         }
@@ -299,9 +299,9 @@ const NotificationDropdown: React.FC = () => {
                                 >
                                     <div className="flex gap-3">
                                         {/* Type indicator */}
-                                        <div className={`w-2 h-2 mt-2 rounded-full flex-shrink-0 ${notification.type === 'success' ? 'bg-green-500' :
-                                            notification.type === 'warning' ? 'bg-yellow-500' :
-                                                notification.type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+                                        <div className={`w-2 h-2 mt-2 rounded-full flex-shrink-0 ${notification.category === 'success' ? 'bg-green-500' :
+                                            notification.category === 'warning' ? 'bg-yellow-500' :
+                                                notification.category === 'error' ? 'bg-red-500' : 'bg-blue-500'
                                             }`} />
 
                                         <div className="flex-1 min-w-0">

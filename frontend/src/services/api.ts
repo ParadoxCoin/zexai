@@ -8,14 +8,14 @@ async function getFreshToken(): Promise<string | null> {
     const { data } = await supabase.auth.getSession();
     if (data?.session?.access_token) {
       // Keep auth_token in sync for legacy components
-      localStorage.setItem('auth_token', data.session.access_token);
+      sessionStorage.setItem('auth_token', data.session.access_token);
       return data.session.access_token;
     }
   } catch (e) {
     console.warn('Failed to get Supabase session:', e);
   }
-  // Fallback: try localStorage keys
-  return localStorage.getItem('auth_token') || null;
+  // Fallback: try sessionStorage keys
+  return sessionStorage.getItem('auth_token') || null;
 }
 
 class ApiService {
@@ -39,9 +39,9 @@ class ApiService {
     try {
       supabase.auth.onAuthStateChange((_event, session) => {
         if (session?.access_token) {
-          localStorage.setItem('auth_token', session.access_token);
+          sessionStorage.setItem('auth_token', session.access_token);
         } else {
-          localStorage.removeItem('auth_token');
+          sessionStorage.removeItem('auth_token');
         }
       });
     } catch (e) {
@@ -71,7 +71,7 @@ class ApiService {
           try {
             const { data, error: refreshError } = await supabase.auth.refreshSession();
             if (data?.session && !refreshError) {
-              localStorage.setItem('auth_token', data.session.access_token);
+              sessionStorage.setItem('auth_token', data.session.access_token);
               // Retry the original request with new token
               const originalRequest = error.config;
               originalRequest.headers.Authorization = `Bearer ${data.session.access_token}`;
@@ -81,8 +81,8 @@ class ApiService {
             console.warn('Token refresh failed:', refreshErr);
           }
           // If refresh failed, redirect to login
-          localStorage.removeItem('auth_token');
-          localStorage.removeItem('user_data');
+          sessionStorage.removeItem('auth_token');
+          sessionStorage.removeItem('user_data');
           window.location.href = '/login';
         }
         return Promise.reject(error);

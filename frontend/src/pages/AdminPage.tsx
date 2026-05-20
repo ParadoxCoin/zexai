@@ -61,6 +61,8 @@ export const AdminPage: React.FC = () => {
 
   // Airdrop state
   const [airdropActionLoading, setAirdropActionLoading] = useState(false);
+  const [airdropLoading, setAirdropLoading] = useState(false);
+  const [airdropData, setAirdropData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'users' | 'models'>('users');
 
   // Video Models State

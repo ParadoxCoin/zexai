@@ -53,9 +53,9 @@ const AuthCallbackPage = () => {
                     const user = data.session.user;
                     const token = data.session.access_token;
 
-                    // Store in localStorage for our app
-                    localStorage.setItem('auth_token', token);
-                    localStorage.setItem('user_data', JSON.stringify({
+                    // Store in sessionStorage for transient security
+                    sessionStorage.setItem('auth_token', token);
+                    sessionStorage.setItem('user_data', JSON.stringify({
                         user_id: user.id,
                         email: user.email,
                         full_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || '',

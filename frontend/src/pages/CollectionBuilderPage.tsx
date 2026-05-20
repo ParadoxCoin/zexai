@@ -58,13 +58,14 @@ const CollectionBuilderPage: React.FC = () => {
         setTraitType('');
         setTraitValue('');
     };
-
-    const handleAddItem = async () => {
+    const handleAddItem = async () => {
         if (!imageUrl || !collectionId) return alert(t('collections.addImageFirst'));
         setLoading(true);
         try {
             const req = { image_url: imageUrl, attributes: currentTraits };
-            const res = await apiService.post(`/collections/${collectionId}/items`, req);            setItems([...items, res]);
+            const res = await apiService.post(`/collections/${collectionId}/items`, req);
+            const newItem = (res as any)?.data || res;
+            setItems([...items, newItem]);
             setImageUrl('');
             setCurrentTraits([]);
         } catch (e: any) {
@@ -81,7 +82,7 @@ const CollectionBuilderPage: React.FC = () => {
             await apiService.post(`/collections/${collectionId}/rarity`);
             // Yükle
             const res = await apiService.get(`/collections/${collectionId}/items`);
-            setItems(res);
+            setItems((res as any)?.data || res?.items || (Array.isArray(res) ? res : []));
             setStep(4);
         } catch (e) {
             alert(t('collections.rarityError'));

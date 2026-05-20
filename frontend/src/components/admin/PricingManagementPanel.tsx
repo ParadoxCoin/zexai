@@ -11,14 +11,14 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-    let token = localStorage.getItem('auth_token') ||
-        localStorage.getItem('sb-access-token') ||
+    let token = sessionStorage.getItem('auth_token') ||
+        sessionStorage.getItem('sb-access-token') ||
         sessionStorage.getItem('sb-access-token');
     if (!token) {
-        const supabaseKey = Object.keys(localStorage).find(key => key.startsWith('sb-') && key.endsWith('-auth-token'));
+        const supabaseKey = Object.keys(sessionStorage).find(key => key.startsWith('sb-') && key.endsWith('-auth-token'));
         if (supabaseKey) {
             try {
-                const session = JSON.parse(localStorage.getItem(supabaseKey) || '{}');
+                const session = JSON.parse(sessionStorage.getItem(supabaseKey) || '{}');
                 token = session.access_token;
             } catch (e) { }
         }
