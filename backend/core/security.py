@@ -12,66 +12,79 @@ async def get_current_user(
     token: HTTPAuthorizationCredentials = Depends(security)
 ) -> SimpleNamespace:
     """
-    LOCAL DEV MODE: Always returns luxor00 as admin to bypass Supabase rate limits.
+    Get the current authenticated user using Supabase JWT.
     """
-    # For local development, we skip token verification and return a mock admin
-    # For local development, we use the real admin user ID from production to satisfy FKs
-    mock_id = "5c0cd695-942b-407d-b59f-71d29b06cdfd"
+    raw_token = token.credentials
+    supabase = get_supabase_client()
+    if not supabase:
+        logger.error("Supabase client is not initialized or configured")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Authentication service is unavailable"
+        )
     
-    # Auto-create mock user in auth.users AND public.users if it doesn't exist
     try:
-        supabase = get_supabase_client()
-        # Check in public.users first
-        check = supabase.table("users").select("id").eq("id", mock_id).execute()
+        # Verify and fetch user from Supabase auth using raw JWT
+        auth_response = supabase.auth.get_user(raw_token)
+        if not auth_response or not auth_response.user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired token"
+            )
         
-        if not check.data:
-            logger.info(f"Mock user {mock_id} not found in public.users, attempting to create...")
+        auth_user = auth_response.user
+        user_id = auth_user.id
+        email = auth_user.email
+        
+        # Default properties from auth metadata
+        user_metadata = getattr(auth_user, "user_metadata", {}) or {}
+        role = user_metadata.get("role", "user")
+        full_name = user_metadata.get("full_name", "")
+        is_active = True
+        
+        # Try to fetch additional profile details from public.users table
+        try:
+            profile_response = supabase.table("users").select("*").eq("id", user_id).execute()
+            if profile_response.data:
+                profile = profile_response.data[0]
+                role = profile.get("role", role)
+                full_name = profile.get("full_name", full_name)
+                is_active = profile.get("is_active", True)
+        except Exception as profile_err:
+            logger.warning(f"Could not fetch user profile for {user_id} from public.users: {profile_err}")
             
-            # 1. Try to create in auth.users using Admin API
-            # This is necessary because of the foreign key constraint: REFERENCES auth.users(id)
-            try:
-                # We use a dummy email and password. 'upsert' isn't available for auth, 
-                # so we just try to get or create.
-                admin_auth = supabase.auth.admin.get_user_by_id(mock_id)
-                if not admin_auth:
-                    supabase.auth.admin.create_user({
-                        "id": mock_id,
-                        "email": "luxor00@gmail.com",
-                        "password": "password123",
-                        "email_confirm": True
-                    })
-                    logger.info(f"✅ Created mock user {mock_id} in auth.users")
-            except Exception as auth_e:
-                # If it already exists or fails, we continue to public.users
-                logger.debug(f"Auth user check/create note: {auth_e}")
-
-            # 2. Create in public.users
-            supabase.table("users").insert({
-                "id": mock_id,
-                "email": "luxor00@gmail.com",
-                "full_name": "Luxor Admin (Local)",
-                "role": "super_admin",
-                "is_active": True
-            }).execute()
-            logger.info(f"✅ Created mock user {mock_id} in public.users")
+        return SimpleNamespace(
+            id=user_id,
+            email=email,
+            role=role,
+            full_name=full_name,
+            is_active=is_active
+        )
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.warning(f"⚠️ Could not auto-create mock user: {e}")
-
-    return SimpleNamespace(
-        id=mock_id,
-        email="luxor00@gmail.com",
-        role="super_admin",
-        full_name="Luxor Admin (Local)",
-        is_active=True
-    )
+        logger.error(f"Authentication error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials"
+        )
 
 async def get_current_admin_user(
     current_user: SimpleNamespace = Depends(get_current_user)
 ) -> SimpleNamespace:
-    # In local mode, everyone is admin!
+    if current_user.role not in ("admin", "super_admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required"
+        )
     return current_user
 
 async def get_current_super_admin(
     current_user: SimpleNamespace = Depends(get_current_user)
 ) -> SimpleNamespace:
+    if current_user.role != "super_admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Super admin privileges required"
+        )
     return current_user

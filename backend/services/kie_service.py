@@ -398,43 +398,96 @@ class KieAIService:
         **kwargs
     ) -> Dict[str, Any]:
         """
-        Generate Text-to-Speech using Kie.ai API.
-        This uses the OpenAI-compatible audio/speech endpoint if supported,
-        or a custom endpoint.
+        Generate Text-to-Speech using Kie.ai Market jobs API.
         """
-        payload = {
-            "model": model_id,
-            "input": text,
-            "voice": voice_id
+        model_map = {
+            "elevenlabs-text-to-speech-turbo-2.5": "elevenlabs/text-to-speech-turbo-2-5",
+            "elevenlabs-text-to-speech-multilingual-v2": "elevenlabs/text-to-speech-multilingual-v2",
+            "elevenlabs-v3-text-to-dialogue": "elevenlabs/text-to-dialogue-v3",
+            "kie_elevenlabs_turbo_25": "elevenlabs/text-to-speech-turbo-2-5",
+            "kie_elevenlabs_multilingual_v2": "elevenlabs/text-to-speech-multilingual-v2",
+            "kie_elevenlabs_v3": "elevenlabs/text-to-dialogue-v3",
         }
-        
-        payload.update(kwargs)
-        
-        # Audio generation is usually sync, but if it is large it might stream
-        # Try standard OpenAI compatible path first
-        result = await self._make_request("POST", "audio/speech", payload, timeout=60)
-        
-        # Depending on if Kie.ai returns binary or JSON with URL
-        if isinstance(result, dict) and "url" in result:
-            return {
-                "success": True,
-                "audio_url": result.get("url"),
-                "model": model_id
-            }
-        elif isinstance(result, dict) and "task_id" in result:
-             return {
-                "success": True,
-                "task_id": result.get("task_id"),
-                "status": "processing",
-                "model": model_id
+        kie_model_id = model_map.get(model_id, model_id)
+        voice = voice_id if voice_id and voice_id != "alloy" else "Rachel"
+
+        if kie_model_id == "elevenlabs/text-to-dialogue-v3":
+            input_data = {
+                "dialogue": [{"text": text, "voice": voice}],
+                "stability": kwargs.pop("stability", 0.5),
             }
         else:
-             # Assume it's a direct URL or base64 structure
-             return {
-                 "success": True,
-                 "data": result,
-                 "model": model_id
-             }
+            input_data = {
+                "text": text,
+                "voice": voice,
+                "stability": kwargs.pop("stability", 0.5),
+                "similarity_boost": kwargs.pop("similarity_boost", 0.75),
+                "style": kwargs.pop("style", 0),
+                "speed": kwargs.pop("speed", 1),
+                "timestamps": kwargs.pop("timestamps", False),
+                "previous_text": kwargs.pop("previous_text", ""),
+                "next_text": kwargs.pop("next_text", ""),
+                "language_code": kwargs.pop("language_code", ""),
+            }
+
+        payload = {
+            "model": kie_model_id,
+            "input": input_data,
+        }
+
+        callback_url = kwargs.pop("callBackUrl", None)
+        if callback_url:
+            payload["callBackUrl"] = callback_url
+        payload.update(kwargs)
+
+        result = await self._make_request("POST", "jobs/createTask", payload, timeout=60)
+        data = result.get("data", {}) if isinstance(result, dict) else {}
+        task_id = data.get("taskId") or data.get("task_id")
+
+        if result.get("code") == 200 and task_id:
+            return {
+                "success": True,
+                "task_id": task_id,
+                "record_id": data.get("recordId"),
+                "status": "processing",
+                "model": kie_model_id,
+            }
+
+        return {
+            "success": False,
+            "error": result,
+            "model": kie_model_id,
+        }
+
+    async def get_market_task_status(self, task_id: str) -> Dict[str, Any]:
+        """Check a Kie.ai Market job status via the unified recordInfo endpoint."""
+        result = await self._make_request("GET", "jobs/recordInfo", {"taskId": task_id})
+        data = result.get("data", {}) if isinstance(result, dict) else {}
+        state = data.get("state")
+
+        output_urls = []
+        result_json = data.get("resultJson")
+        if result_json:
+            try:
+                import json
+                parsed = json.loads(result_json) if isinstance(result_json, str) else result_json
+                output_urls = (
+                    parsed.get("resultUrls")
+                    or parsed.get("audioUrls")
+                    or parsed.get("urls")
+                    or []
+                )
+            except Exception:
+                output_urls = []
+
+        return {
+            "task_id": task_id,
+            "status": "success" if state == "success" else "failed" if state == "fail" else "processing",
+            "output_urls": output_urls,
+            "audio_url": output_urls[0] if output_urls else None,
+            "error": data.get("failMsg") or data.get("failCode"),
+            "raw": data,
+        }
 
     # ============================================
     # ACCOUNT & CREDITS

@@ -271,20 +271,98 @@ async def websocket_endpoint_enhanced(websocket: WebSocket, token: str = None):
     user_id = None
     
     try:
-        # Extract user_id from token if provided
+        # Legacy: token in query string
         if token:
             payload = JWTManager.verify_token(token)
             if payload:
                 user_id = payload.get("user_id")
-        
-        if not user_id:
-            await websocket.close(code=4001, reason="Authentication required")
-            return
-        
-        # Connect user
-        connected = await connection_manager.connect(websocket, user_id, token)
-        if not connected:
-            return
+            
+            # Supabase fallback
+            if not user_id:
+                try:
+                    from core.supabase_client import get_supabase_client
+                    supabase = get_supabase_client()
+                    if supabase:
+                        auth_response = supabase.auth.get_user(token)
+                        if auth_response and auth_response.user:
+                            user_id = auth_response.user.id
+                except Exception as supabase_err:
+                    logger.debug(f"Supabase enhanced auth fallback note: {supabase_err}")
+                    
+            if not user_id:
+                await websocket.close(code=4001, reason="Authentication required")
+                return
+            
+            connected = await connection_manager.connect(websocket, user_id, token)
+            if not connected:
+                return
+        else:
+            # Post-handshake flow: accept connection anonymously first
+            await websocket.accept()
+            logger.info("Anonymous Enhanced WebSocket connected, waiting for authentication...")
+            
+            # Wait for the "auth" message within 10 seconds
+            try:
+                data = await asyncio.wait_for(websocket.receive_text(), timeout=10.0)
+                message = json.loads(data)
+                if message.get("type") == "auth":
+                    auth_token = message.get("token")
+                    payload = JWTManager.verify_token(auth_token)
+                    if payload:
+                        user_id = payload.get("user_id")
+                        
+                    # Supabase fallback
+                    if not user_id:
+                        try:
+                            from core.supabase_client import get_supabase_client
+                            supabase = get_supabase_client()
+                            if supabase:
+                                auth_response = supabase.auth.get_user(auth_token)
+                                if auth_response and auth_response.user:
+                                    user_id = auth_response.user.id
+                        except Exception as supabase_err:
+                            logger.debug(f"Supabase enhanced auth fallback note: {supabase_err}")
+                            
+                    if not user_id:
+                        logger.warning("Post-handshake Enhanced WebSocket auth failed: Invalid token")
+                        await websocket.close(code=4001, reason="Authentication failed")
+                        return
+                    
+                    # Register connection manually in connection_manager
+                    if user_id not in connection_manager.active_connections:
+                        connection_manager.active_connections[user_id] = []
+                    connection_manager.active_connections[user_id].append(websocket)
+                    
+                    connection_id = f"{user_id}_{len(connection_manager.active_connections[user_id])}"
+                    connection_manager.connection_metadata[connection_id] = {
+                        "user_id": user_id,
+                        "connected_at": datetime.utcnow(),
+                        "websocket": websocket,
+                        "authenticated": True
+                    }
+                    
+                    await connection_manager._setup_supabase_subscription(user_id)
+                    logger.info(f"User {user_id} successfully authenticated via post-handshake Enhanced WebSocket")
+                    
+                    # Send welcome message
+                    await connection_manager.send_personal_message({
+                        "type": "connection_established",
+                        "user_id": user_id,
+                        "timestamp": datetime.utcnow().isoformat(),
+                        "real_time_enabled": is_supabase_enabled()
+                    }, user_id)
+                else:
+                    logger.warning("First Enhanced WebSocket message was not of type 'auth'")
+                    await websocket.close(code=4001, reason="Authentication required as first message")
+                    return
+            except asyncio.TimeoutError:
+                logger.warning("Enhanced WebSocket authentication timeout: 'auth' message not received within 10s")
+                await websocket.close(code=4001, reason="Authentication timeout")
+                return
+            except Exception as auth_err:
+                logger.error(f"Error during post-handshake Enhanced WebSocket auth: {auth_err}")
+                await websocket.close(code=4001, reason="Authentication failed")
+                return
         
         # Handle messages
         while True:
@@ -299,20 +377,15 @@ async def websocket_endpoint_enhanced(websocket: WebSocket, token: str = None):
             except WebSocketDisconnect:
                 break
             except json.JSONDecodeError:
-                await connection_manager.send_personal_message({
-                    "type": "error",
-                    "message": "Invalid JSON format"
-                }, user_id)
+                await websocket.send_json({"type": "error", "message": "Invalid JSON format"})
             except Exception as e:
-                logger.error(f"WebSocket message handling error: {e}")
-                await connection_manager.send_personal_message({
-                    "type": "error",
-                    "message": "Message processing failed"
-                }, user_id)
-    
+                logger.error(f"Enhanced WebSocket message handling error: {e}")
+                await websocket.send_json({"type": "error", "message": "Message processing failed"})
+                
+    except WebSocketDisconnect:
+        logger.info(f"Enhanced WebSocket disconnected: {user_id}")
     except Exception as e:
-        logger.error(f"WebSocket endpoint error: {e}")
-    
+        logger.error(f"Enhanced WebSocket error: {e}")
     finally:
         if user_id:
             await connection_manager.disconnect(websocket, user_id)

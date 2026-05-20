@@ -614,7 +614,21 @@ async def create_binance_payment(session_id: str, item_name: str, price: float) 
         return data["data"]["checkoutUrl"]
 
 
+@router.get("/webhooks/lemonsqueezy")
+@router.get("/webhooks/lemonsqueezy/")
+async def lemonsqueezy_webhook_get():
+    """
+    Handle GET requests gracefully (e.g. from ping tests, validation checkers, or direct browser checks)
+    to prevent 405 Method Not Allowed errors.
+    """
+    return {
+        "status": "active",
+        "message": "LemonSqueezy webhook endpoint is fully active. Please send POST requests for webhook event deliveries."
+    }
+
+
 @router.post("/webhooks/lemonsqueezy")
+@router.post("/webhooks/lemonsqueezy/")
 async def lemonsqueezy_webhook(request: Request, db = Depends(get_db)):
     """
     Webhook for LemonSqueezy payment events (order_created).
@@ -663,7 +677,21 @@ async def lemonsqueezy_webhook(request: Request, db = Depends(get_db)):
         return {"status": "error", "message": str(e)}
 
 
+@router.get("/webhooks/nowpayments")
+@router.get("/webhooks/nowpayments/")
+async def nowpayments_webhook_get():
+    """
+    Handle GET requests gracefully (e.g. from ping tests, validation checkers, or direct browser checks)
+    to prevent 405 Method Not Allowed errors.
+    """
+    return {
+        "status": "active",
+        "message": "NowPayments webhook endpoint is fully active. Please send POST requests for webhook event deliveries."
+    }
+
+
 @router.post("/webhooks/nowpayments")
+@router.post("/webhooks/nowpayments/")
 async def nowpayments_webhook(request: Request, db = Depends(get_db)):
     """
     Webhook for NowPayments IPN callbacks.
@@ -711,7 +739,21 @@ async def nowpayments_webhook(request: Request, db = Depends(get_db)):
         return {"status": "error", "message": str(e)}
 
 
+@router.get("/webhooks/metamask")
+@router.get("/webhooks/metamask/")
+async def metamask_webhook_get():
+    """
+    Handle GET requests gracefully (e.g. from ping tests, validation checkers, or direct browser checks)
+    to prevent 405 Method Not Allowed errors.
+    """
+    return {
+        "status": "active",
+        "message": "MetaMask webhook endpoint is fully active. Please send POST requests for webhook transaction updates."
+    }
+
+
 @router.post("/webhooks/metamask")
+@router.post("/webhooks/metamask/")
 async def metamask_webhook(request: Request, db = Depends(get_database)):
     """
     Webhook for MetaMask payment confirmation

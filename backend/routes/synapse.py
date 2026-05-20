@@ -2,11 +2,14 @@
 Synapse (Agent) service routes
 Handles autonomous agent tasks with asynchronous execution and credit-based billing
 """
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Request
 from datetime import datetime
 from typing import List
 import httpx
 import uuid
+import hmac
+import hashlib
+import json
 
 from schemas.synapse import (
     SynapseTaskCreate,
@@ -98,12 +101,47 @@ async def get_task_logs(
 
 @router.post("/webhook")
 async def manus_webhook(
-    payload: SynapseWebhookPayload,
+    request: Request,
     db = Depends(get_db)
 ):
     """
     Webhook endpoint for Manus API callbacks
     Receives task status updates, logs, and completion notifications
     """
+    # 1. Secure signature verification
+    signature = request.headers.get("X-Synapse-Signature")
+    if not signature:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Signature header is missing"
+        )
+    
+    # Read raw body bytes
+    body = await request.body()
+    
+    # Compute signature using settings.SYNAPSE_WEBHOOK_SECRET
+    secret_bytes = settings.SYNAPSE_WEBHOOK_SECRET.encode("utf-8")
+    computed_signature = hmac.new(
+        secret_bytes,
+        body,
+        hashlib.sha256
+    ).hexdigest()
+    
+    if not hmac.compare_digest(computed_signature, signature):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid signature"
+        )
+    
+    # Parse payload manually
+    try:
+        data = json.loads(body)
+        payload = SynapseWebhookPayload(**data)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid webhook payload: {str(e)}"
+        )
+        
     return await synapse_service.handle_manus_webhook(payload, db)
 

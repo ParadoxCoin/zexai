@@ -191,48 +191,92 @@ async def authenticate_websocket(websocket: WebSocket, token: str = None) -> Opt
         if not token:
             return None
         
-        # Decode JWT token
-        payload = jwt.decode(
-            token,
-            settings.JWT_SECRET_KEY,
-            algorithms=[settings.JWT_ALGORITHM]
-        )
+        # 1. Try decoding locally (fast path)
+        try:
+            payload = jwt.decode(
+                token,
+                settings.JWT_SECRET_KEY,
+                algorithms=[settings.JWT_ALGORITHM]
+            )
+            user_id = payload.get('user_id')
+            if user_id:
+                return user_id
+        except Exception:
+            pass
+
+        # 2. Try validating with Supabase client directly
+        try:
+            from core.supabase_client import get_supabase_client
+            supabase = get_supabase_client()
+            if supabase:
+                auth_response = supabase.auth.get_user(token)
+                if auth_response and auth_response.user:
+                    return auth_response.user.id
+        except Exception as supabase_err:
+            logger.debug(f"Supabase websocket auth fallback note: {supabase_err}")
         
-        user_id = payload.get('user_id')
-        if not user_id:
-            return None
-        
-        return user_id
-        
-    except jwt.ExpiredSignatureError:
-        logger.warning("WebSocket authentication failed: Token expired")
         return None
-    except jwt.PyJWTError:
-        logger.warning("WebSocket authentication failed: Invalid token")
-        return None
+        
     except Exception as e:
         logger.error(f"WebSocket authentication error: {e}")
         return None
 
 
 async def websocket_endpoint(websocket: WebSocket, token: str = None):
-    """Main WebSocket endpoint"""
+    """Main WebSocket endpoint with secure post-handshake authentication"""
     user_id = None
     
     try:
-        # Authenticate user if token provided
+        # Legacy: token provided in query params
         if token:
             user_id = await authenticate_websocket(websocket, token)
-        
-        # Connect to manager
-        await manager.connect(websocket, user_id)
-        
-        # Send welcome message
-        welcome_message = WebSocketMessage.create_message(
-            "connection_established",
-            {"user_id": user_id, "timestamp": datetime.utcnow().isoformat()}
-        )
-        await websocket.send_text(welcome_message)
+            await manager.connect(websocket, user_id)
+            
+            welcome_message = WebSocketMessage.create_message(
+                "connection_established",
+                {"user_id": user_id, "timestamp": datetime.utcnow().isoformat()}
+            )
+            await websocket.send_text(welcome_message)
+        else:
+            # Post-handshake flow: accept connection anonymously first
+            await websocket.accept()
+            logger.info("Anonymous WebSocket connected, waiting for authentication...")
+            
+            # Wait for the "auth" message within 10 seconds
+            try:
+                data = await asyncio.wait_for(websocket.receive_text(), timeout=10.0)
+                message = json.loads(data)
+                if message.get("type") == "auth":
+                    auth_token = message.get("token")
+                    user_id = await authenticate_websocket(websocket, auth_token)
+                    if not user_id:
+                        logger.warning("Post-handshake WebSocket auth failed: Invalid token")
+                        await websocket.close(code=4001, reason="Authentication failed")
+                        return
+                    
+                    # Register connection under authenticated user_id
+                    if user_id not in manager.active_connections:
+                        manager.active_connections[user_id] = []
+                    manager.active_connections[user_id].append(websocket)
+                    logger.info(f"User {user_id} successfully authenticated via post-handshake WebSocket")
+                    
+                    welcome_message = WebSocketMessage.create_message(
+                        "connection_established",
+                        {"user_id": user_id, "timestamp": datetime.utcnow().isoformat()}
+                    )
+                    await websocket.send_text(welcome_message)
+                else:
+                    logger.warning("First WebSocket message was not of type 'auth'")
+                    await websocket.close(code=4001, reason="Authentication required as first message")
+                    return
+            except asyncio.TimeoutError:
+                logger.warning("WebSocket authentication timeout: 'auth' message not received within 10s")
+                await websocket.close(code=4001, reason="Authentication timeout")
+                return
+            except Exception as auth_err:
+                logger.error(f"Error during post-handshake WebSocket auth: {auth_err}")
+                await websocket.close(code=4001, reason="Authentication failed")
+                return
         
         # Keep connection alive and handle messages
         while True:

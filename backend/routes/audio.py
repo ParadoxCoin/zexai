@@ -23,6 +23,7 @@ class TTSRequest(BaseModel):
     model_id: str
     text: str
     voice_id: Optional[str] = "default"
+    voice: Optional[str] = None
     speed: float = 1.0
 
 class MusicRequest(BaseModel):
@@ -178,98 +179,38 @@ async def text_to_speech(req: TTSRequest, user = Depends(get_current_user), db =
     
     task_id = str(uuid.uuid4())
     
-    # 4. Fetch Provider Config
+    # 4. Resolve provider
     provider_id = model.get("provider_id")
-    provider_config = await model_service.get_provider_config(db, provider_id)
     
     # 5. Call Provider API
     provider_task_id = None
     output_url = None
     status_val = "processing"
-    
-    try:
-        if provider_id == "elevenlabs":
-            # ElevenLabs API Call
-            # https://api.elevenlabs.io/v1/text-to-speech/{voice_id}
-            voice_id = req.voice_id if req.voice_id != "default" else "21m00Tcm4TlvDq8ikWAM" # Default Rachel
-            
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f"{provider_config['base_url']}/text-to-speech/{voice_id}",
-                    headers={
-                        "xi-api-key": provider_config['api_key'],
-                        "Content-Type": "application/json"
-                    },
-                    json={
-                        "text": req.text,
-                        "model_id": model.get("provider_model_id", "eleven_monolingual_v1"),
-                        "voice_settings": {
-                            "stability": 0.5,
-                            "similarity_boost": 0.5
-                        }
-                    },
-                    timeout=60.0
-                )
-                
-                if response.status_code != 200:
-                    raise HTTPException(500, f"ElevenLabs API error: {response.text}")
-                
-                # ElevenLabs returns audio binary directly
-                # In a real app, we would upload this to R2/S3
-                # For now, we can't easily return binary in this async flow if we want to save to DB first
-                # We'll assume we upload it. 
-                # TODO: Implement R2 upload here. For now, we might skip saving binary or mock URL.
-                # Since I cannot implement R2 upload right now without credentials/library, 
-                # I will mark it as completed but with a placeholder URL or similar.
-                
-                output_url = "https://placeholder.url/audio.mp3" # TODO: Replace with actual upload
-                status_val = "completed"
-                
-        elif provider_id == "openai":
-            # OpenAI TTS
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f"{provider_config['base_url']}/audio/speech",
-                    headers={
-                        "Authorization": f"Bearer {provider_config['api_key']}",
-                        "Content-Type": "application/json"
-                    },
-                    json={
-                        "model": model.get("provider_model_id", "tts-1"),
-                        "input": req.text,
-                        "voice": req.voice_id if req.voice_id != "default" else "alloy"
-                    },
-                    timeout=60.0
-                )
-                
-                if response.status_code != 200:
-                    raise HTTPException(500, f"OpenAI API error: {response.text}")
-                
-                output_url = "https://placeholder.url/openai_audio.mp3" # TODO: Replace with actual upload
-                status_val = "completed"
+    selected_voice_id = req.voice_id or "default"
+    if req.voice and selected_voice_id == "default":
+        selected_voice_id = req.voice
 
-        elif provider_id == "kie":
+    try:
+        if provider_id == "kie":
             from services.kie_service import kie_service
             result = await kie_service.generate_tts(
-                model_id=model.get("provider_model_id", req.model_id),
+                model_id=model.get("provider_model_id") or model.get("model_id") or req.model_id,
                 text=req.text,
-                voice_id=req.voice_id if req.voice_id != "default" else "alloy"
+                voice_id=selected_voice_id if selected_voice_id != "default" else "Rachel",
+                speed=req.speed
             )
             
             if result.get("success"):
-                if result.get("audio_url"):
-                    output_url = result.get("audio_url")
-                    status_val = "completed"
-                elif result.get("task_id"):
-                    provider_task_id = result.get("task_id")
-                    status_val = "processing"
+                provider_task_id = result.get("task_id")
+                status_val = "processing"
             else:
                 raise HTTPException(500, f"Kie.ai TTS API error: {result}")
 
         else:
-             # Fallback for other providers or async providers
-             pass
+            raise HTTPException(400, "Unsupported TTS provider. Audio generation must use Kie.ai.")
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Provider API error: {str(e)}")
 
@@ -286,9 +227,10 @@ async def text_to_speech(req: TTSRequest, user = Depends(get_current_user), db =
         "output_url": output_url,
         "metadata": {
             "provider_id": provider_id,
-            "voice_id": req.voice_id,
+            "voice_id": selected_voice_id,
             "speed": req.speed,
-            "char_count": char_count
+            "char_count": char_count,
+            "provider_task_id": provider_task_id
         }
     }
     
@@ -463,6 +405,42 @@ async def get_my_audio(limit: int = 20, user = Depends(get_current_user), db = D
                                 "status": "completed",
                                 "output_url": status_res.get("audio_url")
                             }).eq("id", gen["id"]).execute()
+                            updated = True
+                        elif status_res and status_res.get("status") == "failed":
+                            gen["status"] = "failed"
+                            db.table("generations").update({"status": "failed"}).eq("id", gen["id"]).execute()
+                            updated = True
+                    elif gen.get("type") == "audio_tts":
+                        status_res = await kie_service.get_market_task_status(provider_task_id)
+                        if status_res and status_res.get("status") == "success" and status_res.get("audio_url"):
+                            audio_url = status_res.get("audio_url")
+                            gen["status"] = "completed"
+                            gen["output_url"] = audio_url
+                            db.table("generations").update({
+                                "status": "completed",
+                                "output_url": audio_url
+                            }).eq("id", gen["id"]).execute()
+
+                            try:
+                                existing = db.table("media_outputs").select("id").eq("id", gen["id"]).execute()
+                                if not existing.data:
+                                    db.table("media_outputs").insert({
+                                        "id": gen["id"],
+                                        "user_id": gen["user_id"],
+                                        "service_type": "audio",
+                                        "file_url": audio_url,
+                                        "prompt": gen.get("prompt"),
+                                        "model_name": gen.get("model_id"),
+                                        "generation_details": {
+                                            "model_id": gen.get("model_id"),
+                                            "type": "tts"
+                                        },
+                                        "credits_charged": gen.get("credits_cost", 0),
+                                        "status": "completed",
+                                        "created_at": gen.get("created_at")
+                                    }).execute()
+                            except Exception as media_err:
+                                print(f"Failed to upsert TTS media output for {gen['id']}: {media_err}")
                             updated = True
                         elif status_res and status_res.get("status") == "failed":
                             gen["status"] = "failed"

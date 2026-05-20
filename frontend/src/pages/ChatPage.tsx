@@ -13,6 +13,7 @@ import { ComparisonChatPage } from "./ComparisonChatPage";
 import CodeBlock from "@/components/CodeBlock";
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from "framer-motion";
+import DOMPurify from "dompurify";
 
 interface UiChatModel {
   id: string;
@@ -116,7 +117,13 @@ const MessageContent = ({ content }: { content: string }) => {
             .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc text-slate-300 mb-1">$1</li>')
             .replace(/^(\d+)\. (.+)$/gm, '<li class="ml-4 list-decimal text-slate-300 mb-1">$1. $2</li>')
             .replace(/\n/g, '<br/>');
-          return <div key={idx} className="text-[14px] text-slate-300" dangerouslySetInnerHTML={{ __html: formatted }} />;
+
+          const sanitized = DOMPurify.sanitize(formatted, {
+            ALLOWED_TAGS: ['code', 'strong', 'em', 'h3', 'h2', 'h1', 'li', 'br', 'span', 'div', 'p'],
+            ALLOWED_ATTR: ['class']
+          });
+          
+          return <div key={idx} className="text-[14px] text-slate-300" dangerouslySetInnerHTML={{ __html: sanitized }} />;
         }
         return null;
       })}

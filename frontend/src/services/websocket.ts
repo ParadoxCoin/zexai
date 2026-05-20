@@ -20,12 +20,16 @@ class WebSocketService {
     const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws';
     
     try {
-      this.ws = new WebSocket(`${wsUrl}?token=${token}`);
+      // Connect anonymously to secure JWT from network visibility / logs
+      this.ws = new WebSocket(wsUrl);
 
       this.ws.onopen = () => {
-        console.log('✅ WebSocket connected');
+        console.log('✅ WebSocket connected anonymously');
         this.reconnectAttempts = 0;
         this.isConnecting = false;
+        
+        // Post-handshake: Immediately send token to authenticate session securely
+        this.send({ type: 'auth', token });
       };
 
       this.ws.onmessage = (event) => {

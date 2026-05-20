@@ -102,6 +102,7 @@ class Settings(BaseSettings):
     MANUS_API_KEY: str = ""
     MANUS_API_ENDPOINT: str = "https://api.manus.ai/v1"
     MANUS_CALLBACK_BASE_URL: str = ""  # Your backend URL for webhooks
+    SYNAPSE_WEBHOOK_SECRET: str = "super_secure_synapse_webhook_secret_2026"
     
     # Pollo.ai Video API
     POLLO_API_KEY: str = ""

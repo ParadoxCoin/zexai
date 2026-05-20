@@ -116,20 +116,17 @@ class StatsResponse(BaseModel):
 # ============================================
 
 def require_admin(current_user):
-    """Check if user is admin (relaxed for development)"""
+    """Check if user is admin or super_admin"""
     if not current_user:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Login required"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
         )
-    # TODO: Uncomment below for production to enforce admin-only access
-    # if current_user.role != "admin":
-    #     raise HTTPException(
-    #         status_code=status.HTTP_403_FORBIDDEN,
-    #         detail="Admin access required"
-    #     )
-    
-    # Force bypass for troubleshooting
+    if current_user.role not in ("admin", "super_admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required"
+        )
     return current_user
 
 

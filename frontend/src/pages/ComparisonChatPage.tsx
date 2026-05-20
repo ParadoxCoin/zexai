@@ -18,6 +18,8 @@ interface ComparisonResult {
     metrics?: { duration_ms: number; token_count: number; cost: number; speed_score: number; };
 }
 
+import DOMPurify from 'dompurify';
+
 // Reuse message renderer
 const ResponseContent = ({ content }: { content: string }) => {
     if (!content) return null;
@@ -48,7 +50,13 @@ const ResponseContent = ({ content }: { content: string }) => {
             .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc text-slate-300 mb-1">$1</li>')
             .replace(/^(\d+)\. (.+)$/gm, '<li class="ml-4 list-decimal text-slate-300 mb-1">$1. $2</li>')
             .replace(/\n/g, '<br/>');
-          return <div key={idx} className="text-[14px] text-slate-300" dangerouslySetInnerHTML={{ __html: formatted }} />;
+
+          const sanitized = DOMPurify.sanitize(formatted, {
+            ALLOWED_TAGS: ['code', 'strong', 'em', 'h3', 'h2', 'h1', 'li', 'br', 'span', 'div', 'p'],
+            ALLOWED_ATTR: ['class']
+          });
+
+          return <div key={idx} className="text-[14px] text-slate-300" dangerouslySetInnerHTML={{ __html: sanitized }} />;
         }
         return null;
       })}

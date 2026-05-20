@@ -189,7 +189,7 @@ const getBaseName = (name: string) => {
 const getBrand = (m: any): { name: string; icon: string } => {
   const n = (m.name || "").toLowerCase();
   const p = (m.provider || "").toLowerCase();
-  
+
   if (p.includes("kie")) return { name: "ZexAi", icon: "⚡" };
   if (n.includes("eleven") || n.includes("neural voice") || n.includes("sonic sfx")) return { name: "ElevenLabs", icon: "🎙️" };
   if (n.includes("suno")) return { name: "Suno AI", icon: "🎵" };
@@ -219,7 +219,7 @@ const AudioPage = () => {
   const [lyrics, setLyrics] = useState("");
   const [style, setStyle] = useState("");
   const [title, setTitle] = useState("");
-  
+
   const queryClient = useQueryClient();
 
   const { data: creditStats } = useQuery({
@@ -253,22 +253,22 @@ const AudioPage = () => {
   const { brands, variantsMap } = useMemo(() => {
     if (!Array.isArray(rawModels)) return { brands: [], variantsMap: {} };
     const filtered = rawModels.filter(m => {
-       if (activeTab === 'tts') return m.type === 'text_to_speech' || m.type === 'sound_effects' || m.type === 'text_to_audio';
-       if (activeTab === 'music') return m.type === 'music_generation' || m.type === 'text_to_music';
-       return false;
+      if (activeTab === 'tts') return m.type === 'text_to_speech' || m.type === 'sound_effects' || m.type === 'text_to_audio';
+      if (activeTab === 'music') return m.type === 'music_generation' || m.type === 'text_to_music';
+      return false;
     });
 
     const uniqueModelsMap = new Map();
     filtered.forEach(m => {
-       const bName = m.base_name || getBaseName(m.name);
-       const vName = m.version_name || "Standard";
-       const key = `${bName.toLowerCase()}|${vName.toLowerCase()}`;
-       const existing = uniqueModelsMap.get(key);
-       if (!existing || (m.id.startsWith('kie_') && !existing.id.startsWith('kie_'))) {
-          uniqueModelsMap.set(key, m);
-       }
+      const bName = m.base_name || getBaseName(m.name);
+      const vName = m.version_name || "Standard";
+      const key = `${bName.toLowerCase()}|${vName.toLowerCase()}`;
+      const existing = uniqueModelsMap.get(key);
+      if (!existing || (m.id.startsWith('kie_') && !existing.id.startsWith('kie_'))) {
+        uniqueModelsMap.set(key, m);
+      }
     });
-    
+
     const baseModelsList = Array.from(uniqueModelsMap.values());
     const grouped: Record<string, any> = {};
     const localVariantsMap: Record<string, any[]> = {};
@@ -296,7 +296,7 @@ const AudioPage = () => {
       baseModels: Object.values(b.baseModels),
       count: Object.values(b.baseModels).length
     }));
-    
+
     return { brands: brandList, variantsMap: localVariantsMap };
   }, [rawModels, activeTab]);
 
@@ -312,9 +312,9 @@ const AudioPage = () => {
     return selectedModel?.credits || 0;
   }, [activeTab, selectedModelId, selectedModel]);
   const availableVersions = useMemo(() => {
-     if (!selectedModel) return [];
-     const baseName = selectedModel.base_name || getBaseName(selectedModel.name);
-     return variantsMap[baseName] || [];
+    if (!selectedModel) return [];
+    const baseName = selectedModel.base_name || getBaseName(selectedModel.name);
+    return variantsMap[baseName] || [];
   }, [selectedModel, variantsMap]);
 
   // Auto-select first KIE model when tab changes
@@ -330,7 +330,7 @@ const AudioPage = () => {
 
   const { mutate: generateTTS, isPending: isGeneratingTTS } = useMutation({
     mutationFn: (data: any) => apiService.post("/audio/tts", data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["userAudio"] }); setText(""); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["userAudio"] }); setText(""); setActiveTab("library"); },
   });
 
   const { mutate: cloneVoice, isPending: isCloning } = useMutation({
@@ -361,7 +361,7 @@ const AudioPage = () => {
       setShowCreditsModal(true);
       return;
     }
-    generateTTS({ text: text.trim(), model_id: selectedModelId, voice: selectedVoice || "default", speed });
+    generateTTS({ text: text.trim(), model_id: selectedModelId, voice_id: selectedVoice || "default", speed });
   };
 
   const handleMusicSubmit = () => {
@@ -456,11 +456,10 @@ const AudioPage = () => {
                         onClick={() => { setSelectedModelId(model.id); setSelectedBaseModelId(model.id); }}
                         whileHover={{ scale: 1.01 }}
                         whileTap={{ scale: 0.99 }}
-                        className={`w-full text-left rounded-2xl border transition-all duration-300 overflow-hidden shadow-xl ${
-                          isSelected
+                        className={`w-full text-left rounded-2xl border transition-all duration-300 overflow-hidden shadow-xl ${isSelected
                             ? `bg-gradient-to-br ${model.accent} ${model.border} shadow-lg ${model.glow}`
                             : 'bg-black/40 border-white/5 hover:border-white/10'
-                        }`}
+                          }`}
                       >
                         {/* Top: Icon + Name + Badge */}
                         <div className="p-4 pb-3">
@@ -526,11 +525,10 @@ const AudioPage = () => {
                         onClick={() => { setSelectedModelId(model.id); setSelectedBaseModelId(model.id); }}
                         whileHover={{ scale: 1.01 }}
                         whileTap={{ scale: 0.99 }}
-                        className={`w-full text-left rounded-2xl border transition-all duration-300 overflow-hidden shadow-xl ${
-                          isSelected
+                        className={`w-full text-left rounded-2xl border transition-all duration-300 overflow-hidden shadow-xl ${isSelected
                             ? `bg-gradient-to-br ${model.accent} ${model.border} shadow-lg ${model.glow}`
                             : 'bg-black/40 border-white/5 hover:border-white/10'
-                        }`}
+                          }`}
                       >
                         {/* Top: Icon + Name + Badge */}
                         <div className="p-4 pb-3">
@@ -676,15 +674,15 @@ const AudioPage = () => {
                             VOICE ENGINE
                           </h3>
                         </div>
-                        
+
                         <div className="flex bg-black/40 p-1 rounded-xl border border-white/5 mb-4">
-                          <button 
+                          <button
                             onClick={() => setVoiceTypeTab('presets')}
                             className={`flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${voiceTypeTab === 'presets' ? 'bg-pink-600 text-white shadow-lg shadow-pink-600/20' : 'text-slate-500 hover:text-slate-300'}`}
                           >
                             Presets
                           </button>
-                          <button 
+                          <button
                             onClick={() => setVoiceTypeTab('custom')}
                             className={`flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${voiceTypeTab === 'custom' ? 'bg-pink-600 text-white shadow-lg shadow-pink-600/20' : 'text-slate-500 hover:text-slate-300'}`}
                           >
@@ -769,7 +767,7 @@ const AudioPage = () => {
                               className="w-full h-1 bg-white/5 rounded-full appearance-none cursor-pointer accent-pink-500"
                             />
                           </div>
-                          
+
                           <div className="pt-6 border-t border-white/5">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 block flex items-center gap-2">
                               <Star className="w-3.5 h-3.5 text-pink-400" />
@@ -810,13 +808,13 @@ const AudioPage = () => {
                               ATMOSPHERIC COMPOSITION
                             </h2>
                             <div className="flex bg-black/40 p-1 rounded-xl border border-white/5">
-                              <button 
+                              <button
                                 onClick={() => setMusicMode('simple')}
                                 className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${musicMode === 'simple' ? 'bg-purple-600 text-white' : 'text-slate-500'}`}
                               >
                                 Simple
                               </button>
-                              <button 
+                              <button
                                 onClick={() => setMusicMode('custom')}
                                 className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${musicMode === 'custom' ? 'bg-purple-600 text-white' : 'text-slate-500'}`}
                               >
@@ -824,52 +822,52 @@ const AudioPage = () => {
                               </button>
                             </div>
                           </div>
-                          
+
                           <AnimatePresence mode="wait">
                             {musicMode === 'simple' ? (
                               <motion.div key="simple" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-                                <textarea 
-                                  value={musicPrompt} 
-                                  onChange={(e) => setMusicPrompt(e.target.value)} 
-                                  placeholder="DESCRIBE SOUNDSCAPE PARAMETERS (e.g. 'Chill lo-fi beats with rain sounds')..." 
-                                  rows={8} 
-                                  className="w-full px-5 py-5 bg-black/40 border border-white/5 rounded-2xl resize-none focus:ring-1 focus:ring-purple-500/50 text-slate-200 text-sm leading-relaxed" 
+                                <textarea
+                                  value={musicPrompt}
+                                  onChange={(e) => setMusicPrompt(e.target.value)}
+                                  placeholder="DESCRIBE SOUNDSCAPE PARAMETERS (e.g. 'Chill lo-fi beats with rain sounds')..."
+                                  rows={8}
+                                  className="w-full px-5 py-5 bg-black/40 border border-white/5 rounded-2xl resize-none focus:ring-1 focus:ring-purple-500/50 text-slate-200 text-sm leading-relaxed"
                                 />
                               </motion.div>
                             ) : (
                               <motion.div key="custom" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
-                                <input 
-                                  type="text" 
-                                  value={title} 
-                                  onChange={(e) => setTitle(e.target.value)} 
-                                  placeholder="SONG TITLE..." 
-                                  className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl text-sm text-slate-200 outline-none focus:ring-1 focus:ring-purple-500/50" 
+                                <input
+                                  type="text"
+                                  value={title}
+                                  onChange={(e) => setTitle(e.target.value)}
+                                  placeholder="SONG TITLE..."
+                                  className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl text-sm text-slate-200 outline-none focus:ring-1 focus:ring-purple-500/50"
                                 />
-                                <input 
-                                  type="text" 
-                                  value={style} 
-                                  onChange={(e) => setStyle(e.target.value)} 
-                                  placeholder="MUSICAL STYLE (e.g. 'Synthesized Pop, 120BPM, Female Vocals')..." 
-                                  className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl text-sm text-slate-200 outline-none focus:ring-1 focus:ring-purple-500/50" 
+                                <input
+                                  type="text"
+                                  value={style}
+                                  onChange={(e) => setStyle(e.target.value)}
+                                  placeholder="MUSICAL STYLE (e.g. 'Synthesized Pop, 120BPM, Female Vocals')..."
+                                  className="w-full px-4 py-3 bg-black/40 border border-white/5 rounded-xl text-sm text-slate-200 outline-none focus:ring-1 focus:ring-purple-500/50"
                                 />
-                                <textarea 
-                                  value={lyrics} 
-                                  onChange={(e) => setLyrics(e.target.value)} 
-                                  placeholder="ENTER LYRICS (OR USE [INSTRUMENTAL] FOR BEATS)..." 
-                                  rows={5} 
-                                  className="w-full px-5 py-5 bg-black/40 border border-white/5 rounded-2xl resize-none focus:ring-1 focus:ring-purple-500/50 text-slate-200 text-sm leading-relaxed" 
+                                <textarea
+                                  value={lyrics}
+                                  onChange={(e) => setLyrics(e.target.value)}
+                                  placeholder="ENTER LYRICS (OR USE [INSTRUMENTAL] FOR BEATS)..."
+                                  rows={5}
+                                  className="w-full px-5 py-5 bg-black/40 border border-white/5 rounded-2xl resize-none focus:ring-1 focus:ring-purple-500/50 text-slate-200 text-sm leading-relaxed"
                                 />
                               </motion.div>
                             )}
                           </AnimatePresence>
                         </div>
                         <div className="p-6 bg-black/20 border-t border-white/5">
-                          <button 
-                            onClick={handleMusicSubmit} 
-                            disabled={isGeneratingMusic || !selectedModelId} 
+                          <button
+                            onClick={handleMusicSubmit}
+                            disabled={isGeneratingMusic || !selectedModelId}
                             className="w-full py-5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 text-white font-black text-xs uppercase tracking-[0.3em] rounded-2xl shadow-xl transition-all flex items-center justify-center gap-3"
                           >
-                            {isGeneratingMusic ? <Loader2 className="w-4 h-4 animate-spin" /> : <Music className="w-4 h-4" />} 
+                            {isGeneratingMusic ? <Loader2 className="w-4 h-4 animate-spin" /> : <Music className="w-4 h-4" />}
                             {isGeneratingMusic ? 'COMPOSING...' : 'INITIALIZE COMPOSITION'}
                           </button>
                         </div>
@@ -881,9 +879,9 @@ const AudioPage = () => {
                           <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"><Radio className="w-3.5 h-3.5 text-purple-400" /> GENRE PRESETS</h3>
                           <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto scrollbar-hide pr-1">
                             {musicGenres.map((g) => (
-                              <button 
-                                key={g.id} 
-                                onClick={() => setSelectedGenre(g.id)} 
+                              <button
+                                key={g.id}
+                                onClick={() => setSelectedGenre(g.id)}
                                 className={`p-3 rounded-xl text-left border flex flex-col gap-1 transition-all ${selectedGenre === g.id ? 'bg-purple-500/20 border-purple-500/30 text-white' : 'bg-black/40 border-white/5 text-slate-400 hover:text-slate-200'}`}
                               >
                                 <span className="text-lg">{g.icon}</span>
@@ -893,14 +891,14 @@ const AudioPage = () => {
                           </div>
                         </div>
                       )}
-                      
+
                       <div className="bg-black/40 backdrop-blur-xl rounded-3xl border border-white/5 p-6 shadow-2xl">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 block">SYNTHESIS ENGINE</label>
                         <div className="grid grid-cols-1 gap-2">
                           {availableVersions.map((v: any) => (
-                            <button 
-                              key={v.id} 
-                              onClick={() => setSelectedModelId(v.id)} 
+                            <button
+                              key={v.id}
+                              onClick={() => setSelectedModelId(v.id)}
                               className={`px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border flex items-center justify-between ${selectedModelId === v.id ? 'bg-purple-600 border-purple-500 text-white shadow-lg shadow-purple-600/20' : 'bg-black/40 border-white/5 text-slate-500 hover:text-slate-300'}`}
                             >
                               <span>{v.version_name || 'STANDARD'}</span>
@@ -954,7 +952,7 @@ const AudioPage = () => {
                               </div>
                               <div className="flex items-center gap-2">
                                 <button className="p-2 text-slate-500 hover:text-pink-400 transition-colors"><Play className="w-4 h-4" /></button>
-                                <button 
+                                <button
                                   onClick={() => setSelectedVoice(v.id || v.voice_id)}
                                   className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all ${selectedVoice === (v.id || v.voice_id) ? 'bg-pink-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white'}`}
                                 >
@@ -988,11 +986,11 @@ const AudioPage = () => {
                             <div className="flex items-center gap-3"><button className="w-12 h-12 bg-pink-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-pink-600/20 hover:scale-105 transition-transform"><Play className="w-5 h-5" /></button><div className="flex-1 h-1 bg-white/5 rounded-full relative"><div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-purple-600 w-1/3 rounded-full" /></div></div>
                           </div>
                           <div className="p-4 bg-black/40 border-t border-white/5 flex items-center justify-between">
-                             <div className="flex items-center gap-2">
-                                <button onClick={() => window.open(audio.file_url, '_blank')} className="p-2 text-slate-500 hover:text-white transition-colors"><Download className="w-4 h-4" /></button>
-                                <button onClick={() => { setSelectedAudioForNft(audio); setNftModalOpen(true); }} className="p-2 text-slate-500 hover:text-amber-400 transition-colors"><Star className="w-4 h-4" /></button>
-                             </div>
-                             <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{audio.credits_cost} {t('common.credits', 'Credits')}</span>
+                            <div className="flex items-center gap-2">
+                              <button onClick={() => window.open(audio.file_url, '_blank')} className="p-2 text-slate-500 hover:text-white transition-colors"><Download className="w-4 h-4" /></button>
+                              <button onClick={() => { setSelectedAudioForNft(audio); setNftModalOpen(true); }} className="p-2 text-slate-500 hover:text-amber-400 transition-colors"><Star className="w-4 h-4" /></button>
+                            </div>
+                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{audio.credits_cost} {t('common.credits', 'Credits')}</span>
                           </div>
                         </div>
                       ))}
