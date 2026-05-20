@@ -658,10 +658,10 @@ async def change_user_role(
 # ============================================
 
 @router.get("/stats/platform", response_model=PlatformStats)
-# @limiter.limit(RateLimits.ADMIN_READ)
+@limiter.limit(RateLimits.ADMIN_READ)
 async def get_platform_stats(
     request: Request,
-    # admin_user = Depends(get_current_admin_user),
+    admin_user = Depends(get_current_admin_user),
     db = Depends(get_db)
 ):
     """

@@ -12,8 +12,8 @@ export const ZEX_PRESALE_ADDRESS = "0x37CAd7cf190059c6716967CB429cD4CD13c390fC";
 export const ZEXAI_NFT_ADDRESS = "0x5938F1a7038997642a4446c20Df72224acba9A60";
 export const ZEXAI_FACTORY_ADDRESS = "0xf0917c8450Fb5aEB2B3a471BCc2E98D2312dfD92";
 
-// Polygon Mainnet read-only provider (Alchemy)
-const POLYGON_RPC = "https://polygon-mainnet.g.alchemy.com/v2/4OECI-BgprApuDWzNqcNL";
+// Polygon Mainnet read-only provider — key must come from env (never hardcode in source)
+const POLYGON_RPC = import.meta.env.VITE_ALCHEMY_RPC_URL || 'https://polygon-rpc.com';
 const polygonProvider = new JsonRpcProvider(POLYGON_RPC);
 
 // Minimal ABI for ERC20 ZEX

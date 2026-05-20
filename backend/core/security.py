@@ -52,6 +52,12 @@ async def get_current_user(
                 is_active = profile.get("is_active", True)
         except Exception as profile_err:
             logger.warning(f"Could not fetch user profile for {user_id} from public.users: {profile_err}")
+
+        if is_active is False:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Account is suspended or inactive"
+            )
             
         return SimpleNamespace(
             id=user_id,

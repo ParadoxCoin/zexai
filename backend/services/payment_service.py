@@ -157,8 +157,11 @@ async def create_lemonsqueezy_subscription_checkout(
 def verify_lemonsqueezy_signature(payload_bytes: bytes, received_sig: str) -> bool:
     """Verify the X-Signature header from LemonSqueezy webhook."""
     if not settings.LEMONSQUEEZY_WEBHOOK_SECRET:
-        logger.warning("[LemonSqueezy] WEBHOOK_SECRET not set — skipping signature check")
-        return True  # dev-mode: trust all
+        if settings.DEBUG:
+            logger.warning("[LemonSqueezy] WEBHOOK_SECRET not set — skipping signature check (DEBUG)")
+            return True
+        logger.error("[LemonSqueezy] WEBHOOK_SECRET not set in production — rejecting webhook")
+        return False
     expected = hmac.new(
         settings.LEMONSQUEEZY_WEBHOOK_SECRET.encode(),
         payload_bytes,
@@ -224,8 +227,11 @@ def verify_nowpayments_signature(payload_bytes: bytes, received_sig: str) -> boo
     NowPayments sorts the JSON keys before computing the signature.
     """
     if not settings.NOWPAYMENTS_IPN_SECRET:
-        logger.warning("[NowPayments] IPN_SECRET not set — skipping signature check")
-        return True  # dev-mode: trust all
+        if settings.DEBUG:
+            logger.warning("[NowPayments] IPN_SECRET not set — skipping signature check (DEBUG)")
+            return True
+        logger.error("[NowPayments] IPN_SECRET not set in production — rejecting webhook")
+        return False
     try:
         body_dict = json.loads(payload_bytes)
         sorted_str = json.dumps(
