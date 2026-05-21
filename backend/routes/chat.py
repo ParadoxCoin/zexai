@@ -21,6 +21,7 @@ from core.config import settings
 from core.logger import app_logger as logger
 from core.rate_limiter import limiter, RateLimits
 from services.model_service import model_service
+from services.kie_service import kie_service
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
@@ -175,7 +176,7 @@ def _build_messages_for_api(
     """
     Build the messages array for the OpenAI-compatible API call.
     Includes system prompt + trimmed conversation history + new user message.
-    Works with ALL providers (OpenAI, Groq, Fireworks, DeepSeek, etc.)
+    Ensures alternating user/assistant turns and merges consecutive identical-role messages.
     """
     api_messages = []
     
@@ -183,20 +184,42 @@ def _build_messages_for_api(
     prompt = system_prompt or DEFAULT_SYSTEM_PROMPT
     api_messages.append({"role": "system", "content": prompt})
     
-    # 2. Conversation history (trimmed to last N messages)
+    # 2. Extract and sanitize messages from history
+    temp_msgs = []
     if history:
-        # Take only the last max_messages to avoid token overflow
-        recent_history = history[-max_messages:]
-        for msg in recent_history:
+        for msg in history:
             role = msg.get("role", "user")
             content = msg.get("content", "")
             if role in ("user", "assistant") and content:
-                api_messages.append({"role": role, "content": content})
-    
-    # 3. New user message
-    api_messages.append({"role": "user", "content": new_message})
-    
+                temp_msgs.append({"role": role, "content": content})
+                
+    # 3. Prevent double-appending if the frontend already added the new user message to the history
+    cleaned_new_message = new_message.strip() if new_message else ""
+    if cleaned_new_message:
+        is_already_appended = False
+        if temp_msgs:
+            last_msg = temp_msgs[-1]
+            if last_msg["role"] == "user" and last_msg["content"].strip() == cleaned_new_message:
+                is_already_appended = True
+        
+        if not is_already_appended:
+            temp_msgs.append({"role": "user", "content": cleaned_new_message})
+
+    # 4. Merge consecutive messages of the exact same role to prevent API validation failures
+    merged_msgs = []
+    for msg in temp_msgs:
+        if merged_msgs and merged_msgs[-1]["role"] == msg["role"]:
+            merged_msgs[-1]["content"] += "\n" + msg["content"]
+        else:
+            merged_msgs.append(msg)
+            
+    # 5. Trim to max_messages
+    if len(merged_msgs) > max_messages:
+        merged_msgs = merged_msgs[-max_messages:]
+        
+    api_messages.extend(merged_msgs)
     return api_messages
+
 
 
 def _save_conversation(
@@ -337,8 +360,10 @@ async def test_save(
 # ============================================
 
 @router.post("", response_model=ChatResponse)
+@limiter.limit(RateLimits.AI_CHAT)
 async def chat_completion(
-    request: ChatRequest,
+    request: Request,
+    body: ChatRequest,
     current_user = Depends(get_current_user),
     db = Depends(get_db)
 ):
@@ -349,62 +374,85 @@ async def chat_completion(
     start_time = time.time()
     
     try:
-        existing_conv = None
-        existing_messages = []
-
         # 1. Fetch Model Details
-        model = await model_service.get_model_by_id(db, request.model)
+        model = await model_service.get_model_by_id(db, body.model)
         if not model:
             all_chat_models = await model_service.get_models(db, type="chat")
             if all_chat_models:
                 model = all_chat_models[0]
             else:
-                model = _default_chat_model(request.model)
+                model = _default_chat_model(body.model)
 
-        # 2. Fetch Provider Config
+        cost_per_unit = float(model.get("cost_usd", 0))
+        is_free_model = cost_per_unit == 0
+        is_kie_paid_model = (not is_free_model) or (model.get("provider_id") == "kie")
+
+        # Pre-check credit balance (minimum 1.0 credits required for paid models)
+        if is_kie_paid_model:
+            balance = await CreditManager.get_user_balance(db, current_user.id)
+            if balance < 1.0:
+                raise HTTPException(
+                    status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                    detail="Bu model ücretlidir. Lütfen en az 1 kredi bakiyeniz olduğundan emin olun."
+                )
+
+        # 2. Fetch Provider Config (Only if not a Kie paid model)
+        provider_config = None
         provider_id = model.get("provider_id")
-        if provider_id == "groq":
-            provider_config = _default_groq_config()
-            if not provider_config:
-                raise HTTPException(status_code=500, detail="GROQ_API_KEY is not configured")
-        else:
-            provider_config = await model_service.get_provider_config(db, provider_id)
+        if not is_kie_paid_model:
+            if provider_id == "groq":
+                provider_config = _default_groq_config()
+                if not provider_config:
+                    raise HTTPException(status_code=500, detail="GROQ_API_KEY is not configured")
+            else:
+                provider_config = await model_service.get_provider_config(db, provider_id)
         
-        # 3. Load conversation history for context
-        if request.history and len(request.history) > 0:
-            history_messages = request.history
-        else:
+        # 3. Load conversation history for context (ALWAYS check DB if conversation_id is supplied)
+        existing_conv = None
+        existing_messages = []
+        if body.conversation_id:
             existing_conv, existing_messages = _load_conversation_messages(
-                db, request.conversation_id, current_user.id
+                db, body.conversation_id, current_user.id
             )
+            
+        if body.history and len(body.history) > 0:
+            history_messages = body.history
+        else:
             history_messages = existing_messages
         
         # 4. Build messages array with full history
         api_messages = _build_messages_for_api(
             history=history_messages,
-            new_message=request.message,
-            system_prompt=request.system_prompt
+            new_message=body.message,
         )
         
-        logger.info(f"Chat request: model={request.model}, history_msgs={len(existing_messages)}, total_api_msgs={len(api_messages)}")
+        logger.info(f"Chat request: model={body.model}, history_msgs={len(existing_messages)}, total_api_msgs={len(api_messages)}")
         
-        # 5. Call API (OpenAI-compatible format - works with all providers)
-        # Smart URL construction - avoid doubling /chat/completions
-        base = provider_config['base_url'].rstrip('/')
-        if base.endswith('/chat/completions'):
-            api_endpoint = base
+        # 5. Call API (OpenAI-compatible format)
+        provider_model_id = model.get("model_id", body.model)
+        if is_kie_paid_model:
+            api_endpoint = "https://api.kie.ai/v1/chat/completions"
+            api_key = kie_service._next_key()
+            req_headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
         else:
-            api_endpoint = f"{base}/chat/completions"
-        provider_model_id = model.get("model_id", request.model)
-        
-        # Build headers - add OpenRouter-specific headers when needed
-        req_headers = {
-            "Authorization": f"Bearer {str(provider_config['api_key'])}",
-            "Content-Type": "application/json"
-        }
-        if "openrouter" in provider_id.lower():
-            req_headers["HTTP-Referer"] = "https://zexai.vercel.app"
-            req_headers["X-Title"] = "ZexAI"
+            # Smart URL construction - avoid doubling /chat/completions
+            base = provider_config['base_url'].rstrip('/')
+            if base.endswith('/chat/completions'):
+                api_endpoint = base
+            else:
+                api_endpoint = f"{base}/chat/completions"
+            
+            # Build headers - add OpenRouter-specific headers when needed
+            req_headers = {
+                "Authorization": f"Bearer {str(provider_config['api_key'])}",
+                "Content-Type": "application/json"
+            }
+            if provider_id and "openrouter" in provider_id.lower():
+                req_headers["HTTP-Referer"] = "https://zexai.vercel.app"
+                req_headers["X-Title"] = "ZexAI"
         
         async with httpx.AsyncClient() as client:
             response = await client.post(
@@ -413,8 +461,8 @@ async def chat_completion(
                 json={
                     "model": provider_model_id,
                     "messages": api_messages,  # ✅ Full history included!
-                    "temperature": request.temperature,
-                    "max_tokens": request.max_tokens
+                    "temperature": body.temperature,
+                    "max_tokens": body.max_tokens
                 },
                 timeout=300.0
             )
@@ -454,9 +502,9 @@ async def chat_completion(
                 service_type="chat",
                 cost=credits_charged,
                 details={
-                    "model": request.model,
+                    "model": body.model,
                     "tokens": tokens_used,
-                    "prompt_length": len(request.message),
+                    "prompt_length": len(body.message),
                     "response_length": len(ai_response),
                     "context_messages": len(api_messages)
                 }
@@ -467,20 +515,20 @@ async def chat_completion(
         # 9. Save/update conversation
         saved_conv_id = _save_conversation(
             db=db,
-            conversation_id=request.conversation_id or str(uuid.uuid4()),
+            conversation_id=body.conversation_id or str(uuid.uuid4()),
             user_id=current_user.id,
             existing_conv=existing_conv,
             existing_messages=existing_messages,
-            user_message=request.message,
+            user_message=body.message,
             ai_response=ai_response,
-            model=request.model,
+            model=body.model,
             tokens_used=tokens_used,
             credits_charged=credits_charged
         )
         
         return ChatResponse(
             response=ai_response,
-            model=request.model,
+            model=body.model,
             tokens_used=tokens_used,
             credits_charged=credits_charged,
             response_time=response_time,
@@ -828,18 +876,19 @@ async def list_chat_models(
 # ============================================
 
 class StreamingChatRequest(BaseModel):
-    """Streaming chat request"""
+    """Streaming chat request — system prompt is server-enforced only."""
     message: str
     model: str = "llama-3.3-70b"
     conversation_id: Optional[str] = None
     temperature: float = 0.7
     max_tokens: int = 2000
-    system_prompt: Optional[str] = None
     history: Optional[List[Dict]] = None  # Frontend sends full message history
 
 
 @router.post("/stream")
+@limiter.limit(RateLimits.AI_CHAT)
 async def chat_stream(
+    http_request: Request,
     request: StreamingChatRequest,
     current_user = Depends(get_current_user),
     db = Depends(get_db)
@@ -848,32 +897,61 @@ async def chat_stream(
     Stream AI chat completion using SSE with conversation memory.
     Uses frontend-provided history (priority) or DB-loaded history (fallback).
     """
-    # ── PRE-STREAM: All DB operations ──
-    model_data = await model_service.get_model_by_id(db, request.model)
-    provider_config = None
-    if model_data:
-        provider_config = await model_service.get_provider_config(db, model_data.get("provider_id"))
-
-    if provider_config:
-        # Smart URL construction - avoid doubling /chat/completions
-        base = provider_config['base_url'].rstrip('/')
-        if base.endswith('/chat/completions'):
-            api_url = base
+    # ── PRE-STREAM: Fetch Model and precheck credits ──
+    model = await model_service.get_model_by_id(db, request.model)
+    if not model:
+        all_chat_models = await model_service.get_models(db, type="chat")
+        if all_chat_models:
+            model = all_chat_models[0]
         else:
-            api_url = f"{base}/chat/completions"
-        api_key = str(provider_config['api_key'])
-        provider_id_lower = (model_data.get("provider_id", "") if model_data else "").lower()
-        is_openrouter = "openrouter" in provider_id_lower
-        provider_model_id = model_data.get("model_id", request.model)  # model_id is the correct field
-    else:
-        groq_key = os.getenv("GROQ_API_KEY", "")
-        if not groq_key:
-            raise HTTPException(status_code=500, detail="No API key configured")
-        api_url = "https://api.groq.com/openai/v1/chat/completions"
-        api_key = groq_key
+            model = _default_chat_model(request.model)
+
+    cost_per_unit = float(model.get("cost_usd", 0))
+    is_free_model = cost_per_unit == 0
+    is_kie_paid_model = (not is_free_model) or (model.get("provider_id") == "kie")
+
+    # Pre-check credit balance (minimum 1.0 credits required for paid models)
+    if is_kie_paid_model:
+        balance = await CreditManager.get_user_balance(db, current_user.id)
+        if balance < 1.0:
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail="Bu model ücretlidir. Lütfen en az 1 kredi bakiyeniz olduğundan emin olun."
+            )
+
+    # Fetch Provider Config (Only if not a Kie paid model)
+    provider_config = None
+    provider_id = model.get("provider_id")
+    if not is_kie_paid_model:
+        if provider_id == "groq":
+            provider_config = _default_groq_config()
+            if not provider_config:
+                raise HTTPException(status_code=500, detail="GROQ_API_KEY is not configured")
+        else:
+            provider_config = await model_service.get_provider_config(db, provider_id)
+
+    # Determine Endpoint, Key and Model ID
+    provider_model_id = model.get("model_id", request.model)
+    if is_kie_paid_model:
+        api_url = "https://api.kie.ai/v1/chat/completions"
+        api_key = kie_service._next_key()
         is_openrouter = False
-        groq_map = {"llama-3.3-70b": "llama-3.3-70b-versatile", "llama-3.1-8b": "llama-3.1-8b-instant"}
-        provider_model_id = groq_map.get(request.model, "llama-3.3-70b-versatile")
+    else:
+        if provider_config:
+            base = provider_config['base_url'].rstrip('/')
+            if base.endswith('/chat/completions'):
+                api_url = base
+            else:
+                api_url = f"{base}/chat/completions"
+            api_key = str(provider_config['api_key'])
+            is_openrouter = "openrouter" in provider_id.lower()
+        else:
+            groq_key = os.getenv("GROQ_API_KEY", "")
+            if not groq_key:
+                raise HTTPException(status_code=500, detail="No API key configured")
+            api_url = "https://api.groq.com/openai/v1/chat/completions"
+            api_key = groq_key
+            is_openrouter = False
 
     # Always try to load existing conversation for proper save/update
     existing_conv = None
@@ -889,14 +967,10 @@ async def chat_stream(
         history_messages = existing_db_messages
         logger.info(f"Using DB history: {len(history_messages)} messages")
 
-    api_messages = _build_messages_for_api(history_messages, request.message, request.system_prompt)
+    api_messages = _build_messages_for_api(history_messages, request.message)
     conv_id = request.conversation_id if existing_conv else str(uuid.uuid4())
 
     logger.info(f"STREAM: model={provider_model_id}, api_msgs={len(api_messages)}, conv_id={conv_id}, existing={existing_conv is not None}")
-
-    # Calculate if this is a free model (no credit charge)
-    model_cost_per_unit = float(model_data.get("cost_usd", 0)) if model_data else 0.0
-    is_free_model = model_cost_per_unit == 0
 
     # ── Closure context for generator ──
     ctx = {
@@ -952,13 +1026,36 @@ async def chat_stream(
                 from core.supabase_client import get_supabase_client
                 fresh = get_supabase_client()
                 if fresh is not None:
+                    tokens_used = max(len(full.split()) * 2, 1)
+                    credits_charged = 0
+                    if not c.get("is_free"):
+                        credits_charged = await CreditManager.calculate_chat_cost(fresh, c["model_name"], tokens_used)
+                        credits_charged = int(credits_charged)
+                        if credits_charged == 0 and tokens_used > 0:
+                            credits_charged = 1
+                        
+                        # Deduct credits
+                        await CreditManager.deduct_credits(
+                            db=fresh,
+                            user_id=c["uid"],
+                            service_type="chat",
+                            cost=credits_charged,
+                            details={
+                                "model": c["model_name"],
+                                "tokens": tokens_used,
+                                "prompt_length": len(c["user_msg"]),
+                                "response_length": len(full),
+                                "context_messages": len(c["messages"])
+                            }
+                        )
+
                     _save_conversation(
                         db=fresh, conversation_id=c["conv_id"], user_id=c["uid"],
                         existing_conv=c["ex_conv"], existing_messages=c["ex_msgs"],
                         user_message=c["user_msg"], ai_response=full,
                         model=c["model_name"], 
-                        tokens_used=max(len(full.split())*2, 1), 
-                        credits_charged=0 if c.get("is_free") else await CreditManager.calculate_chat_cost(db, c["model_name"], max(len(full.split())*2, 1))
+                        tokens_used=tokens_used, 
+                        credits_charged=credits_charged
                     )
 
                     save_state["saved"] = True
@@ -990,11 +1087,34 @@ async def chat_stream(
             from core.supabase_client import get_supabase_client
             fresh = get_supabase_client()
             if fresh is not None:
+                tokens_used = max(len(full.split()) * 2, 1)
+                credits_charged = 0
+                if not c.get("is_free"):
+                    credits_charged = await CreditManager.calculate_chat_cost(fresh, c["model_name"], tokens_used)
+                    credits_charged = int(credits_charged)
+                    if credits_charged == 0 and tokens_used > 0:
+                        credits_charged = 1
+                    
+                    # Deduct credits in background fallback
+                    await CreditManager.deduct_credits(
+                        db=fresh,
+                        user_id=c["uid"],
+                        service_type="chat",
+                        cost=credits_charged,
+                        details={
+                            "model": c["model_name"],
+                            "tokens": tokens_used,
+                            "prompt_length": len(c["user_msg"]),
+                            "response_length": len(full),
+                            "context_messages": len(c["messages"])
+                        }
+                    )
+
                 _save_conversation(
                     db=fresh, conversation_id=c["conv_id"], user_id=c["uid"],
                     existing_conv=c["ex_conv"], existing_messages=c["ex_msgs"],
                     user_message=c["user_msg"], ai_response=full,
-                    model=c["model_name"], tokens_used=max(len(full.split())*2, 1), credits_charged=0 if c.get("is_free") else 1
+                    model=c["model_name"], tokens_used=tokens_used, credits_charged=credits_charged
                 )
                 logger.info(f"✅ Saved conv {c['conv_id']} via background task")
             else:

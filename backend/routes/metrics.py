@@ -1,22 +1,54 @@
 """
-Metrics endpoint for Prometheus monitoring
-Provides application metrics for observability
+Metrics endpoint for Prometheus monitoring.
+All endpoints are protected: /metrics and /metrics/health require a
+static Bearer token (METRICS_AUTH_TOKEN env var). /metrics/business requires admin JWT.
 """
-from fastapi import APIRouter, Response, Depends, HTTPException
+from fastapi import APIRouter, Response, Depends, HTTPException, Security, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
 import time
 import psutil
 from datetime import datetime, timedelta
+import os
+import secrets
 
 from core.database import get_database
-from core.security import get_current_user
-# Correct the import from schemas.user
+from core.security import get_current_user, get_current_admin_user
 from schemas.user import UserProfileResponse
-from .health import get_redis_client # Re-use the redis dependency from health route
+from .health import get_redis_client
 from redis.asyncio import Redis as AsyncRedis
 
 router = APIRouter(tags=["Metrics"])
+
+_metrics_bearer = HTTPBearer(auto_error=False)
+
+# METRICS_AUTH_TOKEN must be set in Railway/production env.
+# If not set, metrics endpoints are completely locked down.
+_METRICS_TOKEN = os.getenv("METRICS_AUTH_TOKEN", "")
+
+
+async def _require_metrics_token(
+    credentials: HTTPAuthorizationCredentials = Security(_metrics_bearer)
+) -> None:
+    """
+    Verifies the static Bearer token for Prometheus scraping.
+    Set METRICS_AUTH_TOKEN in your environment and configure Prometheus
+    to send: Authorization: Bearer <token>
+    """
+    if not _METRICS_TOKEN:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Metrics endpoint is not configured (METRICS_AUTH_TOKEN missing)."
+        )
+    if not credentials or not secrets.compare_digest(
+        credentials.credentials, _METRICS_TOKEN
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or missing metrics token.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 # --- Prometheus Metrics Definitions ---
 REQUEST_COUNT = Counter(
@@ -52,7 +84,10 @@ SYSTEM_CPU_USAGE = Gauge(
 )
 
 @router.get("/metrics", summary="Get Prometheus Metrics")
-async def get_metrics(db: AsyncIOMotorDatabase = Depends(get_database)):
+async def get_metrics(
+    _: None = Depends(_require_metrics_token),
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
     """
     Endpoint for Prometheus to scrape application and system metrics.
     """
@@ -95,6 +130,7 @@ async def get_metrics(db: AsyncIOMotorDatabase = Depends(get_database)):
 
 @router.get("/metrics/health", summary="Get Detailed Health Metrics")
 async def metrics_health(
+    _: None = Depends(_require_metrics_token),
     db: AsyncIOMotorDatabase = Depends(get_database),
     redis: AsyncRedis = Depends(get_redis_client)
 ):
@@ -145,13 +181,12 @@ async def metrics_health(
 @router.get("/metrics/business", summary="Get Business KPIs (Admin Only)")
 async def business_metrics(
     db: AsyncIOMotorDatabase = Depends(get_database),
-    current_user: UserProfileResponse = Depends(get_current_user) # Use the correct schema
+    current_user = Depends(get_current_admin_user)
 ):
     """
-    Provides key business intelligence metrics. Requires admin privileges.
+    Provides key business intelligence metrics. Requires admin JWT.
+    Uses get_current_admin_user which enforces role='admin' or 'super_admin'.
     """
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Admin access required")
     
     try:
         # --- User Metrics ---

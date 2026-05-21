@@ -1,6 +1,14 @@
+"""
+Health check endpoints.
+
+Security:
+  - /health — public, minimal info (for load balancers/uptime monitors)
+  - /health/detailed — admin-only, exposes memory/disk/Redis internals
+"""
 from fastapi import APIRouter, Depends, HTTPException
 from core.database import get_db
 from core.config import settings
+from core.security import get_current_admin_user
 import psutil
 from redis.asyncio import Redis as AsyncRedis
 from datetime import datetime
@@ -14,8 +22,6 @@ async def get_redis_client() -> AsyncRedis:
         await redis_client.ping()
         return redis_client
     except Exception as e:
-        # If Redis is not available, we don't want to crash the health check.
-        # We'll return None and the endpoint will report it as disconnected.
         return None
 
 @router.get("/health")
@@ -24,16 +30,12 @@ async def health_check(
     redis: AsyncRedis = Depends(get_redis_client)
 ):
     """
-    Performs a basic health check of the essential services.
-    - Checks database connectivity.
-    - Checks cache (Redis) connectivity.
+    Basic health check — publicly accessible for load balancers and uptime monitors.
+    Returns minimal information only (no system internals).
     """
     db_status = "disconnected"
     try:
-        # Instead of ping, check if supabase client is active by a light query
-        # We check if we can access the 'users' table (or any common table)
         if hasattr(db, "table"):
-            # Minimal health check: just see if table() exists on the client
             db_status = "connected"
     except Exception:
         pass
@@ -41,7 +43,6 @@ async def health_check(
     cache_status = "disconnected"
     if redis:
         try:
-            # The ping was already done in the dependency, so if we are here, it's connected.
             cache_status = "connected"
         except Exception:
             pass
@@ -62,10 +63,12 @@ async def health_check(
 @router.get("/health/detailed")
 async def detailed_health_check(
     db = Depends(get_db),
-    redis: AsyncRedis = Depends(get_redis_client)
+    redis: AsyncRedis = Depends(get_redis_client),
+    _admin = Depends(get_current_admin_user),  # Admin JWT required — exposes system internals
 ):
     """
-    Provides a detailed health status of all components, including system resources.
+    Detailed health status with system resources.
+    Requires admin JWT — exposes memory, disk, and Redis internals.
     """
     checks = {}
 
@@ -81,7 +84,6 @@ async def detailed_health_check(
     # Redis check
     if redis:
         try:
-            # Ping is implicitly checked by the dependency
             checks["redis"] = {"status": "healthy"}
         except Exception as e:
             checks["redis"] = {"status": "unhealthy", "error": str(e)}
@@ -90,7 +92,6 @@ async def detailed_health_check(
 
     # System resource checks
     try:
-        # Memory check
         memory = psutil.virtual_memory()
         checks["memory"] = {
             "status": "healthy",
@@ -98,7 +99,6 @@ async def detailed_health_check(
             "available_gb": round(memory.available / (1024**3), 2)
         }
 
-        # Disk check
         disk = psutil.disk_usage('/')
         checks["disk"] = {
             "status": "healthy",

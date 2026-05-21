@@ -1,5 +1,5 @@
-// Build v2.1 - Fixed conversation history display
-import { useState, useRef, useEffect, useCallback } from "react";
+// Build v3.0 - Premium Three-Panel Chat Studio
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiService } from "@/services/api";
 import { supabase } from "@/lib/supabase";
@@ -7,7 +7,7 @@ import {
   MessageCircle, Send, Plus, Trash2, Bot, User,
   Copy, Check, Sparkles, History, Loader2, ChevronRight, ChevronDown,
   Crown, Zap, PanelLeftClose, PanelLeft, RotateCcw,
-  Cpu, ArrowDown, Hash, Search
+  Cpu, ArrowDown, Hash, Search, Sliders, Terminal, PenTool, BarChart3, Microscope, Settings
 } from "lucide-react";
 import { ComparisonChatPage } from "./ComparisonChatPage";
 import CodeBlock from "@/components/CodeBlock";
@@ -28,7 +28,7 @@ const fallbackChatModels: UiChatModel[] = [
   {
     id: "llama-3.3-70b",
     name: "Llama 3.3 70B",
-    icon: "LL",
+    icon: "🦙",
     tier: "free",
     desc: "Fast general assistant",
     cost: "0"
@@ -36,7 +36,7 @@ const fallbackChatModels: UiChatModel[] = [
   {
     id: "llama-3.1-8b",
     name: "Llama 3.1 8B",
-    icon: "L8",
+    icon: "🦙",
     tier: "free",
     desc: "Low-latency assistant",
     cost: "0"
@@ -45,14 +45,104 @@ const fallbackChatModels: UiChatModel[] = [
 
 const getApiBaseUrl = () => (import.meta.env.VITE_API_URL || "/api/v1").replace(/\/$/, "");
 
-const getModelIcon = (id: string, name: string) => {
+// Brand classification helper
+const getModelBrand = (id: string, name: string): string => {
   const value = `${id} ${name}`.toLowerCase();
-  if (value.includes("gpt") || value.includes("openai")) return "AI";
-  if (value.includes("claude") || value.includes("anthropic")) return "CL";
-  if (value.includes("gemini")) return "GM";
-  if (value.includes("llama")) return "LL";
-  if (value.includes("mistral")) return "MI";
-  return "AI";
+  if (value.includes("gpt") || value.includes("openai")) return "openai";
+  if (value.includes("claude") || value.includes("anthropic")) return "anthropic";
+  if (value.includes("gemini")) return "gemini";
+  if (value.includes("deepseek") || value.includes("r1")) return "deepseek";
+  if (value.includes("llama") || value.includes("meta")) return "meta";
+  if (value.includes("kie") || value.includes("zex") || value.includes("premium")) return "kie";
+  return "other";
+};
+
+// Brand UI Configurations
+const brandConfigs: Record<string, {
+  name: string;
+  color: string;
+  glow: string;
+  icon: string;
+  border: string;
+  text: string;
+  bg: string;
+  activeBorder: string;
+}> = {
+  openai: {
+    name: "OpenAI GPT",
+    color: "#10b981",
+    glow: "rgba(16, 185, 129, 0.12)",
+    icon: "🧠",
+    border: "border-emerald-500/20 hover:border-emerald-500/40",
+    activeBorder: "border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.15)]",
+    text: "text-emerald-400",
+    bg: "bg-emerald-500/10",
+  },
+  gemini: {
+    name: "Google Gemini",
+    color: "#0ea5e9",
+    glow: "rgba(14, 165, 233, 0.12)",
+    icon: "✨",
+    border: "border-sky-500/20 hover:border-sky-500/40",
+    activeBorder: "border-sky-500 shadow-[0_0_20px_rgba(14,165,233,0.15)]",
+    text: "text-sky-400",
+    bg: "bg-sky-500/10",
+  },
+  anthropic: {
+    name: "Anthropic Claude",
+    color: "#f59e0b",
+    glow: "rgba(245, 158, 11, 0.12)",
+    icon: "👑",
+    border: "border-amber-500/20 hover:border-amber-500/40",
+    activeBorder: "border-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.15)]",
+    text: "text-amber-400",
+    bg: "bg-amber-500/10",
+  },
+  deepseek: {
+    name: "DeepSeek AI",
+    color: "#06b6d4",
+    glow: "rgba(6, 182, 212, 0.12)",
+    icon: "🔍",
+    border: "border-cyan-500/20 hover:border-cyan-500/40",
+    activeBorder: "border-cyan-500 shadow-[0_0_20px_rgba(6,182,212,0.15)]",
+    text: "text-cyan-400",
+    bg: "bg-cyan-500/10",
+  },
+  meta: {
+    name: "Meta Llama",
+    color: "#6366f1",
+    glow: "rgba(99, 102, 241, 0.12)",
+    icon: "🦙",
+    border: "border-indigo-500/20 hover:border-indigo-500/40",
+    activeBorder: "border-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.15)]",
+    text: "text-indigo-400",
+    bg: "bg-indigo-500/10",
+  },
+  kie: {
+    name: "Zex Premium",
+    color: "#d946ef",
+    glow: "rgba(217, 70, 239, 0.12)",
+    icon: "🔮",
+    border: "border-fuchsia-500/20 hover:border-fuchsia-500/40",
+    activeBorder: "border-fuchsia-500 shadow-[0_0_20px_rgba(217,70,239,0.15)]",
+    text: "text-fuchsia-400",
+    bg: "bg-fuchsia-500/10",
+  },
+  other: {
+    name: "Diğer Modeller",
+    color: "#94a3b8",
+    glow: "rgba(148, 163, 184, 0.1)",
+    icon: "🤖",
+    border: "border-slate-500/20 hover:border-slate-500/40",
+    activeBorder: "border-slate-500 shadow-[0_0_20px_rgba(148,163,184,0.1)]",
+    text: "text-slate-400",
+    bg: "bg-slate-500/10",
+  }
+};
+
+const getModelIcon = (id: string, name: string) => {
+  const brand = getModelBrand(id, name);
+  return brandConfigs[brand]?.icon || "🤖";
 };
 
 const normalizeChatModel = (model: any): UiChatModel | null => {
@@ -73,19 +163,60 @@ const normalizeChatModel = (model: any): UiChatModel | null => {
   };
 };
 
-
 // Suggested Prompts
 const suggestedPrompts = [
-  { icon: '💡', title: 'Code Help', prompt: 'How do I optimize a React component?', gradient: 'from-blue-500/10 to-purple-500/10 border-blue-200 dark:border-blue-800' },
-  { icon: '📝', title: 'Content Writing', prompt: 'Suggest SEO-friendly blog titles', gradient: 'from-emerald-500/10 to-teal-500/10 border-emerald-200 dark:border-emerald-800' },
-  { icon: '🎯', title: 'Strategy', prompt: 'Suggest a growth strategy for a SaaS product', gradient: 'from-amber-500/10 to-orange-500/10 border-amber-200 dark:border-amber-800' },
-  { icon: '🔍', title: 'Analysis', prompt: 'How to do competitive analysis?', gradient: 'from-pink-500/10 to-rose-500/10 border-pink-200 dark:border-pink-800' },
-  { icon: '🌍', title: 'Translation', prompt: 'Translate this text to English:', gradient: 'from-violet-500/10 to-indigo-500/10 border-violet-200 dark:border-violet-800' },
-  { icon: '📊', title: 'Data Analysis', prompt: 'How to write Excel formulas?', gradient: 'from-cyan-500/10 to-sky-500/10 border-cyan-200 dark:border-cyan-800' },
+  { icon: '💡', title: 'Code Help', prompt: 'React uygulamasında performans optimizasyonu nasıl yapılır?', gradient: 'from-blue-500/10 to-purple-500/10 border-blue-200 dark:border-blue-800' },
+  { icon: '📝', title: 'Content Writing', prompt: 'Yapay zeka teknolojileri hakkında ilgi çekici blog başlıkları öner.', gradient: 'from-emerald-500/10 to-teal-500/10 border-emerald-200 dark:border-emerald-800' },
+  { icon: '🎯', title: 'Strategy', prompt: 'Yeni çıkan bir SaaS ürünü için büyüme stratejisi tasarla.', gradient: 'from-amber-500/10 to-orange-500/10 border-amber-200 dark:border-amber-800' },
+  { icon: '🔍', title: 'Analysis', prompt: 'Girişim pazarında rakip analizi nasıl yapılır?', gradient: 'from-pink-500/10 to-rose-500/10 border-pink-200 dark:border-pink-800' },
+];
+
+// System Persona Presets
+const systemPresets = [
+  {
+    id: "default",
+    name: "Zex Default",
+    icon: "🤖",
+    iconComponent: Bot,
+    desc: "Genel yapay zeka asistanı",
+    prompt: ""
+  },
+  {
+    id: "coder",
+    name: "Yazılım Mimarı",
+    icon: "💻",
+    iconComponent: Terminal,
+    desc: "Temiz, performanslı kod yazar",
+    prompt: "Sen son derece yetkin, kıdemli bir yazılım mimarısın. Çözümlerini temiz kod kurallarına (Clean Code), modern tasarım kalıplarına ve güvenlik standartlarına uygun olarak sun. Kod yazarken açıklayıcı ve eğitici yorumlar ekle."
+  },
+  {
+    id: "writer",
+    name: "Metin Yazarı",
+    icon: "✍️",
+    iconComponent: PenTool,
+    desc: "Etkileyici ve yaratıcı içerik üretir",
+    prompt: "Sen ödüllü bir metin yazarı ve içerik üreticisisin. Yanıtlarını son derece akıcı, etkileyici, ikna edici ve dilbilgisi kurallarına mükemmel düzeyde uygun olarak yaz. SEO dostu yapıyı göz önünde bulundur."
+  },
+  {
+    id: "analyst",
+    name: "Stratejik Analist",
+    icon: "📊",
+    iconComponent: BarChart3,
+    desc: "Veri odaklı, yapılandırılmış raporlama",
+    prompt: "Sen deneyimli bir iş analisti ve finansal stratejistsin. Yanıtlarını tamamen veri odaklı, yapılandırılmış, SWOT analizi veya benzeri analitik çerçeveler kullanarak sun. Maddeler halinde ve tablolarla desteklenmiş net stratejiler oluştur."
+  },
+  {
+    id: "researcher",
+    name: "Araştırmacı",
+    icon: "🔬",
+    iconComponent: Microscope,
+    desc: "Akademik ve kanıta dayalı bilgi",
+    prompt: "Sen titiz bir bilimsel araştırmacısın. Yanıtlarını tamamen doğrulanabilir gerçeklere, bilimsel kanıtlara ve derinlemesine araştırmalara dayandır. Spekülatif ifadelerden kaçın, varsayımları belirt ve konuyu en ince ayrıntısına kadar açıkla."
+  }
 ];
 
 // Token streaming delay (ms) for natural typing feel
-const STREAM_DELAY_MS = 18;
+const STREAM_DELAY_MS = 14;
 
 // Message content renderer with code blocks
 const MessageContent = ({ content }: { content: string }) => {
@@ -108,10 +239,10 @@ const MessageContent = ({ content }: { content: string }) => {
         }
         if (part.trim()) {
           const formatted = part
-            .replace(/`([^`]+)`/g, '<code class="bg-emerald-500/10 px-1.5 py-0.5 rounded text-emerald-400 text-[12px] font-mono border border-emerald-500/20">$1</code>')
+            .replace(/`([^`]+)`/g, '<code class="bg-indigo-500/10 px-1.5 py-0.5 rounded text-indigo-400 text-[12px] font-mono border border-indigo-500/20">$1</code>')
             .replace(/\*\*([^*]+)\*\*/g, '<strong class="font-black text-white">$1</strong>')
             .replace(/\*([^*]+)\*/g, '<em class="italic text-slate-300">$1</em>')
-            .replace(/^### (.+)$/gm, '<h3 class="text-sm font-black text-white uppercase tracking-widest mt-6 mb-2 border-l-2 border-emerald-500 pl-3">$1</h3>')
+            .replace(/^### (.+)$/gm, '<h3 class="text-sm font-black text-white uppercase tracking-widest mt-6 mb-2 border-l-2 border-indigo-500 pl-3">$1</h3>')
             .replace(/^## (.+)$/gm, '<h2 class="text-base font-black text-white uppercase tracking-[0.15em] mt-8 mb-3">$1</h2>')
             .replace(/^# (.+)$/gm, '<h1 class="text-lg font-black text-white uppercase tracking-[0.2em] mt-10 mb-4">$1</h1>')
             .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc text-slate-300 mb-1">$1</li>')
@@ -137,6 +268,10 @@ interface Conversation { id: string; title?: string; messages: Message[]; model:
 const ChatPage = () => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("chat");
+  
+  // Sidebar Tabs: "engines" | "history"
+  const [sidebarTab, setSidebarTab] = useState<"engines" | "history">("engines");
+  
   const [message, setMessage] = useState("");
   const [selectedModel, setSelectedModel] = useState("llama-3.3-70b");
   const [temperature, setTemperature] = useState(0.7);
@@ -146,10 +281,24 @@ const ChatPage = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [serverConversationId, setServerConversationId] = useState<string | null>(null);
   const [showSidebar, setShowSidebar] = useState(window.innerWidth > 768);
+  const [showRightPanel, setShowRightPanel] = useState(window.innerWidth > 1280);
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [modelSearch, setModelSearch] = useState("");
-  const [showFreeModels, setShowFreeModels] = useState(true);
-  const [showPremiumModels, setShowPremiumModels] = useState(true);
+  
+  // Accordion active state for brands
+  const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>({
+    kie: true,
+    openai: true,
+    gemini: false,
+    anthropic: false,
+    deepseek: false,
+    meta: false,
+    other: false
+  });
+
+  // Selected system persona
+  const [selectedPresetId, setSelectedPresetId] = useState("default");
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -157,9 +306,13 @@ const ChatPage = () => {
   const isProcessingRef = useRef(false);
   const queryClient = useQueryClient();
 
-  // Swipe logic for sidebar
+  const toggleAccordion = (brand: string) => {
+    setOpenAccordions(prev => ({ ...prev, [brand]: !prev[brand] }));
+  };
+
+  // Touch handlers for mobile swipe
   const touchStartX = useRef(0);
-  const touchEndY = useRef(0); // For identifying vertical vs horizontal
+  const touchEndY = useRef(0);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
@@ -171,13 +324,10 @@ const ChatPage = () => {
     const touchEndYDiff = Math.abs(e.changedTouches[0].clientY - touchEndY.current);
     const touchEndXDiff = Math.abs(touchEndX - touchStartX.current);
 
-    // Only trigger if horizontal swipe is larger than vertical (prevents accidental triggers during scrolling)
     if (touchEndXDiff > 50 && touchEndXDiff > touchEndYDiff) {
       if (touchEndX > touchStartX.current) {
-        // Swipe Right -> Open Sidebar
         setShowSidebar(true);
       } else {
-        // Swipe Left -> Close Sidebar
         setShowSidebar(false);
       }
     }
@@ -195,7 +345,6 @@ const ChatPage = () => {
     queryKey: ["chatModels"],
     queryFn: async () => {
       const res = await apiService.get("/chat/models");
-      // Map API models to UI format
       const payload = (res as any)?.data || res || [];
       const models = Array.isArray((payload as any)?.models) ? (payload as any).models : payload;
       if (!Array.isArray(models)) return [];
@@ -213,13 +362,12 @@ const ChatPage = () => {
         return {
           id: modelId,
           name: modelName,
-          icon: m.id.includes('llama') ? '🦙' : m.id.includes('gpt') ? '🧠' : m.id.includes('claude') ? '👑' : m.id.includes('gemini') ? '✨' : '🤖',
+          icon: getModelIcon(modelId, modelName),
           tier: safeCost > 0 ? 'premium' : 'free',
           desc: m?.description || 'Production-ready chat model',
           cost: displayCost
         } as UiChatModel;
       });
-
     }
   });
 
@@ -230,6 +378,52 @@ const ChatPage = () => {
       setSelectedModel(availableModels[0].id);
     }
   }, [availableModels, selectedModel]);
+
+  // Dynamic active brand selector
+  const activeModelDetails = useMemo(() => {
+    const found = availableModels.find(m => m.id === selectedModel);
+    if (found) return found;
+    return availableModels[0] || fallbackChatModels[0];
+  }, [availableModels, selectedModel]);
+
+  const activeBrandKey = useMemo(() => {
+    return getModelBrand(activeModelDetails.id, activeModelDetails.name);
+  }, [activeModelDetails]);
+
+  const activeBrand = useMemo(() => {
+    return brandConfigs[activeBrandKey] || brandConfigs.other;
+  }, [activeBrandKey]);
+
+  // Group models by brand
+  const groupedModels = useMemo(() => {
+    const groups: Record<string, UiChatModel[]> = {
+      kie: [],
+      openai: [],
+      gemini: [],
+      anthropic: [],
+      deepseek: [],
+      meta: [],
+      other: []
+    };
+    
+    availableModels.forEach(m => {
+      if (modelSearch.trim() && !m.name.toLowerCase().includes(modelSearch.toLowerCase())) {
+        return;
+      }
+      const brand = getModelBrand(m.id, m.name);
+      if (groups[brand]) {
+        groups[brand].push(m);
+      } else {
+        groups.other.push(m);
+      }
+    });
+    
+    return groups;
+  }, [availableModels, modelSearch]);
+
+  const activePreset = useMemo(() => {
+    return systemPresets.find(p => p.id === selectedPresetId) || systemPresets[0];
+  }, [selectedPresetId]);
 
   const { mutate: sendMessageFn } = useMutation({
     mutationFn: (data: any) => apiService.post("/chat", data),
@@ -343,8 +537,12 @@ const ChatPage = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({
-          message: userInput, model: selectedModel, conversation_id: serverConversationId || null,
-          temperature, max_tokens: maxTokens,
+          message: userInput, 
+          model: selectedModel, 
+          conversation_id: serverConversationId || null,
+          temperature, 
+          max_tokens: maxTokens,
+          system_prompt: activePreset.prompt || null,
           history: conversation.messages.filter((m: Message) => m.content?.trim()).map((m: Message) => ({ role: m.role, content: m.content }))
         })
       });
@@ -397,12 +595,12 @@ const ChatPage = () => {
           conversation_id: serverConversationId || null,
           temperature,
           max_tokens: maxTokens,
+          system_prompt: activePreset.prompt || null,
           history: currentConversation?.messages?.filter((m: Message) => m.content?.trim())
             .map((m: Message) => ({ role: m.role, content: m.content })) || []
         });
       } catch (fallbackError) {
         console.error('Fallback error:', fallbackError);
-        // Could add a toast notification here if available
       }
     }
   };
@@ -414,7 +612,6 @@ const ChatPage = () => {
       const response = await apiService.get(`/chat/conversations/${conversationId}`);
       const convData = (response as any)?.data || response;
 
-      // Ensure messages is an array (might be JSON string from DB)
       if (convData && typeof convData.messages === 'string') {
         try { convData.messages = JSON.parse(convData.messages); } catch { convData.messages = []; }
       }
@@ -435,214 +632,279 @@ const ChatPage = () => {
   // Extract conversations list - handle ALL possible response shapes
   const rawConv = conversations as any;
   const conversationsList: any[] =
-    rawConv?.conversations ||           // Direct: {conversations: [...]}
-    rawConv?.data?.conversations ||     // Wrapped: {data: {conversations: [...]}}
-    (Array.isArray(rawConv?.data) ? rawConv.data : []) ||  // Array: {data: [...]}
-    (Array.isArray(rawConv) ? rawConv : []);                // Direct array: [...]
+    rawConv?.conversations ||
+    rawConv?.data?.conversations ||
+    (Array.isArray(rawConv?.data) ? rawConv.data : []) ||
+    (Array.isArray(rawConv) ? rawConv : []);
 
-  const currentModel = (availableModels && availableModels.length > 0)
-    ? (availableModels.find((m: any) => m.id === selectedModel) || availableModels[0])
-    : { id: "loading", name: "Yükleniyor...", icon: "⏳", tier: "free", desc: "", cost: 0 };
-
-  const filteredModels = availableModels.filter(m => m.name.toLowerCase().includes(modelSearch.toLowerCase()));
-  const freeModels = filteredModels.filter(m => m.tier === 'free');
-  const premiumModels = filteredModels.filter(m => m.tier === 'premium');
+  const currentModel = activeModelDetails;
 
   return (
     <div 
-      className="flex h-[calc(100vh-64px)] overflow-hidden bg-[#030712] text-white selection:bg-emerald-500/30"
+      className="flex h-[calc(100vh-64px)] overflow-hidden bg-[#030712] text-white selection:bg-indigo-500/30"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Background Ambient Effects */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-900/10 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-teal-900/10 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] brightness-100 contrast-150" />
+      {/* Background Animated Dynamic Ambient Glows */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <motion.div 
+          animate={{
+            scale: [1, 1.15, 1],
+            opacity: [0.06, 0.09, 0.06],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+          style={{ backgroundColor: activeBrand.color }}
+          className="absolute top-[-15%] right-[-10%] w-[55%] h-[55%] rounded-full blur-[140px]"
+        />
+        <motion.div 
+          animate={{
+            scale: [1, 1.1, 1],
+            opacity: [0.04, 0.07, 0.04],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 2
+          }}
+          style={{ backgroundColor: activeBrand.color }}
+          className="absolute bottom-[-15%] left-[-10%] w-[50%] h-[50%] rounded-full blur-[140px]"
+        />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.025] brightness-120 contrast-125" />
       </div>
 
       {/* ═══ Left Sidebar (overlay on mobile) ═══ */}
       {showSidebar && (
         <>
           {/* Backdrop for mobile */}
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-20 md:hidden" onClick={() => setShowSidebar(false)} />
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-20 md:hidden" onClick={() => setShowSidebar(false)} />
+          
           <div className="fixed md:relative z-30 md:z-auto w-80 h-full border-r border-white/5 flex flex-col bg-black/40 backdrop-blur-2xl shadow-2xl">
-            {/* New Chat + Toggle */}
-            <div className="p-4 border-b border-white/5">
+            
+            {/* Action Pill Selector - Mode Selector */}
+            <div className="p-4 border-b border-white/5 flex flex-col gap-3">
               <button onClick={startNewConversation}
-                className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-lg shadow-emerald-600/20 transition-all active:scale-[0.98] border-t border-white/10">
+                className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-lg shadow-indigo-600/20 transition-all active:scale-[0.98] border-t border-white/10">
                 <Plus className="w-4 h-4" /> {t('chat.newChat', 'New Chat')}
               </button>
-            </div>
 
-            {/* Model Selector */}
-            <div className="p-4 border-b border-white/5 max-h-[45vh] flex flex-col">
-              {/* Search */}
-              <div className="relative mb-4">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                <input type="text" placeholder={t('chat.searchModel', 'Search models...')} value={modelSearch} onChange={e => setModelSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 text-[10px] bg-black/40 border border-white/5 rounded-xl text-slate-300 placeholder-slate-700 font-black uppercase tracking-widest focus:outline-none focus:ring-1 focus:ring-emerald-500/50" />
-              </div>
-
-              <div className="overflow-y-auto space-y-1.5 flex-1 scrollbar-hide">
-                {isLoadingModels && (
-                  <div className="p-4 rounded-2xl border border-white/5 bg-white/[0.02] text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                    Loading model catalog...
-                  </div>
-                )}
-                {isModelsError && (
-                  <div className="p-4 rounded-2xl border border-amber-500/20 bg-amber-500/10 text-[10px] font-black text-amber-300 uppercase tracking-widest">
-                    Using local fallback models
-                  </div>
-                )}
-                {/* 🆓 Free Section */}
-                {freeModels.length > 0 && (
-                  <>
-                    <button onClick={() => setShowFreeModels(!showFreeModels)}
-                      className="w-full flex items-center gap-2 px-1 py-2 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] hover:text-emerald-400 transition-colors">
-                      {showFreeModels ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-                      STANDARD ENGINES ({freeModels.length})
-                    </button>
-                    {showFreeModels && freeModels.map((model) => (
-                      <button key={model.id} onClick={() => setSelectedModel(model.id)}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all border group relative overflow-hidden ${selectedModel === model.id
-                          ? 'bg-emerald-500/10 border-emerald-500/50 text-white shadow-lg'
-                          : 'bg-white/[0.02] border-white/5 text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}>
-                        <span className="text-lg relative z-10 opacity-60 group-hover:opacity-100 transition-opacity">{model.icon}</span>
-                        <div className="flex-1 text-left min-w-0 relative z-10">
-                          <div className={`font-black text-[11px] uppercase tracking-widest truncate ${selectedModel === model.id ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>{model.name}</div>
-                          <div className="text-[9px] font-bold text-slate-600 uppercase tracking-tighter truncate">{model.desc}</div>
-                        </div>
-                        <span className="text-[9px] font-black text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20 shrink-0 relative z-10 uppercase">FREE</span>
-                      </button>
-                    ))}
-                  </>
-                )}
-
-                {/* 💎 Premium Section */}
-                {premiumModels.length > 0 && (
-                  <>
-                    <button onClick={() => setShowPremiumModels(!showPremiumModels)}
-                      className="w-full flex items-center gap-2 px-1 py-2 mt-2 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] hover:text-amber-400 transition-colors">
-                      {showPremiumModels ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-                      PREMIUM ENGINES ({premiumModels.length})
-                    </button>
-                    {showPremiumModels && premiumModels.map((model) => (
-                      <button key={model.id} onClick={() => setSelectedModel(model.id)}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all border group relative overflow-hidden ${selectedModel === model.id
-                          ? 'bg-amber-500/10 border-amber-500/50 text-white shadow-lg'
-                          : 'bg-white/[0.02] border-white/5 text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}>
-                        <span className="text-lg relative z-10 opacity-60 group-hover:opacity-100 transition-opacity">{model.icon}</span>
-                        <div className="flex-1 text-left min-w-0 relative z-10">
-                          <div className={`font-black text-[11px] uppercase tracking-widest truncate ${selectedModel === model.id ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>{model.name}</div>
-                          <div className="text-[9px] font-bold text-slate-600 uppercase tracking-tighter truncate">{model.desc}</div>
-                        </div>
-                        <span className="text-[9px] font-black text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-lg border border-amber-400/20 shrink-0 relative z-10 uppercase">{model.cost} ZEX</span>
-                      </button>
-                    ))}
-                  </>
-                )}
+              {/* Sidebar Tabs Slider */}
+              <div className="bg-white/[0.02] border border-white/5 p-1 rounded-xl flex items-center relative overflow-hidden">
+                <button 
+                  onClick={() => setSidebarTab("engines")}
+                  className={`flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all z-10 ${sidebarTab === "engines" ? 'bg-white/10 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                >
+                  <Cpu className="w-3.5 h-3.5 inline-block mr-1.5 -mt-0.5" /> Modeller
+                </button>
+                <button 
+                  onClick={() => setSidebarTab("history")}
+                  className={`flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all z-10 ${sidebarTab === "history" ? 'bg-white/10 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                >
+                  <History className="w-3.5 h-3.5 inline-block mr-1.5 -mt-0.5" /> Geçmiş ({conversationsList.length})
+                </button>
               </div>
             </div>
 
-            {/* History Header */}
-            <div className="px-4 pt-6 pb-2 flex items-center justify-between">
-              <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{t('chat.pastChats', 'Conversations')}</p>
-              <span className="text-[9px] font-black text-slate-600 bg-white/5 px-2 py-0.5 rounded-full border border-white/5">{conversationsList.length}</span>
-            </div>
-
-            {/* Conversation History */}
-            <div className="flex-1 overflow-y-auto px-4 pb-4 scrollbar-hide">
-              <div className="space-y-1.5">
-                {isLoadingConversations ? (
-                  [1, 2, 3, 4, 5].map(i => <div key={i} className="h-20 bg-white/5 rounded-2xl animate-pulse border border-white/5" />)
-                ) : conversationsList.length === 0 ? (
-                  <div className="text-center py-12">
-                    <History className="w-10 h-10 text-slate-800 mx-auto mb-4" />
-                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('chat.noChats', 'No conversations yet')}</p>
+            {/* Content area based on selected sidebarTab */}
+            <div className="flex-1 overflow-y-auto scrollbar-hide flex flex-col">
+              
+              {/* --- ENGINES VIEW --- */}
+              {sidebarTab === "engines" && (
+                <div className="p-4 space-y-4 flex-1 flex flex-col">
+                  {/* Search box with dynamic brand highlights */}
+                  <div className="relative group">
+                    <Search className={`w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${modelSearch ? activeBrand.text : 'text-slate-500'}`} />
+                    <input 
+                      type="text" 
+                      placeholder={t('chat.searchModel', 'Model ara...')} 
+                      value={modelSearch} 
+                      onChange={e => setModelSearch(e.target.value)}
+                      className="w-full pl-9 pr-4 py-2.5 text-[10px] bg-black/40 border border-white/5 rounded-xl text-slate-300 placeholder-slate-700 font-black uppercase tracking-widest focus:outline-none focus:ring-1 focus:ring-indigo-500/50" 
+                    />
                   </div>
-                ) : conversationsList.map((conv: any) => (
-                  <div key={conv.id} onClick={() => loadConversation(conv.id)}
-                    className={`p-4 rounded-2xl cursor-pointer transition-all group border relative overflow-hidden ${currentConversation?.id === conv.id
-                      ? 'bg-emerald-500/10 border-emerald-500/30 shadow-xl'
-                      : 'border-transparent bg-white/[0.01] hover:bg-white/5 hover:border-white/5'
-                      }`}>
-                    <div className="flex items-start justify-between gap-3 relative z-10">
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-[12px] font-black uppercase tracking-widest truncate leading-tight transition-colors ${currentConversation?.id === conv.id ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>
-                          {conv.title || t('chat.untitled', "UNTITLED LOG")}
-                        </p>
-                        <p className="text-[10px] text-slate-600 font-medium truncate mt-1.5 leading-tight italic line-clamp-1 opacity-60">"{conv.last_message}"</p>
-                        <div className="flex items-center gap-3 mt-3">
-                          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1">
-                            <MessageCircle className="w-3 h-3" /> {conv.message_count}
-                          </span>
-                          <div className="w-1 h-1 bg-slate-700 rounded-full" />
-                          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
-                            {new Date(conv.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
-                          </span>
+
+                  {/* Brand Grouped Accordions */}
+                  <div className="space-y-2.5 flex-1 overflow-y-auto scrollbar-hide">
+                    {isLoadingModels && (
+                      <div className="p-4 rounded-2xl border border-white/5 bg-white/[0.02] text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center justify-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin text-indigo-500" /> Catalog yükleniyor...
+                      </div>
+                    )}
+                    
+                    {Object.entries(groupedModels).map(([brandKey, models]) => {
+                      if (models.length === 0) return null;
+                      const bConfig = brandConfigs[brandKey] || brandConfigs.other;
+                      const isOpen = openAccordions[brandKey];
+                      
+                      return (
+                        <div key={brandKey} className="rounded-2xl border border-white/5 bg-black/20 overflow-hidden transition-all">
+                          {/* Accordion Header */}
+                          <button
+                            onClick={() => toggleAccordion(brandKey)}
+                            className="w-full flex items-center justify-between p-3.5 bg-white/[0.01] hover:bg-white/[0.03] transition-all text-left"
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <span className="text-base">{bConfig.icon}</span>
+                              <span className="text-[10.5px] font-black uppercase tracking-wider text-slate-300">{bConfig.name}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[9px] font-black text-slate-500 bg-white/5 px-2 py-0.5 rounded-full">{models.length}</span>
+                              {isOpen ? <ChevronDown className="w-3.5 h-3.5 text-slate-500" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-500" />}
+                            </div>
+                          </button>
+
+                          {/* Accordion Content */}
+                          {isOpen && (
+                            <div className="p-2 space-y-1.5 bg-black/40 border-t border-white/5">
+                              {models.map((model) => {
+                                const isSelected = selectedModel === model.id;
+                                return (
+                                  <button
+                                    key={model.id}
+                                    onClick={() => setSelectedModel(model.id)}
+                                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all border group relative overflow-hidden ${
+                                      isSelected
+                                        ? `${bConfig.activeBorder} ${bConfig.bg} text-white`
+                                        : 'bg-white/[0.01] border-transparent text-slate-500 hover:text-slate-300 hover:bg-white/5 hover:border-white/5'
+                                    }`}
+                                  >
+                                    <div className="flex-1 text-left min-w-0">
+                                      <div className={`font-black text-[11px] uppercase tracking-widest truncate ${isSelected ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>
+                                        {model.name}
+                                      </div>
+                                      <div className="text-[9px] font-bold text-slate-600 uppercase tracking-tighter truncate mt-0.5">{model.desc}</div>
+                                    </div>
+                                    <span className={`text-[9px] font-black px-2 py-0.5 rounded-lg border shrink-0 uppercase transition-all ${
+                                      model.tier === 'free'
+                                        ? 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20'
+                                        : 'text-amber-400 bg-amber-400/10 border-amber-400/20'
+                                    }`}>
+                                      {model.tier === 'free' ? 'FREE' : `${model.cost} ZEX`}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* --- CONVERSATIONS LOGS --- */}
+              {sidebarTab === "history" && (
+                <div className="flex-1 overflow-y-auto p-4 space-y-1.5 scrollbar-hide">
+                  {isLoadingConversations ? (
+                    [1, 2, 3, 4].map(i => <div key={i} className="h-20 bg-white/5 rounded-2xl animate-pulse border border-white/5" />)
+                  ) : conversationsList.length === 0 ? (
+                    <div className="text-center py-16">
+                      <History className="w-10 h-10 text-slate-800 mx-auto mb-4" />
+                      <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('chat.noChats', 'No conversations yet')}</p>
+                    </div>
+                  ) : conversationsList.map((conv: any) => {
+                    const isSelected = currentConversation?.id === conv.id;
+                    return (
+                      <div key={conv.id} onClick={() => loadConversation(conv.id)}
+                        className={`p-4 rounded-2xl cursor-pointer transition-all group border relative overflow-hidden ${
+                          isSelected
+                            ? 'bg-indigo-500/10 border-indigo-500/30 shadow-xl shadow-indigo-500/5'
+                            : 'border-transparent bg-white/[0.01] hover:bg-white/5 hover:border-white/5'
+                        }`}>
+                        <div className="flex items-start justify-between gap-3 relative z-10">
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-[12px] font-black uppercase tracking-widest truncate leading-tight transition-colors ${isSelected ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>
+                              {conv.title || t('chat.untitled', "UNTITLED LOG")}
+                            </p>
+                            <p className="text-[10px] text-slate-600 font-medium truncate mt-2 leading-tight italic line-clamp-1 opacity-70">
+                              "{conv.last_message}"
+                            </p>
+                            <div className="flex items-center gap-3 mt-3.5">
+                              <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1">
+                                <MessageCircle className="w-3 h-3" /> {conv.message_count}
+                              </span>
+                              <div className="w-1 h-1 bg-slate-700 rounded-full" />
+                              <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                                {new Date(conv.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
+                              </span>
+                            </div>
+                          </div>
+                          <button onClick={(e) => { e.stopPropagation(); deleteConversation(conv.id); }}
+                            className="p-2 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all rounded-xl hover:bg-red-500/10 flex-shrink-0">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
-                      <button onClick={(e) => { e.stopPropagation(); deleteConversation(conv.id); }}
-                        className="p-2 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all rounded-xl hover:bg-red-500/10 flex-shrink-0">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
-            {/* Compare button at bottom */}
-            <div className="p-4 border-t border-white/5">
+            {/* Compare engines trigger */}
+            <div className="p-4 border-t border-white/5 bg-black/10">
               <button onClick={() => setActiveTab("compare")}
                 className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white/5 hover:bg-white/10 text-slate-300 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all border border-white/10 group">
-                <Zap className="w-4 h-4 text-emerald-500 group-hover:scale-110 transition-transform" /> {t('chat.compare', 'Compare Models')}
+                <Zap className="w-4 h-4 text-indigo-400 group-hover:scale-110 transition-transform" /> {t('chat.compare', 'Modelleri Karşılaştır')}
               </button>
             </div>
           </div>
         </>
       )}
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      {/* ═══ Center Interactive Generation Panel ═══ */}
+      <div className="flex-1 flex flex-col min-w-0 z-10 relative">
         {activeTab === "compare" ? (
           <ComparisonChatPage onBack={() => setActiveTab("chat")} />
         ) : (
           <>
-            {/* Chat Header (Institutional Dark) */}
-            <div className="relative border-b border-white/5 bg-white/[0.01] backdrop-blur-xl flex-shrink-0 z-10">
+            {/* Main Chat Header (Premium Glassmorphism) */}
+            <div className="relative border-b border-white/5 bg-[#030712]/40 backdrop-blur-2xl flex-shrink-0 z-10">
               <div className="h-20 px-8 flex items-center justify-between">
-                {/* Left */}
+                
+                {/* Left Area - Active model brand badge */}
                 <div className="flex items-center gap-6">
                   {!showSidebar && (
-                    <button onClick={() => setShowSidebar(true)} className="p-2.5 text-slate-500 hover:text-white hover:bg-white/5 rounded-xl transition-all border border-transparent hover:border-white/10">
-                      <PanelLeft className="w-5 h-5" />
+                    <button onClick={() => setShowSidebar(true)} className="p-2.5 text-slate-500 hover:text-white hover:bg-white/5 rounded-xl transition-all border border-white/5 shadow-xl">
+                      <PanelLeft className="w-5 h-5 animate-pulse" />
                     </button>
                   )}
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-black/40 border border-white/10 shadow-2xl flex items-center justify-center text-2xl relative group">
-                       <div className="absolute inset-0 bg-emerald-500/10 rounded-2xl blur-xl group-hover:bg-emerald-500/20 transition-all" />
-                       <span className="relative z-10">{currentModel.icon}</span>
+                    <div className={`w-12 h-12 rounded-2xl bg-black/40 border ${activeBrand.border} shadow-2xl flex items-center justify-center text-2xl relative group transition-all duration-300`}>
+                      <div className="absolute inset-0 bg-white/[0.01] rounded-2xl blur-xl group-hover:bg-white/[0.04] transition-all" />
+                      <span className="relative z-10">{currentModel.icon}</span>
                     </div>
                     <div className="flex flex-col">
-                      <h3 className="text-[13px] font-black text-white uppercase tracking-[0.2em] leading-tight drop-shadow-sm">
-                        {currentConversation?.title || t('chat.newChat', "ZexAi Chat")}
+                      <h3 className="text-[13px] font-black text-white uppercase tracking-[0.2em] leading-tight drop-shadow-sm truncate max-w-xs md:max-w-md">
+                        {currentConversation?.title || t('chat.newChat', "ZexAi Chat Studio")}
                       </h3>
-                      <div className="flex items-center gap-2 mt-1.5">
-                        <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className={`text-[9px] font-black ${activeBrand.text} uppercase tracking-widest ${activeBrand.bg} px-2 py-0.5 rounded-md border ${activeBrand.border}`}>
                           {currentModel.name}
                         </span>
                         <div className="w-1 h-1 bg-slate-700 rounded-full" />
                         <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
-                          {currentModel.tier === 'free' ? 'STANDARD MODEL' : 'PREMIUM MODEL'}
+                          {currentModel.tier === 'free' ? 'STANDART MOTOR' : 'PREMIUM ENGINES'}
                         </span>
+                        {selectedPresetId !== "default" && (
+                          <>
+                            <div className="w-1 h-1 bg-slate-700 rounded-full" />
+                            <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20">
+                              {activePreset.name}
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Right */}
+                {/* Right Area - Stream and settings selectors */}
                 <div className="flex items-center gap-4">
                   <AnimatePresence>
                     {isTyping && (
@@ -653,73 +915,86 @@ const ChatPage = () => {
                         className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-2xl border border-white/5 backdrop-blur-md"
                       >
                         <div className="flex gap-1">
-                          <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce" />
-                          <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                          <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                          <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce" />
+                          <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                         </div>
-                        <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">{t('chat.typing', 'Generating...')}</span>
+                        <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">{t('chat.typing', 'GENERATING...')}</span>
                       </motion.div>
                     )}
                   </AnimatePresence>
-                  
+
+                  <button 
+                    onClick={() => setShowRightPanel(!showRightPanel)} 
+                    className={`p-3 rounded-2xl transition-all shadow-xl border border-white/10 group ${showRightPanel ? 'text-indigo-400 bg-indigo-500/10' : 'text-slate-500 hover:text-white bg-white/5'}`}
+                    title="Parametre Paneli"
+                  >
+                    <Settings className="w-4 h-4" />
+                  </button>
+
                   <div className="h-8 w-px bg-white/5 mx-2" />
                   
-                  <button onClick={startNewConversation} className="p-3 text-slate-500 hover:text-white bg-white/5 hover:bg-emerald-600/20 rounded-2xl transition-all shadow-xl border border-white/10 group" title="Yeni Sohbet">
+                  <button onClick={startNewConversation} className="p-3 text-slate-500 hover:text-white bg-white/5 hover:bg-indigo-600/20 rounded-2xl transition-all shadow-xl border border-white/10 group" title="Sohbeti Yenile">
                     <RotateCcw className="w-4 h-4 group-hover:rotate-[-45deg] transition-transform" />
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Messages */}
+            {/* Conversation Messages Content View */}
             <div ref={messagesContainerRef} className="flex-1 overflow-y-auto relative overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' as any }}>
-              <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
-                {/* Empty State */}
+              <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
+                
+                {/* Empty State / Suggestions Dashboard */}
                 {!currentConversation?.messages?.length && (
-                  <div className="flex flex-col items-center justify-center pt-12 pb-16">
-                    <div className="relative mb-12 group">
-                      <div className="absolute inset-0 bg-emerald-500/20 rounded-[2.5rem] blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                      <div className="w-28 h-28 bg-black/40 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl flex items-center justify-center border border-white/10 relative z-10 overflow-hidden">
-                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent" />
-                        <img src="/logo192.png" alt="ZexAi" className="w-16 h-16 object-contain relative z-10" />
+                  <div className="flex flex-col items-center justify-center pt-8 pb-12">
+                    <div className="relative mb-8 group">
+                      <div className="absolute inset-0 bg-indigo-500/20 rounded-[2.5rem] blur-3xl opacity-50 group-hover:opacity-100 transition-opacity duration-700" />
+                      <div className="w-24 h-24 bg-black/40 backdrop-blur-2xl rounded-[2.2rem] shadow-2xl flex items-center justify-center border border-white/10 relative z-10 overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/15 to-transparent" />
+                        <Sparkles className="w-10 h-10 text-indigo-400" />
                       </div>
                     </div>
-                    <h2 className="text-4xl font-black text-white mb-4 text-center uppercase tracking-tighter italic">
-                      {t('chat.emptyTitle', 'Ask ')}
-                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-500">
-                        {t('chat.emptyTitleHighlight', 'ZexAi')}
-                      </span>
+                    
+                    <h2 className="text-3xl font-black text-white mb-3 text-center uppercase tracking-tight italic">
+                      ZEXAI <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-fuchsia-500">STUDIO</span>
                     </h2>
-                    <p className="text-slate-500 text-[11px] font-black uppercase tracking-[0.2em] mb-12 max-w-md text-center leading-relaxed">
-                      {t('chat.emptyDesc', 'Use a focused assistant for analysis, writing, code, planning, and operational decisions.')}
+                    <p className="text-slate-500 text-[10.5px] font-black uppercase tracking-[0.25em] mb-10 max-w-md text-center leading-relaxed">
+                      Lüks tasarım ve yüksek performanslı yapay zeka motorları ile çalışın.
                     </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-3xl">
+                    
+                    {/* Visual Prompt Card Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl">
                       {suggestedPrompts.map((item, idx) => (
                         <button key={idx} onClick={() => setMessage(item.prompt)}
-                          className="p-5 rounded-3xl text-left bg-black/40 backdrop-blur-xl border border-white/5 hover:border-emerald-500/30 hover:shadow-2xl hover:shadow-emerald-500/10 transition-all group relative overflow-hidden">
-                          <div className="flex items-center gap-4 mb-3">
+                          className="p-5 rounded-3xl text-left bg-black/40 backdrop-blur-xl border border-white/5 hover:border-indigo-500/30 hover:shadow-2xl hover:shadow-indigo-500/5 transition-all group relative overflow-hidden">
+                          <div className="flex items-center gap-3.5 mb-3">
                             <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">{item.icon}</div>
-                            <span className="text-[11px] font-black text-white uppercase tracking-widest">{item.title}</span>
+                            <span className="text-[10px] font-black text-white uppercase tracking-widest">{item.title}</span>
                           </div>
-                          <span className="text-[11px] text-slate-500 font-medium line-clamp-2 leading-relaxed italic">"{item.prompt}"</span>
+                          <span className="text-[11.5px] text-slate-500 font-medium line-clamp-2 leading-relaxed italic">"{item.prompt}"</span>
                         </button>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* Messages List */}
+                {/* Messages List Render */}
                 {currentConversation?.messages?.map((msg, index) => (
-                  <div key={index} className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-4 duration-500`}>
+                  <div key={index} className={`flex gap-4.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-4 duration-500`}>
+                    
+                    {/* Assistant Bubble Icon */}
                     {msg.role === 'assistant' && (
-                      <div className="w-10 h-10 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-center flex-shrink-0 mt-1 shadow-2xl relative overflow-hidden group">
-                        <div className="absolute inset-0 bg-emerald-500/10 group-hover:bg-emerald-500/20 transition-all" />
-                        <Bot className="w-5 h-5 text-emerald-400 relative z-10" />
+                      <div className={`w-10 h-10 rounded-2xl bg-black/40 border ${activeBrand.border} flex items-center justify-center flex-shrink-0 mt-1 shadow-2xl relative overflow-hidden group`}>
+                        <div className={`absolute inset-0 ${activeBrand.bg} transition-all`} />
+                        <Bot className={`w-5 h-5 ${activeBrand.text} relative z-10`} />
                       </div>
                     )}
+                    
+                    {/* Main bubble */}
                     <div className={`max-w-[85%] min-w-[100px] ${msg.role === 'user' ? 'order-first' : ''}`}>
                       <div className={`px-6 py-4 rounded-[2rem] shadow-2xl relative overflow-hidden border ${msg.role === 'user'
-                        ? 'bg-gradient-to-br from-emerald-600 to-teal-700 text-white rounded-tr-lg border-white/20'
+                        ? 'bg-gradient-to-br from-indigo-600 to-violet-700 text-white rounded-tr-lg border-white/20'
                         : 'bg-black/40 backdrop-blur-xl text-slate-200 rounded-tl-lg border-white/5'}`}>
                         {msg.role === 'assistant' ? (
                           <MessageContent content={msg.content} />
@@ -728,13 +1003,14 @@ const ChatPage = () => {
                         )}
                         {msg.role === 'assistant' && !msg.content && isTyping && (
                           <div className="flex gap-1.5 py-2">
-                            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" />
-                            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                            <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" />
+                            <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                            <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                           </div>
                         )}
                       </div>
-                      {/* Meta row */}
+                      
+                      {/* Message Meta Info Row */}
                       <div className={`flex items-center gap-3 mt-2.5 px-3 ${msg.role === 'user' ? 'justify-end' : ''}`}>
                         <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
                           {new Date(msg.timestamp).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
@@ -747,10 +1023,12 @@ const ChatPage = () => {
                         )}
                       </div>
                     </div>
+
+                    {/* User Bubble Icon */}
                     {msg.role === 'user' && (
                       <div className="w-10 h-10 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-center flex-shrink-0 mt-1 shadow-2xl relative overflow-hidden group">
-                        <div className="absolute inset-0 bg-purple-500/10 group-hover:bg-purple-500/20 transition-all" />
-                        <User className="w-5 h-5 text-purple-400 relative z-10" />
+                        <div className="absolute inset-0 bg-violet-500/10 group-hover:bg-violet-500/20 transition-all" />
+                        <User className="w-5 h-5 text-violet-400 relative z-10" />
                       </div>
                     )}
                   </div>
@@ -758,43 +1036,46 @@ const ChatPage = () => {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Scroll to bottom button */}
+              {/* Float Scroll Controller */}
               {showScrollDown && (
                 <button onClick={scrollToBottom}
-                  className="absolute bottom-4 left-1/2 -translate-x-1/2 p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full shadow-lg hover:shadow-xl transition-all z-10">
-                  <ArrowDown className="w-4 h-4 text-gray-500" />
+                  className="absolute bottom-4 left-1/2 -translate-x-1/2 p-3 bg-indigo-600 hover:bg-indigo-500 border border-indigo-500/20 rounded-full shadow-2xl transition-all z-10 active:scale-95">
+                  <ArrowDown className="w-4 h-4 text-white" />
                 </button>
               )}
             </div>
 
-            {/* Input Area */}
-            <div className="border-t border-white/5 bg-black/40 backdrop-blur-2xl p-6 relative z-10">
+            {/* Chat Composer Section */}
+            <div className="border-t border-white/5 bg-[#030712]/40 backdrop-blur-2xl p-6 relative z-10">
               <form onSubmit={handleSendMessage} className="max-w-4xl mx-auto relative">
-                <div className="absolute inset-0 bg-emerald-500/5 rounded-3xl blur-2xl opacity-50 pointer-events-none" />
-                <div className="flex items-end gap-3 bg-black/60 backdrop-blur-3xl rounded-[2rem] p-3 border border-white/5 focus-within:border-emerald-500/50 focus-within:ring-4 focus-within:ring-emerald-500/5 transition-all shadow-2xl relative z-10">
+                <div className={`absolute inset-0 rounded-3xl blur-3xl opacity-20 pointer-events-none transition-all duration-300`} style={{ backgroundColor: activeBrand.color }} />
+                
+                <div className="flex items-end gap-3 bg-black/60 backdrop-blur-3xl rounded-[2rem] p-3 border border-white/5 focus-within:border-indigo-500/50 focus-within:ring-4 focus-within:ring-indigo-500/5 transition-all shadow-2xl relative z-10">
                   <textarea
                     ref={textareaRef}
-                    placeholder={t('chat.typeMsg', "Ask anything...")}
+                    placeholder={`${currentModel.name} ile konuşun...`}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     rows={1}
                     disabled={isTyping}
-                    className="flex-1 px-5 py-3 bg-transparent border-0 resize-none focus:ring-0 focus:outline-none text-slate-100 placeholder-slate-700 text-[14px] font-medium max-h-[200px] scrollbar-hide"
+                    className="flex-1 px-5 py-3.5 bg-transparent border-0 resize-none focus:ring-0 focus:outline-none text-slate-100 placeholder-slate-700 text-[14.5px] font-medium max-h-[180px] scrollbar-hide"
                     onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(e); } }}
                   />
                   <button type="submit" disabled={isTyping || !message.trim()}
-                    className="w-12 h-12 flex items-center justify-center bg-emerald-600 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded-[1.25rem] transition-all shadow-xl shadow-emerald-600/20 active:scale-90 border-t border-white/10 shrink-0">
+                    className="w-12 h-12 flex items-center justify-center bg-gradient-to-br from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 disabled:bg-slate-800 disabled:from-slate-800 disabled:to-slate-850 disabled:text-slate-600 text-white rounded-[1.25rem] transition-all shadow-xl shadow-indigo-600/10 active:scale-90 border-t border-white/10 shrink-0">
                     {isTyping ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                   </button>
                 </div>
+             
+                {/* Micro info footer row */}
                 <div className="flex items-center justify-center gap-4 mt-4">
                   <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.2em] flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    {currentModel.name} · {currentModel.tier === 'free' ? 'STANDARD' : 'PREMIUM'} ENGINE ACTIVE
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: activeBrand.color }} />
+                    {currentModel.name} · {currentModel.tier === 'free' ? 'FREE ENGINE' : 'PREMIUM COMPILATION'}
                   </p>
                   <div className="w-1 h-1 bg-slate-800 rounded-full" />
                   <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.2em]">
-                    Shift+Enter for a new line
+                    Shift+Enter ile yeni satır
                   </p>
                 </div>
               </form>
@@ -802,6 +1083,106 @@ const ChatPage = () => {
           </>
         )}
       </div>
+
+      {/* ═══ Right Studio Settings Panel (Desktop only, toggleable) ═══ */}
+      {showRightPanel && (
+        <div className="w-72 h-full border-l border-white/5 flex flex-col bg-black/40 backdrop-blur-2xl shadow-2xl relative overflow-y-auto p-6 space-y-6 z-10 shrink-0">
+          
+          {/* Section 1: Title */}
+          <div>
+            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] flex items-center gap-2 mb-4">
+              <Sliders className="w-3.5 h-3.5 text-indigo-400" />
+              PARAMETRELER
+            </h2>
+            <div className="h-px bg-white/5 w-full" />
+          </div>
+
+          {/* Temperature Slider */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Yaratıcılık</span>
+              <span className="text-[10px] font-mono font-black text-indigo-400">{temperature.toFixed(1)}</span>
+            </div>
+            <input 
+              type="range" 
+              min="0" 
+              max="1.5" 
+              step="0.1" 
+              value={temperature} 
+              onChange={e => setTemperature(parseFloat(e.target.value))}
+              className="w-full accent-indigo-500 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer"
+            />
+            <div className="flex justify-between text-[8.5px] font-black text-slate-600 uppercase tracking-tighter">
+              <span>Hassas</span>
+              <span>Dengeli</span>
+              <span>Yaratıcı</span>
+            </div>
+          </div>
+
+          {/* Max Response Tokens */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Yanıt Limiti</span>
+              <span className="text-[10px] font-mono font-black text-indigo-400">{maxTokens}</span>
+            </div>
+            <input 
+              type="range" 
+              min="500" 
+              max="8000" 
+              step="100" 
+              value={maxTokens} 
+              onChange={e => setMaxTokens(parseInt(e.target.value))}
+              className="w-full accent-indigo-500 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer"
+            />
+            <div className="flex justify-between text-[8.5px] font-black text-slate-600 uppercase tracking-tighter">
+              <span>Kısa</span>
+              <span>Uzun</span>
+            </div>
+          </div>
+
+          {/* Section 2: Personas Title */}
+          <div className="pt-4">
+            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] flex items-center gap-2 mb-4">
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+              SİSTEM PERSONASI
+            </h2>
+            <div className="h-px bg-white/5 w-full" />
+          </div>
+
+          {/* Persona Selection Grid */}
+          <div className="space-y-2.5">
+            {systemPresets.map((preset) => {
+              const IconComp = preset.iconComponent;
+              const isSelected = selectedPresetId === preset.id;
+              return (
+                <button
+                  key={preset.id}
+                  onClick={() => setSelectedPresetId(preset.id)}
+                  className={`w-full p-3.5 rounded-2xl border text-left transition-all flex items-start gap-3 group relative overflow-hidden ${
+                    isSelected
+                      ? 'border-indigo-500 bg-indigo-500/10 shadow-[0_0_20px_rgba(99,102,241,0.08)]'
+                      : 'border-white/5 bg-white/[0.01] hover:bg-white/5 hover:border-white/10'
+                  }`}
+                >
+                  <div className={`p-2 rounded-xl border shrink-0 transition-all ${
+                    isSelected ? 'border-indigo-400/20 bg-indigo-500/10 text-indigo-400' : 'border-white/5 bg-white/5 text-slate-500 group-hover:text-slate-300'
+                  }`}>
+                    <IconComp className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className={`block text-[11px] font-black uppercase tracking-wider ${isSelected ? 'text-white' : 'text-slate-300 group-hover:text-white'}`}>
+                      {preset.name}
+                    </span>
+                    <span className="block text-[9.5px] font-bold text-slate-600 uppercase tracking-tighter truncate mt-1">
+                      {preset.desc}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

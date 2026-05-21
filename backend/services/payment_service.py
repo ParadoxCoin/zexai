@@ -188,7 +188,11 @@ async def create_nowpayments_invoice(
     if not settings.NOWPAYMENTS_API_KEY:
         raise ValueError("NOWPAYMENTS_API_KEY is not configured")
 
-    callback_base = settings.MANUS_CALLBACK_BASE_URL or "https://api.zexai.io"
+    # MANUS_CALLBACK_BASE_URL must be set in Railway env (e.g. https://api.zexai.io).
+    # No hardcoded fallback — missing URL means misconfigured deployment.
+    callback_base = settings.MANUS_CALLBACK_BASE_URL
+    if not callback_base:
+        raise ValueError("MANUS_CALLBACK_BASE_URL is not configured — set it in Railway env")
 
     payload = {
         "price_amount": price_usd,

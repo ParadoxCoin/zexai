@@ -1,5 +1,9 @@
 """
-Chat service schemas
+Chat service schemas.
+
+Security note: system_prompt is intentionally NOT exposed in the API schema.
+The backend always uses the server-defined DEFAULT_SYSTEM_PROMPT to prevent
+prompt injection and jailbreak attacks via the client.
 """
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict
@@ -18,7 +22,7 @@ class ChatRequest(BaseModel):
     conversation_id: Optional[str] = None
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     max_tokens: int = Field(default=2000, ge=1, le=8000)
-    system_prompt: Optional[str] = None
+    # system_prompt intentionally removed — server enforces DEFAULT_SYSTEM_PROMPT
     history: Optional[List[Dict]] = None
 
 
