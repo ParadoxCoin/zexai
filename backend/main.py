@@ -23,6 +23,7 @@ from sentry_sdk.integrations.fastapi import FastApiIntegration
 
 from routes.webhooks import router as webhooks_router
 from routes.referral import router as referral_router
+from routes.rpc_proxy import router as rpc_proxy_router  # Polygon RPC proxy (key stays server-side)
 from core.config import settings
 from core.database import connect_to_db, close_db_connection
 from core.logger import app_logger as logger
@@ -203,9 +204,17 @@ app.add_middleware(
 )
 
 # Production security middleware
-# if settings.ENVIRONMENT == "production":
-#     # HTTPS redirect handled at Nginx level to prevent internal redirection loops
-#     app.add_middleware(HTTPSRedirectMiddleware)
+if settings.ENVIRONMENT == "production":
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=[
+            "app.zexai.io",
+            "api.zexai.io",
+            "zexai.io",
+            "zexai-production.up.railway.app",
+            "*.railway.app",          # Railway health checks
+        ],
+    )
 
 # Global exception handlers
 @app.exception_handler(AIException)
@@ -308,6 +317,7 @@ app.include_router(metrics_router, prefix=API_V1_PREFIX)  # Metrics for monitori
 app.include_router(admin_pricing_enhanced_router, prefix=API_V1_PREFIX)  # Enhanced admin pricing
 app.include_router(dashboard_enhanced_router, prefix=API_V1_PREFIX)  # Enhanced dashboard
 app.include_router(webhooks_router, prefix=API_V1_PREFIX)  # Webhook handlers
+app.include_router(rpc_proxy_router, prefix=API_V1_PREFIX)  # Polygon RPC proxy — key server-side only
 app.include_router(referral_router, prefix=API_V1_PREFIX)  # Referral system router
 app.include_router(admin_analytics_router, prefix=API_V1_PREFIX)  # Analytics Dashboard
 app.include_router(admin_email_router, prefix=API_V1_PREFIX)  # Email Templates

@@ -12,9 +12,15 @@ export const ZEX_PRESALE_ADDRESS = "0x37CAd7cf190059c6716967CB429cD4CD13c390fC";
 export const ZEXAI_NFT_ADDRESS = "0x5938F1a7038997642a4446c20Df72224acba9A60";
 export const ZEXAI_FACTORY_ADDRESS = "0xf0917c8450Fb5aEB2B3a471BCc2E98D2312dfD92";
 
-// Polygon Mainnet read-only provider — key must come from env (never hardcode in source)
-const POLYGON_RPC = import.meta.env.VITE_ALCHEMY_RPC_URL || 'https://polygon-rpc.com';
-const polygonProvider = new JsonRpcProvider(POLYGON_RPC);
+// Lazy read-only provider — avoid constructing at module load (public RPCs often 401 from browsers).
+const POLYGON_RPC = 'https://polygon-rpc.com';
+let _lazyPolygonProvider: JsonRpcProvider | null = null;
+const getPolygonProvider = (): JsonRpcProvider => {
+    if (!_lazyPolygonProvider) {
+        _lazyPolygonProvider = new JsonRpcProvider(POLYGON_RPC, undefined, { staticNetwork: true });
+    }
+    return _lazyPolygonProvider;
+};
 
 // Minimal ABI for ERC20 ZEX
 const ERC20_ABI = [
@@ -135,13 +141,13 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 const tempProvider = new ethers.BrowserProvider(window.ethereum as any);
                 nativeBal = await tempProvider.getBalance(address);
             } else {
-                nativeBal = await polygonProvider.getBalance(address);
+                nativeBal = await getPolygonProvider().getBalance(address);
             }
             const formattedPol = ethers.formatEther(nativeBal);
             setPolBalance(parseFloat(formattedPol).toFixed(4));
 
             // 2. Fetch ZEX balance
-            const zexContract = new ethers.Contract(ZEX_TOKEN_ADDRESS, ERC20_ABI, polygonProvider);
+            const zexContract = new ethers.Contract(ZEX_TOKEN_ADDRESS, ERC20_ABI, getPolygonProvider());
             const balance: bigint = await zexContract.balanceOf(address);
 
             // Format BigInt down to a readable string (18 decimals standard for ERC20)
@@ -156,10 +162,10 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
             // Retry once after 3 seconds (network may not be ready yet)
             setTimeout(async () => {
                 try {
-                    const nativeBal = await polygonProvider.getBalance(address);
+                    const nativeBal = await getPolygonProvider().getBalance(address);
                     setPolBalance(parseFloat(ethers.formatEther(nativeBal)).toFixed(4));
 
-                    const zexContract = new ethers.Contract(ZEX_TOKEN_ADDRESS, ERC20_ABI, polygonProvider);
+                    const zexContract = new ethers.Contract(ZEX_TOKEN_ADDRESS, ERC20_ABI, getPolygonProvider());
                     const balance: bigint = await zexContract.balanceOf(address);
                     const formattedBalance = ethers.formatUnits(balance, 18);
                     const roundedBalance = parseFloat(formattedBalance).toFixed(2);
@@ -298,7 +304,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
             // 1. Get current mint fee dynamically from the deployed contract 
             // USING THE DIRECT POLYGON RPC. If we use `contracts.nftContract` (which uses the wallet signer), 
             // it will throw a 0x empty error if the user's wallet is connected to the wrong network.
-            const nftReadOnly = new ethers.Contract(ZEXAI_NFT_ADDRESS, NFT_ABI, polygonProvider);
+            const nftReadOnly = new ethers.Contract(ZEXAI_NFT_ADDRESS, NFT_ABI, getPolygonProvider());
             const mintFeeWei: bigint = await nftReadOnly.mintFee();
             const totalFeeWei = mintFeeWei * BigInt(amount);
             const totalFeeEther = ethers.formatEther(totalFeeWei);
@@ -334,7 +340,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         try {
             // 1. Calculate the required ZEX fee for the Factory
-            const factoryReadOnly = new ethers.Contract(ZEXAI_FACTORY_ADDRESS, FACTORY_ABI, polygonProvider);
+            const factoryReadOnly = new ethers.Contract(ZEXAI_FACTORY_ADDRESS, FACTORY_ABI, getPolygonProvider());
             const baseFeeWei: bigint = await factoryReadOnly.baseFee();
             const perNftFeeWei: bigint = await factoryReadOnly.perNftFee();
             const totalFeeWei = baseFeeWei + (perNftFeeWei * BigInt(maxSupply));

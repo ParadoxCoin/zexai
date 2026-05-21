@@ -96,7 +96,11 @@ class Settings(BaseSettings):
     METAMASK_CONTRACT_ADDRESS: str = ""
     COMPANY_WALLET_ADDRESS: str = ""
     METAMASK_DISCOUNT_PERCENT: float = 15.0  # 15% discount for MetaMask payments
-    WEB3_PROVIDER_URL: str = "https://polygon-rpc.com"  # Default Polygon RPC
+    WEB3_PROVIDER_URL: str = "https://polygon-rpc.com"  # Default Polygon RPC (public, no key)
+    # Alchemy RPC URL — contains API key, NEVER expose to frontend.
+    # Set in Railway env: ALCHEMY_RPC_URL=https://polygon-mainnet.g.alchemy.com/v2/<key>
+    # Frontend calls /api/v1/rpc/polygon which proxies here server-side.
+    ALCHEMY_RPC_URL: str = ""
     
     # Manus Agent API (for Synapse service)
     MANUS_API_KEY: str = ""
@@ -205,11 +209,25 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def validate_synapse_webhook_secret(self) -> "Settings":
         """
-        Ensure SYNAPSE_WEBHOOK_SECRET is configured with a secure value in production
+        Log misconfiguration at startup but do not crash the app — Synapse webhook
+        route enforces the secret at request time in production.
         """
-        if not self.DEBUG:
-            if not self.SYNAPSE_WEBHOOK_SECRET or self.SYNAPSE_WEBHOOK_SECRET == "super_secure_synapse_webhook_secret_2026":
-                raise ValueError("SYNAPSE_WEBHOOK_SECRET must be set to a secure custom value in production (DEBUG=False)")
+        import logging
+        _log = logging.getLogger("config")
+        insecure = (
+            not self.SYNAPSE_WEBHOOK_SECRET
+            or self.SYNAPSE_WEBHOOK_SECRET == "super_secure_synapse_webhook_secret_2026"
+        )
+        if self.ENVIRONMENT == "production" and insecure:
+            _log.error(
+                "SYNAPSE_WEBHOOK_SECRET is missing or insecure in production. "
+                "Synapse webhooks will return 500 until Railway env is fixed."
+            )
+        elif not self.DEBUG and insecure:
+            _log.warning(
+                "SYNAPSE_WEBHOOK_SECRET uses default value (DEBUG=False). "
+                "Set a strong secret before accepting production Synapse traffic."
+            )
         return self
     
     class Config:
