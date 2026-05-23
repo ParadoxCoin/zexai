@@ -1071,7 +1071,7 @@ async def chat_stream(
             logger.error(f"Stream error: {e}")
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
-    def background_save():
+    async def background_save():
         """Fallback save in case the inline save didn't work"""
         c = ctx
         if save_state["saved"]:
