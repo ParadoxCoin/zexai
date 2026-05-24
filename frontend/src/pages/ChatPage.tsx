@@ -783,7 +783,7 @@ const ChatPage = () => {
                                         ? 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20'
                                         : 'text-amber-400 bg-amber-400/10 border-amber-400/20'
                                     }`}>
-                                      {model.tier === 'free' ? 'FREE' : `${model.cost} ZEX`}
+                                      {model.tier === 'free' ? 'FREE' : `${model.cost} Kredi`}
                                     </span>
                                   </button>
                                 );
