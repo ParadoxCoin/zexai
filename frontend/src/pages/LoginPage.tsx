@@ -218,6 +218,7 @@ export const LoginPage: React.FC = () => {
                     key={provider.id}
                     onClick={() => handleSocialLogin(provider.id)}
                     disabled={!!socialLoading}
+                    aria-label={`${provider.name} ile giriş yap`}
                     className={`
                       relative flex items-center justify-center gap-2 py-3 px-4 rounded-xl
                       border ${provider.border} ${provider.bg} ${provider.text}
@@ -254,9 +255,9 @@ export const LoginPage: React.FC = () => {
 
             {/* Error Message */}
             {error && (
-              <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 animate-shake">
+              <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 animate-shake" role="alert" aria-live="assertive">
                 <p className="text-sm text-red-400 flex items-center gap-2">
-                  <span>⚠️</span> {error}
+                  <span aria-hidden="true">⚠️</span> {error}
                 </p>
               </div>
             )}
@@ -265,11 +266,12 @@ export const LoginPage: React.FC = () => {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               {/* Email */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-300">
+                <label htmlFor="login-email" className="block text-sm font-medium text-gray-300">
                   {t('login.emailLabel')}
                 </label>
                 <div className="relative group">
                   <input
+                    id="login-email"
                     {...register('email')}
                     type="email"
                     autoComplete="email"
@@ -288,7 +290,7 @@ export const LoginPage: React.FC = () => {
               {/* Password */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="block text-sm font-medium text-gray-300">
+                  <label htmlFor="login-password" className="block text-sm font-medium text-gray-300">
                     {t('login.passwordLabel')}
                   </label>
                   <Link
@@ -300,6 +302,7 @@ export const LoginPage: React.FC = () => {
                 </div>
                 <div className="relative group">
                   <input
+                    id="login-password"
                     {...register('password')}
                     type={showPassword ? 'text' : 'password'}
                     autoComplete="current-password"
@@ -312,8 +315,9 @@ export const LoginPage: React.FC = () => {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                    aria-label={showPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4" aria-hidden="true" />}
                   </button>
                   <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-500/0 to-cyan-500/0 group-focus-within:from-purple-500/5 group-focus-within:to-cyan-500/5 pointer-events-none transition-all duration-300" />
                 </div>

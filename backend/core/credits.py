@@ -1,6 +1,12 @@
 """
 Credit system management and middleware
-Handles credit checking, deduction, and logging using Supabase
+Handles credit checking, deduction, and logging using Supabase.
+
+ATOMIC OPERATIONS: deduct_credits / add_credits / refund_credits now use
+Supabase RPC (PostgreSQL stored procedures in supabase/atomic_credits.sql)
+to prevent race conditions. Both the balance update and the usage_log INSERT
+execute inside a single database transaction — parallel requests can no longer
+exploit a stale read to spend credits they don't have.
 """
 from fastapi import HTTPException, status, Depends
 from datetime import datetime
@@ -8,6 +14,11 @@ from types import SimpleNamespace
 from typing import Dict, Any, Optional
 import uuid
 import json
+
+# Flag: True when Supabase RPC functions exist in the database.
+# Set to False only if you haven't run supabase/atomic_credits.sql yet;
+# a WARNING will be logged and the legacy (non-atomic) path will be used.
+ATOMIC_OPS_AVAILABLE: bool = True
 
 from core.database import get_db
 from core.security import get_current_user
@@ -154,119 +165,194 @@ class CreditManager:
         details: Dict[str, Any] = None
     ) -> float:
         """
-        Deduct credits from user balance and log the usage
+        Atomically deduct credits from user balance and log the usage.
+        Uses a Supabase RPC (PostgreSQL stored procedure) so that the balance
+        read, conditional check, update, and usage_log INSERT all happen in a
+        single database transaction — eliminating race-condition exploits.
         Returns the new balance.
         """
-        # Check balance first
+        details_payload = details or {}
+
+        # ── ATOMIC PATH (preferred) ──────────────────────────────────────────
+        if ATOMIC_OPS_AVAILABLE:
+            try:
+                rpc_response = db.rpc(
+                    "atomic_deduct_credits",
+                    {
+                        "p_user_id": user_id,
+                        "p_cost": cost,
+                        "p_service_type": service_type,
+                        "p_details": json.dumps(details_payload),
+                    }
+                ).execute()
+
+                # Supabase RPC returns the new balance as a scalar
+                new_balance = float(rpc_response.data)
+
+                # Notify user via WebSocket (fire-and-forget)
+                await notify_credit_update(user_id, new_balance, -cost)
+
+                # Low-credit email check (non-blocking)
+                LOW_CREDIT_THRESHOLD = 50
+                try:
+                    import asyncio
+                    from core.email_service import get_email_service
+                    prev_balance = new_balance + cost
+                    if new_balance < LOW_CREDIT_THRESHOLD and prev_balance >= LOW_CREDIT_THRESHOLD:
+                        user_result = db.table("users").select("email, full_name").eq("id", user_id).execute()
+                        if user_result.data:
+                            user_data = user_result.data[0]
+                            email_service = get_email_service()
+                            asyncio.create_task(
+                                email_service.send_credits_low(
+                                    user_email=user_data.get("email"),
+                                    user_name=user_data.get("full_name", "Kullanıcı"),
+                                    current_credits=int(new_balance)
+                                )
+                            )
+                            logger.info(f"Low credits email queued for {user_id}")
+                except Exception as email_error:
+                    logger.warning(f"Failed to send low credits email: {email_error}")
+
+                return new_balance
+
+            except Exception as rpc_err:
+                err_str = str(rpc_err)
+                # Map PostgreSQL INSUFFICIENT_CREDITS exception → CreditInsufficientError
+                if "INSUFFICIENT_CREDITS" in err_str:
+                    current = await CreditManager.get_user_balance(db, user_id)
+                    raise CreditInsufficientError(cost, current)
+                # If RPC doesn't exist yet, fall through to legacy path with warning
+                if "does not exist" in err_str or "function" in err_str.lower():
+                    logger.warning(
+                        "[Credits] atomic_deduct_credits RPC not found — "
+                        "falling back to non-atomic path. "
+                        "Please run supabase/atomic_credits.sql!"
+                    )
+                else:
+                    logger.error(f"[Credits] RPC deduct_credits failed: {rpc_err}")
+                    raise DatabaseError(f"Credit deduction failed: {err_str}")
+
+        # ── LEGACY FALLBACK (non-atomic — only used if RPC missing) ─────────
+        logger.warning("[Credits] Using LEGACY non-atomic credit deduction. RACE CONDITION RISK!")
         current_balance = await CreditManager.get_user_balance(db, user_id)
         if current_balance < cost:
             raise CreditInsufficientError(cost, current_balance)
-            
+
         try:
-            # 1. Deduct credits
-            # Using a stored procedure (RPC) is safer for atomic updates, 
-            # but for now we'll use direct update with a check
             new_balance = current_balance - cost
-            
             update_response = db.table("user_credits").update({
                 "credits_balance": new_balance,
                 "updated_at": datetime.utcnow().isoformat()
             }).eq("user_id", user_id).execute()
-            
+
             if not update_response.data:
                 raise DatabaseError("Failed to update credit balance")
-                
-            # 2. Log usage
+
             db.table("usage_logs").insert({
                 "user_id": user_id,
                 "service_type": service_type,
                 "cost": cost,
-                "details": json.dumps(details) if details else {},
+                "details": json.dumps(details_payload),
                 "created_at": datetime.utcnow().isoformat()
             }).execute()
-            
-            # Notify user via websocket
+
             await notify_credit_update(user_id, new_balance, -cost)
-            
-            # 3. Check if credits are low and send email warning
-            LOW_CREDIT_THRESHOLD = 50  # Send warning when credits drop below this
-            if new_balance < LOW_CREDIT_THRESHOLD and current_balance >= LOW_CREDIT_THRESHOLD:
-                # Only send once when crossing threshold
-                try:
-                    import asyncio
-                    from core.email_service import get_email_service
-                    
-                    # Get user email
-                    user_result = db.table("users").select("email, full_name").eq("id", user_id).execute()
-                    if user_result.data:
-                        user_data = user_result.data[0]
-                        email_service = get_email_service()
-                        asyncio.create_task(
-                            email_service.send_credits_low(
-                                user_email=user_data.get("email"),
-                                user_name=user_data.get("full_name", "Kullanıcı"),
-                                current_credits=int(new_balance)
-                            )
-                        )
-                        logger.info(f"Low credits email queued for {user_id}")
-                except Exception as email_error:
-                    logger.warning(f"Failed to send low credits email: {email_error}")
-            
             return new_balance
-            
+
         except Exception as e:
-            logger.error(f"Error deducting credits: {e}")
+            logger.error(f"Error deducting credits (legacy): {e}")
             raise DatabaseError(f"Credit deduction failed: {str(e)}")
     
     @staticmethod
     async def refund_credits(db, user_id: str, amount: float, details: Dict[str, Any] = None):
-        """Refund credits to user"""
+        """Atomically refund credits to user."""
+        details_payload = details or {}
+        if ATOMIC_OPS_AVAILABLE:
+            try:
+                rpc_response = db.rpc(
+                    "atomic_add_credits",
+                    {
+                        "p_user_id": user_id,
+                        "p_amount": amount,
+                        "p_service_type": "refund",
+                        "p_details": json.dumps(details_payload),
+                    }
+                ).execute()
+                new_balance = float(rpc_response.data)
+                await notify_credit_update(user_id, new_balance, amount)
+                return
+            except Exception as rpc_err:
+                err_str = str(rpc_err)
+                if "does not exist" in err_str or "function" in err_str.lower():
+                    logger.warning("[Credits] atomic_add_credits RPC not found — falling back.")
+                else:
+                    logger.error(f"[Credits] RPC refund_credits failed: {rpc_err}")
+                    return
+
+        # Legacy fallback
         try:
             current_balance = await CreditManager.get_user_balance(db, user_id)
             new_balance = current_balance + amount
-            
             db.table("user_credits").update({
                 "credits_balance": new_balance,
                 "updated_at": datetime.utcnow().isoformat()
             }).eq("user_id", user_id).execute()
-            
             db.table("usage_logs").insert({
                 "user_id": user_id,
                 "service_type": "refund",
                 "cost": -amount,
-                "details": json.dumps(details) if details else {},
+                "details": json.dumps(details_payload),
                 "created_at": datetime.utcnow().isoformat()
             }).execute()
-            
             await notify_credit_update(user_id, new_balance, amount)
-            
         except Exception as e:
-            logger.error(f"Error refunding credits: {e}")
+            logger.error(f"Error refunding credits (legacy): {e}")
 
     @staticmethod
     async def add_credits(db, user_id: str, amount: float, reason: str = "purchase"):
-        """Add credits to user balance"""
+        """Atomically add credits to user balance."""
+        details_payload = {"reason": reason}
+        if ATOMIC_OPS_AVAILABLE:
+            try:
+                rpc_response = db.rpc(
+                    "atomic_add_credits",
+                    {
+                        "p_user_id": user_id,
+                        "p_amount": amount,
+                        "p_service_type": "credit_purchase",
+                        "p_details": json.dumps(details_payload),
+                    }
+                ).execute()
+                new_balance = float(rpc_response.data)
+                await notify_credit_update(user_id, new_balance, amount)
+                return
+            except Exception as rpc_err:
+                err_str = str(rpc_err)
+                if "does not exist" in err_str or "function" in err_str.lower():
+                    logger.warning("[Credits] atomic_add_credits RPC not found — falling back.")
+                else:
+                    logger.error(f"[Credits] RPC add_credits failed: {rpc_err}")
+                    return
+
+        # Legacy fallback
         try:
             current_balance = await CreditManager.get_user_balance(db, user_id)
             new_balance = current_balance + amount
-            
             db.table("user_credits").update({
                 "credits_balance": new_balance,
                 "updated_at": datetime.utcnow().isoformat()
             }).eq("user_id", user_id).execute()
-            
             db.table("usage_logs").insert({
                 "user_id": user_id,
                 "service_type": "credit_purchase",
                 "cost": -amount,
-                "details": json.dumps({"reason": reason}),
+                "details": json.dumps(details_payload),
                 "created_at": datetime.utcnow().isoformat()
             }).execute()
-            
             await notify_credit_update(user_id, new_balance, amount)
-            
         except Exception as e:
-            logger.error(f"Error adding credits: {e}")
+            logger.error(f"Error adding credits (legacy): {e}")
 
 
 async def check_credits_dependency(

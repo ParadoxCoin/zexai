@@ -1,16 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { ModelManagementPanel } from '@/components/admin/ModelManagementPanel';
-import { ProviderManagementPanel } from '@/components/admin/ProviderManagementPanel';
-import { SettingsPanel } from '@/components/admin/SettingsPanel';
-import { AuditLogPanel } from '@/components/admin/AuditLogPanel';
-// Force rebuild for airdrop integration - 2026-04-26
-import { FailoverPanel } from '@/components/admin/FailoverPanel';
-import { RoleManagementPanel } from '@/components/admin/RoleManagementPanel';
-import { PricingManagementPanel } from '@/components/admin/PricingManagementPanel';
-import AdminGamificationPanel from '@/components/admin/AdminGamificationPanel';
-import { VestingPanel } from '@/components/admin/VestingPanel';
-import { AirdropManagementPanel } from '@/components/admin/AirdropManagementPanel';
-import { ReferralManagementPanel } from '@/components/admin/ReferralManagementPanel';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import {
   Users, DollarSign, Activity, TrendingUp, Search, Edit, Ban, CheckCircle,
   Plus, Minus, Bell, Settings, BarChart3, PieChart, LineChart, AlertCircle,
@@ -18,39 +6,34 @@ import {
   RefreshCw, Download, Upload, Eye, Shield, Database, LayoutGrid, XCircle, Trophy,
   UserPlus, Sparkles
 } from 'lucide-react';
-import axios from 'axios';
+import api from '@/services/api';
 import { useToast } from '@/components/ui/toast';
 import { LoadingSpinner } from '@/components/ui/skeleton';
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1',
-});
+// ─── Lazy-loaded admin panel modules ─────────────────────────────────────────
+// Each tab is loaded only when first activated, keeping initial bundle small.
+const ModelManagementPanel    = lazy(() => import('@/components/admin/ModelManagementPanel').then(m => ({ default: m.ModelManagementPanel })));
+const ProviderManagementPanel = lazy(() => import('@/components/admin/ProviderManagementPanel').then(m => ({ default: m.ProviderManagementPanel })));
+const SettingsPanel           = lazy(() => import('@/components/admin/SettingsPanel').then(m => ({ default: m.SettingsPanel })));
+const AuditLogPanel           = lazy(() => import('@/components/admin/AuditLogPanel').then(m => ({ default: m.AuditLogPanel })));
+const FailoverPanel           = lazy(() => import('@/components/admin/FailoverPanel').then(m => ({ default: m.FailoverPanel })));
+const RoleManagementPanel     = lazy(() => import('@/components/admin/RoleManagementPanel').then(m => ({ default: m.RoleManagementPanel })));
+const PricingManagementPanel  = lazy(() => import('@/components/admin/PricingManagementPanel').then(m => ({ default: m.PricingManagementPanel })));
+const AdminGamificationPanel  = lazy(() => import('@/components/admin/AdminGamificationPanel'));
+const VestingPanel            = lazy(() => import('@/components/admin/VestingPanel').then(m => ({ default: m.VestingPanel })));
+const AirdropManagementPanel  = lazy(() => import('@/components/admin/AirdropManagementPanel').then(m => ({ default: m.AirdropManagementPanel })));
+const ReferralManagementPanel = lazy(() => import('@/components/admin/ReferralManagementPanel').then(m => ({ default: m.ReferralManagementPanel })));
 
-// Add auth token to requests
-api.interceptors.request.use((config) => {
-  // Try multiple token storage locations (Supabase stores in different places)
-  let token = sessionStorage.getItem('auth_token') ||
-    sessionStorage.getItem('sb-access-token') ||
-    sessionStorage.getItem('sb-access-token');
-
-  // Also check for Supabase session in localStorage
-  if (!token) {
-    const supabaseKey = Object.keys(sessionStorage).find(key => key.startsWith('sb-') && key.endsWith('-auth-token'));
-    if (supabaseKey) {
-      try {
-        const session = JSON.parse(sessionStorage.getItem(supabaseKey) || '{}');
-        if (session.access_token) {
-          token = session.access_token;
-        }
-      } catch (e) { }
-    }
-  }
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+/** Reusable tab-panel suspense wrapper */
+const TabPanel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Suspense fallback={
+    <div className="flex items-center justify-center py-20">
+      <LoadingSpinner size="lg" />
+    </div>
+  }>
+    {children}
+  </Suspense>
+);
 
 type TabType = 'overview' | 'users' | 'analytics' | 'monitoring' | 'models' | 'settings' | 'audit' | 'gamification' | 'vesting' | 'airdrop' | 'referrals';
 
@@ -301,7 +284,7 @@ export const AdminDashboardEnhanced: React.FC = () => {
 
       {/* Tabs */}
       <div className="border-b border-gray-200 mb-6">
-        <nav className="-mb-px flex space-x-8">
+        <nav className="-mb-px flex space-x-8" aria-label="Admin paneli sekmeleri">
           {[
             { id: 'overview', label: 'Genel Bakış', icon: BarChart3 },
             { id: 'users', label: 'Kullanıcılar', icon: Users },
@@ -323,8 +306,10 @@ export const AdminDashboardEnhanced: React.FC = () => {
                   ? 'border-primary-500 text-primary-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
+                aria-selected={activeTab === tab.id}
+                role="tab"
               >
-                <Icon className="h-5 w-5 mr-2" />
+                <Icon className="h-5 w-5 mr-2" aria-hidden="true" />
                 {tab.label}
               </button>
             );
@@ -347,7 +332,7 @@ export const AdminDashboardEnhanced: React.FC = () => {
                   </p>
                 </div>
                 <div className="bg-blue-400 rounded-full p-3">
-                  <Users className="h-8 w-8" />
+                  <Users className="h-8 w-8" aria-hidden="true" />
                 </div>
               </div>
             </div>
@@ -362,7 +347,7 @@ export const AdminDashboardEnhanced: React.FC = () => {
                   </p>
                 </div>
                 <div className="bg-green-400 rounded-full p-3">
-                  <UserCheck className="h-8 w-8" />
+                  <UserCheck className="h-8 w-8" aria-hidden="true" />
                 </div>
               </div>
             </div>
@@ -377,7 +362,7 @@ export const AdminDashboardEnhanced: React.FC = () => {
                   </p>
                 </div>
                 <div className="bg-purple-400 rounded-full p-3">
-                  <CreditCard className="h-8 w-8" />
+                  <CreditCard className="h-8 w-8" aria-hidden="true" />
                 </div>
               </div>
             </div>
@@ -392,7 +377,7 @@ export const AdminDashboardEnhanced: React.FC = () => {
                   </p>
                 </div>
                 <div className="bg-orange-400 rounded-full p-3">
-                  <DollarSign className="h-8 w-8" />
+                  <DollarSign className="h-8 w-8" aria-hidden="true" />
                 </div>
               </div>
             </div>
@@ -402,37 +387,37 @@ export const AdminDashboardEnhanced: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold mb-4 flex items-center">
-                <Shield className="h-5 w-5 mr-2 text-green-600" />
+                <Shield className="h-5 w-5 mr-2 text-green-600" aria-hidden="true" />
                 Sistem Sağlığı
               </h3>
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                   <div className="flex items-center">
-                    <Database className="h-5 w-5 text-green-600 mr-3" />
+                    <Database className="h-5 w-5 text-green-600 mr-3" aria-hidden="true" />
                     <span className="text-sm font-medium">Veritabanı</span>
                   </div>
                   <span className="flex items-center text-green-600">
-                    <CheckCircle className="h-4 w-4 mr-1" />
+                    <CheckCircle className="h-4 w-4 mr-1" aria-hidden="true" />
                     Çalışıyor
                   </span>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                   <div className="flex items-center">
-                    <Server className="h-5 w-5 text-green-600 mr-3" />
+                    <Server className="h-5 w-5 text-green-600 mr-3" aria-hidden="true" />
                     <span className="text-sm font-medium">API Servisleri</span>
                   </div>
                   <span className="flex items-center text-green-600">
-                    <CheckCircle className="h-4 w-4 mr-1" />
+                    <CheckCircle className="h-4 w-4 mr-1" aria-hidden="true" />
                     Aktif
                   </span>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
                   <div className="flex items-center">
-                    <Wifi className="h-5 w-5 text-blue-600 mr-3" />
+                    <Wifi className="h-5 w-5 text-blue-600 mr-3" aria-hidden="true" />
                     <span className="text-sm font-medium">WebSocket</span>
                   </div>
                   <span className="flex items-center text-blue-600">
-                    <Wifi className="h-4 w-4 mr-1" />
+                    <Wifi className="h-4 w-4 mr-1" aria-hidden="true" />
                     {realtimeStats?.realtime?.websocket_connections?.total_connections || 0} bağlantı
                   </span>
                 </div>
@@ -441,7 +426,7 @@ export const AdminDashboardEnhanced: React.FC = () => {
 
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold mb-4 flex items-center">
-                <Activity className="h-5 w-5 mr-2 text-blue-600" />
+                <Activity className="h-5 w-5 mr-2 text-blue-600" aria-hidden="true" />
                 Gerçek Zamanlı Aktivite
               </h3>
               <div className="space-y-4">
@@ -471,7 +456,7 @@ export const AdminDashboardEnhanced: React.FC = () => {
           {providerStatus && (
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold mb-4 flex items-center">
-                <Zap className="h-5 w-5 mr-2 text-yellow-600" />
+                <Zap className="h-5 w-5 mr-2 text-yellow-600" aria-hidden="true" />
                 AI Sağlayıcı Durumu
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -482,9 +467,9 @@ export const AdminDashboardEnhanced: React.FC = () => {
                       <div className={`flex items-center ${status.status === 'healthy' ? 'text-green-600' :
                         status.status === 'degraded' ? 'text-yellow-600' : 'text-red-600'
                         }`}>
-                        {status.status === 'healthy' ? <CheckCircle className="h-4 w-4" /> :
-                          status.status === 'degraded' ? <AlertCircle className="h-4 w-4" /> :
-                            <XCircle className="h-4 w-4" />}
+                        {status.status === 'healthy' ? <CheckCircle className="h-4 w-4" aria-hidden="true" /> :
+                          status.status === 'degraded' ? <AlertCircle className="h-4 w-4" aria-hidden="true" /> :
+                            <XCircle className="h-4 w-4" aria-hidden="true" />}
                         <span className="ml-1 text-sm capitalize">{status.status}</span>
                       </div>
                     </div>
@@ -512,12 +497,13 @@ export const AdminDashboardEnhanced: React.FC = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" aria-hidden="true" />
                   <input
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Kullanıcı ara..."
+                    aria-label="Kullanıcı ara"
                     className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
                   />
                 </div>
@@ -544,6 +530,7 @@ export const AdminDashboardEnhanced: React.FC = () => {
                   <th className="px-4 py-3 text-left">
                     <input
                       type="checkbox"
+                      aria-label="Tüm kullanıcıları seç"
                       onChange={(e) => {
                         if (e.target.checked) {
                           setSelectedUsers(filteredUsers.map(u => u.id));
@@ -573,6 +560,7 @@ export const AdminDashboardEnhanced: React.FC = () => {
                         type="checkbox"
                         checked={selectedUsers.includes(user.id)}
                         onChange={() => toggleUserSelection(user.id)}
+                        aria-label={`${user.email} kullanıcısını seç`}
                         className="rounded border-gray-300"
                       />
                     </td>
@@ -582,6 +570,7 @@ export const AdminDashboardEnhanced: React.FC = () => {
                       <select
                         value={user.role || 'customer'}
                         onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                        aria-label={`${user.email} rolü`}
                         className={`text-xs font-semibold rounded-md border-0 py-1 px-2 cursor-pointer ${user.role === 'super_admin' ? 'bg-red-100 text-red-800' :
                           user.role === 'admin' ? 'bg-purple-100 text-purple-800' :
                             user.role === 'moderator' ? 'bg-orange-100 text-orange-800' :
@@ -606,7 +595,7 @@ export const AdminDashboardEnhanced: React.FC = () => {
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                        <Clock className="h-3 w-3" />
+                        <Clock className="h-3 w-3" aria-hidden="true" />
                         <span>{formatLastLogin(user.last_login)}</span>
                       </div>
                     </td>
@@ -616,7 +605,7 @@ export const AdminDashboardEnhanced: React.FC = () => {
                         : (user.generation_count_30d || 0) > 10 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
                         : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
                       }`}>
-                        <Sparkles className="h-3 w-3" />
+                        <Sparkles className="h-3 w-3" aria-hidden="true" />
                         {user.generation_count_30d || 0}
                       </span>
                     </td>
@@ -625,12 +614,12 @@ export const AdminDashboardEnhanced: React.FC = () => {
                         }`}>
                         {user.is_active !== false ? (
                           <>
-                            <CheckCircle className="h-3 w-3 mr-1" />
+                            <CheckCircle className="h-3 w-3 mr-1" aria-hidden="true" />
                             Aktif
                           </>
                         ) : (
                           <>
-                            <Ban className="h-3 w-3 mr-1" />
+                            <Ban className="h-3 w-3 mr-1" aria-hidden="true" />
                             Askıda
                           </>
                         )}
@@ -642,15 +631,19 @@ export const AdminDashboardEnhanced: React.FC = () => {
                           <button
                             onClick={() => handleSuspendUser(user.id)}
                             className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
-                            title="Askıya Al">
-                            <Ban className="h-4 w-4" />
+                            title="Askıya Al"
+                            aria-label={`${user.email} kullanıcısını askıya al`}
+                          >
+                            <Ban className="h-4 w-4" aria-hidden="true" />
                           </button>
                         ) : (
                           <button
                             onClick={() => handleActivateUser(user.id)}
                             className="p-1.5 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-all"
-                            title="Aktif Et">
-                            <UserPlus className="h-4 w-4" />
+                            title="Aktif Et"
+                            aria-label={`${user.email} kullanıcısını aktif et`}
+                          >
+                            <UserPlus className="h-4 w-4" aria-hidden="true" />
                           </button>
                         )}
                       </div>
@@ -665,89 +658,91 @@ export const AdminDashboardEnhanced: React.FC = () => {
 
       {/* Analytics artık Ayarlar -> Analytics altında */}
 
-      {/* Model Management Tab */}
+      {/* Model Management Tab — lazy loaded */}
       {activeTab === 'models' && (
-        <ModelManagementPanel />
+        <TabPanel><ModelManagementPanel /></TabPanel>
       )}
 
-      {/* Monitoring Tab - Provider Management */}
+      {/* Monitoring Tab — lazy loaded */}
       {activeTab === 'monitoring' && (
-        <div className="space-y-6">
-          {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white rounded-lg shadow p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">WebSocket Bağlantıları</p>
-                  <p className="text-2xl font-bold text-blue-600">
-                    {realtimeStats?.realtime?.websocket_connections?.total_connections || 0}
-                  </p>
+        <TabPanel>
+          <div className="space-y-6">
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white rounded-lg shadow p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">WebSocket Bağlantıları</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {realtimeStats?.realtime?.websocket_connections?.total_connections || 0}
+                    </p>
+                  </div>
+                  <Wifi className="h-8 w-8 text-blue-400" aria-hidden="true" />
                 </div>
-                <Wifi className="h-8 w-8 text-blue-400" />
+              </div>
+              <div className="bg-white rounded-lg shadow p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Sağlıklı Sağlayıcı</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {realtimeStats?.system?.provider_health || 0}/{realtimeStats?.system?.total_providers || 0}
+                    </p>
+                  </div>
+                  <Server className="h-8 w-8 text-green-400" aria-hidden="true" />
+                </div>
+              </div>
+              <div className="bg-white rounded-lg shadow p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Uptime</p>
+                    <p className="text-2xl font-bold text-purple-600">99.9%</p>
+                  </div>
+                  <Zap className="h-8 w-8 text-purple-400" aria-hidden="true" />
+                </div>
               </div>
             </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Sağlıklı Sağlayıcı</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    {realtimeStats?.system?.provider_health || 0}/{realtimeStats?.system?.total_providers || 0}
-                  </p>
-                </div>
-                <Server className="h-8 w-8 text-green-400" />
-              </div>
-            </div>
-            <div className="bg-white rounded-lg shadow p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Uptime</p>
-                  <p className="text-2xl font-bold text-purple-600">99.9%</p>
-                </div>
-                <Zap className="h-8 w-8 text-purple-400" />
-              </div>
-            </div>
+            <ProviderManagementPanel />
+            <FailoverPanel />
           </div>
-
-          {/* Provider Management Panel */}
-          <ProviderManagementPanel />
-
-          {/* Failover Panel */}
-          <FailoverPanel />
-        </div>
+        </TabPanel>
       )}
 
-      {/* Settings Tab */}
+      {/* Settings Tab — lazy loaded */}
       {activeTab === 'settings' && (
-        <SettingsPanel />
+        <TabPanel><SettingsPanel /></TabPanel>
       )}
 
-      {/* Audit Log Tab */}
+      {/* Audit Log Tab — lazy loaded */}
       {activeTab === 'audit' && (
-        <AuditLogPanel />
+        <TabPanel><AuditLogPanel /></TabPanel>
       )}
 
-      {/* Gamification Tab */}
+      {/* Gamification Tab — lazy loaded */}
       {activeTab === 'gamification' && (
-        <AdminGamificationPanel />
+        <TabPanel><AdminGamificationPanel /></TabPanel>
       )}
 
-      {/* Vesting Tab */}
+      {/* Vesting Tab — lazy loaded */}
       {activeTab === 'vesting' && (
-        <VestingPanel />
+        <TabPanel><VestingPanel /></TabPanel>
       )}
 
-      {/* Airdrop Tab (Landing Page) */}
+      {/* Airdrop Tab — lazy loaded */}
       {activeTab === 'airdrop' && (
-        <div className="space-y-6">
-          <AirdropManagementPanel />
-        </div>
+        <TabPanel>
+          <div className="space-y-6">
+            <AirdropManagementPanel />
+          </div>
+        </TabPanel>
       )}
 
-      {/* Platform Referral Tab (app.zexai.io) */}
+      {/* Platform Referral Tab — lazy loaded */}
       {activeTab === 'referrals' && (
-        <div className="space-y-6">
-          <ReferralManagementPanel />
-        </div>
+        <TabPanel>
+          <div className="space-y-6">
+            <ReferralManagementPanel />
+          </div>
+        </TabPanel>
       )}
     </div>
   );

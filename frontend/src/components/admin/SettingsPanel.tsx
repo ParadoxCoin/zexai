@@ -1,23 +1,40 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import {
     Settings, Save, RefreshCw, Globe, CreditCard, Bell, Key, Shield, Database,
     AlertCircle, DollarSign, Users, Clock
 } from 'lucide-react';
 import axios from 'axios';
 import { useToast } from '../ui/toast';
-import PricingManagementPanel from './PricingManagementPanel';
-import RoleManagementPanel from './RoleManagementPanel';
-import RateLimitPanel from './RateLimitPanel';
-import SchedulerPanel from './SchedulerPanel';
-import KeyVaultPanel from './KeyVaultPanel';
-import ABTestingPanel from './ABTestingPanel';
-import AnalyticsDashboardPanel from './AnalyticsDashboardPanel';
-import EmailTemplatesPanel from './EmailTemplatesPanel';
-import AdvancedReportsPanel from './AdvancedReportsPanel';
-import PackageManagementPanel from './PackageManagementPanel';
-import VideoModelsPanel from './VideoModelsPanel';
-import ProviderKeysPanel from './ProviderKeysPanel';
+import { LoadingSpinner } from '../ui/skeleton';
 import { FlaskConical, BarChart3, Mail, FileBarChart, Package, Video } from 'lucide-react';
+
+// ─── Lazy-loaded settings sub-panels ──────────────────────────────────────────
+// Each sub-panel is loaded only when its tab is first activated.
+const PricingManagementPanel  = lazy(() => import('./PricingManagementPanel'));
+const RoleManagementPanel     = lazy(() => import('./RoleManagementPanel'));
+const RateLimitPanel          = lazy(() => import('./RateLimitPanel'));
+const SchedulerPanel          = lazy(() => import('./SchedulerPanel'));
+const KeyVaultPanel           = lazy(() => import('./KeyVaultPanel'));
+const ABTestingPanel          = lazy(() => import('./ABTestingPanel'));
+const AnalyticsDashboardPanel = lazy(() => import('./AnalyticsDashboardPanel'));
+const EmailTemplatesPanel     = lazy(() => import('./EmailTemplatesPanel'));
+const AdvancedReportsPanel    = lazy(() => import('./AdvancedReportsPanel'));
+const PackageManagementPanel  = lazy(() => import('./PackageManagementPanel'));
+const VideoModelsPanel        = lazy(() => import('./VideoModelsPanel'));
+const ProviderKeysPanel       = lazy(() => import('./ProviderKeysPanel'));
+
+/** Shared Suspense boundary for settings sub-panels */
+const SubPanel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+    <Suspense fallback={
+        <div className="flex items-center justify-center py-16">
+            <LoadingSpinner size="md" />
+        </div>
+    }>
+        {children}
+    </Suspense>
+);
+
+
 
 const api = axios.create({
     baseURL: (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000/api/v1',
@@ -449,86 +466,62 @@ export const SettingsPanel: React.FC = () => {
 
                     {/* Pricing Management Tab */}
                     {activeTab === 'pricing' && (
-                        <div>
-                            <PricingManagementPanel />
-                        </div>
+                        <SubPanel><PricingManagementPanel /></SubPanel>
                     )}
 
                     {/* Package Management Tab */}
                     {activeTab === 'packages' && (
-                        <div>
-                            <PackageManagementPanel />
-                        </div>
+                        <SubPanel><PackageManagementPanel /></SubPanel>
                     )}
 
                     {/* Role Management Tab */}
                     {activeTab === 'roles' && (
-                        <div>
-                            <RoleManagementPanel />
-                        </div>
+                        <SubPanel><RoleManagementPanel /></SubPanel>
                     )}
 
                     {/* Rate Limit Tab */}
                     {activeTab === 'ratelimit' && (
-                        <div>
-                            <RateLimitPanel />
-                        </div>
+                        <SubPanel><RateLimitPanel /></SubPanel>
                     )}
 
                     {/* Scheduler Tab */}
                     {activeTab === 'scheduler' && (
-                        <div>
-                            <SchedulerPanel />
-                        </div>
+                        <SubPanel><SchedulerPanel /></SubPanel>
                     )}
 
                     {/* Key Vault Tab */}
                     {activeTab === 'vault' && (
-                        <div>
-                            <KeyVaultPanel />
-                        </div>
+                        <SubPanel><KeyVaultPanel /></SubPanel>
                     )}
 
                     {/* A/B Testing Tab */}
                     {activeTab === 'abtesting' && (
-                        <div>
-                            <ABTestingPanel />
-                        </div>
+                        <SubPanel><ABTestingPanel /></SubPanel>
                     )}
 
                     {/* Analytics Tab */}
                     {activeTab === 'analytics' && (
-                        <div>
-                            <AnalyticsDashboardPanel />
-                        </div>
+                        <SubPanel><AnalyticsDashboardPanel /></SubPanel>
                     )}
 
                     {/* Email Tab */}
                     {activeTab === 'email' && (
-                        <div>
-                            <EmailTemplatesPanel />
-                        </div>
+                        <SubPanel><EmailTemplatesPanel /></SubPanel>
                     )}
 
                     {/* Reports Tab */}
                     {activeTab === 'reports' && (
-                        <div>
-                            <AdvancedReportsPanel />
-                        </div>
+                        <SubPanel><AdvancedReportsPanel /></SubPanel>
                     )}
 
                     {/* Video Models Tab */}
                     {activeTab === 'videomodels' && (
-                        <div>
-                            <VideoModelsPanel />
-                        </div>
+                        <SubPanel><VideoModelsPanel /></SubPanel>
                     )}
 
                     {/* Provider Keys Tab */}
                     {activeTab === 'providerkeys' && (
-                        <div>
-                            <ProviderKeysPanel />
-                        </div>
+                        <SubPanel><ProviderKeysPanel /></SubPanel>
                     )}
                 </div>
             </div>

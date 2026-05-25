@@ -1,9 +1,13 @@
 """
 File Validation Utilities
-Provides comprehensive file validation for security and quality
+Provides comprehensive file validation for security and quality.
+
+SECURITY NOTE: MIME type validation requires the `python-magic` package and
+the system-level `libmagic` library. If they are unavailable, the system
+rejects ALL file uploads with HTTP 503 rather than silently skipping
+validation — preventing malicious file disguise (e.g., .exe uploaded as .png).
 """
 import os
-import magic
 import hashlib
 from typing import Dict, List, Optional, Tuple, Any
 from PIL import Image, ImageFile
@@ -18,6 +22,22 @@ import json
 
 from core.logger import app_logger as logger
 from core.exceptions import FileProcessingError
+
+# ── python-magic availability check ──────────────────────────────────────────
+# If python-magic / libmagic is not installed, we refuse all uploads
+# instead of silently skipping MIME validation (security-by-design).
+try:
+    import magic as _magic_lib
+    MIME_VALIDATION_AVAILABLE: bool = True
+    logger.info("[FileValidation] python-magic loaded ✔ MIME validation active")
+except ImportError:
+    MIME_VALIDATION_AVAILABLE = False
+    logger.critical(
+        "[FileValidation] python-magic NOT available. "
+        "All file uploads will be rejected (HTTP 503) until 'pip install python-magic' "
+        "and libmagic system library are installed. "
+        "In production Docker images: apt-get install -y libmagic-dev"
+    )
 
 # Enable loading of truncated images
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -170,10 +190,23 @@ class FileValidator:
             }
         
         # Check MIME type
+        # ── SECURITY: Reject if python-magic is unavailable (no silent bypass) ─
+        if not MIME_VALIDATION_AVAILABLE:
+            return {
+                "valid": False,
+                "error": (
+                    "File upload service temporarily unavailable: MIME validation "
+                    "library (libmagic) is not installed on this server. "
+                    "Please contact the administrator."
+                ),
+                "error_code": "MIME_VALIDATION_UNAVAILABLE",
+                "http_status": 503,
+            }
+
         content = await file.read(8192)  # Read first 8KB for MIME detection
         file.file.seek(0)  # Reset
-        
-        detected_mime = magic.from_buffer(content, mime=True)
+
+        detected_mime = _magic_lib.from_buffer(content, mime=True)
         if detected_mime not in config["mime_types"]:
             return {
                 "valid": False,

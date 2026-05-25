@@ -14,6 +14,7 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@reown/appkit": "^1.8.18",
     "@reown/appkit-adapter-wagmi": "^1.8.18",
+    "@sentry/react": "^10.53.1",
     "@supabase/supabase-js": "^2.83.0",
     "@tanstack/react-query": "^5.90.21",
     "@types/react-syntax-highlighter": "^15.5.13",
@@ -22,6 +23,7 @@
     "chartjs-adapter-date-fns": "^3.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dompurify": "^3.0.8",
     "ethers": "^6.11.1",
     "framer-motion": "^12.34.3",
     "i18next": "^23.16.8",
@@ -39,15 +41,14 @@
     "viem": "^2.46.3",
     "wagmi": "^3.5.0",
     "zod": "^4.1.12",
-    "zustand": "^5.0.8",
-    "dompurify": "^3.0.8"
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
+    "@types/dompurify": "^3.0.5",
     "@types/node": "^22.0.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
-    "@types/dompurify": "^3.0.5",
     "@vitejs/plugin-react": "^5.1.0",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.36.0",

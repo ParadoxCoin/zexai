@@ -86,7 +86,7 @@ const Layout: React.FC = () => {
             </Link>
 
             {/* Desktop Navigation - centered */}
-            <nav className="hidden lg:flex items-center justify-center gap-0.5 bg-gray-100/80 dark:bg-gray-800/80 rounded-2xl p-1 flex-1 min-w-0 overflow-x-auto scrollbar-hide">
+            <nav className="hidden lg:flex items-center justify-center gap-0.5 bg-gray-100/80 dark:bg-gray-800/80 rounded-2xl p-1 flex-1 min-w-0 overflow-x-auto scrollbar-hide" aria-label="Ana navigasyon">
               {allNavigation.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.href;
@@ -140,8 +140,9 @@ const Layout: React.FC = () => {
                 onClick={toggleTheme}
                 className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
                 title={theme === 'light' ? 'Koyu Tema' : 'Açık Tema'}
+                aria-label={theme === 'light' ? 'Koyu temaya geç' : 'Açık temaya geç'}
               >
-                {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+                {theme === 'light' ? <Moon className="h-4 w-4" aria-hidden="true" /> : <Sun className="h-4 w-4" aria-hidden="true" />}
               </button>
 
               {/* Install App Button */}
@@ -155,6 +156,9 @@ const Layout: React.FC = () => {
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+                  aria-label={`Kullanıcı menüsü — ${user?.email ?? ''}`}
+                  aria-expanded={isUserMenuOpen}
+                  aria-haspopup="menu"
                 >
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-sm font-bold">
                     {user?.email?.[0]?.toUpperCase() || 'U'}
@@ -303,8 +307,11 @@ const Layout: React.FC = () => {
               <button
                 className="lg:hidden p-2.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-label={isMobileMenuOpen ? 'Menüyü kapat' : 'Menüyü aç'}
+                aria-expanded={isMobileMenuOpen}
+                aria-controls="mobile-nav"
               >
-                {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                {isMobileMenuOpen ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
               </button>
             </div>
           </div>
@@ -317,7 +324,7 @@ const Layout: React.FC = () => {
 
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900">
+          <div id="mobile-nav" className="lg:hidden border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900" role="navigation" aria-label="Mobil navigasyon">
             <div className="p-4 grid grid-cols-4 gap-2">
               {allNavigation.map((item) => {
                 const Icon = item.icon;
@@ -348,7 +355,7 @@ const Layout: React.FC = () => {
       </main>
 
       {/* Mobile Bottom Navigation Bar */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-700/50 safe-area-bottom">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-700/50 safe-area-bottom" aria-label="Alt navigasyon">
         <div className="flex items-stretch justify-around h-16 px-1">
           {[
             { name: t('nav.dashboard', 'Dashboard'), href: '/dashboard', icon: Home, color: 'from-blue-500 to-cyan-500' },
@@ -385,6 +392,9 @@ const Layout: React.FC = () => {
                 ? 'text-purple-600 dark:text-purple-400'
                 : 'text-gray-400 dark:text-gray-500 active:text-gray-600 dark:active:text-gray-300'
             }`}
+            aria-label={isMobileMenuOpen ? 'Menüyü kapat' : 'Daha fazla menü öğesi'}
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-nav"
           >
             <div className={`p-1.5 rounded-xl transition-all ${isMobileMenuOpen ? 'bg-purple-100 dark:bg-purple-900/30' : ''}`}>
               {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}

@@ -9,10 +9,12 @@ import { useAuthStore } from '@/store/authStore';
 import { ToastProvider } from './components/ui/toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { WagmiProvider } from 'wagmi';
-import { config } from './web3config';
-import { Web3Provider } from '@/contexts/Web3Context';
 import './index.css';
+
+// ── Web3 providers loaded lazily ─ only imported for Web3-requiring routes ────────────────────
+// wagmi, viem, ethers, @reown/appkit are large bundles (~1.5-2 MB).
+// Non-Web3 pages (chat, images, audio, dashboard) will NOT download them.
+const LazyWeb3Shell = lazy(() => import('@/components/LazyWeb3Shell'));
 
 // Route-level lazy loading (dynamic imports) to minimize initial bundle size
 const AuthCallbackPage = lazy(() => import('@/pages/AuthCallbackPage'));
@@ -96,6 +98,14 @@ const RouteLoader = () => (
   </div>
 );
 
+// Lightweight wrapper for routes that need Web3 — avoids loading wagmi/viem/ethers
+// for the majority of users who only use AI features.
+const Web3RouteWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Suspense fallback={<RouteLoader />}>
+    <LazyWeb3Shell>{children}</LazyWeb3Shell>
+  </Suspense>
+);
+
 function AppContent() {
   const location = useLocation();
 
@@ -118,7 +128,7 @@ function AppContent() {
             {/* Protected routes */}
             <Route path="/dashboard" element={<ProtectedRoute><PageTransition><DashboardPage /></PageTransition></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><PageTransition><ProfilePage /></PageTransition></ProtectedRoute>} />
-            <Route path="/staking" element={<ProtectedRoute><PageTransition><StakingPage /></PageTransition></ProtectedRoute>} /> {/* Added StakingPage route */}
+            <Route path="/staking" element={<ProtectedRoute><PageTransition><Web3RouteWrapper><StakingPage /></Web3RouteWrapper></PageTransition></ProtectedRoute>} /> {/* StakingPage uses useWeb3 */}
             <Route path="/images" element={<ProtectedRoute><PageTransition><ImageGenerationPage /></PageTransition></ProtectedRoute>} />
             <Route path="/media" element={<ProtectedRoute><PageTransition><MediaLibraryPage /></PageTransition></ProtectedRoute>} />
             <Route path="/synapse" element={<ProtectedRoute><PageTransition><SynapsePage /></PageTransition></ProtectedRoute>} />
@@ -129,14 +139,14 @@ function AppContent() {
             <Route path="/avatar" element={<ProtectedRoute><PageTransition><AvatarPage /></PageTransition></ProtectedRoute>} />
             <Route path="/showcase" element={<ProtectedRoute><PageTransition><ShowcasePage /></PageTransition></ProtectedRoute>} />
             
-            {/* AI NFT Collection Builder Routes */}
-            <Route path="/collections/my" element={<ProtectedRoute><PageTransition><MyCollectionsPage /></PageTransition></ProtectedRoute>} />
-            <Route path="/collections/create" element={<ProtectedRoute><PageTransition><CollectionBuilderPage /></PageTransition></ProtectedRoute>} />
-            <Route path="/collections/builder/:id" element={<ProtectedRoute><PageTransition><CollectionBuilderPage /></PageTransition></ProtectedRoute>} />
+            {/* AI NFT Collection Builder Routes — requires Web3 */}
+            <Route path="/collections/my" element={<ProtectedRoute><PageTransition><Web3RouteWrapper><MyCollectionsPage /></Web3RouteWrapper></PageTransition></ProtectedRoute>} />
+            <Route path="/collections/create" element={<ProtectedRoute><PageTransition><Web3RouteWrapper><CollectionBuilderPage /></Web3RouteWrapper></PageTransition></ProtectedRoute>} />
+            <Route path="/collections/builder/:id" element={<ProtectedRoute><PageTransition><Web3RouteWrapper><CollectionBuilderPage /></Web3RouteWrapper></PageTransition></ProtectedRoute>} />
             <Route path="/compare" element={<ProtectedRoute><PageTransition><ComparisonChatPage /></PageTransition></ProtectedRoute>} />
-            <Route path="/billing" element={<ProtectedRoute><PageTransition><CreditPurchasePage /></PageTransition></ProtectedRoute>} />
+            <Route path="/billing" element={<ProtectedRoute><PageTransition><Web3RouteWrapper><CreditPurchasePage /></Web3RouteWrapper></PageTransition></ProtectedRoute>} />
             <Route path="/marketplace" element={<ProtectedRoute><PageTransition><MarketplacePage /></PageTransition></ProtectedRoute>} />
-            <Route path="/credits" element={<ProtectedRoute><PageTransition><CreditPurchasePage /></PageTransition></ProtectedRoute>} />
+            <Route path="/credits" element={<ProtectedRoute><PageTransition><Web3RouteWrapper><CreditPurchasePage /></Web3RouteWrapper></PageTransition></ProtectedRoute>} />
 
             <Route path="/admin" element={<AdminRoute><PageTransition><AdminDashboardEnhanced /></PageTransition></AdminRoute>} />
             <Route path="/admin/basic" element={<AdminRoute><PageTransition><AdminDashboardEnhanced /></PageTransition></AdminRoute>} />
@@ -155,19 +165,15 @@ function AppContent() {
 function App() {
   return (
     <ErrorBoundary>
-      <WagmiProvider config={config}>
-        <ThemeProvider>
-          <QueryClientProvider client={queryClient}>
-            <Web3Provider>
-              <ToastProvider>
-                <Router>
-                  <AppContent />
-                </Router>
-              </ToastProvider>
-            </Web3Provider>
-          </QueryClientProvider>
-        </ThemeProvider>
-      </WagmiProvider>
+      <ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <ToastProvider>
+            <Router>
+              <AppContent />
+            </Router>
+          </ToastProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }

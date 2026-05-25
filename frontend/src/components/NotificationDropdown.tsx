@@ -223,10 +223,13 @@ const NotificationDropdown: React.FC = () => {
             <button
                 onClick={handleOpen}
                 className="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                aria-label={unreadCount > 0 ? `Bildirimler — ${unreadCount} okunmamış` : 'Bildirimler'}
+                aria-expanded={isOpen}
+                aria-haspopup="dialog"
             >
-                <Bell className="w-5 h-5" />
+                <Bell className="w-5 h-5" aria-hidden="true" />
                 {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center text-xs font-bold text-white bg-red-500 rounded-full">
+                    <span className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center text-xs font-bold text-white bg-red-500 rounded-full" aria-hidden="true">
                         {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                 )}
@@ -234,7 +237,7 @@ const NotificationDropdown: React.FC = () => {
 
             {/* Dropdown Panel */}
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
+                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden" role="dialog" aria-label="Bildirimler paneli">
                     {/* Header */}
                     <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
                         <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -335,16 +338,18 @@ const NotificationDropdown: React.FC = () => {
                                                 onClick={(e) => { e.stopPropagation(); handleMarkAsRead(notification.id); }}
                                                 className="p-1.5 text-gray-400 hover:text-green-500 hover:bg-green-100 dark:hover:bg-green-900/30 rounded"
                                                 title="Okundu işaretle"
+                                                aria-label="Okundu olarak işaretle"
                                             >
-                                                <Check className="w-4 h-4" />
+                                                <Check className="w-4 h-4" aria-hidden="true" />
                                             </button>
                                         )}
                                         <button
                                             onClick={(e) => { e.stopPropagation(); handleDelete(notification.id); }}
                                             className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 rounded"
                                             title="Sil"
+                                            aria-label="Bildirimi sil"
                                         >
-                                            <Trash2 className="w-4 h-4" />
+                                            <Trash2 className="w-4 h-4" aria-hidden="true" />
                                         </button>
                                     </div>
                                 </div>

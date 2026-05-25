@@ -45,8 +45,8 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRATION_DAYS: int = 30
     
-    # CORS - Security: Specific origins only
-    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:3001,https://app.zexai.io,https://zexai.io,https://zexai.vercel.app,https://yourdomain.com"
+    # CORS - Security: Specific origins only (no wildcard, no placeholder domains)
+    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:3001,https://app.zexai.io,https://zexai.io,https://zexai.vercel.app"
     
     @property
     def cors_origins_list(self) -> List[str]:
@@ -125,7 +125,9 @@ class Settings(BaseSettings):
 
     # Email (Resend)
     RESEND_API_KEY: str = ""
-    EMAIL_FROM: str = "noreply@example.com"
+    # SECURITY: No placeholder default — must be set via env in production.
+    # Leaving empty triggers a startup warning (see model_validator below).
+    EMAIL_FROM: str = ""
 
     # Cloudflare R2 Storage (Fallback)
     R2_ACCOUNT_ID: str = ""
@@ -141,15 +143,17 @@ class Settings(BaseSettings):
     # OAuth Configuration
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
-    GOOGLE_REDIRECT_URI: str = "http://localhost:8000/api/v1/auth/google/callback"
+    # SECURITY: Set to production callback URL via Railway/Vercel env vars.
+    # Empty default prevents accidental localhost callbacks in production.
+    GOOGLE_REDIRECT_URI: str = ""
     
     GITHUB_CLIENT_ID: str = ""
     GITHUB_CLIENT_SECRET: str = ""
-    GITHUB_REDIRECT_URI: str = "http://localhost:8000/api/v1/auth/github/callback"
+    GITHUB_REDIRECT_URI: str = ""
     
     DISCORD_CLIENT_ID: str = ""
     DISCORD_CLIENT_SECRET: str = ""
-    DISCORD_REDIRECT_URI: str = "http://localhost:8000/api/v1/auth/discord/callback"
+    DISCORD_REDIRECT_URI: str = ""
     
     # Credit System
     DEFAULT_USD_TO_CREDIT_RATE: int = 100  # 1 USD = 100 credits
@@ -178,7 +182,8 @@ class Settings(BaseSettings):
     
     # Email Configuration
     SENDGRID_API_KEY: str = ""
-    FROM_EMAIL: str = "noreply@yourdomain.com"
+    # SECURITY: No placeholder default — must be set via env.
+    FROM_EMAIL: str = ""
     
     # Web Push Notification Config
     VAPID_PUBLIC_KEY: str = ""
@@ -209,11 +214,14 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def validate_synapse_webhook_secret(self) -> "Settings":
         """
-        Log misconfiguration at startup but do not crash the app — Synapse webhook
-        route enforces the secret at request time in production.
+        Validate critical config at startup — log misconfiguration but do not
+        crash for non-critical fields. Synapse webhook route enforces the
+        secret at request time in production.
         """
         import logging
         _log = logging.getLogger("config")
+
+        # Synapse webhook secret check
         insecure = (
             not self.SYNAPSE_WEBHOOK_SECRET
             or self.SYNAPSE_WEBHOOK_SECRET == "super_secure_synapse_webhook_secret_2026"
@@ -228,6 +236,16 @@ class Settings(BaseSettings):
                 "SYNAPSE_WEBHOOK_SECRET uses default value (DEBUG=False). "
                 "Set a strong secret before accepting production Synapse traffic."
             )
+
+        # Email placeholder check
+        placeholder_emails = {"", "noreply@example.com", "noreply@yourdomain.com"}
+        for field_name, field_val in [("EMAIL_FROM", self.EMAIL_FROM), ("FROM_EMAIL", self.FROM_EMAIL)]:
+            if self.ENVIRONMENT == "production" and field_val in placeholder_emails:
+                _log.error(
+                    f"{field_name} is not set or uses a placeholder value in production. "
+                    "Email delivery will fail. Set a real sender address via Railway env vars."
+                )
+
         return self
     
     class Config:

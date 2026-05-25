@@ -137,7 +137,8 @@ def is_allowed_file(filename: str) -> bool:
 def validate_file_content(content: bytes, expected_type: str) -> bool:
     """Validate file content matches expected type using magic numbers"""
     if not MAGIC_AVAILABLE:
-        return True  # Skip validation if magic not available
+        logger.error("[FileValidation] python-magic/libmagic is not available! Refusing upload for safety.")
+        return False  # Fail closed for security
     try:
         # Use python-magic to detect actual file type
         mime_type = magic.from_buffer(content, mime=True)

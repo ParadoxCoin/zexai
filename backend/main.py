@@ -199,8 +199,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    # SECURITY HARDENING: Explicit method list instead of wildcard "*"
+    # Removes CONNECT, TRACE and other methods not needed by the API.
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Request-ID", "Accept", "Origin", "X-Requested-With"],
     expose_headers=["X-Request-ID"],
 )
 
@@ -275,7 +277,26 @@ async def log_requests_and_add_security_headers(request: Request, call_next):
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
     response.headers["X-Permitted-Cross-Domain-Policies"] = "none"
     response.headers["X-XSS-Protection"] = "1; mode=block"
-    response.headers["X-Content-Security-Policy"] = "default-src 'none'"
+    # SECURITY: Real Content-Security-Policy (W3C standard, replaces legacy X-Content-Security-Policy)
+    # 'unsafe-inline'/'unsafe-eval' required for Vite/React runtime and wagmi/ethers wallet libs.
+    # connect-src covers Supabase REST+realtime, Alchemy RPC, and WalletConnect relay servers.
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' data: https://fonts.gstatic.com; "
+        "img-src 'self' data: blob: https:; "
+        "media-src 'self' blob: https:; "
+        "connect-src 'self' "
+            "https://*.supabase.co wss://*.supabase.co "
+            "https://api.alchemy.com https://polygon-rpc.com "
+            "https://relay.walletconnect.com wss://relay.walletconnect.com "
+            "https://rpc.walletconnect.com https://*.reown.com; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'; "
+        "object-src 'none'"
+    )
     # Remove server fingerprint header if present. Starlette's MutableHeaders
     # does not implement dict.pop(), so use deletion guarded by membership.
     if "Server" in response.headers:
