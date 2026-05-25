@@ -126,11 +126,11 @@ function AppContent() {
             <Route path="/contact" element={<PageTransition><ContactPage /></PageTransition>} />
 
             {/* Protected routes */}
-            <Route path="/dashboard" element={<ProtectedRoute><PageTransition><DashboardPage /></PageTransition></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute><PageTransition><Web3RouteWrapper><DashboardPage /></Web3RouteWrapper></PageTransition></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><PageTransition><ProfilePage /></PageTransition></ProtectedRoute>} />
             <Route path="/staking" element={<ProtectedRoute><PageTransition><Web3RouteWrapper><StakingPage /></Web3RouteWrapper></PageTransition></ProtectedRoute>} /> {/* StakingPage uses useWeb3 */}
             <Route path="/images" element={<ProtectedRoute><PageTransition><ImageGenerationPage /></PageTransition></ProtectedRoute>} />
-            <Route path="/media" element={<ProtectedRoute><PageTransition><MediaLibraryPage /></PageTransition></ProtectedRoute>} />
+            <Route path="/media" element={<ProtectedRoute><PageTransition><Web3RouteWrapper><MediaLibraryPage /></Web3RouteWrapper></PageTransition></ProtectedRoute>} />
             <Route path="/synapse" element={<ProtectedRoute><PageTransition><SynapsePage /></PageTransition></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><PageTransition><SettingsPage /></PageTransition></ProtectedRoute>} />
             <Route path="/chat" element={<ProtectedRoute><PageTransition><ChatPage /></PageTransition></ProtectedRoute>} />
