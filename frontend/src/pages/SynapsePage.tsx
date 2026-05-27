@@ -141,7 +141,28 @@ interface InstallingState {
 // BACKEND_BASE: OAuth popup needs absolute backend URL (not frontend domain!)
 const API = "/api/v1";
 const BACKEND_BASE = (import.meta.env.VITE_API_URL as string || "/api/v1").replace(/\/api\/v1$/, "");
-const getToken = () => localStorage.getItem("auth_token") || "";
+
+// Token: reads from sessionStorage (where authService stores it) + Supabase fallback
+const getToken = (): string => {
+  // 1. Direct key set by authService
+  const direct = sessionStorage.getItem("auth_token");
+  if (direct && direct !== "null" && direct !== "undefined") return direct;
+  // 2. Supabase internal key pattern (sb-{ref}-auth-token)
+  for (let i = 0; i < sessionStorage.length; i++) {
+    const key = sessionStorage.key(i);
+    if (key && key.startsWith("sb-") && key.endsWith("-auth-token")) {
+      try {
+        const parsed = JSON.parse(sessionStorage.getItem(key) || "");
+        if (parsed?.access_token) return parsed.access_token;
+      } catch { /* skip */ }
+    }
+  }
+  // 3. localStorage fallback (some setups store here)
+  const local = localStorage.getItem("auth_token");
+  if (local && local !== "null" && local !== "undefined") return local;
+  return "";
+};
+
 const authH = () => ({ Authorization: `Bearer ${getToken()}` });
 
 const loadSkills = () => {
@@ -360,16 +381,32 @@ export default function SynapsePage() {
   /* ════════════════════════════════════════════
      REAL OAUTH CONNECT
   ════════════════════════════════════════════ */
-  function connectProvider(providerId: string) {
-    const tok = getToken();
-    if (!tok) { setConnectorError("Lütfen giriş yapın."); return; }
+  async function connectProvider(providerId: string) {
     if (connectingId) return;
-
     setConnectorError("");
     setConnectingId(providerId);
 
+    // Get fresh token from Supabase session (most reliable source)
+    let tok = "";
+    try {
+      const { supabase } = await import("@/lib/supabase");
+      const { data } = await supabase.auth.getSession();
+      if (data?.session?.access_token) {
+        tok = data.session.access_token;
+        sessionStorage.setItem("auth_token", tok);
+      }
+    } catch { /* ignore */ }
+
+    // Fallback to stored token
+    if (!tok) tok = getToken();
+
+    if (!tok) {
+      setConnectorError("Lütfen giriş yapın.");
+      setConnectingId(null);
+      return;
+    }
+
     // IMPORTANT: Popup must use absolute backend URL, NOT relative path.
-    // Relative /api/v1/... would open the frontend (app.zexai.io) — not the backend.
     const oauthUrl = `${BACKEND_BASE}/api/v1/connectors/oauth/${providerId}/start?token=${encodeURIComponent(tok)}`;
 
     const popup = window.open(
