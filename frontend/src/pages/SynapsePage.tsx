@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Bot, Sparkles, Scissors, FileText, Megaphone, Film, Play, Send,
@@ -137,7 +137,10 @@ interface InstallingState {
 /* ═══════════════════════════════════════════════
    HELPERS
 ═══════════════════════════════════════════════ */
+// API_BASE: axios calls use relative path (proxied via Vite / reverse proxy)
+// BACKEND_BASE: OAuth popup needs absolute backend URL (not frontend domain!)
 const API = "/api/v1";
+const BACKEND_BASE = (import.meta.env.VITE_API_URL as string || "/api/v1").replace(/\/api\/v1$/, "");
 const getToken = () => localStorage.getItem("auth_token") || "";
 const authH = () => ({ Authorization: `Bearer ${getToken()}` });
 
@@ -365,7 +368,9 @@ export default function SynapsePage() {
     setConnectorError("");
     setConnectingId(providerId);
 
-    const oauthUrl = `${API}/connectors/oauth/${providerId}/start?token=${encodeURIComponent(tok)}`;
+    // IMPORTANT: Popup must use absolute backend URL, NOT relative path.
+    // Relative /api/v1/... would open the frontend (app.zexai.io) — not the backend.
+    const oauthUrl = `${BACKEND_BASE}/api/v1/connectors/oauth/${providerId}/start?token=${encodeURIComponent(tok)}`;
 
     const popup = window.open(
       oauthUrl,
