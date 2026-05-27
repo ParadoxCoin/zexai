@@ -51,6 +51,7 @@ from routes.image_new import router as image_new_router
 from routes.audio import router as audio_tts_router  # TTS, Music generation
 from routes.audio_extended import router as audio_extended_router  # Extended audio features
 from routes.synapse import router as synapse_router
+from routes.connectors import router as connectors_router
 from routes.admin import router as admin_router
 from routes.admin_video import router as admin_video_router
 from routes.admin_image import router as admin_image_router
@@ -319,6 +320,7 @@ app.include_router(video_new_router, prefix=API_V1_PREFIX)  # New Pollo.ai video
 app.include_router(audio_tts_router, prefix=API_V1_PREFIX)  # Audio TTS, Music (/audio prefix)
 app.include_router(audio_extended_router, prefix=API_V1_PREFIX)  # Audio Extended features
 app.include_router(synapse_router, prefix=API_V1_PREFIX)
+app.include_router(connectors_router, prefix=API_V1_PREFIX)  # Real OAuth connectors
 # IMPORTANT: Enhanced admin routers MUST come before base admin router
 # because they have more specific routes (e.g., /users/advanced vs /users/{user_id})
 app.include_router(admin_enhanced_router, prefix=API_V1_PREFIX)  # Enhanced admin panel - MUST BE FIRST

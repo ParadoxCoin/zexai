@@ -127,23 +127,24 @@ function AppContent() {
 
             {/* Protected routes */}
             <Route path="/dashboard" element={<ProtectedRoute><PageTransition><Web3RouteWrapper><DashboardPage /></Web3RouteWrapper></PageTransition></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><PageTransition><ProfilePage /></PageTransition></ProtectedRoute>} />
-            <Route path="/staking" element={<ProtectedRoute><PageTransition><Web3RouteWrapper><StakingPage /></Web3RouteWrapper></PageTransition></ProtectedRoute>} /> {/* StakingPage uses useWeb3 */}
-            <Route path="/images" element={<ProtectedRoute><PageTransition><ImageGenerationPage /></PageTransition></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><PageTransition><Web3RouteWrapper><ProfilePage /></Web3RouteWrapper></PageTransition></ProtectedRoute>} />
+            <Route path="/staking" element={<ProtectedRoute><PageTransition><Web3RouteWrapper><StakingPage /></Web3RouteWrapper></PageTransition></ProtectedRoute>} />
+            {/* Images/Videos/Audio/Avatar/Showcase use NFTMintModal → useWeb3 → must be in Web3RouteWrapper */}
+            <Route path="/images" element={<ProtectedRoute><PageTransition><Web3RouteWrapper><ImageGenerationPage /></Web3RouteWrapper></PageTransition></ProtectedRoute>} />
             <Route path="/media" element={<ProtectedRoute><PageTransition><Web3RouteWrapper><MediaLibraryPage /></Web3RouteWrapper></PageTransition></ProtectedRoute>} />
             <Route path="/synapse" element={<ProtectedRoute><PageTransition><SynapsePage /></PageTransition></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><PageTransition><SettingsPage /></PageTransition></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><PageTransition><Web3RouteWrapper><SettingsPage /></Web3RouteWrapper></PageTransition></ProtectedRoute>} />
             <Route path="/chat" element={<ProtectedRoute><PageTransition><ChatPage /></PageTransition></ProtectedRoute>} />
-            <Route path="/videos" element={<ProtectedRoute><PageTransition><VideoPage /></PageTransition></ProtectedRoute>} />
-            <Route path="/audio" element={<ProtectedRoute><PageTransition><AudioPage /></PageTransition></ProtectedRoute>} />
-            <Route path="/avatar" element={<ProtectedRoute><PageTransition><AvatarPage /></PageTransition></ProtectedRoute>} />
-            <Route path="/showcase" element={<ProtectedRoute><PageTransition><ShowcasePage /></PageTransition></ProtectedRoute>} />
+            <Route path="/videos" element={<ProtectedRoute><PageTransition><Web3RouteWrapper><VideoPage /></Web3RouteWrapper></PageTransition></ProtectedRoute>} />
+            <Route path="/audio" element={<ProtectedRoute><PageTransition><Web3RouteWrapper><AudioPage /></Web3RouteWrapper></PageTransition></ProtectedRoute>} />
+            <Route path="/avatar" element={<ProtectedRoute><PageTransition><Web3RouteWrapper><AvatarPage /></Web3RouteWrapper></PageTransition></ProtectedRoute>} />
+            <Route path="/showcase" element={<ProtectedRoute><PageTransition><Web3RouteWrapper><ShowcasePage /></Web3RouteWrapper></PageTransition></ProtectedRoute>} />
             
             {/* AI NFT Collection Builder Routes — requires Web3 */}
             <Route path="/collections/my" element={<ProtectedRoute><PageTransition><Web3RouteWrapper><MyCollectionsPage /></Web3RouteWrapper></PageTransition></ProtectedRoute>} />
             <Route path="/collections/create" element={<ProtectedRoute><PageTransition><Web3RouteWrapper><CollectionBuilderPage /></Web3RouteWrapper></PageTransition></ProtectedRoute>} />
             <Route path="/collections/builder/:id" element={<ProtectedRoute><PageTransition><Web3RouteWrapper><CollectionBuilderPage /></Web3RouteWrapper></PageTransition></ProtectedRoute>} />
-            <Route path="/compare" element={<ProtectedRoute><PageTransition><ComparisonChatPage /></PageTransition></ProtectedRoute>} />
+            <Route path="/compare" element={<ProtectedRoute><PageTransition><Web3RouteWrapper><ComparisonChatPage /></Web3RouteWrapper></PageTransition></ProtectedRoute>} />
             <Route path="/billing" element={<ProtectedRoute><PageTransition><Web3RouteWrapper><CreditPurchasePage /></Web3RouteWrapper></PageTransition></ProtectedRoute>} />
             <Route path="/marketplace" element={<ProtectedRoute><PageTransition><MarketplacePage /></PageTransition></ProtectedRoute>} />
             <Route path="/credits" element={<ProtectedRoute><PageTransition><Web3RouteWrapper><CreditPurchasePage /></Web3RouteWrapper></PageTransition></ProtectedRoute>} />

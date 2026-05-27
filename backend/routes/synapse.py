@@ -3,8 +3,9 @@ Synapse (Agent) service routes
 Handles autonomous agent tasks with asynchronous execution and credit-based billing
 """
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Request
+from pydantic import BaseModel
 from datetime import datetime
-from typing import List
+from typing import List, Optional, Dict, Any
 import httpx
 import uuid
 import hmac
@@ -52,6 +53,7 @@ async def create_synapse_task(
     background_tasks.add_task(
         synapse_service.call_manus_api,
         task_id=response.task_id,
+        user_id=str(current_user.id),
         objective=request.objective,
         context=request.context,
         constraints=request.constraints,
@@ -155,4 +157,137 @@ async def manus_webhook(
         )
         
     return await synapse_service.handle_manus_webhook(payload, db)
+
+
+# ============================================
+# CONNECTORS (BAĞLANTILAR) ENDPOINTS
+# ============================================
+
+class ConnectorToggleRequest(BaseModel):
+    provider_name: str
+    auth_data: Optional[Dict[str, Any]] = {}
+
+
+@router.get("/connectors")
+async def list_user_connectors(
+    current_user = Depends(get_current_user),
+    db = Depends(get_db)
+):
+    """
+    Kullanıcının aktif Google Drive, Slack vb. entegrasyon bağlantılarını listeler.
+    Bağlı connectorları provider_name listesi olarak döner.
+    """
+    try:
+        response = db.table("user_connectors").select("provider_name, is_active, created_at").eq("user_id", current_user.id).eq("is_active", True).execute()
+        connected_names = [row["provider_name"] for row in (response.data or [])]
+        return {
+            "success": True,
+            "connected": connected_names
+        }
+    except Exception as e:
+        logger.warning(f"Error fetching connectors: {e}")
+        return {"success": True, "connected": []}
+
+
+@router.post("/connectors/toggle")
+async def toggle_user_connector(
+    request: ConnectorToggleRequest,
+    current_user = Depends(get_current_user),
+    db = Depends(get_db)
+):
+    """
+    Bir platform bağlantısını aktifleştirir veya kaldırır.
+    """
+    try:
+        # Mevcut var mı kontrol et
+        exists = db.table("user_connectors").select("id").eq("user_id", current_user.id).eq("provider_name", request.provider_name).execute()
+        
+        if exists.data:
+            # Bağlantıyı sil (Toggle off)
+            db.table("user_connectors").delete().eq("user_id", current_user.id).eq("provider_name", request.provider_name).execute()
+            return {"success": True, "status": "disconnected", "connected": False, "message": f"{request.provider_name} bağlantısı kaldırıldı."}
+        else:
+            # Bağlantı ekle (Toggle on)
+            connector_data = {
+                "user_id": current_user.id,
+                "provider_name": request.provider_name,
+                "auth_data": request.auth_data or {},
+                "is_active": True,
+                "created_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.utcnow().isoformat()
+            }
+            db.table("user_connectors").insert(connector_data).execute()
+            return {"success": True, "status": "connected", "connected": True, "message": f"{request.provider_name} bağlantısı aktifleştirildi."}
+            
+    except Exception as e:
+        logger.error(f"Error toggling connector: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Bağlantı işlemi başarısız: {str(e)}"
+        )
+
+
+# ============================================
+# MEMORY (VEKTÖREEmbedding) ENDPOINTS
+# ============================================
+
+class MemoryNodeCreate(BaseModel):
+    label: str
+
+
+@router.get("/memory")
+async def list_memory_nodes(
+    current_user = Depends(get_current_user),
+    db = Depends(get_db)
+):
+    """
+    Kullanıcının Supercomputer hafıza düğümlerini listeler.
+    """
+    try:
+        response = db.table("synapse_memory").select("*").eq("user_id", current_user.id).order("created_at", desc=True).execute()
+        return {"success": True, "nodes": response.data or []}
+    except Exception as e:
+        logger.warning(f"Memory fetch error: {e}")
+        return {"success": True, "nodes": []}
+
+
+@router.post("/memory")
+async def add_memory_node(
+    request: MemoryNodeCreate,
+    current_user = Depends(get_current_user),
+    db = Depends(get_db)
+):
+    """
+    Yeni bir hafıza düğümü ekler.
+    """
+    try:
+        node_data = {
+            "id": str(uuid.uuid4()),
+            "user_id": current_user.id,
+            "label": request.label,
+            "created_at": datetime.utcnow().isoformat()
+        }
+        db.table("synapse_memory").insert(node_data).execute()
+        return {"success": True, "node": node_data}
+    except Exception as e:
+        logger.error(f"Memory save error: {e}")
+        # Hata olsa bile frontend'de local olarak göster
+        return {"success": False, "error": str(e)}
+
+
+@router.delete("/memory/{node_id}")
+async def delete_memory_node(
+    node_id: str,
+    current_user = Depends(get_current_user),
+    db = Depends(get_db)
+):
+    """
+    Bir hafıza düğümünü siler.
+    """
+    try:
+        db.table("synapse_memory").delete().eq("id", node_id).eq("user_id", current_user.id).execute()
+        return {"success": True}
+    except Exception as e:
+        logger.error(f"Memory delete error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 

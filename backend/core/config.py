@@ -146,14 +146,26 @@ class Settings(BaseSettings):
     # SECURITY: Set to production callback URL via Railway/Vercel env vars.
     # Empty default prevents accidental localhost callbacks in production.
     GOOGLE_REDIRECT_URI: str = ""
-    
+
     GITHUB_CLIENT_ID: str = ""
     GITHUB_CLIENT_SECRET: str = ""
     GITHUB_REDIRECT_URI: str = ""
-    
+
     DISCORD_CLIENT_ID: str = ""
     DISCORD_CLIENT_SECRET: str = ""
     DISCORD_REDIRECT_URI: str = ""
+
+    # Notion OAuth
+    NOTION_CLIENT_ID: str = ""
+    NOTION_CLIENT_SECRET: str = ""
+
+    # LinkedIn OAuth
+    LINKEDIN_CLIENT_ID: str = ""
+    LINKEDIN_CLIENT_SECRET: str = ""
+
+    # OAuth Security — used for HMAC state signing and Fernet token encryption
+    OAUTH_STATE_SECRET: str = ""
+    OAUTH_ENCRYPTION_KEY: str = ""  # 32-byte Fernet key (base64). If empty, derived from JWT_SECRET_KEY.
     
     # Credit System
     DEFAULT_USD_TO_CREDIT_RATE: int = 100  # 1 USD = 100 credits

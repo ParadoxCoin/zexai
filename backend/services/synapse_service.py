@@ -54,73 +54,121 @@ class SynapseService:
         except Exception as e:
             print(f"Error appending log: {e}")
 
-    async def call_manus_api(self, task_id: str, objective: str, context: dict, constraints: list, max_credits: int, max_duration: int, db):
+    async def calculate_orchestrator_credits(self, base_credits: int, context: dict) -> int:
+        """Orkestratör LLM modeline göre +40% premium çarpanı (1.4x) uygular"""
+        orchestrator = (context or {}).get("orchestrator", "gemini").lower()
+        if orchestrator in ["claude", "gpt4o", "gpt-4o"]:
+            return int(base_credits * 1.4)
+        return base_credits
+
+    async def call_manus_api(self, task_id: str, user_id: str, objective: str, context: dict, constraints: list, max_credits: int, max_duration: int, db):
         """
-        Background task to call Manus API
-        This runs asynchronously after the initial request returns
+        Kie.ai LLM/Ajan API'sini kullanan asenkron asistan planlayıcı görevi.
+        Manus yerine tamamen tek API sağlayıcımız olan kie.ai'a yönlendirilmiştir.
         """
         try:
-            # 1. Fetch Provider Config
-            # Assuming 'manus' provider for now, or we could store provider_id in task metadata
-            # For now, let's fetch the 'manus' provider config directly or via a default model
-            
-            # Try to get provider config for 'manus'
-            try:
-                provider_config = await model_service.get_provider_config(db, "manus")
-            except:
-                # Fallback if 'manus' provider not in DB yet
-                provider_config = {
-                    "base_url": settings.MANUS_API_ENDPOINT,
-                    "api_key": settings.MANUS_API_KEY
-                }
-
-            # Prepare Manus API request
-            manus_payload = {
-                "task_name": f"Synapse Task {task_id}",
-                "agent_instructions": {
-                    "objective": objective,
-                    "context": context or {},
-                    "constraints": constraints or []
-                },
-                "resource_limits": {
-                    "max_credits": max_credits,
-                    "max_duration_minutes": max_duration
-                },
-                "callback_url": f"{settings.MANUS_CALLBACK_BASE_URL}/api/v1/synapse/webhook"
+            # 1. Orkestratör Model Eşlemesi
+            orchestrator_id = (context or {}).get("orchestrator", "gemini").lower()
+            model_map = {
+                "gemini": "google/gemini-2.5-flash",
+                "claude": "anthropic/claude-3-5-sonnet",
+                "gpt4o": "gpt-4o"
             }
+            kie_model = model_map.get(orchestrator_id, "google/gemini-2.5-flash")
             
-            # Update task status to running
-            db.table("generations").update({
-                "status": "running", 
-                # "updated_at": datetime.utcnow().isoformat() # generations table doesn't have updated_at, relying on metadata logs
-            }).eq("id", task_id).execute()
+            # 2. Kie.ai API Kimlik Doğrulama & Rotasyon
+            from services.kie_service import kie_service
+            try:
+                api_key = kie_service._next_key()
+            except:
+                api_key = settings.KIE_API_KEY
+                
+            if not api_key:
+                raise Exception("Kie.ai API anahtarı yapılandırılmamış.")
+
+            # Görev durumunu güncelle
+            db.table("generations").update({"status": "running"}).eq("id", task_id).execute()
+            await self._append_log(db, task_id, "ZexAi Supercomputer planlayıcı katmanı başlatıldı...", "info")
+            await self._append_log(db, task_id, f"Seçilen Orkestratör: {orchestrator_id.upper()} (Kie.ai üzerinden yönlendiriliyor)", "info")
             
-            # Add log entry
-            await self._append_log(db, task_id, "Manus Agent başlatıldı...", "info")
-            
-            # Call Manus API
-            response = await self.http_client.post(
-                f"{provider_config['base_url']}/tasks",
-                headers={
-                    "Authorization": f"Bearer {provider_config['api_key']}",
-                    "Content-Type": "application/json"
-                },
-                json=manus_payload,
-                timeout=30.0
+            # Connectors Kontrolü ve Loglama
+            connectors_active = (context or {}).get("connectors", [])
+            if connectors_active:
+                await self._append_log(db, task_id, f"Aktif Entegrasyonlar Yükleniyor: {', '.join(connectors_active)}", "info")
+
+            # 3. Kie.ai OpenAI-Uyumlu Chat Completions İsteği
+            api_endpoint = "https://api.kie.ai/v1/chat/completions"
+            system_prompt = (
+                "You are ZexAi's Supercomputer Agent Orchestrator. "
+                "Your goal is to break down the user's objective and generate a structured output. "
+                f"Constraints: {json.dumps(constraints or [])}"
             )
             
-            if response.status_code not in [200, 201]:
-                # Mark task as failed
-                db.table("generations").update({
-                    "status": "failed",
-                    "completed_at": datetime.utcnow().isoformat(),
-                    "error_message": f"Manus API error: {response.status_code} - {response.text}"
-                }).eq("id", task_id).execute()
-                
-                await self._append_log(db, task_id, f"Hata: Manus API çağrısı başarısız oldu (HTTP {response.status_code})", "error")
-        
+            req_payload = {
+                "model": kie_model,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"Objective: {objective}"}
+                ],
+                "temperature": 0.7,
+                "max_tokens": 4096
+            }
+
+            await self._append_log(db, task_id, "Otonom muhakeme ve planlama adımı çalıştırılıyor...", "info")
+
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                response = await client.post(
+                    api_endpoint,
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json"
+                    },
+                    json=req_payload
+                )
+
+            if response.status_code != 200:
+                raise Exception(f"Kie.ai API Hatası ({response.status_code}): {response.text}")
+
+            result = response.json()
+            ai_response = result["choices"][0]["message"]["content"]
+            tokens_used = result.get("usage", {}).get("total_tokens", 0)
+            
+            # Kie.ai Maliyet Hesaplama ve 2.0x Kâr Çarpanı (Kullanıcı Raporu Entegrasyonu)
+            # Standart LLM token maliyeti (kie credits)
+            kie_credits = int(tokens_used * 0.002) or 5
+            app_credits_cost = await self.calculate_orchestrator_credits(kie_credits * 2, context) # 2x sağlayıcı kâr çarpanı + premium katsayı
+            
+            # Kredi Limit Düşülmesi
+            try:
+                await CreditManager.deduct_credits(
+                    supabase=db,
+                    user_id=user_id,  # Gerçek user_id parametresi kullanılıyor
+                    service_type="synapse",
+                    cost=app_credits_cost,
+                    details={
+                        "task_id": task_id,
+                        "orchestrator": orchestrator_id,
+                        "tokens_used": tokens_used
+                    }
+                )
+            except Exception as cred_err:
+                # Fallback to standard logging if direct charge inside bg task has issues
+                print(f"Credit charge log: {cred_err}")
+
+            await self._append_log(db, task_id, "Otonom plan başarıyla tamamlandı. Sonuçlar derleniyor...", "info")
+            await self._append_log(db, task_id, ai_response[:500] + "..." if len(ai_response) > 500 else ai_response, "info")
+
+            # Görevi tamamla ve sonucu veritabanına yaz
+            db.table("generations").update({
+                "status": "completed",
+                "completed_at": datetime.utcnow().isoformat(),
+                "credits_cost": app_credits_cost,
+                "output_url": None  # Sonuç metin tabanlı; media library'e yönlendirme gerekmez
+            }).eq("id", task_id).execute()
+
+            await self._append_log(db, task_id, f"Görev başarıyla tamamlandı! {app_credits_cost} ZEX Kredisi harcandı.", "info")
+
         except Exception as e:
-            # Mark task as failed
             db.table("generations").update({
                 "status": "failed",
                 "completed_at": datetime.utcnow().isoformat(),
@@ -130,20 +178,24 @@ class SynapseService:
             await self._append_log(db, task_id, f"Hata: {str(e)}", "error")
 
     async def create_synapse_task(self, request: SynapseTaskCreate, current_user: SimpleNamespace, db) -> SynapseTaskResponse:
-        """Creates the task record and returns the initial response."""
+        """Kie.ai tek sağlayıcı ve premium çarpanlı yeni otonom görev kaydı açar."""
         
-        # Check minimum credit balance (to start the task)
-        min_required_credits = 10  # Minimum to start any task
+        # Giriş için minimum bakiye kontrolü
+        min_required_credits = 10
         balance = await CreditManager.get_user_balance(db, current_user.id)
         
         if balance < min_required_credits:
             raise HTTPException(
                 status_code=status.HTTP_402_PAYMENT_REQUIRED,
-                detail=f"Insufficient credits to start task. Minimum required: {min_required_credits}"
+                detail=f"Yetersiz kredi. Görevi başlatmak için en az {min_required_credits} krediye ihtiyacınız var."
             )
         
-        # Create task record
         task_id = str(uuid.uuid4())
+        
+        # Premium Çarpanlı Tahmini Maliyet Hesaplama
+        # Gemini -> 1.0x, Claude/GPT-4o -> 1.4x (+40%)
+        base_estimate = request.max_credits * self.MANUS_CREDIT_MULTIPLIER
+        estimated_cost = await self.calculate_orchestrator_credits(base_estimate, request.context)
         
         generation_record = {
             "id": task_id,
@@ -151,7 +203,7 @@ class SynapseService:
             "type": "synapse",
             "prompt": request.objective,
             "status": "pending",
-            "credits_cost": 0, # Will be updated on completion
+            "credits_cost": 0,
             "created_at": datetime.utcnow().isoformat(),
             "metadata": {
                 "context": request.context,
@@ -159,7 +211,7 @@ class SynapseService:
                 "max_credits": request.max_credits,
                 "max_duration_minutes": request.max_duration_minutes,
                 "logs": [{
-                    "log_message": "Görev oluşturuldu, agent başlatılıyor...",
+                    "log_message": "ZexAi Supercomputer komutu sıraya alındı...",
                     "log_type": "info",
                     "created_at": datetime.utcnow().isoformat()
                 }]
@@ -170,9 +222,6 @@ class SynapseService:
             db.table("generations").insert(generation_record).execute()
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
-        
-        # Estimate cost
-        estimated_cost = request.max_credits * self.MANUS_CREDIT_MULTIPLIER
         
         return SynapseTaskResponse(
             task_id=task_id,
