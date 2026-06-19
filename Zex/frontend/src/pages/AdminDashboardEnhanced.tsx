@@ -72,8 +72,8 @@ export const AdminDashboardEnhanced: React.FC = () => {
         api.get('/admin/stats/platform'),
         api.get('/admin/users/advanced')
       ]);
-      setStats(statsRes.data);
-      setUsers(usersRes.data?.users || []);
+      setStats(statsRes.stats);
+      setUsers(usersRes.users || []);
     } catch (error) {
       console.error('Failed to fetch data:', error);
       toast.error('Hata', 'Veri yüklenemedi');
@@ -88,8 +88,8 @@ export const AdminDashboardEnhanced: React.FC = () => {
         api.get('/admin/stats/realtime'),
         api.get('/admin/providers/status')
       ]);
-      setRealtimeStats(realtimeRes.data?.stats);
-      setProviderStatus(providersRes.data?.providers);
+      setRealtimeStats(realtimeRes.stats);
+      setProviderStatus(providersRes.providers);
     } catch (error) {
       console.error('Failed to fetch realtime data:', error);
     }
@@ -326,7 +326,7 @@ export const AdminDashboardEnhanced: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-blue-100">Toplam Kullanıcı</p>
-                  <p className="text-3xl font-bold mt-2">{realtimeStats?.users?.total || stats?.total_users || 0}</p>
+                  <p className="text-3xl font-bold mt-2">{realtimeStats?.users?.total || stats?.users?.total || 0}</p>
                   <p className="text-sm text-blue-100 mt-1">
                     +{realtimeStats?.users?.new_24h || 0} bugün
                   </p>
