@@ -180,10 +180,49 @@ export const AdminDashboardEnhanced: React.FC = () => {
     return d.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: '2-digit' });
   };
 
-  const filteredUsers = users.filter(user =>
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>({
+    key: 'last_sign_in_at',
+    direction: 'desc'
+  });
+
+  const requestSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const filteredUsers = [...users]
+    .filter(user =>
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      if (!sortConfig) return 0;
+      const { key, direction } = sortConfig;
+      
+      let valA = a[key];
+      let valB = b[key];
+      
+      if (key === 'last_sign_in_at') {
+        valA = a.last_sign_in_at || a.created_at || '';
+        valB = b.last_sign_in_at || b.created_at || '';
+      }
+      
+      if (valA === undefined || valA === null) valA = '';
+      if (valB === undefined || valB === null) valB = '';
+      
+      if (typeof valA === 'string' && typeof valB === 'string') {
+        return direction === 'asc' 
+          ? valA.localeCompare(valB) 
+          : valB.localeCompare(valA);
+      }
+      
+      if (valA < valB) return direction === 'asc' ? -1 : 1;
+      if (valA > valB) return direction === 'asc' ? 1 : -1;
+      return 0;
+    });
 
   if (loading) {
     return (
@@ -542,14 +581,28 @@ export const AdminDashboardEnhanced: React.FC = () => {
                       className="rounded border-gray-300"
                     />
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">İsim</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rol</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kredi</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Son Giriş</th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">30g Üretim</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durum</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">İşlemler</th>
+                  <th onClick={() => requestSort('email')} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-700/50">
+                    Email {sortConfig?.key === 'email' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '↕'}
+                  </th>
+                  <th onClick={() => requestSort('full_name')} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-700/50">
+                    İsim {sortConfig?.key === 'full_name' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '↕'}
+                  </th>
+                  <th onClick={() => requestSort('role')} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-700/50">
+                    Rol {sortConfig?.key === 'role' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '↕'}
+                  </th>
+                  <th onClick={() => requestSort('credits_balance')} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-700/50">
+                    Kredi {sortConfig?.key === 'credits_balance' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '↕'}
+                  </th>
+                  <th onClick={() => requestSort('last_sign_in_at')} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-700/50">
+                    Son Giriş {sortConfig?.key === 'last_sign_in_at' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '↕'}
+                  </th>
+                  <th onClick={() => requestSort('generation_count_30d')} className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-700/50">
+                    30g Üretim {sortConfig?.key === 'generation_count_30d' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '↕'}
+                  </th>
+                  <th onClick={() => requestSort('is_active')} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-700/50">
+                    Durum {sortConfig?.key === 'is_active' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '↕'}
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase select-none">İşlemler</th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
