@@ -1,0 +1,260 @@
+const fs = require('fs');
+const path = require('path');
+
+const localesDir = path.join(__dirname, 'frontend/src/i18n/locales');
+const langs = ['en', 'tr', 'fr', 'de', 'es', 'zh', 'su'];
+
+const newKeys = {
+    en: {
+        dashboard: {
+            creditBalance: "Credit Balance",
+            generatedImages: "Generated Images",
+            generatedVideos: "Generated Videos",
+            audioAndChat: "Audio & Chat",
+            greetingMorning: "Good morning",
+            greetingAfternoon: "Good afternoon",
+            greetingEvening: "Good evening",
+            summarySubtitle: "Today's summary of your AI services",
+            web3Title: "Web3 (Polygon Amoy)",
+            web3Subtitle: "Your ZEX and NFT contracts are live on testnet.",
+            walletBtnConnect: "Connect Wallet",
+            walletBtnConnecting: "Connecting...",
+            walletBtnDisconnect: "Disconnect Wallet",
+            walletInfoLabel: "Wallet",
+            walletNotConnected: "Not connected",
+            walletBalance: "ZEX balance",
+            contractsLabel: "Contracts",
+            monthlyTargetTitle: "Monthly Generation Target",
+            todayGen: "Today: {{count}} generations",
+            weekGen: "This week: {{count}} generations",
+            noSpendToday: "No spend today",
+            spentToday: "Spent {{count}} credits today",
+            monthTotalGen: "Total {{count}} generations this month",
+            favModel: "Favorite model: {{model}}",
+            noVideoGen: "No video generations this month",
+            audioChatSubtitle: "{{audio}} audio, {{chats}} chats",
+            justNow: "Just now",
+            minsAgo: "{{mins}} minutes ago",
+            hoursAgo: "{{hours}} hours ago",
+            daysAgo: "{{days}} days ago"
+        }
+    },
+    tr: {
+        dashboard: {
+            creditBalance: "Kredi Bakiyesi",
+            generatedImages: "Oluşturulan Görseller",
+            generatedVideos: "Oluşturulan Videolar",
+            audioAndChat: "Ses & Chat",
+            greetingMorning: "Günaydın",
+            greetingAfternoon: "İyi günler",
+            greetingEvening: "İyi akşamlar",
+            summarySubtitle: "AI hizmetlerinizin bugünkü özeti",
+            web3Title: "Web3 (Polygon Amoy)",
+            web3Subtitle: "ZEX ve NFT kontratların testnet üzerinde canlı.",
+            walletBtnConnect: "Cüzdan Bağla",
+            walletBtnConnecting: "Bağlanıyor...",
+            walletBtnDisconnect: "Cüzdanı Ayır",
+            walletInfoLabel: "Cüzdan",
+            walletNotConnected: "Bağlı değil",
+            walletBalance: "ZEX bakiyesi",
+            contractsLabel: "Kontratlar",
+            monthlyTargetTitle: "Aylık Üretim Hedefi",
+            todayGen: "Bugün: {{count}} üretim",
+            weekGen: "Bu hafta: {{count}} üretim",
+            noSpendToday: "Bugün harcama yok",
+            spentToday: "Bugün {{count}} kredi harcandı",
+            monthTotalGen: "Bu ay toplam {{count}} üretim",
+            favModel: "Favori model: {{model}}",
+            noVideoGen: "Bu ay video üretimi yok",
+            audioChatSubtitle: "{{audio}} ses, {{chats}} sohbet",
+            justNow: "Az önce",
+            minsAgo: "{{mins}} dakika önce",
+            hoursAgo: "{{hours}} saat önce",
+            daysAgo: "{{days}} gün önce"
+        }
+    },
+    fr: {
+        dashboard: {
+            creditBalance: "Solde de Crédits",
+            generatedImages: "Images Générées",
+            generatedVideos: "Vidéos Générées",
+            audioAndChat: "Audio & Chat",
+            greetingMorning: "Bonjour",
+            greetingAfternoon: "Bon après-midi",
+            greetingEvening: "Bonsoir",
+            summarySubtitle: "Résumé du jour de vos services IA",
+            web3Title: "Web3 (Polygon Amoy)",
+            web3Subtitle: "Vos contrats ZEX et NFT sont en direct sur le réseau test.",
+            walletBtnConnect: "Connecter le Portefeuille",
+            walletBtnConnecting: "Connexion...",
+            walletBtnDisconnect: "Déconnecter",
+            walletInfoLabel: "Portefeuille",
+            walletNotConnected: "Non connecté",
+            walletBalance: "Solde ZEX",
+            contractsLabel: "Contrats",
+            monthlyTargetTitle: "Objectif Mensuel",
+            todayGen: "Aujourd'hui : {{count}} générations",
+            weekGen: "Cette semaine : {{count}} générations",
+            noSpendToday: "Aucune dépense aujourd'hui",
+            spentToday: "{{count}} crédits dépensés",
+            monthTotalGen: "Total : {{count}} ce mois-ci",
+            favModel: "Modèle favori : {{model}}",
+            noVideoGen: "Aucune vidéo ce mois-ci",
+            audioChatSubtitle: "{{audio}} audio, {{chats}} chats",
+            justNow: "À l'instant",
+            minsAgo: "Il y a {{mins}} minutes",
+            hoursAgo: "Il y a {{hours}} heures",
+            daysAgo: "Il y a {{days}} jours"
+        }
+    },
+    de: {
+        dashboard: {
+            creditBalance: "Guthaben-Saldo",
+            generatedImages: "Generierte Bilder",
+            generatedVideos: "Generierte Videos",
+            audioAndChat: "Audio & Chat",
+            greetingMorning: "Guten Morgen",
+            greetingAfternoon: "Guten Tag",
+            greetingEvening: "Guten Abend",
+            summarySubtitle: "Heutige Zusammenfassung Ihrer KI-Dienste",
+            web3Title: "Web3 (Polygon Amoy)",
+            web3Subtitle: "Ihre ZEX- und NFT-Verträge sind live im Testnet.",
+            walletBtnConnect: "Wallet Verbinden",
+            walletBtnConnecting: "Verbinde...",
+            walletBtnDisconnect: "Trennen",
+            walletInfoLabel: "Wallet",
+            walletNotConnected: "Nicht verbunden",
+            walletBalance: "ZEX-Saldo",
+            contractsLabel: "Verträge",
+            monthlyTargetTitle: "Monatliches Ziel",
+            todayGen: "Heute: {{count}} Generationen",
+            weekGen: "Diese Woche: {{count}} Generationen",
+            noSpendToday: "Heute keine Ausgaben",
+            spentToday: "Heute {{count}} Credits ausgegeben",
+            monthTotalGen: "Monatlich {{count}} Generationen",
+            favModel: "Favoriten-Modell: {{model}}",
+            noVideoGen: "Keine Videos diesen Monat",
+            audioChatSubtitle: "{{audio}} Audio, {{chats}} Chats",
+            justNow: "Gerade eben",
+            minsAgo: "Vor {{mins}} Minuten",
+            hoursAgo: "Vor {{hours}} Stunden",
+            daysAgo: "Vor {{days}} Tagen"
+        }
+    },
+    es: {
+        dashboard: {
+            creditBalance: "Saldo de Créditos",
+            generatedImages: "Imágenes Generadas",
+            generatedVideos: "Videos Generados",
+            audioAndChat: "Audio y Chat",
+            greetingMorning: "Buenos días",
+            greetingAfternoon: "Buenas tardes",
+            greetingEvening: "Buenas noches",
+            summarySubtitle: "Resumen de hoy de sus servicios de IA",
+            web3Title: "Web3 (Polygon Amoy)",
+            web3Subtitle: "Sus contratos ZEX y NFT están activos en testnet.",
+            walletBtnConnect: "Conectar Billetera",
+            walletBtnConnecting: "Conectando...",
+            walletBtnDisconnect: "Desconectar",
+            walletInfoLabel: "Billetera",
+            walletNotConnected: "No conectado",
+            walletBalance: "Saldo ZEX",
+            contractsLabel: "Contratos",
+            monthlyTargetTitle: "Objetivo Mensual",
+            todayGen: "Hoy: {{count}} generaciones",
+            weekGen: "Esta semana: {{count}} generaciones",
+            noSpendToday: "Ningún gasto hoy",
+            spentToday: "{{count}} créditos gastados hoy",
+            monthTotalGen: "Total {{count}} este mes",
+            favModel: "Modelo favorito: {{model}}",
+            noVideoGen: "Sin videos este mes",
+            audioChatSubtitle: "{{audio}} audio, {{chats}} chats",
+            justNow: "Justo ahora",
+            minsAgo: "Hace {{mins}} minutos",
+            hoursAgo: "Hace {{hours}} horas",
+            daysAgo: "Hace {{days}} días"
+        }
+    },
+    zh: {
+        dashboard: {
+            creditBalance: "积分余额",
+            generatedImages: "生成的图像",
+            generatedVideos: "生成的视频",
+            audioAndChat: "音频与聊天",
+            greetingMorning: "早上好",
+            greetingAfternoon: "下午好",
+            greetingEvening: "晚上好",
+            summarySubtitle: "今日AI服务使用摘要",
+            web3Title: "Web3 (Polygon Amoy)",
+            web3Subtitle: "您的ZEX和NFT合约在测试网上处于活动状态。",
+            walletBtnConnect: "连接钱包",
+            walletBtnConnecting: "连接中...",
+            walletBtnDisconnect: "断开连接",
+            walletInfoLabel: "钱包",
+            walletNotConnected: "未连接",
+            walletBalance: "ZEX余额",
+            contractsLabel: "合约",
+            monthlyTargetTitle: "每月生成目标",
+            todayGen: "今日：{{count}}次",
+            weekGen: "本周：{{count}}次",
+            noSpendToday: "今日无消费",
+            spentToday: "今日已消费{{count}}积分",
+            monthTotalGen: "本月总计{{count}}次",
+            favModel: "最喜欢的模型：{{model}}",
+            noVideoGen: "本月无视频生成",
+            audioChatSubtitle: "{{audio}}音频，{{chats}}聊天",
+            justNow: "刚刚",
+            minsAgo: "{{mins}}分钟前",
+            hoursAgo: "{{hours}}小时前",
+            daysAgo: "{{days}}天前"
+        }
+    },
+    su: {
+        dashboard: {
+            creditBalance: "Kú Kù-babbar",
+            generatedImages: "Alam Dù-dù",
+            generatedVideos: "Zubi Dù-dù",
+            audioAndChat: "Gù & KA-bal",
+            greetingMorning: "U4-zal-la",
+            greetingAfternoon: "U4-dè",
+            greetingEvening: "Gi6-a",
+            summarySubtitle: "U4-da me-zu dim-dim",
+            web3Title: "Web3 (Polygon)",
+            web3Subtitle: "ZEX ù NFT dub-zu ki-sur-ra GUB-ba",
+            walletBtnConnect: "É-kìshib-ba Kéš",
+            walletBtnConnecting: "Kéš-da...",
+            walletBtnDisconnect: "Šub",
+            walletInfoLabel: "É",
+            walletNotConnected: "Nu-kéš",
+            walletBalance: "ZEX šu-nigin",
+            contractsLabel: "Dub",
+            monthlyTargetTitle: "Iti Dù-dù",
+            todayGen: "U4-da: {{count}}",
+            weekGen: "U4-imin-da: {{count}}",
+            noSpendToday: "U4-da nu",
+            spentToday: "U4-da {{count}} kú",
+            monthTotalGen: "Iti: {{count}}",
+            favModel: "Dim-dim ki-ág: {{model}}",
+            noVideoGen: "Zubi nu iti",
+            audioChatSubtitle: "{{audio}} gù, {{chats}} KA",
+            justNow: "An-ta",
+            minsAgo: "{{mins}} u4-tur",
+            hoursAgo: "{{hours}} u4-gal",
+            daysAgo: "{{days}} u4"
+        }
+    }
+};
+
+langs.forEach(lang => {
+    const filePath = path.join(localesDir, `${lang}.json`);
+    let data = {};
+    if (fs.existsSync(filePath)) {
+        try {
+            data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        } catch (e) {
+            console.error(`Error parsing ${filePath}`);
+        }
+    }
+    data.dashboard = newKeys[lang].dashboard;
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+});

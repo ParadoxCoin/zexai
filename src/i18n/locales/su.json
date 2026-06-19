@@ -1,0 +1,67 @@
+{
+  "nav": { "language": "Basa Sunda", "goToApp": "Mimitian App" },
+  "hero": {
+    "visionBadge": "AI + WEB3 + ROBOTIC INTELLIGENCE",
+    "mainTitleLine1": "Kacerdasan Jieunan & Robotika",
+    "mainTitleLine2": "Infrastruktur Generasi Anyar",
+    "description": "ZexAI ngahijikeun multi-model AI, ekonomi kreator, sarta kacerdasan robotik.",
+    "joinPresale": "Ngiringan Presale",
+    "tryApp": "Tingali ZexAi",
+    "stats": { "aiModels": "Model AI", "emotions": "Cara Kenging Kredit", "communityShare": "Ekosistem & Staking", "status": "Status Platform", "statusLive": "Hirup" }
+  },
+  "story": { "title": "Naha ZexAI?", "p1": "Visi global.", "p2": "Sasak software-hardware.", "p3": "Tulang tonggong digital.", "p4": "Robah ide.", "readWhitepaper": "Baca Whitepaper" },
+  "campaign": { "title": "Ekosistem ZexAI", "subtitle": "Platform desentralisasi.", "tabVision": "Platform AI", "tabTokenomics": "Ekonomi $ZEX", "tabRobot": "Robot 🚀", "tabSdk": "SDK 🌐" },
+  "vision": { "agentTitle": "Mesin Multi-Model", "agentDesc": "40+ model.", "mintBadge": "INTEGRASI", "mintTitle": "Produksi AI + NFT", "mintDesc": "Mint dina OpenSea.", "whyWinTitle": "Kauntungan :", "whyWin1": "Hak komersial", "whyWin2": "Mint langsung", "whyWin3": "Diskon", "startCreating": "Mimitian" },
+  "tokenomics": {
+    "supplyBadge": "TOTAL SUPLAY : 1.000.000.000",
+    "title": "Rencana Distribusi $ZEX",
+    "desc": "Model anu adil.",
+    "tiers": [
+      { "name": "35% — Presale", "desc": "Fase 1" },
+      { "name": "25% — Ekosistem", "desc": "Ganjaran" },
+      { "name": "15% — Likuiditas", "desc": "Dikonci" },
+      { "name": "10% — Pamasaran", "desc": "Tumuwuh" },
+      { "name": "10% — Tim", "desc": "Dikonci 1 taun" },
+      { "name": "5% — Penasihat", "desc": "Dikonci 6 bulan" }
+    ],
+    "utilityTitle": "Mangpaat $ZEX",
+    "utilityDesc": "Panghasilan pasif.",
+    "burnTitle": "Burn Deflasioner",
+    "burnDesc": ": Meuli deui sareng diduruk.",
+    "yieldTitle": "Real Yield",
+    "yieldDesc": ": Bagéan pikeun stakers.",
+    "robotTitle": "Ekosistem Robot",
+    "robotDesc": ": Meuli ku $ZEX."
+  },
+  "robot": { "badgeLimited": "Edisi Terbatas", "badgeAi": "AI Integrasi", "title": "Ekosistem Robotik ZexAI", "desc": "Lapisan Kacerdasan.", "buyTitle": "Meuli Langsung (80)", "buyPrice": "Harga", "buyLeft": "Sésa {{count}} deui!", "raffleTitle": "Undian ICO (20)", "raffleDesc": "Minimal 10.000 ZEX.", "raffleBtn": "🎯 Ngiringan", "confirmPurchase": "Konfirmasi" },
+  "faq": { "title": "FAQ", "subtitle": "Patarosan.", "q1": "Iraha $ZEX?", "a1": "Sakedap deui.", "q2": "Robot?", "a2": "Ku $ZEX." },
+  "footer": { "copyright": "© 2026 ZexAi.", "terms": "Sarat", "privacy": "Privasi" },
+  "whitepaper": { "backToHome": "Balik", "officialDoc": "Dok", "loading": "Loading..." },
+  "markdown": { "backToHome": "Balik", "loading": "Loading..." },
+  "sdk": { "badge": "DEV", "title": "SDK & Pasar", "desc": "Kahareupna.", "marketTitle": "Pasar", "marketDesc": "Hardware.", "docsBtn": "Baca" },
+  "neuralSync": {
+    "badge": "Neural Sync",
+    "load": "Beban",
+    "core": "Inti",
+    "storage": "Panyimpenan",
+    "safe": "Aman",
+    "connected": "Koneksi",
+    "booting": "NGAMIMITIAN...",
+    "logs": ["NODE_42", "STAKING_OK", "ROBOT_LINKED", "VISION_READY"]
+  },
+  "galleryItems": [
+    { "title": "Neural #01", "rarity": "Legendary" },
+    { "title": "Evolution #04", "rarity": "Epic" }
+  ],
+  "tickerStats": { "price": "$ZEX: ${{price}}", "burned": "Burnt: {{count}}", "robots": "Sales: {{sold}}/{{total}}", "presale": "Presale" },
+  "grok": {
+    "name": "Grok", "poweredBy": "GROK", "welcome": "Halo!", "placeholder": "Naros...",
+    "syncing": "Sinkronisasi...", "visionTitle": "Visi", "status": "OK",
+    "intents": { "robot": "80 Unit.", "buyback": "Burn aktif." },
+    "logs": { "connecting": "CONN...", "syncing": "SYNC...", "initializing": "INIT...", "matching": "MATCH...", "granted": "OK" },
+    "vision": { "phase": "Fase 4", "neural": "100%", "economy": "Aktif" }
+  },
+  "grokFacts": ["Fact 1", "Fact 2"],
+  "calc": { "badge": "Yield", "title": "Staking", "desc": "Maximer.", "labelAmount": "Jumlah", "labelPeriod": "Wanci", "months": "Sasih", "estimatedEarn": "Bati", "totalReturn": "Total", "stakeBtn": "Stake" },
+  "gallery": { "badge": "NFT", "title": "Galeri", "subtitle": "Mint ayeuna." }
+}

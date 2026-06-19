@@ -1,0 +1,119 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: #060612;
+  color: white;
+}
+
+.premium-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background-image: 
+    linear-gradient(to bottom, rgba(6, 6, 18, 0.8), rgba(6, 6, 18, 0.95)),
+    url('/corporate-madness.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  filter: saturate(1.2) brightness(0.8);
+}
+
+/* === Ticker Marquee Animation === */
+.ticker-track {
+  animation: ticker-scroll 30s linear infinite;
+}
+
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes ticker-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-33.333%);
+  }
+}
+
+/* === 3D Card Flip Utilities === */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* === Scroll Reveal Animation === */
+.reveal-up {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.reveal-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* === Counting Number Glow === */
+@keyframes glow-pulse {
+  0%, 100% {
+    text-shadow: 0 0 10px rgba(45, 212, 191, 0.3);
+  }
+  50% {
+    text-shadow: 0 0 25px rgba(45, 212, 191, 0.6), 0 0 50px rgba(45, 212, 191, 0.2);
+  }
+}
+
+.stat-glow {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+/* === Safari Compatibility for Backdrop Blur === */
+.backdrop-blur-md, 
+.backdrop-blur-lg, 
+.backdrop-blur-xl, 
+.backdrop-blur-2xl,
+.backdrop-blur-3xl {
+  -webkit-backdrop-filter: blur(var(--tw-backdrop-blur));
+}
+
+/* === Universal Glass Utility === */
+.glass-panel {
+  background: rgba(6, 6, 18, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@supports not (backdrop-filter: blur(0)) {
+  .glass-panel {
+    background: rgba(6, 6, 18, 0.95);
+  }
+}

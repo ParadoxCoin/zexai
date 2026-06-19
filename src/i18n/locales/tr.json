@@ -1,0 +1,351 @@
+{
+  "nav": {
+    "language": "Türkçe",
+    "goToApp": "Paneli Başlat"
+  },
+  "hero": {
+    "creditsBadge": "KREDİLERİNİZ ASLA SİLİNMEZ",
+    "visionBadge": "AI + WEB3 + ROBOTİK INTELLIGENCE",
+    "mainTitleLine1": "Yapay Zeka ve Robotik",
+    "mainTitleLine2": "Teknolojilerin Yeni Nesil Altyapısı",
+    "description": "ZexAI; çoklu AI modellerini, creator ekonomisini ve robotik zekayı tek bir ekosistemde birleştiren devasa bir altyapı. Yazılım sınırlarını aşın, dijitalden fiziksel dünyaya uzanan bir güç inşa edin.",
+    "joinPresale": "Ön Satışa Katıl",
+    "tryApp": "ZexAi'yi Keşfet",
+    "stats": {
+      "aiModels": "AI Modeli",
+      "emotions": "Kredi Kazanma Yolu",
+      "communityShare": "Ekosistem & Staking",
+      "status": "Platform Durumu",
+      "statusLive": "Yayında"
+    }
+  },
+  "story": {
+    "title": "Neden ZexAI?",
+    "p1": "Küresel teknoloji vizyonumuz, yapay zekanın sadece dijital bir araç değil, fiziksel dünyayı da yöneten bir 'akıl' olması gerektiği ilkesine dayanır. Günümüzde AI üretimi ve robotik kontrol sistemleri birbirinden kopuk ilerlemektedir.",
+    "p2": "ZexAI, bu iki dünyayı birleştirerek yazılımın gücünü robotik donanımlara aktarır. Amacımız, geliştiricilere ve yaratıcılara uçtan uca bir üretim ve yönetim platformu sunarak teknolojik bariyerleri ortadan kaldırmaktır.",
+    "p3": "Platformumuz, çoklu AI model mimarisi ile fiziksel dünyadaki robotları birleştiren bir köprü görevi görür. <1>ZexAI bir araç değil, yeni nesil dijital ve robotik ekonominin ana omurgasıdır.</1>",
+    "p4": "ZexAI ile fikirlerinizi dijital varlıklara, yazılımlarınızı robotik yeteneklere dönüştürün. Siz vizyonu belirleyin, ZexAI dünyaya sunsun.",
+    "readWhitepaper": "Whitepaper'ın Tamamını Oku"
+  },
+  "campaign": {
+    "title": "ZexAI Ekosistemi ve Fırsatlar",
+    "subtitle": "Yapay zeka üretim araçlarını, creator ekonomisini ve Web3 altyapısını tek bir platformda birleştiren merkeziyetsiz ekosistem. 40'tan fazla AI modeli, NFT üretimi, token ekonomisi ve fiziksel ürünler.",
+    "tabVision": "AI Üretim Platformu",
+    "tabTokenomics": "$ZEX Ekonomisi",
+    "tabRobot": "Robot Ekosistemi 🚀",
+    "tabSdk": "SDK & Robot Market 🌐"
+  },
+  "vision": {
+    "agentTitle": "Çoklu Model Motoru",
+    "agentDesc": "ZexAI, 40'tan fazla yapay zeka modelini tek bir platformda sunar. Aynı prompt ile birden fazla modeli çalıştırın, sonuçları karşılaştırın ve en iyisini seçin.",
+    "mintBadge": "KUSURSUZ ENTEGRASYON",
+    "mintTitle": "AI Üretim + NFT Monetizasyon",
+    "mintDesc": "Görsel, video ve ses üretin. Ürettiğiniz içerikleri tek tıkla OpenSea ve Zora'da NFT olarak basın. Kredi sistemi ile çalışan platform, referans sistemi, sosyal paylaşım ödülleri ve günlük görevlerle kredi kazanma imkânı sunar.",
+    "whyWinTitle": "Neden ZexAI Platform Farkı:",
+    "whyWin1": "40+ AI modeli ile çoklu model karşılaştırma",
+    "whyWin2": "Doğrudan OpenSea ve Zora entegrasyonu ile NFT mintleme",
+    "whyWin3": "Referans sistemi: Davet ettiğiniz kişilerin kredi alımlarından %5 kazanç",
+    "startCreating": "Platformu Keşfet"
+  },
+  "tokenomics": {
+    "supplyBadge": "TOPLAM ARZ: 1.000.000.000 ZEX",
+    "title": "$ZEX Token Dağılım Planı",
+    "desc": "$ZEX, ZexAI ekosisteminin temel utility (işlevsel) tokenidir. AI üretim indirimleri, NFT mint ücretleri, platform ödülleri ve staking için kullanılır. Adil, uzun vadeli ve topluluk odaklı dağıtım.",
+    "tiers": [
+      {
+        "name": "%35 — Ön Satış / ICO",
+        "desc": "Vesting yoktur. Listeleme anında %100 açık."
+      },
+      {
+        "name": "%25 — Ekosistem & Staking Ödülleri",
+        "desc": "Platform kullanımı, NFT üretici ödülleri, staking havuzu"
+      },
+      {
+        "name": "%15 — Likidite (DEX/CEX)",
+        "desc": "Listeleme likidite havuzları için kilitli"
+      },
+      {
+        "name": "%10 — Pazarlama & Ortaklıklar",
+        "desc": "Kampanya ve ortaklık ihtiyaçlarına göre kademeli"
+      },
+      {
+        "name": "%10 — Takım & Kurucular",
+        "desc": "1 yıl tamamen kilitli + 24 ay lineer açılım"
+      },
+      {
+        "name": "%5 — Danışmanlar",
+        "desc": "6 ay kilitli + 6 ay lineer açılım"
+      }
+    ],
+    "utilityTitle": "$ZEX Token Faydaları",
+    "utilityDesc": "AI üretimde indirimler, NFT mint ücretleri, staking ödülleri ve platform gelir paylaşımı. Deflasyonist mekanizmalarla desteklenen sürdürülebilir token ekonomisi.",
+    "burnTitle": "Deflasyonist Yakım",
+    "burnDesc": ": İşlemlerde %0.5 yakım + erken unstake %10 ceza yakımı + platform gelirlerinin %20'si ile geri alım & yakım.",
+    "yieldTitle": "Staking Geliri",
+    "yieldDesc": ": $ZEX stake ederek ödül kazanın. Erken unstake durumunda %10 ceza uygulanır ve yakılır.",
+    "robotTitle": "Robot Ekosistemi",
+    "robotDesc": ": $ZEX token kullanarak fiziksel robotlar satın alabilir ve donanımlara özel otonom AI davranış modülleri yükleyebilirsiniz."
+  },
+  "robot": {
+    "badgeLimited": "Sınırlı Üretim",
+    "badgeAi": "Yapay Zeka Entegreli",
+    "title": "ZexAI Robot Geliştirici Ekosistemi",
+    "desc": "ZexAI Robotik Zeka Katmanı ile yeni nesil yapay zeka destekli robotik geliştirme dönemini başlatıyoruz. İnsansı robotları ve akıllı ajanları birleştiren, $ZEX token ile desteklenen güvenli aktivasyon ve yetenek monetizasyonu sunan birleşik bir yazılım platformu.",
+    "buyTitle": "Doğrudan Satın Al (80 Adet)",
+    "buyPrice": "Fiyat (Cüzdan İle)",
+    "buyLeft": "Sadece {{count}} adet kaldı!",
+    "raffleTitle": "Büyük ICO Çekilişi (20 Adet)",
+    "raffleDesc": "Ön satışta <1>en az 10.000 ZEX</1> alarak çekiliş biletinizi kazanın. Viral kampanyamızda bedava İnsansı Robot şansını yakalayın!",
+    "raffleBtn": "🎯 Çekilişe Katıl (Yakında)",
+    "confirmPurchase": "Satın Alımı Onayla",
+    "paymentMethods": "Ödeme Yöntemi Seçin",
+    "payWeb3": "ZEX Token (Polygon)",
+    "payCC": "Kredi Kartı (LemonSqueezy)",
+    "payBank": "Binance Pay / NOWPayments",
+    "specsTitle": "Teknik Özellikler (Unitree G1)",
+    "specs": {
+      "height": "Boy: ~127cm (Katlanabilir)",
+      "weight": "Ağırlık: ~35kg",
+      "speed": "Hız: 2.0m/s (Maksimum)",
+      "dof": "Eklemler: 23-43 Serbestlik Derecesi",
+      "battery": "Batarya: 9000mAh (2-4 Saat Çalışma)",
+      "compute": "İşlemci: 8-Core CPU & NVIDIA Orin (EDU)",
+      "sensors": "Sensörler: 3D LiDAR + Derinlik Kamerası"
+    },
+    "payCCDesc": "Ödemenizi LemonSqueezy güvenli altyapısı ile gerçekleştirin. Tüm kredi ve banka kartları geçerlidir.",
+    "payCCBtn": "Ödemeye Geç",
+    "payBankDesc": "Binance Pay veya NOWPayments ile kripto ödemesi yapın. %5 ek indirim kazanın.",
+    "payBankBtn": "Kripto ile Öde",
+    "shippingTitle": "Kargo & Teslimat Bilgileri",
+    "shippingName": "Ad Soyad",
+    "shippingEmail": "E-posta Adresi",
+    "shippingPhone": "Telefon Numarası",
+    "shippingAddress": "Tam Teslimat Adresi",
+    "phase2Unlock": "FAZ 2: YAKINDA AÇILACAK",
+    "phase2Desc": "Donanım tahsisi kesinlikle Faz 2 katılımcılarına özeldir.",
+    "phase2Exclusive": "FAZ 2 ÖZEL",
+    "ccDescShort": "LemonSqueezy aracılığıyla sorunsuz ödeme. Tüm kredi ve banka kartları kabul edilir.",
+    "bankDescShort": "Binance Pay veya NOWPayments ile güvenli kripto işlemleri yapın."
+  },
+  "faq": {
+    "title": "Sıkça Sorulan Sorular",
+    "subtitle": "ZexAI ekosistemi hakkında merak edilenler.",
+    "q1": "ZexAI nedir ve ne yapar?",
+    "a1": "ZexAI, çoklu AI model mimarisi ile çalışan bir üretim platformudur. 40'tan fazla yapay zeka modeline erişim, görsel/video/ses üretimi, model karşılaştırma, dijital varlık üretimi ve token tabanlı creator ekonomisi sunar. Platform, AI üretim araçlarını, creator ekonomisini ve Web3 altyapısını tek bir ekosistemde birleştirir.",
+    "q2": "$ZEX Token hangi alanlarda kullanılıyor?",
+    "a2": "$ZEX tokeni AI üretim indirimlerinde, NFT mint ücretlerinde, platform ödüllerinde ve staking'de kullanılır. Deflasyonist mekanizmalarla desteklenir: işlemlerde %0.5 yakım, erken unstake'de %10 ceza yakımı ve platform gelirlerinin %20'si ile geri alım & yakım uygulanır.",
+    "q3": "Kredi sistemi nasıl çalışıyor?",
+    "a3": "AI üretimi kredi sistemi ile çalışır. Kredi kazanma yolları: abonelik planları, kredi satın alma, referans sistemi (davet edilen kişinin kredi alımlarından %5 kazanç), sosyal paylaşım ödülleri ve günlük görevler (giriş, üretim, paylaşım). Abonelik kredileri ay sonunda sıfırlanmaz.",
+    "q4": "Token dağılımı ve kilit süreleri nedir?",
+    "a4": "Toplam arz 1 milyar ZEX. Ön Satış %35 (listede %50 açık, %50 6 ay vesting), Ekosistem %25 (kademeli), Likidite %15 (kilitli), Pazarlama %10 (kademeli), Takım %10 (1 yıl tam kilit + 24 ay lineer), Danışman %5 (6 ay kilit + 6 ay lineer). Takım tokenleri 1 yıl tamamen kilitlidir — biz buradayız, gitmiyoruz.",
+    "q5": "ZexAI hangi blokzincir ağını kullanıyor?",
+    "a5": "ZexAI, düşük işlem ücretleri ve yüksek hız için Polygon (POL) ağında çalışır. Ön satış portalımız üzerinden Web3 cüzdanınızı bağlayarak doğrudan POL ile $ZEX satın alabilirsiniz.",
+    "q6": "ZexAI gelir paylaşımı (Real Yield) sunuyor mu?",
+    "a6": "Evet! ZexAI'nin ürettiği gerçek dünya gelirlerinin (abonelikler, NFT satışları vb.) bir bölümü sadık $ZEX yatırımcılarına ve Staking yapanlara dağıtılır. $ZEX stake ederek ekosistemin doğrudan ortağı olursunuz.",
+    "q7": "NFT üretme özelliği nasıl çalışıyor?",
+    "a7": "ZexAI ile ürettiğiniz görsel, video ve sesleri anında NFT olarak mint'leyebilirsiniz (basabilirsiniz). Kusursuz Web3 entegrasyonumuz sayesinde, ürettiğiniz eserleri tek tıkla OpenSea ve Zora gibi büyük pazarlarda satışa sunabilirsiniz.",
+    "q8": "Ön satış sürecinde fikrimi değiştirirsem iade alabilir miyim?",
+    "a8": "Evet, ZexAI güvenli bir İade (Buyback) mekanizması sunar. Satın aldığınız $ZEX'i iade etmek isterseniz, ağ üzerinden %15'lik bir kesinti uygulanır (bu miktar ekosistemi korumak için kalıcı olarak yakılır) ve kalan değer doğrudan POL olarak cüzdanınıza anında aktarılır.",
+    "q9": "Gerçekten $ZEX token ile fiziksel bir insansı robot satın alabilir miyim?",
+    "a9": "Evet! ZexAI ekosistemi yazılım ve donanımı kusursuzca birbirine bağlar. İlk sürümümüzde, Web3 portalımız üzerinden doğrudan $ZEX token ile satın alınabilen 80 adetlik sınırlı bir insansı robot (Humanoid) serisi satışa sunulmuştur.",
+    "q10": "Robot Pazaryeri'nin uzun vadeli vizyonu nedir?",
+    "a10": "Vizyonumuz sadece donanım satmanın ötesine geçiyor. ZexAI Robot Market, geliştiricilerin özelleştirilmiş AI davranış modüllerini (örneğin; Güvenlik, Karşılama, Eğlence Asistanı) satabileceği bir altyapı olacak. Bu 'dijital beyinleri' $ZEX ile satın alıp saniyeler içinde fiziksel robotunuza yükleyebileceksiniz."
+  },
+  "footer": {
+    "copyright": "© 2026 ZexAi. Tüm hakları saklıdır.",
+    "terms": "Şartlar",
+    "privacy": "Gizlilik"
+  },
+  "whitepaper": {
+    "backToHome": "Ana Sayfaya Dön",
+    "officialDoc": "Resmi Döküman",
+    "loading": "Vizyon Yükleniyor..."
+  },
+  "markdown": {
+    "backToHome": "Ana Sayfaya Dön",
+    "loading": "İçerik Yükleniyor...",
+    "termsTitle": "Hizmet Şartları",
+    "privacyTitle": "Gizlilik Politikası"
+  },
+  "sdk": {
+    "badge": "GELİŞTİRİCİLER VE YARATICILAR İÇİN",
+    "title": "ZexAI Developer SDK ve Robot Pazaryeri",
+    "desc": "Robotik zekanın geleceğini inşa edin. SDK'mızı kullanarak geliştiriciler, ZexAI'nin otonom ajanlarını Web3 uygulamalarına, Metaverse oyunlarına veya fiziksel robotlara entegre edebilir.",
+    "marketTitle": "Robot Modeli ve Yapay Zeka Pazaryeri",
+    "marketDesc": "Sadece donanım değil, beyin satın alın. ZexAI Robot Market'te doğrudan $ZEX token kullanarak insansı robotlar, dronlar ve özelleştirilmiş AI davranış modülleri satın alabilirsiniz.",
+    "docsBtn": "Dokümantasyonu Oku"
+  },
+  "roadmap": {
+    "title": "Yol Haritası 2026-2027",
+    "subtitle": "Vizyondan gerçeğe uzanan yolculuğumuz.",
+    "q1Title": "Temel ve Başlangıç",
+    "q1i1": "Çoklu model AI platformu lansmanı (40+ model)",
+    "q1i2": "NFT basım entegrasyonu (OpenSea & Zora)",
+    "q1i3": "Kredi sistemi ve referans programı",
+    "q1i4": "ZexAI Asistanı (Grok) dağıtımı",
+    "q2Title": "Token ve Topluluk",
+    "q2i1": "Polygon üzerinde $ZEX Token ön satışı",
+    "q2i2": "Staking ve yakım mekanizmalarının aktivasyonu",
+    "q2i3": "Topluluk yönetişimi (DAO Aşama 1)",
+    "q2i4": "İl DEX listelemesi (QuickSwap)",
+    "q3Title": "Robot Ekosistemi",
+    "q3i1": "İl grup insansı robot teslimatı (80 adet)",
+    "q3i2": "Robot SDK ve davranış modülü pazaryeri",
+    "q3i3": "Geliştirici API ve dökümantasyon",
+    "q3i4": "CEX listelemeleri (Tier 2)",
+    "q4Title": "Küresel Genişleme",
+    "q4i1": "Robot davranış modülü pazaryeri lansmanı",
+    "q4i2": "Kurumsal ortaklıklar ve B2B entegrasyonları",
+    "q4i3": "Mobil uygulama yayını (iOS & Android)",
+    "q4i4": "CEX listelemeleri (Tier 1)",
+    "q4i5": "Otonom Donanım ve Unitree Entegrasyonu (H1 2027)",
+    "q5Title": "Gelecek Vizyonu",
+    "q5i1": "Otonom AI ajan ağı",
+    "q5i2": "Cross-chain köprüsü (Ethereum, Solana)",
+    "q5i3": "Tam DAO yönetişimine geçiş",
+    "q5i4": "Yeni nesil robot donanımı (Gen 2)"
+  },
+  "team": {
+    "title": "ZexAI'ın Arkasındaki Zihinler",
+    "subtitle": "İnsan vizyonu ve yapay zekanın geleceği birlikte inşa ettiği bir sentez.",
+    "founderRole": "Kurucu & CEO",
+    "founderBio": "AI, Web3 ve robotiği birleştiren vizyoner teknoloji uzmanı. Yeni nesil akıllı sistemlerin altyapısını inşa ediyor.",
+    "ctoRole": "AI Mimarisi",
+    "ctoBio": "40'tan fazla modeli besleyen çoklu model AI motoru. Sinir ağı optimizasyonu ve otonom ajan orkestrasyonu.",
+    "communityRole": "DAO & Yönetişim",
+    "communityBio": "ZexAI'ın kalbi. Geleceği birlikte şekillendiren token sahipleri, yaratıcılar ve geliştiriciler.",
+    "robotRole": "Donanım & Entegrasyon",
+    "robotBio": "Yazılım zekası ile fiziksel robotiği birleştiren köprü. Unitree G1 entegrasyonu ve sensör sistemleri.",
+    "clickToFlip": "Daha fazlası için tıklayın",
+    "clickToFlipBack": "Geri dönmek için tıklayın"
+  },
+  "ticker": {
+    "live": "YAYINDA",
+    "burned": "Toplam Yakılan: 0 ZEX",
+    "robots": "Robot Satış: 0/80",
+    "countdown": "Ön Satış"
+  },
+  "calc": {
+    "badge": "Real Yield Protokolü",
+    "title": "$ZEX Staking Getirileri",
+    "desc": "ZexAI'nin kademeli staking sistemiyle varlıklarınızı maksimize edin. Küresel AI yaratıcı ekonomisinden payınızı alın.",
+    "labelAmount": "Staking Miktarı",
+    "labelPeriod": "Staking Süresi",
+    "months": "Ay",
+    "estimatedEarn": "Tahmini Kazanç",
+    "totalReturn": "Toplam Bakiye",
+    "stakeBtn": "Onayla ve Hemen Stake Et",
+    "yearly": "APY (Yıllık)",
+    "comingSoon": "Yakında",
+    "disclaimer": "* Oranlar tahmindir ve protokol yönetişimine tabidir"
+  },
+  "gallery": {
+    "badge": "Yeni Nesil Dijital Varlıklar",
+    "title": "AI Hologram Sergisi",
+    "subtitle": "Kurumsal AI varlıklarımızı doğrudan OpenSea ve Zora üzerinde mintleyin. Her kart, ZexAI sinir ağının eşsiz bir parçasıdır."
+  },
+  "neuralSync": {
+    "badge": "Neural Sync",
+    "load": "Sistem Yükü",
+    "core": "Çekirdek",
+    "storage": "Depolama",
+    "safe": "Güvenli",
+    "connected": "Polygon Mainnet'e Bağlı",
+    "booting": "NEURAL_LINK BAŞLATILIYOR...",
+    "logs": [
+      "NEURAL_SYNC: NODE_42_BAGLANDI",
+      "PROTOKOL: STAKING_KATMANI_AKTIF",
+      "ROBOTIK_CEKIRDEK: UNITREE_G1_ESLESTI",
+      "VISION_v40: MOTOR_HAZIR",
+      "VERI_PULSU: SIFRELENDI",
+      "AG: GECIKME_8ms",
+      "GÜVENLIK: KALKAN_MAKS_KAPASITE",
+      "AI_ORKESTRATOR: YUK_DENGELENDI",
+      "METRIKLER: ROI_HAVUZU_OPTIMIZE",
+      "DAO: YÖNETISIM_SNAP_TAMAM"
+    ]
+  },
+  "galleryItems": [
+    { "title": "Neural Sync #01", "rarity": "Efsanevi" },
+    { "title": "Evolution #04", "rarity": "Epik" },
+    { "title": "Robot Genesis #07", "rarity": "Mistik" },
+    { "title": "Network City #12", "rarity": "Nadir" },
+    { "title": "Cyber Core #22", "rarity": "Efsanevi" }
+  ],
+  "tickerStats": {
+    "price": "$ZEX Ön Satış: ${{price}}",
+    "burned": "Toplam Yakılan: {{count}} ZEX",
+    "robots": "Robot Satış: {{sold}}/{{total}}",
+    "presale": "Ön Satış"
+  },
+  "grok": {
+    "name": "ZexAI Asistanı",
+    "poweredBy": "POWERED BY GROK",
+    "welcome": "Merhaba! Ben ZexAI Asistanıyım. Sana nasıl yardımcı olabilirim?",
+    "placeholder": "Bir şeyler sor...",
+    "syncing": "Neural Core Senkronize Ediliyor",
+    "visionTitle": "ZexAI Vizyoner Projeksiyonu",
+    "status": "SİSTEM DURUMU: OPTİMAL / VİZYON MODU: AÇIK",
+    "intents": {
+      "robot": "Sadece 80 adet üretilecek olan Unitree G1 robotlarımız sizi bekliyor. $ZEX ile sahip olabilirsiniz.",
+      "buyback": "Geri Alım (Buy-Back) mekanizmamız ile $ZEX değerini koruyoruz."
+    },
+    "logs": {
+      "connecting": "VISION V40 BAĞLANTISI KURULUYOR...",
+      "syncing": "TOKENOMİ KATMANI SENKRONİZE EDİLİYOR...",
+      "initializing": "NÖRAL NODLAR BAŞLATILIYOR...",
+      "matching": "WHITEPAPER VERİLERİ KARŞILAŞTIRILIYOR...",
+      "granted": "ERİŞİM ONAYLANDI. HOŞ GELDİNİZ."
+    },
+    "vision": {
+      "phase": "FAZ 4: Profesyonelleşme ve Yönetişim",
+      "neural": "NÖRAL AĞ: %100 Veri-Güdümlü Mimari",
+      "economy": "EKONOMİ: Real-Yield Dağıtım Protokolü Aktif"
+    }
+  },
+  "grokFacts": [
+    "ZexAI'nin temeli kızı hasta olan bir babanın sevgisi üzerine kurulmuştur.",
+    "Yapay Zekayı NFT İçin Tasarladık! ZexAI ekonomik değer üreten bir fabrikadır.",
+    "ZexAI eserleri OpenSea, Zora ve Blur'da doğrudan satışa sunulabilir.",
+    "Zex Vision: 40+ AI modeliyle hayallerinizi piksellere döken güç.",
+    "Zex Motion: 43 farklı video modeliyle sinematik teknolojimiz.",
+    "$ZEX Token; platform üretimi ve Real Yield gelir paylaşımı için kullanılır.",
+    "Buy-Back & Burn mekanizmasıyla $ZEX değerini koruyoruz.",
+    "Toplam 1 Milyar arzın %35'i ön satışa ayrılmıştır.",
+    "Takım payı 1 yıl kilitlidir. Uzun vadeli vizyona sahibiz.",
+    "Yol haritamız 2026 Q4'e kadar küresel genişlemede net bir plana sahiptir."
+  ],
+  "presale": {
+    "portalTitle": "ZEX Ön Satış Portalı",
+    "portalDesc": "Ön Satış paneline erişmek için Polygon ağındaki cüzdanınızı bağlayın veya aşağıdan farklı bir coin seçin.",
+    "orBuyWith": "Veya cüzdan bağlamadan diğer coinlerle satın alın:",
+    "active": "Aktif",
+    "paused": "Durduruldu",
+    "phase1": "Aşama 1: Özel",
+    "phase2": "Aşama 2: Halka Açık",
+    "tabBuy": "ZEX SATIN AL",
+    "tabReferral": "REFERANS",
+    "tabRefund": "İADE",
+    "paymentMethod": "Ödeme Yöntemi",
+    "amountToPay": "Ödenecek Tutar (POL)",
+    "expectedZex": "Beklenen ZEX (Maks)",
+    "expectedZexEst": "Beklenen ZEX (Tahmini)",
+    "connectToBuy": "POL ile satın almak için cüzdanınızı bağlayın.",
+    "amountToSpendUsd": "Harcayacağınız Tutar (USD)",
+    "receivingAddress": "ZEX Alacak Polygon Cüzdan Adresi",
+    "invalidAddress": "Geçersiz adres — 0x ile başlamalı ve 42 karakter olmalıdır",
+    "validAddress": "✓ Geçerli Polygon adresi",
+    "afterPaymentDesc": "Ödeme onaylandıktan sonra ZEX tokenleriniz yukarıdaki cüzdan adresine otomatik olarak gönderilecektir.",
+    "referTitle": "Referans Ol & %5 Kazan",
+    "referDesc": "Arkadaşlarınızı davet edin ve satın alımlarından %5 ZEX airdrop kazanın! (Haftalık otomatik dağıtım)",
+    "invited": "Davet Edilen",
+    "earned": "Kazanılan ZEX",
+    "referLink": "Referans Linkiniz",
+    "referLinkCopied": "Referans linki kopyalandı!",
+    "airdropSunday": "Kazançlar her Pazar günü otomatik olarak cüzdanınıza airdrop edilir.",
+    "connectToRefer": "Linkinizi görmek için cüzdanınızı bağlayın",
+    "refundAmount": "İade Edilecek ZEX",
+    "refundWarning": "⚠️ İade edilen ZEX'in %15'i yakılacaktır, kalan değer POL cüzdanınıza aktarılacaktır.",
+    "comingSoonBtn": "Yakında"
+  }
+}

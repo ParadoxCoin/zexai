@@ -1,0 +1,129 @@
+{
+  "nav": {
+    "language": "Deutsch",
+    "goToApp": "Zur App"
+  },
+  "hero": {
+    "visionBadge": "KI + WEB3 + ROBOTIK-INTELLIGENZ",
+    "mainTitleLine1": "KI und Robotik",
+    "mainTitleLine2": "Infrastruktur der nächsten Generation",
+    "description": "ZexAI vereint Multi-Model KI, Creator-Economy und robotische Intelligenz in einem einzigen Ökosystem.",
+    "joinPresale": "Am Vorverkauf teilnehmen",
+    "tryApp": "ZexAi Entdecken",
+    "stats": {
+      "aiModels": "KI-Modelle",
+      "emotions": "Kredit-Verdienstmöglichkeiten",
+      "communityShare": "Ökosystem & Staking",
+      "status": "Plattformstatus",
+      "statusLive": "Live"
+    }
+  },
+  "story": {
+    "title": "Warum ZexAI?",
+    "p1": "Unsere globale Technologievision basiert auf dem Prinzip, dass künstliche Intelligenz nicht nur ein digitales Werkzeug sein sollte, sondern ein 'Verstand', der die physische Welt steuert.",
+    "p2": "ZexAI verbindet diese beiden Welten, indem es die Leistung der Software auf robotische Hardware überträgt.",
+    "p3": "Unsere Plattform dient als Brücke, die Multi-Model KI-Architektur mit physischen Robotern verbindet.",
+    "p4": "Mit ZexAI verwandeln Sie Ihre Ideen in digitale Vermögenswerte.",
+    "readWhitepaper": "Vollständiges Whitepaper lesen"
+  },
+  "campaign": {
+    "title": "ZexAI Ökosystem & Möglichkeiten",
+    "subtitle": "Eine dezentrale Plattform.",
+    "tabVision": "NFT-Ökosystem",
+    "tabTokenomics": "$ZEX-Wirtschaft",
+    "tabRobot": "Roboter-Ökosystem 🚀",
+    "tabSdk": "SDK & Robotermarkt 🌐"
+  },
+  "vision": {
+    "agentTitle": "Synapse KI-Agent",
+    "agentDesc": "Tippe einfach \"Hoffnung\" ein und lass den Synapse-Agenten den perfekten Prompt erstellen.",
+    "mintBadge": "NAHTLOSE INTEGRATION",
+    "mintTitle": "Direkt bei OpenSea & Zora prägen",
+    "mintDesc": "ZexAI ermöglicht es dir, in Sekundenschnelle ein weltweit anerkannter Künstler zu werden.",
+    "whyWinTitle": "Warum ZexAI-Schöpfer gewinnen:",
+    "whyWin1": "Volle kommerzielle Rechte",
+    "whyWin2": "Direktes Prägen vom Dashboard",
+    "whyWin3": "Provisionsrabatte",
+    "startCreating": "Mit Erstellen & Prägen beginnen"
+  },
+  "tokenomics": {
+    "supplyBadge": "GESAMTBESTAND: 1.000.000.000",
+    "title": "$ZEX Verteilungsplan",
+    "desc": "Ein faires, langfristiges Verteilungsmodell.",
+    "tiers": [
+      { "name": "35% - Vorverkauf / ICO", "desc": "Phase 1" },
+      { "name": "25% - Ökosystem & Staking", "desc": "Rewards" },
+      { "name": "15% - CEX / DEX Liquidität", "desc": "Gesperrt" },
+      { "name": "10% - Marketing", "desc": "Wachstum" },
+      { "name": "10% - Team", "desc": "1 Jahr kilitli" },
+      { "name": "5% - Berater", "desc": "6 Monate" }
+    ],
+    "utilityTitle": "$ZEX Nutzen & Stabilität",
+    "utilityDesc": "Token-Inhaber erzielen passives Einkommen.",
+    "burnTitle": "Deflationär (Verbrennung)",
+    "burnDesc": ": Rückkauf und Verbrennung.",
+    "yieldTitle": "Reale Rendite (Real Yield)",
+    "yieldDesc": ": Staker erhalten einen Anteil.",
+    "robotTitle": "Roboter-Ökosystem",
+    "robotDesc": ": Humanoide Roboter mit $ZEX kaufen."
+  },
+  "robot": {
+    "badgeLimited": "Limitierte Auflage",
+    "badgeAi": "KI Integriert",
+    "title": "ZexAI Roboter-Entwickler-Ökosystem",
+    "desc": "ZexAI Robotic Intelligence Layer.",
+    "buyTitle": "Direktkauf (80 Stück)",
+    "buyPrice": "Preis (Mit Wallet)",
+    "buyLeft": "Nur noch {{count}} Stück!",
+    "raffleTitle": "Büyük ICO Çekilişi (20 Adet)",
+    "raffleDesc": "Mindestens 10.000 ZEX.",
+    "raffleBtn": "🎯 An der Verlosung teilnehmen",
+    "confirmPurchase": "Kauf Bestätigen"
+  },
+  "faq": {
+    "title": "Häufig gestellte Fragen",
+    "subtitle": "Fragen klären.",
+    "q1": "Wann $ZEX?", "a1": "Bald.",
+    "q2": "Roboter?", "a2": "$ZEX mit wallet."
+  },
+  "footer": {
+    "copyright": "© 2026 ZexAi.",
+    "terms": "AGB",
+    "privacy": "Datenschutz"
+  },
+  "whitepaper": { "backToHome": "Zurück", "officialDoc": "Offiziell", "loading": "Laden..." },
+  "markdown": { "backToHome": "Zurück", "loading": "Laden..." },
+  "sdk": {
+    "badge": "ENTWICKLER",
+    "title": "SDK & Market",
+    "desc": "Robotik Zukunft.",
+    "marketTitle": "Marktplatz",
+    "marketDesc": "Hardware & Brains.",
+    "docsBtn": "Lesen"
+  },
+  "neuralSync": {
+    "badge": "Neural Sync",
+    "load": "Systemlast",
+    "core": "Kern",
+    "storage": "Speicher",
+    "safe": "Sicher",
+    "connected": "Verbunden",
+    "booting": "START...",
+    "logs": ["NODE_42", "STAKING_AKTIV", "UNITREE_LINKED", "VISION_READY"]
+  },
+  "galleryItems": [
+    { "title": "Neural #01", "rarity": "Legendär" },
+    { "title": "Evolution #04", "rarity": "Episch" }
+  ],
+  "tickerStats": { "price": "$ZEX: ${{price}}", "burned": "Burnt: {{count}}", "robots": "Sales: {{sold}}/{{total}}", "presale": "Presale" },
+  "grok": {
+    "name": "Grok", "poweredBy": "GROK", "welcome": "Hallo!", "placeholder": "Fragen...",
+    "syncing": "Sync...", "visionTitle": "Vision", "status": "OK",
+    "intents": { "robot": "80 Units.", "buyback": "Burn active." },
+    "logs": { "connecting": "CONN...", "syncing": "SYNC...", "initializing": "INIT...", "matching": "MATCH...", "granted": "OK" },
+    "vision": { "phase": "Phase 4", "neural": "100%", "economy": "Active" }
+  },
+  "grokFacts": ["Fact 1", "Fact 2"],
+  "calc": { "badge": "Yield", "title": "Staking", "desc": "Maximize holdings.", "labelAmount": "Amount", "labelPeriod": "Period", "months": "Monate", "estimatedEarn": "Profit", "totalReturn": "Total", "stakeBtn": "Stake" },
+  "gallery": { "badge": "NFT", "title": "Showcase", "subtitle": "Mint now." }
+}

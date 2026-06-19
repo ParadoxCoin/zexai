@@ -1,0 +1,67 @@
+{
+  "nav": { "language": "Español", "goToApp": "Ir a la App" },
+  "hero": {
+    "visionBadge": "AI + WEB3 + INTELIGENCIA ROBÓTICA",
+    "mainTitleLine1": "IA y Robótica",
+    "mainTitleLine2": "Infraestructura de Próxima Generación",
+    "description": "ZexAI unifica la IA multimodelo, la economía de creadores y la inteligencia robótica.",
+    "joinPresale": "Unirse a la Preventa",
+    "tryApp": "Explorar ZexAi",
+    "stats": { "aiModels": "Modelos IA", "emotions": "Formas de ganar", "communityShare": "Ecosistema & Staking", "status": "Estado", "statusLive": "En Vivo" }
+  },
+  "story": { "title": "¿Por qué ZexAI?", "p1": "Visión global.", "p2": "Puente software-hardware.", "p3": "Columna vertebral digital.", "p4": "Transforma ideas.", "readWhitepaper": "Leer Whitepaper" },
+  "campaign": { "title": "Ecosistema ZexAI", "subtitle": "Plataforma descentralizada.", "tabVision": "Plataforma IA", "tabTokenomics": "Economía $ZEX", "tabRobot": "Robots 🚀", "tabSdk": "SDK 🌐" },
+  "vision": { "agentTitle": "Motor Multimodelo", "agentDesc": "40+ modelos.", "mintBadge": "INTEGRACIÓN", "mintTitle": "IA + NFT", "mintDesc": "Mintear en OpenSea.", "whyWinTitle": "Ventajas:", "whyWin1": "Derechos comerciales", "whyWin2": "Minteo directo", "whyWin3": "Descuentos", "startCreating": "Empezar" },
+  "tokenomics": {
+    "supplyBadge": "SUMINISTRO: 1.000.000.000",
+    "title": "Distribución $ZEX",
+    "desc": "Modelo justo.",
+    "tiers": [
+      { "name": "35% — Preventa", "desc": "Fase 1" },
+      { "name": "25% — Ecosistema", "desc": "Recompensas" },
+      { "name": "15% — Liquidez", "desc": "Bloqueado" },
+      { "name": "10% — Marketing", "desc": "Crecimiento" },
+      { "name": "10% — Equipo", "desc": "1 año bloqueado" },
+      { "name": "5% — Asesores", "desc": "6 meses" }
+    ],
+    "utilityTitle": "Utilidad $ZEX",
+    "utilityDesc": "Ingresos pasivos.",
+    "burnTitle": "Quema Deflacionaria",
+    "burnDesc": ": Compra y quema.",
+    "yieldTitle": "Rendimiento Real",
+    "yieldDesc": ": Participación para stakers.",
+    "robotTitle": "Ecosistema Robot",
+    "robotDesc": ": Comprar con $ZEX."
+  },
+  "robot": { "badgeLimited": "Edición Limitada", "badgeAi": "IA Integrada", "title": "Ecosistema Robótico ZexAI", "desc": "Capa de Inteligencia.", "buyTitle": "Compra Directa (80)", "buyPrice": "Precio", "buyLeft": "¡Solo {{count}}!", "raffleTitle": "Sorteo ICO (20)", "raffleDesc": "Mínimo 10.000 ZEX.", "raffleBtn": "🎯 Unirse", "confirmPurchase": "Confirmar" },
+  "faq": { "title": "FAQ", "subtitle": "Preguntas.", "q1": "¿Cuándo $ZEX?", "a1": "Pronto.", "q2": "¿Robots?", "a2": "Con $ZEX." },
+  "footer": { "copyright": "© 2026 ZexAi.", "terms": "Términos", "privacy": "Privacidad" },
+  "whitepaper": { "backToHome": "Inicio", "officialDoc": "Doc", "loading": "Cargando..." },
+  "markdown": { "backToHome": "Inicio", "loading": "Cargando..." },
+  "sdk": { "badge": "DEV", "title": "SDK & Market", "desc": "Futuro.", "marketTitle": "Mercado", "marketDesc": "Hardware.", "docsBtn": "Leer" },
+  "neuralSync": {
+    "badge": "Neural Sync",
+    "load": "Carga",
+    "core": "Núcleo",
+    "storage": "Almacén",
+    "safe": "Seguro",
+    "connected": "Conectado",
+    "booting": "INICIANDO...",
+    "logs": ["NODE_42", "STAKING_OK", "ROBOT_LINKED", "VISION_READY"]
+  },
+  "galleryItems": [
+    { "title": "Neural #01", "rarity": "Legendario" },
+    { "title": "Evolution #04", "rarity": "Épico" }
+  ],
+  "tickerStats": { "price": "$ZEX: ${{price}}", "burned": "Quemado: {{count}}", "robots": "Ventas: {{sold}}/{{total}}", "presale": "Preventa" },
+  "grok": {
+    "name": "Grok", "poweredBy": "GROK", "welcome": "¡Hola!", "placeholder": "Preguntar...",
+    "syncing": "Sincronizando...", "visionTitle": "Visión", "status": "OK",
+    "intents": { "robot": "80 Unidades.", "buyback": "Quema activa." },
+    "logs": { "connecting": "CONN...", "syncing": "SYNC...", "initializing": "INIT...", "matching": "MATCH...", "granted": "OK" },
+    "vision": { "phase": "Fase 4", "neural": "100%", "economy": "Activo" }
+  },
+  "grokFacts": ["Fact 1", "Fact 2"],
+  "calc": { "badge": "Yield", "title": "Staking", "desc": "Maximizar.", "labelAmount": "Cantidad", "labelPeriod": "Periodo", "months": "Meses", "estimatedEarn": "Ganancia", "totalReturn": "Total", "stakeBtn": "Stake" },
+  "gallery": { "badge": "NFT", "title": "Galería", "subtitle": "Mintear ahora." }
+}

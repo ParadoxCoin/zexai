@@ -1,0 +1,331 @@
+{
+  "nav": {
+    "language": "English",
+    "goToApp": "Launch Dashboard"
+  },
+  "hero": {
+    "creditsBadge": "CREDITS NEVER EXPIRE",
+    "visionBadge": "AI + WEB3 + ROBOTIC INTELLIGENCE",
+    "mainTitleLine1": "AI and Robotics",
+    "mainTitleLine2": "Next-Gen Infrastructure",
+    "description": "ZexAI unifies multi-model AI, creator economy, and robotic intelligence in a single ecosystem. Push beyond software boundaries and build a force spanning from digital to physical worlds.",
+    "joinPresale": "Join Presale",
+    "tryApp": "Explore ZexAi",
+    "stats": {
+      "aiModels": "AI Models",
+      "emotions": "Ways to Earn Credits",
+      "communityShare": "Ecosystem & Staking",
+      "status": "Platform Status",
+      "statusLive": "Live"
+    }
+  },
+  "story": {
+    "title": "Why ZexAI?",
+    "p1": "Our global technology vision is based on the principle that artificial intelligence should not just be a digital tool, but a 'mind' that manages the physical world. Today, AI production and robotic control systems are progressing separately.",
+    "p2": "ZexAI bridges these two worlds by transferring the power of software to robotic hardware. Our goal is to provide developers and creators with an end-to-end production and management platform, eliminating technological barriers.",
+    "p3": "Our platform serves as a bridge connecting multi-model AI architecture with physical world robots. <1>ZexAI is not just a tool, but the backbone of the next generation digital and robotic economy.</1>",
+    "p4": "With ZexAI, transform your ideas into digital assets and your software into robotic skills. You set the vision, ZexAI delivers to the world.",
+    "readWhitepaper": "Read the Full Whitepaper"
+  },
+  "campaign": {
+    "title": "ZexAI Ecosystem & Opportunities",
+    "subtitle": "A decentralized ecosystem combining AI production tools, creator economy, and Web3 infrastructure in one platform. 40+ AI models, NFT production, token economy, and physical products.",
+    "tabVision": "AI Production Platform",
+    "tabTokenomics": "$ZEX Economy",
+    "tabRobot": "Robot Ecosystem 🚀",
+    "tabSdk": "SDK & Robot Market 🌐"
+  },
+  "vision": {
+    "agentTitle": "Multi-Model Engine",
+    "agentDesc": "ZexAI provides 40+ AI models in a single platform. Run the same prompt across multiple models, compare results, and choose the best output.",
+    "mintBadge": "SEAMLESS INTEGRATION",
+    "mintTitle": "AI Production + NFT Monetization",
+    "mintDesc": "Generate images, videos, and audio. Mint your creations as NFTs on OpenSea and Zora with a single click. The credit-based platform offers earning through referrals, social sharing rewards, and daily quests.",
+    "whyWinTitle": "Why ZexAI Platform Advantage:",
+    "whyWin1": "40+ AI models with multi-model comparison",
+    "whyWin2": "Direct OpenSea and Zora integration for NFT minting",
+    "whyWin3": "Referral system: Earn 5% from credit purchases of invited users",
+    "startCreating": "Start Creating Now"
+  },
+  "tokenomics": {
+    "supplyBadge": "TOTAL SUPPLY: 1,000,000,000 ZEX",
+    "title": "$ZEX Token Distribution Plan",
+    "desc": "$ZEX is the core utility token of the ZexAI ecosystem. Used for AI production discounts, NFT mint fees, platform rewards, and staking. Fair, long-term, and community-focused distribution.",
+    "tiers": [
+      {
+        "name": "35% — Presale / ICO",
+        "desc": "No vesting. Fully unlocked at listing."
+      },
+      {
+        "name": "25% — Ecosystem & Staking Rewards",
+        "desc": "Platform usage, NFT creator rewards, staking pool"
+      },
+      {
+        "name": "15% — Liquidity (DEX/CEX)",
+        "desc": "Locked for listing liquidity pools"
+      },
+      {
+        "name": "10% — Marketing & Partnerships",
+        "desc": "Gradual release based on campaign and partnership needs"
+      },
+      {
+        "name": "10% — Team & Founders",
+        "desc": "1 year fully locked + 24-month linear unlock"
+      },
+      {
+        "name": "5% — Advisors",
+        "desc": "6 months locked + 6-month linear unlock"
+      }
+    ],
+    "utilityTitle": "$ZEX Token Utility",
+    "utilityDesc": "AI production discounts, NFT mint fees, staking rewards, and platform revenue sharing. Sustainable token economy backed by deflationary mechanisms.",
+    "burnTitle": "Deflationary Burn",
+    "burnDesc": ": 0.5% burn on transactions + 10% early unstake penalty burn + 20% of platform revenue used for buyback & burn.",
+    "yieldTitle": "Staking Yield",
+    "yieldDesc": ": Earn rewards by staking $ZEX. Early unstake incurs a 10% penalty that is burned.",
+    "robotTitle": "Robot Ecosystem",
+    "robotDesc": ": Use $ZEX to purchase limited edition humanoid robots and deploy customized autonomous AI behavior modules."
+  },
+  "robot": {
+    "badgeLimited": "Limited Edition",
+    "badgeAi": "AI Integrated",
+    "title": "ZexAI Robot Developer Ecosystem",
+    "desc": "Our platform introduces a new generation of AI-powered robotics development through the ZexAI Robotic Intelligence Layer. Connect humanoid robots and intelligent agents through a unified software platform, powered by $ZEX tokens for activation and skill-based monetization.",
+    "buyTitle": "Direct Purchase (80 Units)",
+    "buyPrice": "Price (With Wallet)",
+    "buyLeft": "Only {{count}} units left!",
+    "raffleTitle": "Grand ICO Raffle (20 Units)",
+    "raffleDesc": "Earn your raffle ticket by purchasing <1>at least 10,000 ZEX</1> during the presale. Catch the chance to win a free Humanoid Robot in our viral campaign!",
+    "raffleBtn": "🎯 Join Raffle (Soon)",
+    "confirmPurchase": "Confirm Purchase",
+    "paymentMethods": "Select Payment Method",
+    "payWeb3": "ZEX Token (Polygon)",
+    "payCC": "Credit Card (LemonSqueezy)",
+    "payBank": "Binance Pay / NOWPayments",
+    "specsTitle": "Technical Specifications (Unitree G1)",
+    "specs": {
+      "height": "Height: ~127cm (Foldable)",
+      "weight": "Weight: ~35kg",
+      "speed": "Speed: 2.0m/s (Max)",
+      "dof": "DOF: 23-43 Degrees of Freedom",
+      "battery": "Battery: 9000mAh (2-4h Runtime)",
+      "compute": "Compute: 8-Core CPU & NVIDIA Orin (EDU)",
+      "sensors": "Sensors: 3D LiDAR + Depth Camera"
+    },
+    "payCCDesc": "Safely process your payment via LemonSqueezy secure infrastructure. All major credit and debit cards accepted.",
+    "payCCBtn": "Proceed to Checkout",
+    "payBankDesc": "Pay with crypto via Binance Pay or NOWPayments. Get an extra 5% discount on your purchase.",
+    "payBankBtn": "Pay with Crypto",
+    "shippingTitle": "Shipping & Delivery Information",
+    "shippingName": "Full Name",
+    "shippingEmail": "Email Address",
+    "shippingPhone": "Phone Number",
+    "shippingAddress": "Full Shipping Address",
+    "phase2Unlock": "PHASE 2: UNLOCKING SOON",
+    "phase2Desc": "Hardware allocation is strictly reserved for Phase 2 participants.",
+    "phase2Exclusive": "PHASE 2 EXCLUSIVE",
+    "ccDescShort": "Seamless fiat integration via LemonSqueezy. Global credit & debit cards accepted.",
+    "bankDescShort": "Process secure crypto transactions via Binance Pay or NOWPayments."
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "subtitle": "Everything you need to know about the ZexAI ecosystem.",
+    "q1": "What is ZexAI and what does it do?",
+    "a1": "ZexAI is a production platform powered by multi-model AI architecture. It provides access to 40+ AI models, image/video/audio generation, model comparison, digital asset creation, and a token-based creator economy. The platform unifies AI production tools, creator economy, and Web3 infrastructure in one ecosystem.",
+    "q2": "What is $ZEX Token used for?",
+    "a2": "$ZEX token is used for AI production discounts, NFT mint fees, platform rewards, and staking. It is backed by deflationary mechanisms: 0.5% burn on transactions, 10% early unstake penalty burn, and 20% of platform revenue used for buyback & burn.",
+    "q3": "How does the credit system work?",
+    "a3": "AI production runs on a credit system. Ways to earn credits: subscription plans, credit purchases, referral system (earn 5% from invited users' credit purchases), social sharing rewards, and daily quests (login, generation, sharing). Subscription credits do not expire at month end.",
+    "q4": "What is the token distribution and lock schedule?",
+    "a4": "Total supply is 1 billion ZEX. Presale 35% (50% unlocked at listing, 50% 6-month vesting), Ecosystem 25% (gradual), Liquidity 15% (locked), Marketing 10% (gradual), Team 10% (1-year full lock + 24-month linear), Advisors 5% (6-month lock + 6-month linear). Team tokens are fully locked for 1 year — we are here to stay.",
+    "q5": "Which blockchain network does ZexAI use?",
+    "a5": "ZexAI operates on the Polygon (POL) network for low fees and high speed. You can buy $ZEX directly through our presale portal by connecting your Web3 wallet and swapping POL for $ZEX.",
+    "q6": "Does ZexAI provide revenue sharing (Real Yield)?",
+    "a6": "Yes! A portion of ZexAI's real-world revenues (subscriptions, NFT sales, etc.) is distributed to loyal $ZEX investors and stakers. By staking $ZEX, you become a direct partner in the ecosystem's success.",
+    "q7": "How does the NFT minting feature work?",
+    "a7": "ZexAI allows you to instantly mint your AI-generated images, videos, and audio as NFTs. With our seamless Web3 integration, you can directly list your creations on major marketplaces like OpenSea and Zora with just one click.",
+    "q8": "Can I get a refund if I change my mind during the Presale?",
+    "a8": "Yes, ZexAI offers a secure Refund (Buyback) mechanism. If you choose to refund your purchased $ZEX, a 15% network penalty is incurred (which is permanently burned to protect the ecosystem), and the remaining value in POL is instantly returned to your wallet.",
+    "q9": "Can I actually purchase a physical humanoid robot with $ZEX?",
+    "a9": "Yes! The ZexAI ecosystem seamlessly bridges software and hardware. During our initial release, a strictly limited batch of 80 humanoid robots is available for direct purchase using $ZEX tokens through our Web3 portal.",
+    "q10": "What is the long-term vision for the Robot Marketplace?",
+    "a10": "Our vision extends beyond simply selling hardware. The ZexAI Marketplace will become an ecosystem where developers can sell custom AI behavior modules (e.g., Security, Assistant, Entertainment). You can purchase these 'digital brains' with $ZEX and instantly deploy them to your physical robot via our secure cloud SDK."
+  },
+  "footer": {
+    "copyright": "© 2026 ZexAi. All rights reserved.",
+    "terms": "Terms",
+    "privacy": "Privacy"
+  },
+  "whitepaper": {
+    "backToHome": "Back to Home",
+    "officialDoc": "Official Document",
+    "loading": "Loading Vision..."
+  },
+  "markdown": {
+    "backToHome": "Back to Home",
+    "loading": "Loading Content...",
+    "termsTitle": "Terms of Service",
+    "privacyTitle": "Privacy Policy"
+  },
+  "sdk": {
+    "badge": "FOR DEVELOPERS & CREATORS",
+    "title": "ZexAI Developer SDK & Robot Marketplace",
+    "desc": "Build the future of robotic intelligence. Using our SDK, developers can seamlessly integrate ZexAI's autonomous agents into Web3 applications, Metaverse games, or physical robots.",
+    "marketTitle": "Robot Model & AI Marketplace",
+    "marketDesc": "Don't just buy hardware; buy brains. In the ZexAI Robot Marketplace, you can purchase humanoid robots, drones, and specialized AI behavior modules directly using $ZEX.",
+    "docsBtn": "Read Documentation"
+  },
+  "roadmap": {
+    "title": "Roadmap 2026-2027",
+    "subtitle": "Our journey from vision to reality.",
+    "q1Title": "Foundation & Launch",
+    "q1i1": "Multi-model AI platform launch (40+ models)",
+    "q1i2": "NFT minting integration (OpenSea & Zora)",
+    "q1i3": "Credit system & referral program",
+    "q1i4": "ZexAI Assistant (Grok) deployment",
+    "q2Title": "Token & Community",
+    "q2i1": "$ZEX Token presale on Polygon",
+    "q2i2": "Staking & burn mechanisms activation",
+    "q2i3": "Community governance voting (DAO Phase 1)",
+    "q2i4": "First DEX listing (QuickSwap)",
+    "q3Title": "Robot Ecosystem",
+    "q3i1": "Humanoid robot first batch delivery (80 units)",
+    "q3i2": "Robot SDK & behavior module marketplace",
+    "q3i3": "Developer API & documentation",
+    "q3i4": "CEX listings (Tier 2)",
+    "q4Title": "Global Expansion",
+    "q4i1": "Robot behavior module marketplace launch",
+    "q4i2": "Enterprise partnerships & B2B integrations",
+    "q4i3": "Mobile app release (iOS & Android)",
+    "q4i4": "CEX listings (Tier 1)",
+    "q4i5": "Autonomous Hardware & Unitree Integration (H1 2027)",
+    "q5Title": "The Vision",
+    "q5i1": "Autonomous AI agent network",
+    "q5i2": "Cross-chain bridge (Ethereum, Solana)",
+    "q5i3": "Full DAO governance transition",
+    "q5i4": "Next-gen robot hardware (Gen 2)"
+  },
+  "neuralSync": {
+    "badge": "Neural Sync",
+    "load": "System Load",
+    "core": "Core",
+    "storage": "Storage",
+    "safe": "Safe",
+    "connected": "Connected to Polygon Mainnet",
+    "booting": "BOOTING NEURAL_LINK...",
+    "logs": [
+      "NEURAL_SYNC: NODE_42_CONNECTED",
+      "PROTOCOL: STAKING_LAYER_ACTIVE",
+      "ROBOTIC_CORE: UNITREE_G1_LINKED",
+      "VISION_v40: ENGINE_READY",
+      "DATA_PULSE: ENCRYPTED",
+      "NETWORK: LATENCY_8ms",
+      "SECURITY: SHIELD_MAX_CAPACITY",
+      "AI_ORCHESTRATOR: LOAD_BALANCED",
+      "METRICS: ROI_POOL_OPTIMIZED",
+      "DAO: GOVERNANCE_SNAPSHOT_COMPLETE"
+    ]
+  },
+  "galleryItems": [
+    { "title": "Neural Sync #01", "rarity": "Legendary" },
+    { "title": "Evolution #04", "rarity": "Epic" },
+    { "title": "Robot Genesis #07", "rarity": "Mythic" },
+    { "title": "Network City #12", "rarity": "Rare" },
+    { "title": "Cyber Core #22", "rarity": "Legendary" }
+  ],
+  "tickerStats": {
+    "price": "$ZEX Presale: ${{price}}",
+    "burned": "Total Burned: {{count}} ZEX",
+    "robots": "Robot Sales: {{sold}}/{{total}}",
+    "presale": "Presale"
+  },
+  "grok": {
+    "name": "ZexAI Assistant",
+    "poweredBy": "POWERED BY GROK",
+    "welcome": "Hello! I am ZexAI Assistant. How can I help you today?",
+    "placeholder": "Ask something...",
+    "syncing": "Synchronizing Neural Core",
+    "visionTitle": "ZexAI Visionary Projection",
+    "status": "SYSTEM STATUS: OPTIMAL / VISION MODE: ON",
+    "intents": {
+      "robot": "Only 80 Unitree G1 humanoid robots will be produced. Get yours with $ZEX.",
+      "buyback": "Our Buy-Back & Burn mechanism protects $ZEX value systematically."
+    },
+    "logs": {
+      "connecting": "CONNECTING TO VISION V40...",
+      "syncing": "SYNCING TOKENOMICS LAYER...",
+      "initializing": "INITIALIZING NEURAL NODES...",
+      "matching": "CROSS-MATCHING WHITEPAPER...",
+      "granted": "ACCESS GRANTED. WELCOME."
+    },
+    "vision": {
+      "phase": "PHASE 4: Professionalization & Governance",
+      "neural": "NEURAL NET: 100% Data-Driven Architecture",
+      "economy": "ECONOMY: Real-Yield Distribution Protocol Active"
+    }
+  },
+  "grokFacts": [
+    "ZexAI was founded on the love of a father for his sick daughter, a tireless motivation.",
+    "We designed AI for NFT! ZexAI is a global production factory for digital assets.",
+    "ZexAI creations can be sold directly on OpenSea, Zora, and Blur.",
+    "Zex Vision: Powering your dreams into pixels with 40+ advanced AI models.",
+    "Zex Motion: Cinema-grade technology with 43 unique video generation models.",
+    "$ZEX Token is used for production and Real Yield revenue sharing.",
+    "Our Buy-Back & Burn mechanism protects $ZEX value systematically.",
+    "35% of the 1 Billion total supply is allocated for the Presale.",
+    "Team tokens are locked for 1 year. We are here for the long-term legacy.",
+    "Roadmap Phase 3 (2026 Q4): Universal production and major CEX listings."
+  ],
+  "calc": {
+    "badge": "Real Yield Protocol",
+    "title": "$ZEX Staking Returns",
+    "desc": "Maximize your ZexAI holdings with our Tier-based staking system. Earn a share of platform revenues through the global AI creator economy.",
+    "labelAmount": "Staking Amount",
+    "labelPeriod": "Staking Period",
+    "months": "Months",
+    "estimatedEarn": "Estimated Earnings",
+    "totalReturn": "Total Balance",
+    "stakeBtn": "Approve & Stake Now",
+    "yearly": "APY (Yearly)",
+    "comingSoon": "Coming Soon",
+    "disclaimer": "* Rates are estimated and subject to protocol governance"
+  },
+  "gallery": {
+    "badge": "Next-Gen Digital Assets",
+    "title": "AI Hologram Showcase",
+    "subtitle": "Directly mint our corporate AI assets onto OpenSea and Zora. Each card is a unique fragment of the ZexAI neural network."
+  },
+  "presale": {
+    "portalTitle": "ZEX Presale Portal",
+    "portalDesc": "Connect your wallet on the Polygon network to access the Presale panel, or select a different coin below.",
+    "orBuyWith": "Or buy with other coins without connecting a wallet:",
+    "active": "Active",
+    "paused": "Paused",
+    "phase1": "Phase 1: Private",
+    "phase2": "Phase 2: Public",
+    "tabBuy": "BUY ZEX",
+    "tabReferral": "REFERRAL",
+    "tabRefund": "REFUND",
+    "paymentMethod": "Payment Method",
+    "amountToPay": "Amount to Pay (POL)",
+    "expectedZex": "Expected ZEX (Max)",
+    "expectedZexEst": "Expected ZEX (Est.)",
+    "connectToBuy": "Connect wallet to buy with POL.",
+    "amountToSpendUsd": "Amount to Spend (USD)",
+    "receivingAddress": "Receiving Polygon Wallet Address",
+    "invalidAddress": "Invalid address — Must start with 0x and be 42 characters",
+    "validAddress": "✓ Valid Polygon address",
+    "afterPaymentDesc": "After payment confirmation, your ZEX tokens will be automatically sent to the wallet address above.",
+    "referTitle": "Refer & Earn 5%",
+    "referDesc": "Invite friends and receive a 5% ZEX airdrop from their purchases! (Automated weekly distribution)",
+    "invited": "Invited",
+    "earned": "ZEX Earned",
+    "referLink": "Your Referral Link",
+    "referLinkCopied": "Referral link copied!",
+    "airdropSunday": "Earnings are automatically airdropped to your wallet every Sunday.",
+    "connectToRefer": "Connect wallet to view your link",
+    "refundAmount": "ZEX to Refund",
+    "refundWarning": "⚠️ 15% of the refunded ZEX will be Burned, the remaining value will be transferred to your POL wallet.",
+    "comingSoonBtn": "Coming Soon"
+  }
+}

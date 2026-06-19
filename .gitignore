@@ -1,17 +1,23 @@
-# logs
-logs
+# Logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# node_modules
+# Node modules & builds
 node_modules/
 dist/
 dist-ssr/
-*.local
+.vercel/
 
-# python
+# Virtualenvs & Python Cache
+venv/
+.venv/
+.venv312/
+.venv_uv/
 __pycache__/
 *.py[cod]
 *$py.class
@@ -20,11 +26,9 @@ __pycache__/
 env/
 build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
-# lib/ (Removed because it ignores src/lib)
 lib64/
 parts/
 sdist/
@@ -35,30 +39,32 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-
-# virtualenv
-venv/
-.env
-.venv
 env.bak/
 venv.bak/
 
-# Editor
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# macos
-.DS_Store
-
-# build files
-*.zip
+# Databases & SQLite
 *.db
 *.sqlite
 *.sqlite3
-.env.example.complete
-.env.progressive
 backend/zexai.db
 backend/supabase_db.sqlite
-.vercel
+
+# Editor directories and files
+.vscode/
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swo
+*.swp
+
+# Env files
+.env
+.env.local
+.env.example.complete
+.env.progressive
+

@@ -1,5 +1,0 @@
-Contact: mailto:security@zexai.io
-Expires: 2027-05-20T23:59:59.000Z
-Preferred-Languages: en, tr
-Canonical: https://app.zexai.io/.well-known/security.txt
-Policy: https://app.zexai.io/privacy

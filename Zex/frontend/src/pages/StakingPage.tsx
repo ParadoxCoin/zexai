@@ -1,0 +1,535 @@
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useWeb3, ZEX_STAKING_ADDRESS } from '@/contexts/Web3Context';
+import {
+    Wallet, Lock, Unlock, Gift, TrendingUp, AlertCircle,
+    ArrowRight, Activity, ShieldCheck, Zap
+} from 'lucide-react';
+import { ethers } from 'ethers';
+import playHapticFeedback from '@/utils/haptics';
+import api from '@/services/api';
+import { useTranslation } from 'react-i18next';
+
+export const StakingPage: React.FC = () => {
+    const { t, i18n } = useTranslation();
+    const { account, zexBalance, getContracts, checkAndApproveZex, connectWallet } = useWeb3();
+
+    // Staking State
+    const [stakedBalance, setStakedBalance] = useState("0");
+    const [earnedRewards, setEarnedRewards] = useState("0");
+    const [totalStaked, setTotalStaked] = useState("0");
+    const [rewardRateDisplay, setRewardRateDisplay] = useState("0");
+    const [lockupEndTime, setLockupEndTime] = useState<number | null>(null);
+    const [isLocked, setIsLocked] = useState(false);
+    const [timeRemaining, setTimeRemaining] = useState<string>("");
+
+    // UI Input State
+    const [stakeAmount, setStakeAmount] = useState("");
+    const [withdrawAmount, setWithdrawAmount] = useState("");
+    const [activeTab, setActiveTab] = useState<'stake' | 'withdraw'>('stake');
+
+    // Loading States
+    const [isStaking, setIsStaking] = useState(false);
+    const [isWithdrawing, setIsWithdrawing] = useState(false);
+    const [isClaiming, setIsClaiming] = useState(false);
+    const [isLoadingStats, setIsLoadingStats] = useState(false);
+    const [isClaimingCredits, setIsClaimingCredits] = useState(false);
+    const [hasClaimedCredits, setHasClaimedCredits] = useState(false);
+
+    // Fetch Staking Stats
+    const fetchStakingStats = async () => {
+        if (!account) return;
+        setIsLoadingStats(true);
+        try {
+            const contracts = await getContracts();
+            if (contracts && contracts.stakingContract) {
+                // Fetch user staked balance
+                const stakedWei = await contracts.stakingContract.balanceOf(account);
+                setStakedBalance(parseFloat(ethers.formatEther(stakedWei)).toFixed(2));
+
+                // Fetch earned rewards
+                const earnedWei = await contracts.stakingContract.earned(account);
+                setEarnedRewards(parseFloat(ethers.formatEther(earnedWei)).toFixed(4));
+
+                // Fetch global stats
+                const totalWei = await contracts.stakingContract.totalSupply();
+                setTotalStaked(parseFloat(ethers.formatEther(totalWei)).toLocaleString());
+
+                const rateWei = await contracts.stakingContract.rewardRate();
+                // Just display reward rate as a fun metric
+                setRewardRateDisplay(ethers.formatUnits(rateWei, 0));
+            }
+        } catch (error) {
+            console.error("Error fetching staking stats:", error);
+        } finally {
+            setIsLoadingStats(false);
+        }
+    };
+
+    // Check if user already claimed platform credits this month
+    const fetchClaimStatus = async () => {
+        try {
+            const res = await api.get('/staking/status');
+            if (res.data) setHasClaimedCredits(res.data.has_claimed_this_month);
+        } catch (e) {
+            console.error("Error checking claim status:", e);
+        }
+    };
+
+    // Auto-refresh stats every 10 seconds (for live rewards)
+    useEffect(() => {
+        if (account) {
+            fetchStakingStats();
+            fetchClaimStatus();
+            const interval = setInterval(fetchStakingStats, 10000);
+            return () => clearInterval(interval);
+        }
+    }, [account]);
+
+    // Live Countdown Timer logic
+    useEffect(() => {
+        if (!isLocked || !lockupEndTime) {
+            setTimeRemaining("");
+            return;
+        }
+
+        const tick = () => {
+            const now = Date.now();
+            const difference = lockupEndTime - now;
+
+            if (difference <= 0) {
+                setIsLocked(false);
+                setTimeRemaining(t('staking.lockExpired'));
+                return;
+            }
+
+            const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+            const minutes = Math.floor((difference / 1000 / 60) % 60);
+            const seconds = Math.floor((difference / 1000) % 60);
+
+            setTimeRemaining(`${days}${t('staking.daysShort')} ${hours}${t('staking.hoursShort')} ${minutes}${t('staking.minutesShort')} ${seconds}${t('staking.secondsShort')}`);
+        };
+
+        tick(); // Run immediately
+        const timerInterval = setInterval(tick, 1000);
+        return () => clearInterval(timerInterval);
+    }, [isLocked, lockupEndTime]);
+
+    const handleStake = async () => {
+        if (!stakeAmount || parseFloat(stakeAmount) <= 0 || !account) return;
+        setIsStaking(true);
+        try {
+            // 1. Approve allowance for Staking Contract
+            const approved = await checkAndApproveZex(ZEX_STAKING_ADDRESS, stakeAmount);
+            if (!approved) {
+                alert(t('staking.approvalDenied'));
+                setIsStaking(false);
+                return;
+            }
+
+            // 2. Stake
+            const contracts = await getContracts();
+            if (contracts && contracts.stakingContract) {
+                const amountWei = ethers.parseEther(stakeAmount);
+                const tx = await contracts.stakingContract.stake(amountWei);
+                await tx.wait();
+                playHapticFeedback('success');
+                setStakeAmount("");
+                fetchStakingStats();
+            }
+        } catch (error: any) {
+            console.error("Staking failed:", error);
+            alert(t('staking.stakeFailed') + (error?.reason || error?.message));
+        } finally {
+            setIsStaking(false);
+        }
+    };
+
+    const handleWithdraw = async () => {
+        if (!withdrawAmount || parseFloat(withdrawAmount) <= 0 || !account) return;
+
+        // Warn about early penalty
+        if (isLocked) {
+            const confirmWithdraw = window.confirm(
+                t('staking.earlyWithdrawConfirm')
+            );
+            if (!confirmWithdraw) return;
+        }
+
+        setIsWithdrawing(true);
+        try {
+            const contracts = await getContracts();
+            if (contracts && contracts.stakingContract) {
+                const amountWei = ethers.parseEther(withdrawAmount);
+                const tx = await contracts.stakingContract.withdraw(amountWei);
+                await tx.wait();
+                playHapticFeedback('success');
+                setWithdrawAmount("");
+                fetchStakingStats();
+            }
+        } catch (error: any) {
+            console.error("Withdraw failed:", error);
+            alert(t('staking.withdrawFailed') + (error?.reason || error?.message));
+        } finally {
+            setIsWithdrawing(false);
+        }
+    };
+
+    const handleClaimRewards = async () => {
+        if (!account) return;
+        setIsClaiming(true);
+        try {
+            const contracts = await getContracts();
+            if (contracts && contracts.stakingContract) {
+                const tx = await contracts.stakingContract.getReward();
+                await tx.wait();
+                playHapticFeedback('success');
+                fetchStakingStats();
+            }
+        } catch (error: any) {
+            console.error("Claim failed:", error);
+            alert(t('staking.claimFailed'));
+        } finally {
+            setIsClaiming(false);
+        }
+    };
+
+    const handleClaimPlatformCredits = async () => {
+        if (!account) return;
+        setIsClaimingCredits(true);
+        try {
+            // Ask MetaMask for signature
+            if (!window.ethereum) throw new Error("MetaMask is not installed.");
+            const browserProvider = new ethers.BrowserProvider(window.ethereum);
+            const signer = await browserProvider.getSigner();
+
+            const currentMonth = new Date().toLocaleString(i18n.language === 'tr' ? 'tr-TR' : 'en-US', { month: 'long', year: 'numeric' });
+            const message = t('staking.signatureMessage', { account, month: currentMonth });
+
+            const signature = await signer.signMessage(message);
+
+            // Send to FastAPI Backend
+            const res = await api.post('/staking/claim', {
+                wallet_address: account,
+                message: message,
+                signature: signature
+            });
+
+            if (res.data && res.data.success) {
+                alert(res.data.message);
+                playHapticFeedback('success');
+                setHasClaimedCredits(true);
+            }
+        } catch (error: any) {
+            console.error("Credit claim failed:", error);
+            const msg = error.response?.data?.detail || error.message || t('staking.unknownError');
+            alert(t('staking.creditClaimFailed') + msg);
+        } finally {
+            setIsClaimingCredits(false);
+        }
+    };
+
+    return (
+        <div className="px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
+            {/* Header */}
+            <div className="mb-10">
+                <div className="flex items-center gap-4 mb-3">
+                    <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg shadow-indigo-500/30">
+                        <TrendingUp className="w-8 h-8 text-white" />
+                    </div>
+                    <div>
+                        <h1 className="text-4xl font-black bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+                            ZEX Staking
+                        </h1>
+                        <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">
+                            {t('staking.subtitle')}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {!account ? (
+                /* Disconnected State */
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                    className="flex flex-col items-center justify-center p-12 bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 text-center"
+                >
+                    <div className="w-20 h-20 mb-6 bg-indigo-50 dark:bg-indigo-900/30 rounded-full flex items-center justify-center">
+                        <Wallet className="w-10 h-10 text-indigo-500" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{t('staking.connectWallet')}</h2>
+                    <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-md">
+                        {t('staking.connectWalletDesc')}
+                    </p>
+                    <button
+                        onClick={connectWallet}
+                        className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl font-bold text-lg shadow-xl shadow-indigo-500/30 transition-all hover:scale-105"
+                    >
+                        {t('staking.connectWalletBtn')}
+                    </button>
+                </motion.div>
+            ) : (
+                /* Connected State */
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+                    {/* Left Column: Stats & Claim */}
+                    <div className="lg:col-span-5 space-y-6">
+                        {/* Earned Rewards Card */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                            className="bg-gradient-to-br from-indigo-600 via-purple-600 to-fuchsia-600 rounded-3xl p-6 text-white shadow-2xl shadow-purple-500/25 relative overflow-hidden"
+                        >
+                            <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-white/10 blur-3xl rounded-full" />
+
+                            <div className="relative z-10">
+                                <span className="flex items-center gap-2 text-indigo-100 text-sm font-bold uppercase tracking-wider mb-2">
+                                    <Gift className="w-4 h-4" /> {t('staking.earnedReward')}
+                                </span>
+                                <div className="text-5xl font-black mb-1 truncate">
+                                    {earnedRewards} <span className="text-2xl text-indigo-200">ZEX</span>
+                                </div>
+                                <p className="text-sm text-indigo-200 mb-6">
+                                    {t('staking.worthValue', { value: (parseFloat(earnedRewards) * 0.15).toFixed(2) })}
+                                </p>
+
+                                <button
+                                    onClick={handleClaimRewards}
+                                    disabled={isClaiming || parseFloat(earnedRewards) <= 0}
+                                    className="w-full py-4 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-2xl font-bold text-lg border border-white/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {isClaiming ? <Activity className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5" />}
+                                    {t('staking.collectRewards')}
+                                </button>
+                            </div>
+                        </motion.div>
+
+                        {/* Monthly Platform Credits Claim Card */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                            className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-xl border border-gray-100 dark:border-gray-700 relative overflow-hidden"
+                        >
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <Zap className="w-5 h-5 text-yellow-500" /> {t('staking.platformCredits')}
+                                </h3>
+                                {hasClaimedCredits && (
+                                    <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold rounded-full border border-green-200 dark:border-green-800/50">
+                                        {t('staking.claimed')}
+                                    </span>
+                                )}
+                            </div>
+
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
+                                {t('staking.platformCreditsDesc')}
+                            </p>
+
+                            <button
+                                onClick={handleClaimPlatformCredits}
+                                disabled={isClaimingCredits || hasClaimedCredits || parseFloat(stakedBalance) < 500}
+                                className={`w-full py-4 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-2 ${hasClaimedCredits
+                                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 border border-gray-200 dark:border-gray-600 cursor-not-allowed'
+                                    : parseFloat(stakedBalance) < 500
+                                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 border border-gray-200 dark:border-gray-600 cursor-not-allowed opacity-50'
+                                        : 'bg-yellow-500 hover:bg-yellow-400 text-yellow-950 shadow-lg shadow-yellow-500/20 active:scale-[0.98]'
+                                    }`}
+                            >
+                                {isClaimingCredits ? (
+                                    <Activity className="w-5 h-5 animate-spin" />
+                                ) : hasClaimedCredits ? (
+                                    t('staking.creditsClaimed')
+                                ) : (
+                                    t('staking.requestCredits')
+                                )}
+                            </button>
+
+                            {parseFloat(stakedBalance) < 5000 && !hasClaimedCredits && (
+                                <p className="text-center text-xs text-red-500 mt-3 font-medium">
+                                    {t('staking.minTierNote')}
+                                </p>
+                            )}
+                        </motion.div>
+
+                        {/* Staked Balance / Wallet Balance Stats */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700">
+                                <ShieldCheck className="w-6 h-6 text-emerald-500 mb-3" />
+                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{t('staking.myLockedZex')}</h3>
+                                <p className="text-xl font-black text-gray-900 dark:text-white truncate">{stakedBalance}</p>
+                            </div>
+                            <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700">
+                                <Wallet className="w-6 h-6 text-blue-500 mb-3" />
+                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{t('staking.walletBalance')}</h3>
+                                <p className="text-xl font-black text-gray-900 dark:text-white truncate">{zexBalance}</p>
+                            </div>
+                        </div>
+
+                        {/* Global Pool Info */}
+                        <div className="bg-gray-50 dark:bg-gray-900/50 p-6 rounded-3xl border border-gray-100 dark:border-gray-700">
+                            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                <Activity className="w-4 h-4 text-indigo-500" /> {t('staking.poolStats')}
+                            </h3>
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-gray-500 dark:text-gray-400">{t('staking.totalZexInPool')}</span>
+                                    <span className="font-bold text-gray-900 dark:text-white">{totalStaked}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-gray-500 dark:text-gray-400">{t('staking.annualYield')}</span>
+                                    <span className="font-bold text-emerald-500">%{rewardRateDisplay}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-gray-500 dark:text-gray-400">{t('staking.supportedNetwork')}</span>
+                                    <span className="font-bold text-gray-900 dark:text-white">Polygon (MATIC)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Column: Interaction Panel (Stake/Withdraw) */}
+                    <div className="lg:col-span-7">
+                        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden h-full flex flex-col">
+                            {/* Tab Headers */}
+                            <div className="flex border-b border-gray-100 dark:border-gray-700">
+                                <button
+                                    onClick={() => setActiveTab('stake')}
+                                    className={`flex-1 py-5 text-center font-bold text-sm transition-colors flex justify-center items-center gap-2 ${activeTab === 'stake'
+                                        ? 'text-indigo-600 bg-indigo-50/50 dark:bg-indigo-900/10 border-b-2 border-indigo-600'
+                                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                                        }`}
+                                >
+                                    <Lock className="w-4 h-4" /> {t('staking.stakeTab')}
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('withdraw')}
+                                    className={`flex-1 py-5 text-center font-bold text-sm transition-colors flex justify-center items-center gap-2 ${activeTab === 'withdraw'
+                                        ? 'text-purple-600 bg-purple-50/50 dark:bg-purple-900/10 border-b-2 border-purple-600'
+                                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                                        }`}
+                                >
+                                    <Unlock className="w-4 h-4" /> {t('staking.withdrawTab')}
+                                </button>
+                            </div>
+
+                            {/* Tab Content */}
+                            <div className="p-8 flex-1 flex flex-col justify-center">
+                                <AnimatePresence mode="wait">
+                                    {activeTab === 'stake' ? (
+                                        <motion.div
+                                            key="stake-tab"
+                                            initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
+                                        >
+                                            <div className="flex justify-between items-end mb-2">
+                                                <label className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                                                    {t('staking.amountToStake')}
+                                                </label>
+                                                <span className="text-xs font-medium text-gray-500">
+                                                    {t('staking.balance')}: <span className="text-indigo-600 dark:text-indigo-400 font-bold">{zexBalance} ZEX</span>
+                                                </span>
+                                            </div>
+                                            <div className="relative mb-6">
+                                                <input
+                                                    type="number"
+                                                    value={stakeAmount}
+                                                    onChange={(e) => setStakeAmount(e.target.value)}
+                                                    placeholder="0.00"
+                                                    className="w-full text-3xl font-black bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-indigo-500 rounded-2xl px-5 py-6 text-gray-900 dark:text-white"
+                                                />
+                                                <button
+                                                    onClick={() => setStakeAmount(zexBalance)}
+                                                    className="absolute right-4 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 text-xs font-bold rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-800 transition-colors"
+                                                >
+                                                    MAX
+                                                </button>
+                                            </div>
+
+                                            <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-xl p-4 mb-8 flex items-start gap-3">
+                                                <AlertCircle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+                                                <div className="space-y-1">
+                                                    <p className="text-xs font-bold text-blue-900 dark:text-blue-300">{t('staking.stakingRules')}</p>
+                                                    <p className="text-xs text-blue-800 dark:text-blue-400 leading-relaxed">
+                                                        {t('staking.stakingRulesDesc', { rate: rewardRateDisplay })}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                onClick={handleStake}
+                                                disabled={!stakeAmount || parseFloat(stakeAmount) <= 0 || isStaking}
+                                                className="w-full py-5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white rounded-2xl font-bold text-lg shadow-xl shadow-indigo-500/20 transition-all active:scale-[0.98] flex justify-center items-center gap-2"
+                                            >
+                                                {isStaking ? <Activity className="w-6 h-6 animate-spin" /> : t('staking.lockZex')}
+                                            </button>
+                                        </motion.div>
+                                    ) : (
+                                        <motion.div
+                                            key="withdraw-tab"
+                                            initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
+                                        >
+                                            <div className="flex justify-between items-end mb-2">
+                                                <label className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                                                    {t('staking.amountToWithdraw')}
+                                                </label>
+                                                <span className="text-xs font-medium text-gray-500">
+                                                    {t('staking.locked')}: <span className="text-purple-600 dark:text-purple-400 font-bold">{stakedBalance} ZEX</span>
+                                                </span>
+                                            </div>
+                                            <div className="relative mb-6">
+                                                <input
+                                                    type="number"
+                                                    value={withdrawAmount}
+                                                    onChange={(e) => setWithdrawAmount(e.target.value)}
+                                                    placeholder="0.00"
+                                                    className="w-full text-3xl font-black bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-purple-500 rounded-2xl px-5 py-6 text-gray-900 dark:text-white"
+                                                />
+                                                <button
+                                                    onClick={() => setWithdrawAmount(stakedBalance)}
+                                                    className="absolute right-4 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 text-xs font-bold rounded-lg hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors"
+                                                >
+                                                    MAX
+                                                </button>
+                                            </div>
+
+                                            <div className="bg-purple-50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-900/30 rounded-xl p-4 mb-8 flex items-start gap-3">
+                                                <Unlock className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
+                                                <div className="space-y-2 flex-1">
+                                                    <p className="text-xs text-purple-800 dark:text-purple-300 leading-relaxed">
+                                                        {t('staking.withdrawDesc')}
+                                                    </p>
+
+                                                    {isLocked && lockupEndTime && parseFloat(stakedBalance) > 0 && (
+                                                        <div className="p-2.5 bg-red-100 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-lg">
+                                                            <p className="text-xs font-bold text-red-600 dark:text-red-400 mb-0.5">⚠️ {t('staking.earlyWithdrawWarning')}</p>
+                                                            <p className="text-[11px] text-red-500 dark:text-red-300">
+                                                                {t('staking.earlyWithdrawPenalty')}
+                                                            </p>
+                                                            <p className="text-[10px] text-red-500 dark:text-red-400 mt-2 font-mono bg-red-500/10 p-2 rounded border border-red-500/20">
+                                                                {t('staking.timeRemaining')}: <span className="font-bold text-red-600 dark:text-red-400 text-xs">{timeRemaining}</span>
+                                                                <br />
+                                                                <span className="text-gray-500 mt-1 block">{t('staking.unlockDate')}: {new Date(lockupEndTime).toLocaleString()}</span>
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                onClick={handleWithdraw}
+                                                disabled={!withdrawAmount || parseFloat(withdrawAmount) <= 0 || isWithdrawing}
+                                                className="w-full py-5 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white rounded-2xl font-bold text-lg shadow-xl shadow-purple-500/20 transition-all active:scale-[0.98] flex justify-center items-center gap-2"
+                                            >
+                                                {isWithdrawing ? <Activity className="w-6 h-6 animate-spin" /> : t('staking.unlock')}
+                                            </button>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default StakingPage;
