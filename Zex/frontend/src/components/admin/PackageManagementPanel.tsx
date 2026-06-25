@@ -231,10 +231,12 @@ export const PackageManagementPanel: React.FC = () => {
         }
     };
 
-    const filteredPackages = packages.filter(p =>
-        p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.id?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredPackages = packages.filter(p => {
+        const query = searchQuery.toLowerCase();
+        const name = p.name?.toLowerCase() || '';
+        const id = p.id?.toLowerCase() || '';
+        return name.includes(query) || id.includes(query);
+    });
 
     // Calculate total from selected effects
     const calculateTotalFromEffects = () => {

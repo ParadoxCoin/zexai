@@ -211,11 +211,10 @@ export const AuditLogPanel: React.FC = () => {
     const filteredLogs = logs.filter(log => {
         if (!searchTerm) return true;
         const search = searchTerm.toLowerCase();
-        return (
-            log.user_email?.toLowerCase().includes(search) ||
-            log.resource_name?.toLowerCase().includes(search) ||
-            log.details?.toLowerCase().includes(search)
-        );
+        const userEmail = log.user_email?.toLowerCase() || '';
+        const resourceName = log.resource_name?.toLowerCase() || '';
+        const details = log.details?.toLowerCase() || '';
+        return userEmail.includes(search) || resourceName.includes(search) || details.includes(search);
     });
 
     return (

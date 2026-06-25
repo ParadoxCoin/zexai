@@ -141,10 +141,12 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
-  const filteredUsers = users.filter(user =>
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users.filter(user => {
+    const search = searchTerm.toLowerCase();
+    const emailMatch = user.email ? user.email.toLowerCase().includes(search) : false;
+    const nameMatch = user.name ? user.name.toLowerCase().includes(search) : false;
+    return emailMatch || nameMatch;
+  });
 
   if (loading) {
     return (

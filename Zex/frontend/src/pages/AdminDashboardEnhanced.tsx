@@ -194,10 +194,12 @@ export const AdminDashboardEnhanced: React.FC = () => {
   };
 
   const filteredUsers = [...users]
-    .filter(user =>
-      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    .filter(user => {
+      const search = searchTerm.toLowerCase();
+      const emailMatch = user.email ? user.email.toLowerCase().includes(search) : false;
+      const nameMatch = user.full_name ? user.full_name.toLowerCase().includes(search) : false;
+      return emailMatch || nameMatch;
+    })
     .sort((a, b) => {
       if (!sortConfig) return 0;
       const { key, direction } = sortConfig;

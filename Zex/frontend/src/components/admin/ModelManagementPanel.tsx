@@ -357,11 +357,13 @@ export const ModelManagementPanel: React.FC = () => {
         }
     };
 
-    const filteredModels = models.filter(model =>
-        model.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        model.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (model.description?.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+    const filteredModels = models.filter(model => {
+        const search = searchTerm.toLowerCase();
+        const name = model.name?.toLowerCase() || '';
+        const id = model.id?.toLowerCase() || '';
+        const description = model.description?.toLowerCase() || '';
+        return name.includes(search) || id.includes(search) || description.includes(search);
+    });
 
     const getCategoryColor = (category: string) => {
         const colors: Record<string, string> = {
