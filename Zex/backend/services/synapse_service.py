@@ -96,7 +96,21 @@ class SynapseService:
             if connectors_active:
                 await self._append_log(db, task_id, f"Aktif Entegrasyonlar Yükleniyor: {', '.join(connectors_active)}", "info")
 
-            # 3. Kie.ai OpenAI-Uyumlu Chat Completions İsteği
+            # 3. Fetch user memories from Supabase
+            user_memories = []
+            try:
+                mem_resp = db.table("synapse_memory").select("label").eq("user_id", user_id).execute()
+                if mem_resp.data:
+                    user_memories = [m["label"] for m in mem_resp.data]
+                    await self._append_log(db, task_id, f"Kullanıcı Hafızasından {len(user_memories)} kayıt yüklendi.", "info")
+            except Exception as e:
+                logger.warning(f"Failed to fetch user memory for task: {e}")
+                
+            memory_context = ""
+            if user_memories:
+                memory_context = "\n\nRetrieved User Memories / Brand Facts to remember and respect in your generation:\n" + "\n".join(f"- {m}" for m in user_memories)
+
+            # 4. Kie.ai OpenAI-Uyumlu Chat Completions İsteği
             api_endpoint = "https://api.kie.ai/v1/chat/completions"
             system_prompt = (
                 "You are ZexAi's Supercomputer Agent Orchestrator, inspired by Higgsfield Supercomputer. "
@@ -108,6 +122,8 @@ class SynapseService:
                 "5. SOCIAL DISTRIBUTION LAYOUT (Post captions optimized for TikTok/Reels, trending hashtags, and a virality estimation score)\n"
                 f"Ensure the output is rich, structured, and formatted in clear markdown. Constraints: {json.dumps(constraints or [])}"
             )
+            if memory_context:
+                system_prompt += memory_context
             
             req_payload = {
                 "model": kie_model,

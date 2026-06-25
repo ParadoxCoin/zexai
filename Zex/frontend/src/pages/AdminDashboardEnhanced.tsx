@@ -206,8 +206,8 @@ export const AdminDashboardEnhanced: React.FC = () => {
       let valB = b[key];
       
       if (key === 'last_sign_in_at') {
-        valA = a.last_sign_in_at || a.created_at || '';
-        valB = b.last_sign_in_at || b.created_at || '';
+        valA = a.last_login || a.last_sign_in_at || a.created_at || '';
+        valB = b.last_login || b.last_sign_in_at || b.created_at || '';
       }
       
       if (valA === undefined || valA === null) valA = '';

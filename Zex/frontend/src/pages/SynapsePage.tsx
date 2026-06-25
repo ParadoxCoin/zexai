@@ -177,6 +177,34 @@ const loadSkills = () => {
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
+const getActionPromptTemplate = (skillId: string, action: string) => {
+  const templates: Record<string, Record<string, string>> = {
+    single_command_agency: {
+      "Kampanya tasarla": "Kampanya tasarla skill'ini kullanarak yeni bir pazarlama kampanyası oluştur:\n- Ürün Adı: [Örn: ZexAi Supercomputer]\n- Hedef Kitle: [Örn: Kripto Yatırımcıları ve Geliştiriciler]\n- Kampanya Amacı: [Örn: Lansman Bilinirliği ve Web Sitesi Trafiği]",
+      "Karakter/Sahne planla": "Karakter/Sahne planla skill'ini kullanarak video sahneleri ve görsel stil planla:\n- Video Konsepti: [Örn: Uzay boşluğunda süzülen parlayan bir yapay zeka çekirdeği]\n- Görsel Atmosfer: [Örn: Sinematik 8k, karanlık neon mavi ve mor tonları]",
+      "Video promptları üret": "Video promptları üret skill'ini kullanarak video modelleri (Kling 3.0/Veo) için detaylı promptlar yaz:\n- Sahne Detayları: [Örn: Kameranın yavaşça siberpunk bir kontrol odasından içeri girmesi, ekranda kod akışları]\n- Kamera Açısı & Hareket: [Örn: Drone çekimi, yavaşça alçalan açı, sığ alan derinliği]"
+    },
+    ad_creative: {
+      "Headline üret": "Headline üret skill'ini kullanarak etkileyici reklam başlıkları yaz:\n- Ürün/Hizmet: [Örn: AI Destekli Tasarım Stüdyosu]\n- Hedef Kitle: [Örn: Sosyal medya içerik üreticileri]\n- Ton: [Örn: Profesyonel, iddialı, merak uyandırıcı]",
+      "CTA yaz": "CTA yaz skill'ini kullanarak yüksek dönüşüm getirecek harekete geçirici mesajlar yaz:\n- Reklam Teklifi: [Örn: İlk aya özel %50 İndirim ve 7 Gün Ücretsiz Deneme]",
+      "Banner oluştur": "Banner oluştur skill'ini kullanarak banner tasarımları için yerleşim ve metin fikirleri hazırla:\n- Platform: [Örn: Instagram Story / Google Display]\n- Görsel Tasarım Fikirleri: [Örn: Sol köşede ürün görseli, sağda büyük başlık]"
+    },
+    seedance_prompting: {
+      "Prompt oluştur": "Prompt oluştur skill'ini kullanarak Seedance 2.0 için prompt yaz:\n- Video Sahnesi: [Örn: Sisli bir ormanda yürüyen parlayan geyik]\n- Kamera & Işık: [Örn: Takip çekimi, ağaçların arasından sızan gün ışığı, 4k ultra detay]",
+      "Sahne yaz": "Sahne yaz skill'ini kullanarak sinematik bir sahne akışı yaz:\n- Sahne Amacı: [Örn: Karakterin gücünü ilk kez keşfettiği an]",
+      "Storyboard": "Storyboard skill'ini kullanarak sahne sahne görsel planlama oluştur:\n- Video Konsepti: [Örn: Marka tanıtım videosu, 3 sahne]"
+    },
+    b_roll_planner: {
+      "Görsel analiz": "Görsel analiz skill'ini kullanarak sahne detaylarını analiz et:\n- Görsel Detayı: [Örn: Fütüristik bir şehir silüeti]",
+      "Çekim planla": "Çekim planla skill'ini kullanarak B-roll çekim listesi oluştur:\n- Mekan: [Örn: Kahve dükkanı]\n- Çekim Konsepti: [Örn: Kahve çekirdeklerinin öğütülmesi, bardağa dökülmesi, duman detayları]",
+      "Shot listesi": "Shot listesi skill'ini kullanarak detaylı kamera planı oluştur:\n- Video Türü: [Örn: Portre tanıtım videosu]"
+    }
+  };
+
+  return templates[skillId]?.[action] || `${action} skill'ini kullanarak bir görev yürüt:\n- Detaylar: [Görevinizin detaylarını buraya yazın]`;
+};
+
+
 /* ═══════════════════════════════════════════════
    COMPONENT
 ═══════════════════════════════════════════════ */
@@ -957,8 +985,8 @@ export default function SynapsePage() {
                     {skill.installed && !isInstalling && (
                       <div className="mt-4 flex items-center gap-2 flex-wrap">
                         {skill.actions.map((a: string) => (
-                          <button key={a} onClick={e => { e.stopPropagation(); setPrompt(a + " skill'ini kullanarak bir görev yürüt"); setTab("workspace"); }}
-                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-500/8 hover:bg-indigo-500/15 border border-indigo-500/15 text-indigo-300 text-[10px] font-semibold transition-all">
+                          <button key={a} onClick={e => { e.stopPropagation(); setPrompt(getActionPromptTemplate(skill.id, a)); setTab("workspace"); }}
+                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/8 hover:bg-indigo-500/15 border border-indigo-500/15 text-indigo-300 text-[10px] font-semibold transition-all">
                             <PlayCircle className="w-2.5 h-2.5" />{a}
                           </button>
                         ))}
@@ -1052,7 +1080,7 @@ export default function SynapsePage() {
               <p className="text-[10px] text-gray-600 font-mono uppercase tracking-widest mb-2">Hızlı Aksiyonlar</p>
               <div className="flex flex-wrap gap-2">
                 {skillDetail.actions.map((a: string) => (
-                  <button key={a} onClick={() => { setPrompt(a + " skill'ini kullanarak bir görev yürüt"); setTab("workspace"); setSkillDetail(null); }}
+                  <button key={a} onClick={() => { setPrompt(getActionPromptTemplate(skillDetail.id, a)); setTab("workspace"); setSkillDetail(null); }}
                     className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-500/8 hover:bg-indigo-500/15 border border-indigo-500/15 text-indigo-300 text-xs font-semibold transition-all">
                     <PlayCircle className="w-3 h-3" />{a}
                   </button>
