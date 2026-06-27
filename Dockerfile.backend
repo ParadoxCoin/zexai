@@ -1,0 +1,28 @@
+# ZexAI Backend - Railway Production Dockerfile
+# Root: Zex/backend
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    libmagic1 \
+    libmagic-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy from backend directory
+COPY Zex/backend/requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy backend application code
+COPY Zex/backend/ .
+
+# Expose API port
+EXPOSE 8000
+
+# Start backend using gunicorn + uvicorn workers
+CMD ["gunicorn", "main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:8000"]
